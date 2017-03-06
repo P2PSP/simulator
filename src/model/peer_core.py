@@ -8,8 +8,9 @@ from common import Common
 class Peer_core():
     def __init__(self):
         self.socket = Queue()
-        self.played_chunk = -1
+        self.played_chunk = 0
         self.prev_received_chunk = 0
+        self.buffer_size = 1024
         self.player_alive = True
         print("DBS initialized")
         
@@ -17,11 +18,27 @@ class Peer_core():
         raise NotImplementedError
 
     def process_next_message(self):
-        content = self.socket.get()
+        content = self.socket.get() #replaces receive_next_message   
         return process_message(content[1], content[0])
 
     def buffer_data(self):
-        #TO-DO: buffering
+        chunk_number = process_next_message()
+        min_chunk_number = chunk_number
+
+        while(chunk_number < 0):
+            chunk_number = process_next_message()
+
+        if (min_chunk_number < chunk_number):
+            min_chunk_number = chunk_number
+
+        self.played_chunk = min_chunk_number % self.buffer_size
+
+        #LOG: position in the buffer of the first chunk to play
+
+        while (((chunk_number - self.played_chunk) % self.buffer_size) / 2):
+            while ((chunk_number = process_next_message()) < 0):
+                if (chunk_number < min_chunk_number):
+                    self.played_chunk = min_chunk_number
 
     def keep_the_buffer_full(self):
         last_received_chunk = process_next_message()
@@ -35,9 +52,11 @@ class Peer_core():
            self.player_alive = play_chunk(self.played_chunk)
            #LOG chunks consumed and lost chunks
            self.played_chunk = (self.played_chunk + 1) % MAX_CHUNK_NUMBER
-           if ((self.prev_received_chunk % MAX_CHUNK_NUMBER) < last_received_chunk):
-               self.prev_received_chunk = last_received_chunk
-        
+        if ((self.prev_received_chunk % MAX_CHUNK_NUMBER) < last_received_chunk):
+            self.prev_received_chunk = last_received_chunk
+
+        self.prev_received_chunk = chunk_number
+    
     def play_chunk(self, chunk_number):
         raise NotImplementedError
 
