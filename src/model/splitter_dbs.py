@@ -5,6 +5,8 @@ splitter_dbs module
 from threading import Thread
 
 class Splitter_DBS(Splitter_core):
+    MAX_NUMBER_OF_CHUNK_LOSS = 32
+    NUMBER_OF_MONITORS = 1
     
     def __init__(self):
         self.peer_list = []
@@ -13,8 +15,18 @@ class Splitter_DBS(Splitter_core):
         self.destination_of_chunk = []
         self.buffer_size = 1024
         self.peer_number = 0
+        self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_CHUNK_LOSS
+        self.number_of_monitors = self.NUMBER_OF_MONITORS
+        self.outgoing_peer_list = []
         print("DBS initialized")
 
+    def send_the_number_of_peers(self, peer):
+        peer.socket.put(self.number_of_monitors)
+        peer.socket.put(len(self.peer_list))
+
+    def send_the_list_of_peers(self, peer):
+        peer.socket.put(self.peer_list)
+        
     def insert_peer(self, peer):
         if peer not in self.peer_list:
             self.peer_list.append(peer)
