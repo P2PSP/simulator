@@ -67,7 +67,7 @@ class Splitter_DBS(Splitter_core):
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        peer.put((self.socket,goodbye))
+        peer.put((self,goodbye))
         print("goodbye sent to", peer)
     
     def moderate_the_team(self):

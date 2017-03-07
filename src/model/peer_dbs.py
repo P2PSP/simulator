@@ -15,10 +15,12 @@ class Peer_DBS(Peer_core):
         print("DBS initialized")
 
     def say_hello(self, node):
-        node.put((-1,"H"))
+        hello = (-1,"H")
+        node.put((self,hello))
         print("Hello sent to", node)
 
     def say_goodbye(self, node):
-        node.put((-1,"G"))
+        goodbye = (-1,"G")
+        node.put((self,goodbye))
         print("Goodbye sent to", node)
         
