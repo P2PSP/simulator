@@ -12,7 +12,7 @@ class Peer_core():
         self.prev_received_chunk = 0
         self.buffer_size = 1024
         self.player_alive = True
-        print("DBS initialized")
+        print("Core initialized")
         
     def process_message(self, message, sender):
         raise NotImplementedError
