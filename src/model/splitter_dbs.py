@@ -32,3 +32,4 @@ class Splitter_DBS(Splitter_core):
     def process_lost_chunk(self, lost_chunk_number, sender):
         destination = get_losser(lost_chunk_number)
         print(sender,"complains about lost chunk",lost_chunk_number)
+        self.increment_unsupportivity_of_peer(destination)
