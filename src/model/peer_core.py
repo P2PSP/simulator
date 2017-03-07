@@ -13,6 +13,10 @@ class Peer_core():
         self.buffer_size = 1024
         self.player_alive = True
         print("Core initialized")
+
+    def connect_to_the_splitter(self):
+        hello = (-1,"H")
+        self.splitter.put((self,hello))
         
     def process_message(self, message, sender):
         raise NotImplementedError
