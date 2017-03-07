@@ -7,7 +7,16 @@ class Splitter_core():
     
     def __init__(self):
         self.alive = True
+        self.chunk_number = 0
         print("Core initialized")
         
     def send_chunk(self, message, destination):
-       destination.put(message)
+        print(self.chunk_number, "->", destination)
+        destination.put(message)
+
+    def receive_chunk(self):
+        #C->Chunk, L->Lost, G->Goodbye, B->Broken
+        return "C"
+
+    def run(self):
+        raise NotImplementedError

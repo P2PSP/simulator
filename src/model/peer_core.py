@@ -51,8 +51,8 @@ class Peer_core():
         for i in range(last_received_chunk - self.prev_received_chunk):
            self.player_alive = play_chunk(self.played_chunk)
            #LOG chunks consumed and lost chunks
-           self.played_chunk = (self.played_chunk + 1) % MAX_CHUNK_NUMBER
-        if ((self.prev_received_chunk % MAX_CHUNK_NUMBER) < last_received_chunk):
+           self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
+        if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
 
         self.prev_received_chunk = chunk_number

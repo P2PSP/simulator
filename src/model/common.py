@@ -8,3 +8,4 @@ from core.color import Color
 class Common:
 
     MAX_CHUNK_NUMBER = 65536
+    COUNTERS_TIMING = 1
