@@ -12,7 +12,7 @@ class Splitter_core():
         
     def send_chunk(self, message, destination):
         print(self.chunk_number, "->", destination)
-        destination.put((self,message))
+        destination.socket.put((self,message))
 
     def receive_chunk(self):
         #C->Chunk, L->Lost, G->Goodbye, B->Broken

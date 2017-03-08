@@ -16,8 +16,8 @@ class Peer_core():
         print("Core initialized")
 
     def connect_to_the_splitter(self):
-        hello = (-1,"H")
-        self.splitter.socket.put((self,hello))
+        hello = (-1,"P")
+        self.splitter.socketTCP.put((self,hello))
         
     def process_message(self, message, sender):
         raise NotImplementedError

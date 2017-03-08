@@ -11,7 +11,8 @@ class Splitter_DBS(Splitter_core):
     def __init__(self):
         self.peer_list = []
         self.losses = {}
-        self.socket = Queue()
+        self.socketTCP = Queue()
+        self.socketUDP = Queue()
         self.destination_of_chunk = []
         self.buffer_size = 1024
         self.peer_number = 0
@@ -33,7 +34,20 @@ class Splitter_DBS(Splitter_core):
         self.losses[peer] = 0
         print("peer inserted", peer)
 
-   def increment_unsupportivity_of_peer(self, peer):
+    def handle_a_peer_arrival(self):
+        content = self.socketTCP.get()
+        incoming_peer = content[0]
+        message = content[1]
+        print("acepted connection from peer", incoming_peer)
+
+        if (message == "M"):
+            self.number_of_monitors += 1
+                
+        self.send_the_number_of_peers(incoming_peer)
+        self.send_the_list_of_peers(incoming_peer)
+        self.insert_peer(incoming_peer)
+        
+    def increment_unsupportivity_of_peer(self, peer):
         try:
             self.losses[peer] += 1
         except KeyError:
@@ -84,7 +98,7 @@ class Splitter_DBS(Splitter_core):
     
     def moderate_the_team(self):
         while self.alive:
-            content = socket.get()
+            content = self.socketUDP.get()
             sender = content[0]
             message = content[1]
 
