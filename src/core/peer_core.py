@@ -1,9 +1,9 @@
 """
-@package p2psp-simulator
+@package simulator
 peer_core module
 """
 from queue import Queue
-from common import Common
+from .common import Common
 
 class Peer_core():
     def __init__(self):
@@ -41,9 +41,11 @@ class Peer_core():
         #LOG: position in the buffer of the first chunk to play
 
         while (((chunk_number - self.played_chunk) % self.buffer_size) / 2):
-            while ((chunk_number = process_next_message()) < 0):
+            chunk_number = process_next_message()
+            while (chunk_number < 0):
                 if (chunk_number < min_chunk_number):
                     self.played_chunk = min_chunk_number
+                chunk_number = process_next_message()
 
     def keep_the_buffer_full(self):
         last_received_chunk = process_next_message()
@@ -63,7 +65,7 @@ class Peer_core():
         self.prev_received_chunk = chunk_number
     
     def play_chunk(self, chunk_number):
-        raise NotImplementedError
+        print("chunk", chunk_number, "consumed")
 
     def run(self):
         while(self.player_alive):

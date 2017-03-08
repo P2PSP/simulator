@@ -1,11 +1,8 @@
 """
-@package p2psp_simulator
+@package simulator
 common module
 """
-
-from core.color import Color
-
-class Common:
+class Common():
 
     MAX_CHUNK_NUMBER = 65536
     COUNTERS_TIMING = 1

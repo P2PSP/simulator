@@ -1,9 +1,11 @@
 """
-@package p2psp-simulator
+@package simulator
 peer_dbs module
 """
 from queue import Queue
-from common import Common
+from threading import Thread
+from .common import Common
+from .peer_core import Peer_core
 
 class Peer_DBS(Peer_core):
     MAX_CHUNK_DEBT = 128
@@ -78,7 +80,7 @@ class Peer_DBS(Peer_core):
                     print("First chunk to play modified", str(self.played_chunk))
 
                 self.modified_list = False
-                print("sent",str(self.receive_and_feed_counter,"of",str(self.peer_list.size()))
+                print("sent",str(self.receive_and_feed_counter),"of",str(self.peer_list.size()))
                 print("Last chunk saved in receive and feed", str(message[0]))
                 self.receive_and_feed_counter = 0
                 self.receive_and_feed_previous = message
@@ -105,7 +107,7 @@ class Peer_DBS(Peer_core):
                       del self.debt[peer]
                       self.peer_list.remove(peer)
 
-                print(self, "-", self.receive_and_feed_previous[0]), "->", peer)
+                print(self, "-", str(self.receive_and_feed_previous[0]), "->", peer)
                 self.receive_and_feed_counter += 1
            
             return chunk_number
@@ -141,7 +143,7 @@ class Peer_DBS(Peer_core):
             message = content[1]
             self.receive_and_feed_counter += 1
 
-        for (peer in self.peer_list):
+        for peer in self.peer_list:
             say_goodbye(peer)
 
         self.ready_to_leave_the_team = True
@@ -155,10 +157,13 @@ class Peer_DBS(Peer_core):
         self.waiting_for_goodbye = True
         Peer_core.buffer_data(self)
 
+    def start(self):
+        Thread(target=self.run).start()
+        
     def run(self):
         while (self.player_alive or self.waiting_for_goodbye):
             self.keep_the_buffer_full()
-            if (!self.player_alive):
+            if not self.player_alive:
                 self.say_goodbye(self.splitter)
         self.polite_farewell()
 

@@ -2,13 +2,18 @@
 @package p2psp-simulator
 splitter_dbs module
 """
+from queue import Queue
 from threading import Thread
+from .splitter_core import Splitter_core
+from .common import Common
+import time
 
 class Splitter_DBS(Splitter_core):
     MAX_NUMBER_OF_CHUNK_LOSS = 32
     NUMBER_OF_MONITORS = 1
     
     def __init__(self):
+        super().__init__()
         self.peer_list = []
         self.losses = {}
         self.socketTCP = Queue()
@@ -121,11 +126,15 @@ class Splitter_DBS(Splitter_core):
     def compute_next_peer_number(self, peer):
         self.peer_number = (self.peer_number + 1) % len(self.peer_list)
 
+    def start(self):
+        Thread(target=self.run).start()
+
     def run(self):
+        Thread(target=self.handle_a_peer_arrival).start()
         Thread(target=self.moderate_the_team).start()
         Thread(target=self.reset_counters_thread).start()
-        
-         while self.alive:
+
+        while self.alive:
             chunk = self.receive_chunk()
             try:
                 peer = self.peer_list[self.peer_number]
@@ -140,8 +149,8 @@ class Splitter_DBS(Splitter_core):
                 print("The monitor peer has died!")
 
             if self.peer_number == 0:
-                for peer in outgoing_peer_list:
+                for peer in self.outgoing_peer_list:
                     say_goodbye(peer)
                     remove_peer(peer)
 
-            del outgoint_peer_list[:]
+            del self.outgoing_peer_list[:]
