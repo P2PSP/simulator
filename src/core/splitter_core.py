@@ -11,11 +11,11 @@ class Splitter_core():
         print("Core initialized")
         
     def send_chunk(self, message, destination):
-        print(self.chunk_number, "->", destination)
+        #print(self.chunk_number, "->", destination)
         destination.socket.put((self,message))
 
     def receive_chunk(self):
-        #C->Chunk, L->Lost, G->Goodbye, B->Broken
+        #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
 
     def run(self):
