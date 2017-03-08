@@ -1,34 +1,41 @@
 import threading
 import queue
+import sys
+import io
 
-queues = [queue.Queue(10)] * 10
+queues = []
 
 class Node(threading.Thread):
 
-    distances = [1000]*10       # Distance to each node
-    
     def __init__(self, node):
         super(Node,self).__init__()
         self.node = node
-        Node.distances[self.node] = 0
-
-#    def define_distance_to_node(self, node, distance):
-#        distances[node] = distance
+        self.distances = [1000]*2 # Distance to each node
+        self.gateways = [None]*2
+        queues.append(queue.Queue(10))
+        self.distances[self.node] = 0
+        print('hola'); sys.stdout.flush()
 
     # Runs Bellman-Ford algorithm for routing between nodes
     def run(self):
         while True:
 
+            found_new_route = False
             # Compute distances
-            received_distances, neighbour_node = Node.q.get()
-            for i in enum(received_distances):
-                if received_distances[i].distance + distances[neighbour_node] < distances[i]:
-                    gateway[i] = neighbour_node
-                    distances[i] = received_distances[i].distance + distances[neighbour_node]
+            received_distances, neighbour_node = queues[self.node].get()
+            print(received_distances, neighbour_node)
+            for i,distance in enumerate(received_distances):
+                if distance + self.distances[neighbour_node] < self.distances[i]:
+                    gateways[i] = neighbour_node
+                    self.distances[i] = distance + self.distances[neighbour_node]
+                    found_new_route = True
 
             # Communicate distances
-            for i in len(distances):
-                queue[i].put(Node.distances)
+            if found_new_route:
+                for i,distance in enumerate(self.distances):
+                    queues[i].put((distance, i))
                     
-            for i in distances:
-                print("({},{}) ",format(i, distances[i]))
+            for i,distance in enumerate(self.distances):
+                print("({},{}) ".format(i, distance))
+
+            sys.stdout.flush()
