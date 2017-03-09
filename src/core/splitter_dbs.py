@@ -10,7 +10,8 @@ import time
 
 class Splitter_DBS(Splitter_core):
     MAX_NUMBER_OF_CHUNK_LOSS = 32
-    NUMBER_OF_MONITORS = 1
+    BUFFER_SIZE = 1024
+    NUMBER_OF_MONITORS = 0
     
     def __init__(self):
         super().__init__()
@@ -19,7 +20,7 @@ class Splitter_DBS(Splitter_core):
         self.socketTCP = Queue()
         self.socketUDP = Queue()
         self.destination_of_chunk = []
-        self.buffer_size = 1024
+        self.buffer_size = self.BUFFER_SIZE
         self.peer_number = 0
         self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_CHUNK_LOSS
         self.number_of_monitors = self.NUMBER_OF_MONITORS
@@ -37,7 +38,7 @@ class Splitter_DBS(Splitter_core):
         if peer not in self.peer_list:
             self.peer_list.append(peer)
         self.losses[peer] = 0
-        print("peer inserted", peer)
+        print("peer inserted on splitter list", peer)
 
     def handle_a_peer_arrival(self):
         content = self.socketTCP.get()
@@ -50,6 +51,7 @@ class Splitter_DBS(Splitter_core):
                 
         self.send_the_number_of_peers(incoming_peer)
         self.send_the_list_of_peers(incoming_peer)
+        self.socketTCP.get() #receive_ready_for_receiving_chunks
         self.insert_peer(incoming_peer)
         
     def increment_unsupportivity_of_peer(self, peer):
@@ -142,11 +144,11 @@ class Splitter_DBS(Splitter_core):
                 
                 self.send_chunk(message, peer)
 
-                self.destination_of_chunk[self.chunk_number % self.BUFFER_SIZE] = peer
-                self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
+                self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
+                self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER                
                 self.compute_next_peer_number(peer)
             except IndexError:
-                print("The monitor peer has died!")
+                pass#print("The monitor peer has died!")
 
             if self.peer_number == 0:
                 for peer in self.outgoing_peer_list:
