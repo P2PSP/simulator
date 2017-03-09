@@ -6,12 +6,13 @@ from queue import Queue
 from threading import Thread
 from .common import Common
 from .peer_core import Peer_core
+import time
 
 class Peer_DBS(Peer_core):
     MAX_CHUNK_DEBT = 128
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self,id):
+        super().__init__(id)
         self.ready_to_leave_the_team = False
         self.max_chunk_debt = self.MAX_CHUNK_DEBT
         self.peer_list = []
@@ -27,17 +28,17 @@ class Peer_DBS(Peer_core):
         self.sendto_counter = 0
         self.ready_to_leave_the_team = False
         print("max_chunk_debt", self.MAX_CHUNK_DEBT)
-        print("DBS initialized")
+        print("Peer DBS initialized")
 
-    def say_hello(self, node):
-        hello = (-1,"P")
-        node.socket.put((self,hello))
-        print("Hello sent to", node)
+    def say_hello(self, peer):
+        hello = (-1,"H")
+        peer.socket.put((self,hello))
+        print("Hello sent to", peer.id)
 
-    def say_goodbye(self, node):
+    def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        node.socket.put((self,goodbye))
-        print("Goodbye sent to", node)
+        peer.socket.put((self,goodbye))
+        print("Goodbye sent to", peer.id)
 
     def receive_the_number_of_peers(self):
         self.number_of_monitors = self.socket.get()
@@ -46,12 +47,12 @@ class Peer_DBS(Peer_core):
         print("number of peers received")
         
     def receive_the_list_of_peers(self):
-        self.peer_list = self.socket.get()
+        self.peer_list = self.socket.get()[:]
         for peer in self.peer_list:
             self.say_hello(peer)
             self.debt[peer] = 0
 
-        print("list of peers received")
+        print("list of peers received. Size",len(self.peer_list))
 
     def connect_to_the_splitter(self):
         Peer_core.connect_to_the_splitter(self)
@@ -60,71 +61,74 @@ class Peer_DBS(Peer_core):
         if (message[0] >= 0):
             chunk_number = message[0]
             chunk = message[1]
-            print("Chunk",chunk_number,"received from",sender,"inserted in", (chunk_number % self.buffer_size))
+            #print("Chunk",chunk_number,"received from",sender.id,"inserted in", (chunk_number % self.buffer_size))
             self.received_counter += 1
             if (sender == self.splitter):
                 while((self.receive_and_feed_counter < len(self.peer_list)) and (self.receive_and_feed_counter > 0 or self.modified_list)):
                     peer = self.peer_list[self.receive_and_feed_counter]
                     peer.socket.put((self,self.receive_and_feed_previous))
                     self.sendto_counter += 1
-
-                    print(self,",",self.receive_and_feed_previous[0],"->", peer)
+                    
+                    print(self.id,",",self.receive_and_feed_previous[0],"->", peer.id)
+                    
                     self.debt[peer] += 1
+                    
                     if self.debt[peer] > self.MAX_CHUNK_DEBT:
-                        print(peer, "removed by unsupportive (", str(self.debt[peer]) , "lossess)")
+                        
+                        print(peer.id, "removed by unsupportive (", str(self.debt[peer]) , "lossess)")
                         del self.debt[peer]
                         self.peer_list.remove(peer)
 
                     self.receive_and_feed_counter += 1
 
-                if (self.receive_and_feed_previous == ""):
+                if (not self.receive_and_feed_previous):
                     self.played_chunk = message[0]
                     print("First chunk to play modified", str(self.played_chunk))
 
                 self.modified_list = False
-                print("sent",str(self.receive_and_feed_counter),"of",len(self.peer_list))
-                print("Last chunk saved in receive and feed", str(message[0]))
+                #print("sent",str(self.receive_and_feed_counter),"of",len(self.peer_list))
+                #print("Last chunk saved in receive and feed", str(message[0]))
                 self.receive_and_feed_counter = 0
                 self.receive_and_feed_previous = message
                 
             else:
                 
-                print(self, "<-", str(self.chunk_number), "-", sender)
+                print(self.id, "<-", str(chunk_number), "-", sender.id)
 
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
-                    print(sender, "added by chunk", chunk_number)
+                    print(sender.id, "added by chunk", chunk_number)
                 else:
                     self.debt[sender] -= 1
 
-            if (self.receive_and_feed_counter < len(self.peer_list) and (self.receive_and_feed_previous != "")):
+            if (self.receive_and_feed_counter < len(self.peer_list) and (self.receive_and_feed_previous)):
                 peer = self.peer_list[self.receive_and_feed_counter]
-                peer.socket.put((self,self.receive_and_feed_previous))
+                peer.socket.put((self, self.receive_and_feed_previous))
                 self.sendto_counter += 1
                 self.debt[peer] += 1
                       
                 if (self.debt[peer] > self.MAX_CHUNK_DEBT):
-                      print(peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
+                      print(peer.id, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
                       del self.debt[peer]
                       self.peer_list.remove(peer)
 
-                print(self, "-", str(self.receive_and_feed_previous[0]), "->", peer)
+                print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer.id)
                 self.receive_and_feed_counter += 1
            
             return chunk_number
 
         else:
             # A control chunk has been received
-            print("Control message received")
+            print("Control message received", message)
             if message[1] == "H":
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
-                    print(sender, "added by [hello]")
+                    print(sender.id, "added by [hello]")
             else:
                 if sender in self.peer_list:
-                    print(self, "received goodbye from", sender)
+                    print(self.id, "received goodbye from", sender.id)
                     self.peer_list.remove(sender)
                     del self.debt[sender]
                     if (self.receive_and_feed_counter > 0):

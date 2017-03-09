@@ -25,7 +25,7 @@ class Splitter_DBS(Splitter_core):
         self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_CHUNK_LOSS
         self.number_of_monitors = self.NUMBER_OF_MONITORS
         self.outgoing_peer_list = []
-        print("DBS initialized")
+        print("Splitter DBS initialized")
 
     def send_the_number_of_peers(self, peer):
         peer.socket.put(self.number_of_monitors)
@@ -132,7 +132,7 @@ class Splitter_DBS(Splitter_core):
         Thread(target=self.run).start()
 
     def run(self):
-        Thread(target=self.handle_a_peer_arrival).start()
+        Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
         Thread(target=self.reset_counters_thread).start()
 
@@ -148,7 +148,7 @@ class Splitter_DBS(Splitter_core):
                 self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER                
                 self.compute_next_peer_number(peer)
             except IndexError:
-                pass#print("The monitor peer has died!")
+                print("The monitor peer has died!")
 
             if self.peer_number == 0:
                 for peer in self.outgoing_peer_list:
