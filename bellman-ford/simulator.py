@@ -7,18 +7,25 @@ number_of_nodes = 6
 
 queues = [None]*number_of_nodes
 
-class Node(threading.Thread):
+class Node():
 
     def __init__(self, node):
         super(Node,self).__init__()
-        self.node = node
+        self.node = node # Node number
         self.distances = [1000]*number_of_nodes # Distance to each node
         self.gateways = [None]*number_of_nodes
         queues[self.node] = queue.Queue(10)
         self.distances[self.node] = 0
 
+    def set_distance(self, node, distance):
+        self.distances[node] = distance
+
+    def get_distances(self):
+        return self.distances
+
     # Runs Bellman-Ford algorithm for routing between nodes
     def run(self):
+        print('Running node', self.node)
         while True:
 
             found_new_route = False
@@ -37,7 +44,7 @@ class Node(threading.Thread):
                     
             # Communicate distances
             if found_new_route:
-                print(selt.node, 'Transmiting vector of distances')
+                print(self.node, 'Transmiting vector of distances')
                 for i,distance in enumerate(self.distances):
                     queues[i].put((distance, i))
                     
@@ -47,3 +54,6 @@ class Node(threading.Thread):
 
             sys.stdout.flush()
 
+    def start(self):
+        threading.Thread(target=self.run).start()
+        
