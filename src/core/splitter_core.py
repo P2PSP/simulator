@@ -2,7 +2,6 @@
 @package p2psp-simulator
 splitter_core module
 """
-from threading import Thread
 import time
 
 class Splitter_core():

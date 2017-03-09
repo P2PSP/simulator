@@ -3,7 +3,6 @@
 monitor_dbs module
 """
 from queue import Queue
-from threading import Thread
 from .common import Common
 from .peer_dbs import Peer_DBS
 
