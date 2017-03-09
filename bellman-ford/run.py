@@ -7,6 +7,7 @@ n3 = simulator.Node(3)
 n4 = simulator.Node(4)
 n5 = simulator.Node(5)
 
+  n0.set_distance(
 n1.distances[0] = 0
 n2.distances[0] = 0
 n3.distance
