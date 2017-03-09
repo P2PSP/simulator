@@ -9,7 +9,7 @@ queues = [None]*number_of_nodes
 
 class Node():
 
-    def __init__(self, node_number):
+    def __init__(self, node):
         super(Node,self).__init__()
         self.node = node # Node number
         self.distances = [1000]*number_of_nodes # Distance to each node
@@ -25,6 +25,7 @@ class Node():
 
     # Runs Bellman-Ford algorithm for routing between nodes
     def run(self):
+        print('Running node', self.node)
         while True:
 
             found_new_route = False
@@ -43,7 +44,7 @@ class Node():
                     
             # Communicate distances
             if found_new_route:
-                print(selt.node, 'Transmiting vector of distances')
+                print(self.node, 'Transmiting vector of distances')
                 for i,distance in enumerate(self.distances):
                     queues[i].put((distance, i))
                     
