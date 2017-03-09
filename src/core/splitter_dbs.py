@@ -38,20 +38,20 @@ class Splitter_DBS(Splitter_core):
         if peer not in self.peer_list:
             self.peer_list.append(peer)
         self.losses[peer] = 0
-        print("peer inserted on splitter list", peer)
+        print("peer inserted on splitter list", peer.id)
 
     def handle_a_peer_arrival(self):
         content = self.socketTCP.get()
         incoming_peer = content[0]
         message = content[1]
-        print("acepted connection from peer", incoming_peer)
-
+        print(self.id,"acepted connection from peer", incoming_peer.id)
+        print(self.id, "message", content)
         if (message == "M"):
             self.number_of_monitors += 1
                 
         self.send_the_number_of_peers(incoming_peer)
         self.send_the_list_of_peers(incoming_peer)
-        self.socketTCP.get() #receive_ready_for_receiving_chunks
+        #self.socketTCP.get() #receive_ready_for_receiving_chunks
         self.insert_peer(incoming_peer)
         
     def increment_unsupportivity_of_peer(self, peer):

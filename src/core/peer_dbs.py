@@ -42,9 +42,9 @@ class Peer_DBS(Peer_core):
 
     def receive_the_number_of_peers(self):
         self.number_of_monitors = self.socket.get()
-        print("number of monitors received")
+        print(self.id,"number of monitors received")
         self.number_of_peers = self.socket.get()
-        print("number of peers received")
+        print(self.id,"number of peers received")
         
     def receive_the_list_of_peers(self):
         self.peer_list = self.socket.get()[:]
