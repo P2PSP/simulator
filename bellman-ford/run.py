@@ -15,13 +15,13 @@ n1.set_distance(0,3)
 n1.set_distance(3,1)
 n1.set_distance(4,4)
 
-n2.set_distance(1,2)
+n2.set_distance(0,2)
 n2.set_distance(3,2)
 n2.set_distance(5,1)
 
-n3.set_distance(1,5)
-n3.set_distance(2,1)
-n3.set_distance(3,2)
+n3.set_distance(0,5)
+n3.set_distance(1,1)
+n3.set_distance(2,2)
 n3.set_distance(4,3)
 
 n4.set_distance(1,4)
