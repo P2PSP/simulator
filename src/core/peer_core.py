@@ -9,7 +9,8 @@ import time
 class Peer_core():
     def __init__(self, id):
         self.id = id
-        self.socket = Queue()
+        Common.UDP_SOCKETS[self.id] = Queue()
+        self.socket = Common.UDP_SOCKETS[self.id]
         self.played_chunk = 0
         self.prev_received_chunk = 0
         self.buffer_size = 1024
@@ -17,15 +18,18 @@ class Peer_core():
         print("Peer Core initialized")
 
     def set_splitter(self, splitter):
-        self.splitter = splitter
+        self.splitter = {}
+        self.splitter["id"] = splitter
+        self.splitter["socketTCP"] = Common.TCP_SOCKETS[splitter]
+        self.splitter["socketUDP"] = Common.UDP_SOCKETS[splitter]
 
     def connect_to_the_splitter(self):
         hello = (-1,"P")
-        self.splitter.socketTCP.put((self,hello))
+        self.splitter["socketTCP"].put((self.id,hello))
 
     def send_ready_for_receiving_chunks(self):
         ready = (-1, "R")
-        self.splitter.socketTCP.put((self,ready))
+        self.splitter["socketTCP"].put((self.id,ready))
 
     def process_message(self, message, sender):
         raise NotImplementedError
@@ -70,7 +74,7 @@ class Peer_core():
             self.prev_received_chunk = last_received_chunk
     
     def play_chunk(self, chunk_number):
-        #print("chunk", chunk_number, "consumed")
+        print(self.id, "chunk", chunk_number, "consumed")
         return True
 
     def run(self):

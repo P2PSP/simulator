@@ -11,47 +11,55 @@ import time
 class Splitter_DBS(Splitter_core):
     MAX_NUMBER_OF_CHUNK_LOSS = 32
     BUFFER_SIZE = 1024
-    NUMBER_OF_MONITORS = 0
     
     def __init__(self):
         super().__init__()
         self.peer_list = []
         self.losses = {}
-        self.socketTCP = Queue()
-        self.socketUDP = Queue()
+        Common.TCP_SOCKETS[self.id] = Queue()
+        self.socketTCP = Common.TCP_SOCKETS[self.id]
+        Common.UDP_SOCKETS[self.id] = Queue()
+        self.socketUDP = Common.UDP_SOCKETS[self.id]
         self.destination_of_chunk = []
         self.buffer_size = self.BUFFER_SIZE
         self.peer_number = 0
         self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_CHUNK_LOSS
-        self.number_of_monitors = self.NUMBER_OF_MONITORS
+        self.number_of_monitors = 0
         self.outgoing_peer_list = []
         print("Splitter DBS initialized")
 
     def send_the_number_of_peers(self, peer):
-        peer.socket.put(self.number_of_monitors)
-        peer.socket.put(len(self.peer_list))
+        Common.UDP_SOCKETS[peer].put(self.number_of_monitors)
+        Common.UDP_SOCKETS[peer].put(len(self.peer_list))
 
     def send_the_list_of_peers(self, peer):
-        peer.socket.put(self.peer_list)
+        Common.UDP_SOCKETS[peer].put(self.peer_list)
         
     def insert_peer(self, peer):
         if peer not in self.peer_list:
             self.peer_list.append(peer)
         self.losses[peer] = 0
-        print("peer inserted on splitter list", peer.id)
+        print("peer inserted on splitter list", peer)
 
     def handle_a_peer_arrival(self):
         content = self.socketTCP.get()
         incoming_peer = content[0]
         message = content[1]
-        print(self.id,"acepted connection from peer", incoming_peer.id)
+        print(self.id,"acepted connection from peer", incoming_peer)
         print(self.id, "message", content)
         if (message == "M"):
             self.number_of_monitors += 1
                 
         self.send_the_number_of_peers(incoming_peer)
         self.send_the_list_of_peers(incoming_peer)
-        #self.socketTCP.get() #receive_ready_for_receiving_chunks
+
+        #receive_ready_for_receiving_chunks
+        #check if we receive confirmation from the incoming_peer
+        m = self.socketTCP.get()
+        while m[0] != incoming_peer:
+            self.socketTCP.put(m)
+            m = self.socketTCP.get()
+            
         self.insert_peer(incoming_peer)
         
     def increment_unsupportivity_of_peer(self, peer):
@@ -92,7 +100,7 @@ class Splitter_DBS(Splitter_core):
             pass
 
     def process_goodbye(self, peer):
-        print("received goodbye from", peer)
+        print(self.id,"received goodbye from", peer)
         if peer not in self.outgoing_peer_list:
             if peer in self.peer_list:
                 self.outgoing_peer_list.append(peer)
@@ -100,7 +108,7 @@ class Splitter_DBS(Splitter_core):
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        peer.put((self,goodbye))
+        peer.put((self.id,goodbye))
         print("goodbye sent to", peer)
     
     def moderate_the_team(self):
@@ -109,6 +117,8 @@ class Splitter_DBS(Splitter_core):
             sender = content[0]
             message = content[1]
 
+            print("MENSAJE:", content)
+            
             if (message[1] == "L"):
                 lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)

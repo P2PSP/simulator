@@ -3,6 +3,7 @@
 splitter_core module
 """
 import time
+from .common import Common
 
 class Splitter_core():
     
@@ -13,8 +14,8 @@ class Splitter_core():
         print("Splitter Core initialized")
         
     def send_chunk(self, message, destination):
-        print("S -",self.chunk_number, "->", destination.id)
-        destination.socket.put((self,message))
+        print("S -",self.chunk_number, "->", destination)
+        Common.UDP_SOCKETS[destination].put((self.id,message))
 
     def receive_chunk(self):
         time.sleep(0.01) #bit-rate control
