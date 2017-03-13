@@ -16,10 +16,8 @@ class Splitter_DBS(Splitter_core):
         super().__init__()
         self.peer_list = []
         self.losses = {}
-        Common.TCP_SOCKETS[self.id] = Queue()
-        self.socketTCP = Common.TCP_SOCKETS[self.id]
-        Common.UDP_SOCKETS[self.id] = Queue()
-        self.socketUDP = Common.UDP_SOCKETS[self.id]
+        self.tcp_socket = Common.TCP_SOCKETS[self.id]
+        self.udp_socket = Common.UDP_SOCKETS[self.id]
         self.destination_of_chunk = []
         self.buffer_size = self.BUFFER_SIZE
         self.peer_number = 0
@@ -42,7 +40,7 @@ class Splitter_DBS(Splitter_core):
         print("peer inserted on splitter list", peer)
 
     def handle_a_peer_arrival(self):
-        content = self.socketTCP.get()
+        content = self.tcp_socket.get()
         incoming_peer = content[0]
         message = content[1]
         print(self.id,"acepted connection from peer", incoming_peer)
@@ -55,10 +53,10 @@ class Splitter_DBS(Splitter_core):
 
         #receive_ready_for_receiving_chunks
         #check if we receive confirmation from the incoming_peer
-        m = self.socketTCP.get()
+        m = self.tcp_socket.get()
         while m[0] != incoming_peer:
-            self.socketTCP.put(m)
-            m = self.socketTCP.get()
+            self.tcp_socket.put(m)
+            m = self.tcp_socket.get()
             
         self.insert_peer(incoming_peer)
         
@@ -113,7 +111,7 @@ class Splitter_DBS(Splitter_core):
     
     def moderate_the_team(self):
         while self.alive:
-            content = self.socketUDP.get()
+            content = self.udp_socket.get()
             sender = content[0]
             message = content[1]
 

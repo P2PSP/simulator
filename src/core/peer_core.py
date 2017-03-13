@@ -9,7 +9,6 @@ import time
 class Peer_core():
     def __init__(self, id):
         self.id = id
-        Common.UDP_SOCKETS[self.id] = Queue()
         self.socket = Common.UDP_SOCKETS[self.id]
         self.played_chunk = 0
         self.prev_received_chunk = 0
