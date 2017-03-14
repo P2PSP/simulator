@@ -81,10 +81,10 @@ class Simulator:
         while m[0] != "Bye":
             if m[0] == "Node":
                 labels[m[1]]=m[1]
-                if m[1][0] == "P":
-                    G.add_node(m[1], {'type':'peer'})
-                else:
+                if m[1][0] == "M":
                     G.add_node(m[1], {'type':'monitor'})
+                else:
+                    G.add_node(m[1], {'type':'peer'})
             else:
                 #m[0] == "Edge":
                 G.add_edge(*m[1])
@@ -96,6 +96,6 @@ class Simulator:
             m = team.get()
          
 if __name__ == "__main__":
-    app = Simulator(1,5)
+    app = Simulator(2,5)
     app.run()
     
