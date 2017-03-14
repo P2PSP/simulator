@@ -59,6 +59,9 @@ class Splitter_DBS(Splitter_core):
             m = self.tcp_socket.get()
             
         self.insert_peer(incoming_peer)
+        Common.SIMULATOR_FEEDBACK["TEAM"].put(("Node",incoming_peer))
+        for p in self.peer_list:
+            Common.SIMULATOR_FEEDBACK["TEAM"].put(("Edge",(incoming_peer, p)))
         
     def increment_unsupportivity_of_peer(self, peer):
         try:

@@ -5,7 +5,8 @@ from core.common import Common
 from threading import Thread
 from multiprocessing import Process, Queue
 import time
-
+import networkx as nx
+import matplotlib.pyplot as plt
 
 class Simulator:
 
@@ -38,7 +39,8 @@ class Simulator:
             pass
             
     def run(self):
-        Common.SIMULATOR_FEEDBACK["INFO"] = Queue()
+        Common.SIMULATOR_FEEDBACK["TEAM"] = Queue()
+        Thread(target=self.draw_net).start()
         
         Common.UDP_SOCKETS['S'] = Queue()
         Common.TCP_SOCKETS['S'] = Queue()
@@ -58,11 +60,30 @@ class Simulator:
             Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(i+1)]).start()
         
         for i in range(self.number_of_peers):
-            time.sleep(5)
+            time.sleep(1)
             Process(target=self.run_a_peer, args=["S", "peer", "P"+str(i+1)]).start()
 
+    def draw_net(self):
+        G = nx.Graph()
 
+        team  = Common.SIMULATOR_FEEDBACK["TEAM"]
+
+        plt.ion()
+        
+        m = team.get()
+        while m[0] != "":
+            if m[0] == "Node":
+                G.add_node(m[1])
+            else:
+                #m[0] == "Edge":
+                G.add_edge(*m[1])
+                 
+            plt.clf()
+            nx.draw_circular(G)
+            plt.pause(0.001)
+            m = team.get()
+            
 if __name__ == "__main__":
-    app = Simulator(1,2)
+    app = Simulator(1,5)
     app.run()
     
