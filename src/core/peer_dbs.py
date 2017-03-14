@@ -100,6 +100,9 @@ class Peer_DBS(Peer_core):
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(sender, "added by chunk", chunk_number)
+                    Common.SIMULATOR_FEEDBACK["TEAM"].put(("Node",sender))
+                    Common.SIMULATOR_FEEDBACK["TEAM"].put(("Edge",(self.id,sender)))
+
                 else:
                     self.debt[sender] -= 1
 
@@ -127,6 +130,9 @@ class Peer_DBS(Peer_core):
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(sender, "added by [hello]")
+                    Common.SIMULATOR_FEEDBACK["TEAM"].put(("Node",sender))
+                    Common.SIMULATOR_FEEDBACK["TEAM"].put(("Edge",(self.id,sender)))
+                    print(self.id,sender,"Edge sent to TEAM")
             else:
                 if sender in self.peer_list:
                     print(self.id, "received goodbye from", sender)
