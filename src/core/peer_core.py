@@ -39,22 +39,20 @@ class Peer_core():
 
     def buffer_data(self):
         chunk_number = self.process_next_message()
-        min_chunk_number = chunk_number
-
+        
         while(chunk_number < 0):
             chunk_number = self.process_next_message()
 
-        if (min_chunk_number < chunk_number):
-            min_chunk_number = chunk_number
+        self.played_chunk = chunk_number
 
-        self.played_chunk = min_chunk_number % self.buffer_size
-
-        while (((chunk_number - self.played_chunk) % self.buffer_size) < self.buffer_size / 2):
+        print("Position in the buffer of the first chunk to play", str(self.played_chunk % self.buffer_size))
+        
+        while (((chunk_number - self.played_chunk) % self.buffer_size) < (self.buffer_size / 2)):
             chunk_number = self.process_next_message()
-            while (chunk_number < 0):
-                if (chunk_number < min_chunk_number):
-                    self.played_chunk = min_chunk_number
+            #while (chunk_number < 0 or chunk_number < self.played_chunk):
+            while (chunk_number < self.played_chunk):
                 chunk_number = self.process_next_message()
+                
         self.prev_received_chunk = chunk_number
 
     def keep_the_buffer_full(self):

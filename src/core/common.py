@@ -8,3 +8,6 @@ class Common():
     COUNTERS_TIMING = 1
     UDP_SOCKETS= {}
     TCP_SOCKETS = {}
+
+    #Communication channel with the simulator
+    SIMULATOR_FEEDBACK = {}

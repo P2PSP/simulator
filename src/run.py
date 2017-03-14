@@ -38,6 +38,8 @@ class Simulator:
             pass
             
     def run(self):
+        Common.SIMULATOR_FEEDBACK["INFO"] = Queue()
+        
         Common.UDP_SOCKETS['S'] = Queue()
         Common.TCP_SOCKETS['S'] = Queue()
 
@@ -58,9 +60,9 @@ class Simulator:
         for i in range(self.number_of_peers):
             time.sleep(5)
             Process(target=self.run_a_peer, args=["S", "peer", "P"+str(i+1)]).start()
-        
+
 
 if __name__ == "__main__":
-    app = Simulator(1,20)
+    app = Simulator(1,2)
     app.run()
     

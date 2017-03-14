@@ -10,6 +10,7 @@ class Monitor_DBS(Peer_DBS):
     
     def __init__(self,id):
         super().__init__(id)
+        self.buffer_size //= 2
         print("DBS initialized by monitor")
 
     def say_hello(self, peer):
