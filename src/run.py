@@ -41,7 +41,7 @@ class Simulator:
     def run(self):
         #listen to the team for uptating graph
         Common.SIMULATOR_FEEDBACK["TEAM"] = Queue()
-        Thread(target=self.draw_net).start()
+        Process(target=self.draw_net).start()
 
         #create communication channels for the team and splitter
         Common.UDP_SOCKETS['S'] = Queue()
@@ -85,17 +85,29 @@ class Simulator:
                     G.add_node(m[1], {'type':'monitor'})
                 else:
                     G.add_node(m[1], {'type':'peer'})
-            else:
-                #m[0] == "Edge":
+            elif m[0] == "Edge":
                 G.add_edge(*m[1])
+            elif m[0] == "Round":
+                pass
+            else:
+                print("Error: unknown message")
 
+            plt.figure(1)
             plt.clf()
             nx.draw_circular(G, node_color=[color_map[G.node[node]['type']]for node in G], node_size=400, edge_color='#cccccc', labels=labels, font_size=10, font_weight='bold')
-            plt.pause(0.05)
+            
 
+            #plt.figure(2)
+            #plt.clf()
+            #plt.plot(rounds,'ro')
+
+            plt.pause(0.001)
             m = team.get()
+
+        plt.ioff()
+        plt.show()
          
 if __name__ == "__main__":
-    app = Simulator(2,5)
+    app = Simulator(1,5)
     app.run()
     

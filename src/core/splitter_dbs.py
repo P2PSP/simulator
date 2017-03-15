@@ -24,6 +24,7 @@ class Splitter_DBS(Splitter_core):
         self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_CHUNK_LOSS
         self.number_of_monitors = 0
         self.outgoing_peer_list = []
+        self.current_round = 0
         print("Splitter DBS initialized")
 
     def send_the_number_of_peers(self, peer):
@@ -162,6 +163,8 @@ class Splitter_DBS(Splitter_core):
                 print("The monitor peer has died!")
 
             if self.peer_number == 0:
+                self.current_round += 1
+                #Common.SIMULATOR_FEEDBACK["TEAM"].put(("Round",self.current_round))
                 for peer in self.outgoing_peer_list:
                     say_goodbye(peer)
                     remove_peer(peer)
