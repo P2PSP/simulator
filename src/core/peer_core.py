@@ -14,6 +14,7 @@ class Peer_core():
         self.prev_received_chunk = 0
         self.buffer_size = 1024
         self.player_alive = True
+        self.chunks = []
         print("Peer Core initialized")
 
     def set_splitter(self, splitter):
@@ -38,6 +39,10 @@ class Peer_core():
         return self.process_message(content[1], content[0])
 
     def buffer_data(self):
+
+        for i in range(self.buffer_size):
+            self.chunks.append((-1,"L"))
+        
         chunk_number = self.process_next_message()
         
         while(chunk_number < 0):
@@ -52,7 +57,11 @@ class Peer_core():
             #while (chunk_number < 0 or chunk_number < self.played_chunk):
             while (chunk_number < self.played_chunk):
                 chunk_number = self.process_next_message()
-                
+
+            #for i in range(self.buffer_size):
+                #if chunks[i][0] != -1:
+                    #Common.SIMULATOR_FEEDBACK["BUFFER"].put(("IN",self.id,i))
+                    
         self.prev_received_chunk = chunk_number
 
     def keep_the_buffer_full(self):
@@ -65,12 +74,13 @@ class Peer_core():
     def play_next_chunks(self, last_received_chunk):
         for i in range(last_received_chunk - self.prev_received_chunk):
            self.player_alive = self.play_chunk(self.played_chunk)
-           #LOG chunks consumed and lost chunks
+           self.chunks[self.played_chunk % buffer_size_] = (-1,"L")
            self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
     
     def play_chunk(self, chunk_number):
+        Common.SIMULATOR_FEEDBACK["BUFFER"].put(("OUT",self.id,chunk_number))
         print(self.id, "chunk", chunk_number, "consumed")
         return True
 
