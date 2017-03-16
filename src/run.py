@@ -38,10 +38,79 @@ class Simulator:
         while peer.player_alive:
             pass
             
-    def run(self):
-        #listen to the team for uptating graph
-        Common.SIMULATOR_FEEDBACK["TEAM"] = Queue()
+    def draw_net(self):
+        G = nx.Graph()
+        queue = Common.SIMULATOR_FEEDBACK["OVERLAY"]
+        plt.ion()
+         
+        labels={}
+        color_map={'peer':'#A9BCF5', 'monitor':'#A9F5D0'}
+
+        plt.figure()
+        m = queue.get()
+        while m[0] != "Bye":
+            if m[0] == "Node":
+                labels[m[1]]=m[1]
+                if m[1][0] == "M":
+                    G.add_node(m[1], {'type':'monitor'})
+                else:
+                    G.add_node(m[1], {'type':'peer'})
+            elif m[0] == "Edge":
+                G.add_edge(*m[1])
+            else:
+                print("Error: unknown message")
+
+            plt.clf()
+            plt.suptitle("Overlay Network of the Team", size=16)
+            nx.draw_circular(G, node_color=[color_map[G.node[node]['type']]for node in G], node_size=400, edge_color='#cccccc', labels=labels, font_size=10, font_weight='bold')
+            plt.pause(0.001)
+            m = queue.get()
+
+        plt.ioff()
+        plt.show()
+
+    def plot_team(self):
+        queue = Common.SIMULATOR_FEEDBACK["TEAM"]
+        plt.ion()
+
+        number_of_rounds = []
+        number_of_regulars = []
+        number_of_monitors = []
+        
+        plt.figure()
+        m = queue.get()
+        while m[0] != "Bye":            
+            if m[0] == "Node":
+                if m[1] == "M":
+                    number_of_monitors.append(m[2])
+                else:
+                    number_of_regulars.append(m[2])
+            elif m[0] == "Round":
+                number_of_rounds.append(m[1])
+            else:
+                print("Error: unknown message")
+
+            if len(number_of_rounds) == len(number_of_regulars) == len(number_of_monitors):
+                plt.clf()
+                plt.suptitle("Number of Peers in the Team", size=16)
+                plt.plot(number_of_rounds,number_of_monitors,color = '#A9F5D0', marker='o', label="# Monitor Peers")
+                plt.plot(number_of_rounds,number_of_regulars, color = '#A9BCF5', marker='o', label="# Regular Peers")
+                plt.legend(loc=2)
+                plt.pause(0.001)
+
+            m = queue.get()
+
+        plt.ioff()
+        plt.show()
+
+     def run(self):
+        #listen to the team for uptating overlay graph
+        Common.SIMULATOR_FEEDBACK["OVERLAY"] = Queue()
         Process(target=self.draw_net).start()
+
+        #listen to the splitter for uptating team plot
+        Common.SIMULATOR_FEEDBACK["TEAM"] = Queue()
+        Process(target=self.plot_team).start()
 
         #create communication channels for the team and splitter
         Common.UDP_SOCKETS['S'] = Queue()
@@ -66,48 +135,8 @@ class Simulator:
             time.sleep(0.5)
             Process(target=self.run_a_peer, args=["S", "peer", "P"+str(i+1)]).start()
 
-            
-    def draw_net(self):
-        G = nx.Graph()
-
-        team  = Common.SIMULATOR_FEEDBACK["TEAM"]
-
-        plt.ion()
-         
-        labels={}
-        color_map={'peer':'#A9BCF5', 'monitor':'#A9F5D0'}
-        
-        m = team.get()
-        while m[0] != "Bye":
-            if m[0] == "Node":
-                labels[m[1]]=m[1]
-                if m[1][0] == "M":
-                    G.add_node(m[1], {'type':'monitor'})
-                else:
-                    G.add_node(m[1], {'type':'peer'})
-            elif m[0] == "Edge":
-                G.add_edge(*m[1])
-            elif m[0] == "Round":
-                pass
-            else:
-                print("Error: unknown message")
-
-            plt.figure(1)
-            plt.clf()
-            nx.draw_circular(G, node_color=[color_map[G.node[node]['type']]for node in G], node_size=400, edge_color='#cccccc', labels=labels, font_size=10, font_weight='bold')
-            
-
-            #plt.figure(2)
-            #plt.clf()
-            #plt.plot(rounds,'ro')
-
-            plt.pause(0.001)
-            m = team.get()
-
-        plt.ioff()
-        plt.show()
          
 if __name__ == "__main__":
-    app = Simulator(1,5)
+    app = Simulator(1,10)
     app.run()
     
