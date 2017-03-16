@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from core.peer_dbs import Peer_DBS
 from core.monitor_dbs import Monitor_DBS
 from core.splitter_dbs import Splitter_DBS
@@ -5,10 +7,11 @@ from core.common import Common
 from threading import Thread
 from multiprocessing import Process, Queue
 import time
+import fire
 import networkx as nx
 import matplotlib.pyplot as plt
 
-class Simulator:
+class Simulator(object):
 
     def __init__(self, number_of_monitors, number_of_peers):
         self.number_of_peers = number_of_peers
@@ -103,7 +106,7 @@ class Simulator:
         plt.ioff()
         plt.show()
 
-     def run(self):
+    def run(self):
         #listen to the team for uptating overlay graph
         Common.SIMULATOR_FEEDBACK["OVERLAY"] = Queue()
         Process(target=self.draw_net).start()
@@ -137,6 +140,5 @@ class Simulator:
 
          
 if __name__ == "__main__":
-    app = Simulator(1,10)
-    app.run()
+    fire.Fire(Simulator)
     
