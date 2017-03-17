@@ -64,7 +64,7 @@ class Peer_DBS(Peer_core):
             chunk = message[1]
 
             self.chunks[chunk_number % self.buffer_size] = (chunk,chunk_number)
-            #Common.SIMULATOR_FEEDBACK["BUFFER"].put(("IN",self.id,(chunk_number % self.buffer_size)))
+            Common.SIMULATOR_FEEDBACK["BUFFER"].put(("IN",self.id,(chunk_number % self.buffer_size)))
             
             #print("Chunk",chunk_number,"received from",sender,"inserted in", (chunk_number % self.buffer_size))
             self.received_counter += 1

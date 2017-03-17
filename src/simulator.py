@@ -106,6 +106,38 @@ class Simulator(object):
         plt.ioff()
         plt.show()
 
+    def draw_buffer(self):
+        queue = Common.SIMULATOR_FEEDBACK["BUFFER"]
+        plt.ion()
+
+        buffers={}
+                
+        fig = plt.figure()
+        plt.suptitle("Buffer Status", size=16)
+        plt.axis([0, 6, 0, 1024])
+        m = queue.get()
+        while m[0] != "Bye":            
+            if m[0] == "IN":
+                buffers.setdefault(m[1],[]).append(m[2])
+            elif m[0] == "OUT":
+                buffers.setdefault(m[1],[]).remove(m[2])                
+            else:
+                print("Error: unknown message")
+
+            #plt.clf()
+            i = 1
+            for k,v in buffers.items():
+                plt.plot([i], v[-1], color = '#A9F5D0', marker='o')
+                i += 1
+
+            fig.canvas.draw()
+
+            m = queue.get()
+
+        plt.ioff()
+        plt.show()
+
+
     def run(self):
         #listen to the team for uptating overlay graph
         Common.SIMULATOR_FEEDBACK["OVERLAY"] = Queue()
@@ -115,6 +147,10 @@ class Simulator(object):
         Common.SIMULATOR_FEEDBACK["TEAM"] = Queue()
         Process(target=self.plot_team).start()
 
+        #listen to the team for uptating buffer graph
+        Common.SIMULATOR_FEEDBACK["BUFFER"] = Queue()
+        Process(target=self.draw_buffer).start()
+        
         #create communication channels for the team and splitter
         Common.UDP_SOCKETS['S'] = Queue()
         Common.TCP_SOCKETS['S'] = Queue()
