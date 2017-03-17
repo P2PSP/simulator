@@ -129,8 +129,8 @@ class Simulator(object):
             for k,v in buffers.items():
                 plt.plot([i], v[-1], color = '#A9F5D0', marker='o')
                 i += 1
-                plt.pause(0.001)
-            #fig.canvas.draw()
+                #plt.pause(0.001)
+                fig.canvas.draw()
 
             m = queue.get()
 
