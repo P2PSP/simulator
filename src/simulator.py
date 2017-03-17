@@ -120,7 +120,7 @@ class Simulator(object):
             if m[0] == "IN":
                 buffers.setdefault(m[1],[]).append(m[2])
             elif m[0] == "OUT":
-                buffers.setdefault(m[1],[]).remove(m[2])                
+                buffers.remove(m[2])                
             else:
                 print("Error: unknown message")
 
@@ -129,8 +129,8 @@ class Simulator(object):
             for k,v in buffers.items():
                 plt.plot([i], v[-1], color = '#A9F5D0', marker='o')
                 i += 1
-
-            fig.canvas.draw()
+                plt.pause(0.001)
+            #fig.canvas.draw()
 
             m = queue.get()
 
