@@ -15,15 +15,17 @@ bk = fig.canvas.copy_from_bbox(ax.bbox)
 for i in range(1024):
     v.append(i)
     fig.canvas.restore_region(bk)
-    line1.set_xdata([1]*len(v))
-    line1.set_ydata([v])
+    line1.set_xdata(1)
+    line1.set_ydata(v[-1])
     ax.draw_artist(line1)
 
-    line2.set_xdata([2]*len(v))
-    line2.set_ydata([v])
+    line2.set_xdata(2)
+    line2.set_ydata(v[-1])
     ax.draw_artist(line2)
     
     fig.canvas.blit(ax.bbox)
+    bk = fig.canvas.copy_from_bbox(ax.bbox)
+
     #fig.canvas.get_tk_widget().update()
     #fig.canvas.flush_events()
     #plt.pause(0.001)

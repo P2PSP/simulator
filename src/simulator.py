@@ -110,27 +110,64 @@ class Simulator(object):
         queue = Common.SIMULATOR_FEEDBACK["BUFFER"]
         plt.ion()
 
-        buffers={}
+        buffers = {}
+        lines = {}
+        index = {}
+        labels = []
+        
+        fig, ax = plt.subplots()
                 
-        fig = plt.figure()
         plt.suptitle("Buffer Status", size=16)
         plt.axis([0, 6, 0, 1024])
+        x = range(6)
+        labels.append("")
+        fig.canvas.draw()
+        bk = fig.canvas.copy_from_bbox(ax.bbox)
+        j = 1
         m = queue.get()
         while m[0] != "Bye":            
             if m[0] == "IN":
-                buffers.setdefault(m[1],[]).append(m[2])
+                
+                if index.get(m[1]) == None:
+                    lineIN, = ax.plot(j, 0, color = '#A9F5D0', marker='o', animated=True)
+                    lineOUT, = ax.plot(j, 0, color = '#CCCCCC', marker='o', animated=True)
+                    lines[m[1]] = (lineIN, lineOUT)
+                    index[m[1]] = j
+                    labels.append(m[1])
+                    plt.xticks(x,labels)
+                    j += 1
+
+                fig.canvas.restore_region(bk)
+                lines[m[1]][0].set_xdata(index[m[1]])
+                lines[m[1]][0].set_ydata(m[2])
+                ax.draw_artist(lines[m[1]][0])
+                bk = fig.canvas.copy_from_bbox(ax.bbox)
+                fig.canvas.blit(ax.bbox)
             elif m[0] == "OUT":
-                buffers.remove(m[2])                
+                fig.canvas.restore_region(bk)
+                lines[m[1]][1].set_xdata(index[m[1]])
+                lines[m[1]][1].set_ydata(m[2])
+                ax.draw_artist(lines[m[1]][1])
+                bk = fig.canvas.copy_from_bbox(ax.bbox)
+                fig.canvas.blit(ax.bbox)
             else:
                 print("Error: unknown message")
 
             #plt.clf()
+            '''
             i = 1
             for k,v in buffers.items():
-                plt.plot([i], v[-1], color = '#A9F5D0', marker='o')
+                fig.canvas.restore_region(bk)
+                lines[k].set_xdata(i)
+                lines[k].set_ydata(v[-1])
+                ax.draw_artist(lines[k])
+                bk = fig.canvas.copy_from_bbox(ax.bbox)
+
                 i += 1
                 #plt.pause(0.001)
-                fig.canvas.draw()
+                #fig.canvas.draw()
+            '''
+            #fig.canvas.blit(ax.bbox)
 
             m = queue.get()
 
@@ -171,7 +208,7 @@ class Simulator(object):
             
         #run regular peers
         for i in range(self.number_of_peers):
-            time.sleep(0.5)
+            time.sleep(1)
             Process(target=self.run_a_peer, args=["S", "peer", "P"+str(i+1)]).start()
 
          
