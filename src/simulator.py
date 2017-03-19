@@ -122,8 +122,9 @@ class Simulator(object):
         x = range(6)
         labels.append("")
         fig.canvas.draw()
-        bk = fig.canvas.copy_from_bbox(ax.bbox)
+        #bk = fig.canvas.copy_from_bbox(ax.bbox)
         j = 1
+        i = 0
         m = queue.get()
         while m[0] != "Bye":            
             if m[0] == "IN":
@@ -137,18 +138,18 @@ class Simulator(object):
                     plt.xticks(x,labels)
                     j += 1
 
-                fig.canvas.restore_region(bk)
+                #fig.canvas.restore_region(bk)
                 lines[m[1]][0].set_xdata(index[m[1]])
                 lines[m[1]][0].set_ydata(m[2])
                 ax.draw_artist(lines[m[1]][0])
-                bk = fig.canvas.copy_from_bbox(ax.bbox)
+                #bk = fig.canvas.copy_from_bbox(ax.bbox)
                 fig.canvas.blit(ax.bbox)
             elif m[0] == "OUT":
-                fig.canvas.restore_region(bk)
+                #fig.canvas.restore_region(bk)
                 lines[m[1]][1].set_xdata(index[m[1]])
                 lines[m[1]][1].set_ydata(m[2])
                 ax.draw_artist(lines[m[1]][1])
-                bk = fig.canvas.copy_from_bbox(ax.bbox)
+                #bk = fig.canvas.copy_from_bbox(ax.bbox)
                 fig.canvas.blit(ax.bbox)
             else:
                 print("Error: unknown message")
