@@ -4,27 +4,31 @@ plt.ion()
 buffers={}
 
 fig, ax = plt.subplots()
-line1, = ax.plot([1], 0, color = '#A9F5D0', marker='o', animated=True)
-line2, = ax.plot([2], 0, color = '#CCCCCC', marker='o', animated=True)
+lines=[]
+#for i in range(6):
+#    line, = ax.plot([i], 0, color = '#A9F5D0', marker='o', animated=True)
+#    lines.append(line)
+
+line, = ax.plot([1,2], [1]*2, color = '#A9F5D0', ls='None', marker='o', animated=True)
+
+
 plt.suptitle("Buffer Status", size=16)
 plt.axis([0, 6, 0, 1024])
 fig.canvas.draw()
 v = []
 
-bk = fig.canvas.copy_from_bbox(ax.bbox)
+#bk = fig.canvas.copy_from_bbox(ax.bbox)
 for i in range(1024):
     v.append(i)
-    fig.canvas.restore_region(bk)
-    line1.set_xdata(1)
-    line1.set_ydata(v[-1])
-    ax.draw_artist(line1)
-
-    line2.set_xdata(2)
-    line2.set_ydata(v[-1])
-    ax.draw_artist(line2)
-    
+    #for j in range(6):
+        #fig.canvas.restore_region(bk)
+        #lines[j].set_xdata(j+1)
+        #lines[j].set_ydata(v[-1])
+        #ax.draw_artist(lines[j])
+    line.set_ydata(i*2)
+    ax.draw_artist(line)
     fig.canvas.blit(ax.bbox)
-    bk = fig.canvas.copy_from_bbox(ax.bbox)
+        #bk = fig.canvas.copy_from_bbox(ax.bbox)
 
     #fig.canvas.get_tk_widget().update()
     #fig.canvas.flush_events()
