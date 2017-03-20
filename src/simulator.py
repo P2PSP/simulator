@@ -10,6 +10,7 @@ import time
 import fire
 import networkx as nx
 import matplotlib.pyplot as plt
+from collections import OrderedDict
 
 class Simulator(object):
 
@@ -171,7 +172,7 @@ class Simulator(object):
             '''
             #fig.canvas.blit(ax.bbox)
 
-            if(i%200 ==0):
+            if(i%20 ==0):
                 fig.canvas.blit(ax.bbox)
             i+=1
             m = queue.get()
@@ -212,32 +213,49 @@ class Simulator(object):
         lineOUT, = ax.plot(x, [0]*total_peers, color = '#CCCCCC', ls='None', marker='o',markeredgecolor='#CCCCCC', animated=True)
         
         plt.xticks(x,labels)
-
+        j = 1
         m = queue.get()
         while m[0] != "Bye":
-            print("MESSAGE BUFFER:", m)
+            print("SIZE queue", queue.qsize())
+            
             if m[0] == "IN":
-                fig.canvas.restore_region(bk)
-                buffersIN.setdefault(m[1],[]).append(m[2])
-                labels.append(m[1])
-                lst = list(buffersIN.values())
-                lineIN.set_ydata(list(zip(*lst))[-1])
+                #fig.canvas.restore_region(bk)
+                
+                if index.get(m[1]) == None:
+                    index[m[1]] = j
+                    j += 1
+                
+                #buffersIN.setdefault(m[1],[]).append(m[2])
+                #labels.append(m[1])
+                #lst = list(buffersIN.values())
+                #lineIN.set_ydata(list(zip(*lst))[-1])
+                lineIN.set_xdata(index[m[1]])
+                lineIN.set_ydata(m[2])
                 ax.draw_artist(lineIN)
-                bk = fig.canvas.copy_from_bbox(ax.bbox)
-                fig.canvas.blit(ax.bbox)
+                #bk = fig.canvas.copy_from_bbox(ax.bbox)
+                #fig.canvas.blit(ax.bbox)
             elif m[0] == "OUT":
-                fig.canvas.restore_region(bk)
-                buffersOUT.setdefault(m[1],[]).append(m[2])
-                lst = list(buffersOUT.values())
-                lineOUT.set_ydata(list(zip(*lst))[-1])
+                if index.get(m[1]) == None:
+                    index[m[1]] = j
+                    j += 1
+                #fig.canvas.restore_region(bk)
+                #buffersOUT.setdefault(m[1],[]).append(m[2])
+                #lst = list(buffersOUT.values())
+                #lineOUT.set_ydata(list(zip(*lst))[-1])
+                lineOUT.set_xdata(index[m[1]])
+                lineOUT.set_ydata(m[2])
                 ax.draw_artist(lineOUT)
-                bk = fig.canvas.copy_from_bbox(ax.bbox)
-                fig.canvas.blit(ax.bbox)
+                #bk = fig.canvas.copy_from_bbox(ax.bbox)
+                #fig.canvas.blit(ax.bbox)
 
             else:
                 print("Error: unknown message")
 
+            if (vueltas % 20 == 0):
+                fig.canvas.blit(ax.bbox)
 
+            vueltas +=  1
+            
             m = queue.get()
 
         plt.ioff()
@@ -248,15 +266,15 @@ class Simulator(object):
     def run(self):
         #listen to the team for uptating overlay graph
         Common.SIMULATOR_FEEDBACK["OVERLAY"] = Queue()
-        Process(target=self.draw_net).start()
+        #Process(target=self.draw_net).start()
 
         #listen to the splitter for uptating team plot
         Common.SIMULATOR_FEEDBACK["TEAM"] = Queue()
-        Process(target=self.plot_team).start()
+        #Process(target=self.plot_team).start()
 
         #listen to the team for uptating buffer graph
         Common.SIMULATOR_FEEDBACK["BUFFER"] = Queue()
-        Process(target=self.draw_buffer).start()
+        Process(target=self.draw_buffer2).start()
         
         #create communication channels for the team and splitter
         Common.UDP_SOCKETS['S'] = Queue()
