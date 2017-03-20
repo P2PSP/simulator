@@ -118,11 +118,11 @@ class Simulator(object):
         fig, ax = plt.subplots()
                 
         plt.suptitle("Buffer Status", size=16)
-        plt.axis([0, 6, 0, 1024])
-        x = range(6)
+        plt.axis([0, 21, 0, 1024])
+        x = range(21)
         labels.append("")
         fig.canvas.draw()
-        #bk = fig.canvas.copy_from_bbox(ax.bbox)
+        bk = fig.canvas.copy_from_bbox(ax.bbox)
         j = 1
         i = 0
         m = queue.get()
@@ -130,27 +130,28 @@ class Simulator(object):
             if m[0] == "IN":
                 
                 if index.get(m[1]) == None:
-                    lineIN, = ax.plot(j, 0, color = '#A9F5D0', marker='o', animated=True)
-                    lineOUT, = ax.plot(j, 0, color = '#CCCCCC', marker='o', animated=True)
+                    lineIN, = ax.plot(j, 0, color = '#A9F5D0', marker='o', markeredgecolor='#A9F5D0', animated=True)
+                    lineOUT, = ax.plot(j, 0, color = '#CCCCCC', marker='o',markeredgecolor='#CCCCCC', animated=True)
                     lines[m[1]] = (lineIN, lineOUT)
                     index[m[1]] = j
                     labels.append(m[1])
                     plt.xticks(x,labels)
+                    fig.canvas.blit(ax.bbox)
                     j += 1
 
-                #fig.canvas.restore_region(bk)
+                fig.canvas.restore_region(bk)
                 lines[m[1]][0].set_xdata(index[m[1]])
                 lines[m[1]][0].set_ydata(m[2])
                 ax.draw_artist(lines[m[1]][0])
-                #bk = fig.canvas.copy_from_bbox(ax.bbox)
-                fig.canvas.blit(ax.bbox)
+                bk = fig.canvas.copy_from_bbox(ax.bbox)
+                #fig.canvas.blit(ax.bbox)
             elif m[0] == "OUT":
-                #fig.canvas.restore_region(bk)
+                fig.canvas.restore_region(bk)
                 lines[m[1]][1].set_xdata(index[m[1]])
                 lines[m[1]][1].set_ydata(m[2])
                 ax.draw_artist(lines[m[1]][1])
-                #bk = fig.canvas.copy_from_bbox(ax.bbox)
-                fig.canvas.blit(ax.bbox)
+                bk = fig.canvas.copy_from_bbox(ax.bbox)
+                #fig.canvas.blit(ax.bbox)
             else:
                 print("Error: unknown message")
 
@@ -170,10 +171,78 @@ class Simulator(object):
             '''
             #fig.canvas.blit(ax.bbox)
 
+            if(i%200 ==0):
+                fig.canvas.blit(ax.bbox)
+            i+=1
             m = queue.get()
 
         plt.ioff()
         plt.show()
+
+    def draw_buffer2(self):
+        total_peers = self.number_of_monitors + self.number_of_peers
+        queue = Common.SIMULATOR_FEEDBACK["BUFFER"]
+        plt.ion()
+
+        buffersIN = {}
+        buffersOUT = {}
+        lines = {}
+        index = {}
+        labels = []
+
+        for i in range(self.number_of_monitors):
+            buffersIN.setdefault("M"+str(i+1),[]).append(0)
+            buffersOUT.setdefault("M"+str(i+1),[]).append(0)
+
+        for i in range(self.number_of_peers):
+            buffersIN.setdefault("P"+str(i+1),[]).append(0)
+            buffersOUT.setdefault("P"+str(i+1),[]).append(0)
+        
+        fig, ax = plt.subplots()
+                
+        plt.suptitle("Buffer Status", size=16)
+        plt.axis([0, total_peers+1, 0, 1024])
+        x = range(1,total_peers+1)
+        labels.append("")
+        fig.canvas.draw()
+        bk = fig.canvas.copy_from_bbox(ax.bbox)
+        vueltas = 0     
+
+        lineIN, = ax.plot(x, [0]*total_peers, color = '#A9F5D0', ls='None', marker='o',markeredgecolor='#A9F5D0', animated=True)
+        lineOUT, = ax.plot(x, [0]*total_peers, color = '#CCCCCC', ls='None', marker='o',markeredgecolor='#CCCCCC', animated=True)
+        
+        plt.xticks(x,labels)
+
+        m = queue.get()
+        while m[0] != "Bye":
+            print("MESSAGE BUFFER:", m)
+            if m[0] == "IN":
+                fig.canvas.restore_region(bk)
+                buffersIN.setdefault(m[1],[]).append(m[2])
+                labels.append(m[1])
+                lst = list(buffersIN.values())
+                lineIN.set_ydata(list(zip(*lst))[-1])
+                ax.draw_artist(lineIN)
+                bk = fig.canvas.copy_from_bbox(ax.bbox)
+                fig.canvas.blit(ax.bbox)
+            elif m[0] == "OUT":
+                fig.canvas.restore_region(bk)
+                buffersOUT.setdefault(m[1],[]).append(m[2])
+                lst = list(buffersOUT.values())
+                lineOUT.set_ydata(list(zip(*lst))[-1])
+                ax.draw_artist(lineOUT)
+                bk = fig.canvas.copy_from_bbox(ax.bbox)
+                fig.canvas.blit(ax.bbox)
+
+            else:
+                print("Error: unknown message")
+
+
+            m = queue.get()
+
+        plt.ioff()
+        plt.show()
+
 
 
     def run(self):
