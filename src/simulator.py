@@ -44,70 +44,49 @@ class Simulator(object):
             pass
             
     def draw_net(self):
-        G = nx.Graph()
-        queue = Common.SIMULATOR_FEEDBACK["OVERLAY"]
-        plt.ion()
-         
-        labels={}
-        color_map={'peer':'#A9BCF5', 'monitor':'#A9F5D0'}
+        self.G = nx.Graph()
+        self.labels={}
+        self.color_map={'peer':'#A9BCF5', 'monitor':'#A9F5D0'}
+        self.net_figure = plt.figure(1)
 
-        plt.figure()
-        m = queue.get()
-        while m[0] != "Bye":
-            if m[0] == "Node":
-                labels[m[1]]=m[1]
-                if m[1][0] == "M":
-                    G.add_node(m[1], {'type':'monitor'})
-                else:
-                    G.add_node(m[1], {'type':'peer'})
-            elif m[0] == "Edge":
-                G.add_edge(*m[1])
+    def update_net(self,node, edge):
+        plt.figure(1)
+        if node:
+            self.labels[node]=node
+            if node[0] == "M":
+                self.G.add_node(node, {'type':'monitor'})
             else:
-                print("Error: unknown message")
+                self.G.add_node(node, {'type':'peer'})
+        else:
+            self.G.add_edge(*edge)
 
-            plt.clf()
-            plt.suptitle("Overlay Network of the Team", size=16)
-            nx.draw_circular(G, node_color=[color_map[G.node[node]['type']]for node in G], node_size=400, edge_color='#cccccc', labels=labels, font_size=10, font_weight='bold')
-            plt.pause(0.001)
-            m = queue.get()
-
-        plt.ioff()
-        plt.show()
+        self.net_figure.clf()
+        self.net_figure.suptitle("Overlay Network of the Team", size=16)
+        nx.draw_circular(self.G, node_color=[self.color_map[self.G.node[node]['type']]for node in self.G], node_size=400, edge_color='#cccccc', labels=self.labels, font_size=10, font_weight='bold')
+        self.net_figure.canvas.draw()
 
     def plot_team(self):
-        queue = Common.SIMULATOR_FEEDBACK["TEAM"]
-        plt.ion()
-
-        number_of_rounds = []
-        number_of_regulars = []
-        number_of_monitors = []
+        self.team_figure, self.team_ax = plt.subplots()
+        self.lineWIPs, = self.team_ax.plot(1, 1, color = '#A9BCF5', label="# Monitor Peers", marker='o',markeredgecolor='#A9BCF5', animated=True)
+        self.lineMonitors, = self.team_ax.plot(1, 1, color = '#A9F5D0', label="# WIPs", marker='o',markeredgecolor='#A9F5D0', animated=True)
+        self.team_figure.suptitle("Number of Peers in the Team", size=16)
+        plt.legend(loc=2)
+        plt.axis([0, 2000, 0, 4])
+        self.team_figure.canvas.draw()
+                
+    def update_team(self, node, quantity, n_round):
         
-        plt.figure()
-        m = queue.get()
-        while m[0] != "Bye":            
-            if m[0] == "Node":
-                if m[1] == "M":
-                    number_of_monitors.append(m[2])
-                else:
-                    number_of_regulars.append(m[2])
-            elif m[0] == "Round":
-                number_of_rounds.append(m[1])
-            else:
-                print("Error: unknown message")
+        if node == "M":
+            self.lineMonitors.set_xdata(n_round)
+            self.lineMonitors.set_ydata(quantity)
+            self.team_ax.draw_artist(self.lineMonitors)
+        else:
+            self.lineWIPs.set_xdata(n_round)
+            self.lineWIPs.set_ydata(quantity)
+            self.team_ax.draw_artist(self.lineWIPs)
 
-            if len(number_of_rounds) == len(number_of_regulars) == len(number_of_monitors):
-                plt.clf()
-                plt.suptitle("Number of Peers in the Team", size=16)
-                plt.plot(number_of_rounds,number_of_monitors,color = '#A9F5D0', marker='o', label="# Monitor Peers")
-                plt.plot(number_of_rounds,number_of_regulars, color = '#A9BCF5', marker='o', label="# Regular Peers")
-                plt.legend(loc=2)
-                plt.pause(0.001)
-
-            m = queue.get()
-
-        plt.ioff()
-        plt.show()
-
+        self.team_figure.canvas.blit(self.team_ax.bbox)
+            
     def draw_buffer(self):
         queue = Common.SIMULATOR_FEEDBACK["BUFFER"]
         plt.ion()
@@ -278,15 +257,35 @@ class Simulator(object):
     def draw(self, draw_file):
         draw_file = open(self.draw_filename, "r")
 
-        m = draw_file.readline()
-        while m != "Bye":
-            #str.split(",",count)
+        plt.ion()
+
+        self.draw_net()
+        self.plot_team()
+        
+        line = draw_file.readline()
+        while line != "Bye":
+            m = line.strip().split(";",3)
+            if m[0] == "O":
+                if m[1] == "Node":
+                    pass
+                    self.update_net(m[2], None)
+                else:
+                    pass
+                    self.update_net(None, (m[2],m[3]))
+            if m[0] == "T":
+                self.update_team(m[1],m[2],m[3])
+            line = draw_file.readline()
+            
+        plt.ioff()
+        plt.show()
 
     def run(self):
 
         #Listen to the team for drawing
         Common.SIMULATOR_FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
+
+        Process(target=self.draw, args=[self.draw_filename]).start()
         
         #listen to the team for uptating overlay graph
         #Common.SIMULATOR_FEEDBACK["OVERLAY"] = Queue(100)
