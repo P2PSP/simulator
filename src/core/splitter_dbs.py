@@ -61,7 +61,7 @@ class Splitter_DBS(Splitter_core):
             m = self.tcp_socket.get()
             
         self.insert_peer(incoming_peer)
-        Common.SIMULATOR_FEEDBACK["OVERLAY"].put(("Node",incoming_peer))
+        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node",incoming_peer))
         
     def increment_unsupportivity_of_peer(self, peer):
         try:
@@ -164,9 +164,9 @@ class Splitter_DBS(Splitter_core):
             if self.peer_number == 0:
                 self.current_round += 1
                 if self.current_round % 30 == 1:
-                    Common.SIMULATOR_FEEDBACK["TEAM"].put(("Node","M",self.number_of_monitors))
-                    Common.SIMULATOR_FEEDBACK["TEAM"].put(("Node","P",(len(self.peer_list)-self.number_of_monitors)))
-                    Common.SIMULATOR_FEEDBACK["TEAM"].put(("Round",self.current_round))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","Node","M",self.number_of_monitors))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","Node","P",(len(self.peer_list)-self.number_of_monitors)))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","Round",self.current_round))
                 for peer in self.outgoing_peer_list:
                     say_goodbye(peer)
                     remove_peer(peer)

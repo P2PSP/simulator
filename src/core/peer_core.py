@@ -80,7 +80,13 @@ class Peer_core():
             self.prev_received_chunk = last_received_chunk
     
     def play_chunk(self, chunk_number):
-        Common.SIMULATOR_FEEDBACK["BUFFER"].put(("OUT",self.id,chunk_number % self.buffer_size))
+        #Common.SIMULATOR_FEEDBACK["DRAW"].put(("B","OUT",self.id,chunk_number % self.buffer_size))
+
+        chunks = ""
+        for n,c in self.chunks:
+            chunks += c
+        Common.SIMULATOR_FEEDBACK["DRAW"].put(("B",self.id,chunks))
+        
         print(self.id, "chunk", chunk_number, "consumed")
         return True
 

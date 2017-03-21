@@ -14,9 +14,10 @@ from collections import OrderedDict
 
 class Simulator(object):
 
-    def __init__(self, number_of_monitors, number_of_peers):
+    def __init__(self, number_of_monitors, number_of_peers, draw_filename):
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
+        self.draw_filename = draw_filename
         
     def run_a_splitter(self):     
         splitter = Splitter_DBS()
@@ -262,19 +263,42 @@ class Simulator(object):
         plt.show()
 
 
+        
+    def store(self):
+        queue = Common.SIMULATOR_FEEDBACK["DRAW"]
+        m = queue.get()
+        draw_file = open(self.draw_filename, "w", 1)
+        
+        while m[0] != "Bye":
+            draw_file.write(";".join(map(str,m))+"\n")
+            m= queue.get()
+
+        draw_file.close()
+
+    def draw(self, draw_file):
+        draw_file = open(self.draw_filename, "r")
+
+        m = draw_file.readline()
+        while m != "Bye":
+            #str.split(",",count)
 
     def run(self):
+
+        #Listen to the team for drawing
+        Common.SIMULATOR_FEEDBACK["DRAW"] = Queue()
+        Process(target=self.store).start()
+        
         #listen to the team for uptating overlay graph
-        Common.SIMULATOR_FEEDBACK["OVERLAY"] = Queue()
+        #Common.SIMULATOR_FEEDBACK["OVERLAY"] = Queue(100)
         #Process(target=self.draw_net).start()
 
         #listen to the splitter for uptating team plot
-        Common.SIMULATOR_FEEDBACK["TEAM"] = Queue()
+        #Common.SIMULATOR_FEEDBACK["TEAM"] = Queue(100)
         #Process(target=self.plot_team).start()
 
         #listen to the team for uptating buffer graph
-        Common.SIMULATOR_FEEDBACK["BUFFER"] = Queue()
-        Process(target=self.draw_buffer2).start()
+        #Common.SIMULATOR_FEEDBACK["BUFFER"] = Queue(100)
+        #Process(target=self.draw_buffer2).start()
         
         #create communication channels for the team and splitter
         Common.UDP_SOCKETS['S'] = Queue()

@@ -63,8 +63,9 @@ class Peer_DBS(Peer_core):
             chunk_number = message[0]
             chunk = message[1]
 
-            self.chunks[chunk_number % self.buffer_size] = (chunk,chunk_number)
-            Common.SIMULATOR_FEEDBACK["BUFFER"].put(("IN",self.id,(chunk_number % self.buffer_size)))
+            self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
+            #Common.SIMULATOR_FEEDBACK["BUFFER"].put(("IN",self.id,(chunk_number % self.buffer_size)))
+            #NOTE: Would be insteresting to move here from play_chunk the part of sending buffer to DRAW?
             
             #print("Chunk",chunk_number,"received from",sender,"inserted in", (chunk_number % self.buffer_size))
             self.received_counter += 1
@@ -104,8 +105,8 @@ class Peer_DBS(Peer_core):
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(sender, "added by chunk", chunk_number)
-                    Common.SIMULATOR_FEEDBACK["OVERLAY"].put(("Node",sender))
-                    Common.SIMULATOR_FEEDBACK["OVERLAY"].put(("Edge",(self.id,sender)))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node",sender))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge",self.id,sender))
 
                 else:
                     self.debt[sender] -= 1
@@ -134,8 +135,8 @@ class Peer_DBS(Peer_core):
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(sender, "added by [hello]")
-                    Common.SIMULATOR_FEEDBACK["OVERLAY"].put(("Node",sender))
-                    Common.SIMULATOR_FEEDBACK["OVERLAY"].put(("Edge",(self.id,sender)))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node",sender))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge",self.id,sender))
             else:
                 if sender in self.peer_list:
                     print(self.id, "received goodbye from", sender)
