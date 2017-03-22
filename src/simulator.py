@@ -105,16 +105,16 @@ class Simulator(object):
         if self.buffer_order.get(node) == None:
             self.buffer_order[node] = self.buffer_index
             self.buffer_index += 1
-        
-        buffer_in = [pos for pos, char in enumerate(buffer_shot) if char == "C"]
-        self.lineIN.set_xdata([self.buffer_order[node]]*len(buffer_in))
-        self.lineIN.set_ydata(buffer_in)
-        self.buffer_ax.draw_artist(self.lineIN)
 
         buffer_out = [pos for pos, char in enumerate(buffer_shot) if char == "L"]
         self.lineOUT.set_xdata([self.buffer_order[node]]*len(buffer_out))
         self.lineOUT.set_ydata(buffer_out)
         self.buffer_ax.draw_artist(self.lineOUT)
+            
+        buffer_in = [pos for pos, char in enumerate(buffer_shot) if char == "C"]
+        self.lineIN.set_xdata([self.buffer_order[node]]*len(buffer_in))
+        self.lineIN.set_ydata(buffer_in)
+        self.buffer_ax.draw_artist(self.lineIN)
 
         self.buffer_figure.canvas.blit(self.buffer_ax.bbox)       
         
@@ -154,7 +154,7 @@ class Simulator(object):
                     self.update_buffer(m[1],m[2])
                 except:
                     e = sys.exc_info()[0]
-                    print("INDEX-ERROR", e)
+                    print("INDEX-ERROR:", m)
                     sys.exit(1)
                 
             line = draw_file.readline()

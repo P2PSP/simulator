@@ -74,7 +74,6 @@ class Peer_DBS(Peer_core):
                     peer = self.peer_list[self.receive_and_feed_counter]
                     Common.UDP_SOCKETS[peer].put((self.id,self.receive_and_feed_previous))
                     self.sendto_counter += 1
-                    
                     print(self.id,",",self.receive_and_feed_previous[0],"->", peer)
                     
                     self.debt[peer] += 1
