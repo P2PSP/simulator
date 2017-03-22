@@ -167,21 +167,8 @@ class Simulator(object):
         #Listen to the team for drawing
         Common.SIMULATOR_FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
-
         Process(target=self.draw, args=[self.draw_filename]).start()
-        
-        #listen to the team for uptating overlay graph
-        #Common.SIMULATOR_FEEDBACK["OVERLAY"] = Queue(100)
-        #Process(target=self.draw_net).start()
-
-        #listen to the splitter for uptating team plot
-        #Common.SIMULATOR_FEEDBACK["TEAM"] = Queue(100)
-        #Process(target=self.plot_team).start()
-
-        #listen to the team for uptating buffer graph
-        #Common.SIMULATOR_FEEDBACK["BUFFER"] = Queue(100)
-        #Process(target=self.draw_buffer2).start()
-        
+                
         #create communication channels for the team and splitter
         Common.UDP_SOCKETS['S'] = Queue()
         Common.TCP_SOCKETS['S'] = Queue()
