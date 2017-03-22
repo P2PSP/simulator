@@ -4,13 +4,12 @@ from core.peer_dbs import Peer_DBS
 from core.monitor_dbs import Monitor_DBS
 from core.splitter_dbs import Splitter_DBS
 from core.common import Common
-from threading import Thread
 from multiprocessing import Process, Queue
 import time
 import fire
 import networkx as nx
 import matplotlib.pyplot as plt
-from collections import OrderedDict
+import sys
 
 class Simulator(object):
 
@@ -86,167 +85,43 @@ class Simulator(object):
             self.team_ax.draw_artist(self.lineWIPs)
 
         self.team_figure.canvas.blit(self.team_ax.bbox)
-            
+
+        
     def draw_buffer(self):
-        queue = Common.SIMULATOR_FEEDBACK["BUFFER"]
-        plt.ion()
-
-        buffers = {}
-        lines = {}
-        index = {}
-        labels = []
-        
-        fig, ax = plt.subplots()
-                
-        plt.suptitle("Buffer Status", size=16)
-        plt.axis([0, 21, 0, 1024])
-        x = range(21)
-        labels.append("")
-        fig.canvas.draw()
-        bk = fig.canvas.copy_from_bbox(ax.bbox)
-        j = 1
-        i = 0
-        m = queue.get()
-        while m[0] != "Bye":            
-            if m[0] == "IN":
-                
-                if index.get(m[1]) == None:
-                    lineIN, = ax.plot(j, 0, color = '#A9F5D0', marker='o', markeredgecolor='#A9F5D0', animated=True)
-                    lineOUT, = ax.plot(j, 0, color = '#CCCCCC', marker='o',markeredgecolor='#CCCCCC', animated=True)
-                    lines[m[1]] = (lineIN, lineOUT)
-                    index[m[1]] = j
-                    labels.append(m[1])
-                    plt.xticks(x,labels)
-                    fig.canvas.blit(ax.bbox)
-                    j += 1
-
-                fig.canvas.restore_region(bk)
-                lines[m[1]][0].set_xdata(index[m[1]])
-                lines[m[1]][0].set_ydata(m[2])
-                ax.draw_artist(lines[m[1]][0])
-                bk = fig.canvas.copy_from_bbox(ax.bbox)
-                #fig.canvas.blit(ax.bbox)
-            elif m[0] == "OUT":
-                fig.canvas.restore_region(bk)
-                lines[m[1]][1].set_xdata(index[m[1]])
-                lines[m[1]][1].set_ydata(m[2])
-                ax.draw_artist(lines[m[1]][1])
-                bk = fig.canvas.copy_from_bbox(ax.bbox)
-                #fig.canvas.blit(ax.bbox)
-            else:
-                print("Error: unknown message")
-
-            #plt.clf()
-            '''
-            i = 1
-            for k,v in buffers.items():
-                fig.canvas.restore_region(bk)
-                lines[k].set_xdata(i)
-                lines[k].set_ydata(v[-1])
-                ax.draw_artist(lines[k])
-                bk = fig.canvas.copy_from_bbox(ax.bbox)
-
-                i += 1
-                #plt.pause(0.001)
-                #fig.canvas.draw()
-            '''
-            #fig.canvas.blit(ax.bbox)
-
-            if(i%20 ==0):
-                fig.canvas.blit(ax.bbox)
-            i+=1
-            m = queue.get()
-
-        plt.ioff()
-        plt.show()
-
-    def draw_buffer2(self):
+        self.buffer_figure, self.buffer_ax = plt.subplots()
+        self.lineIN, = self.buffer_ax.plot(1, 1, color = '#A9BCF5', ls="None",label="IN", marker='o',markeredgecolor='#A9BCF5',animated=True)
+        self.lineOUT, = self.buffer_ax.plot(1, 1, color = '#CCCCCC', ls="None", label="OUT", marker='o',markeredgecolor='#CCCCCC', animated=True)
+        self.buffer_figure.suptitle("Buffer Status", size=16)
+        plt.legend(loc=2)
         total_peers = self.number_of_monitors + self.number_of_peers
-        queue = Common.SIMULATOR_FEEDBACK["BUFFER"]
-        plt.ion()
-
-        buffersIN = {}
-        buffersOUT = {}
-        lines = {}
-        index = {}
-        labels = []
-
-        for i in range(self.number_of_monitors):
-            buffersIN.setdefault("M"+str(i+1),[]).append(0)
-            buffersOUT.setdefault("M"+str(i+1),[]).append(0)
-
-        for i in range(self.number_of_peers):
-            buffersIN.setdefault("P"+str(i+1),[]).append(0)
-            buffersOUT.setdefault("P"+str(i+1),[]).append(0)
-        
-        fig, ax = plt.subplots()
-                
-        plt.suptitle("Buffer Status", size=16)
         plt.axis([0, total_peers+1, 0, 1024])
-        x = range(1,total_peers+1)
-        labels.append("")
-        fig.canvas.draw()
-        bk = fig.canvas.copy_from_bbox(ax.bbox)
-        vueltas = 0     
+        self.buffer_order = {}
+        self.buffer_index = 1
+        #plt.xticks(x,labels)
+        self.buffer_figure.canvas.draw()
 
-        lineIN, = ax.plot(x, [0]*total_peers, color = '#A9F5D0', ls='None', marker='o',markeredgecolor='#A9F5D0', animated=True)
-        lineOUT, = ax.plot(x, [0]*total_peers, color = '#CCCCCC', ls='None', marker='o',markeredgecolor='#CCCCCC', animated=True)
+    def update_buffer(self, node, buffer_shot):
+
+        if self.buffer_order.get(node) == None:
+            self.buffer_order[node] = self.buffer_index
+            self.buffer_index += 1
         
-        plt.xticks(x,labels)
-        j = 1
-        m = queue.get()
-        while m[0] != "Bye":
-            print("SIZE queue", queue.qsize())
-            
-            if m[0] == "IN":
-                #fig.canvas.restore_region(bk)
-                
-                if index.get(m[1]) == None:
-                    index[m[1]] = j
-                    j += 1
-                
-                #buffersIN.setdefault(m[1],[]).append(m[2])
-                #labels.append(m[1])
-                #lst = list(buffersIN.values())
-                #lineIN.set_ydata(list(zip(*lst))[-1])
-                lineIN.set_xdata(index[m[1]])
-                lineIN.set_ydata(m[2])
-                ax.draw_artist(lineIN)
-                #bk = fig.canvas.copy_from_bbox(ax.bbox)
-                #fig.canvas.blit(ax.bbox)
-            elif m[0] == "OUT":
-                if index.get(m[1]) == None:
-                    index[m[1]] = j
-                    j += 1
-                #fig.canvas.restore_region(bk)
-                #buffersOUT.setdefault(m[1],[]).append(m[2])
-                #lst = list(buffersOUT.values())
-                #lineOUT.set_ydata(list(zip(*lst))[-1])
-                lineOUT.set_xdata(index[m[1]])
-                lineOUT.set_ydata(m[2])
-                ax.draw_artist(lineOUT)
-                #bk = fig.canvas.copy_from_bbox(ax.bbox)
-                #fig.canvas.blit(ax.bbox)
+        buffer_in = [pos for pos, char in enumerate(buffer_shot) if char == "C"]
+        self.lineIN.set_xdata([self.buffer_order[node]]*len(buffer_in))
+        self.lineIN.set_ydata(buffer_in)
+        self.buffer_ax.draw_artist(self.lineIN)
 
-            else:
-                print("Error: unknown message")
+        buffer_out = [pos for pos, char in enumerate(buffer_shot) if char == "L"]
+        self.lineOUT.set_xdata([self.buffer_order[node]]*len(buffer_out))
+        self.lineOUT.set_ydata(buffer_out)
+        self.buffer_ax.draw_artist(self.lineOUT)
 
-            if (vueltas % 20 == 0):
-                fig.canvas.blit(ax.bbox)
-
-            vueltas +=  1
-            
-            m = queue.get()
-
-        plt.ioff()
-        plt.show()
-
-
+        self.buffer_figure.canvas.blit(self.buffer_ax.bbox)       
         
     def store(self):
+        draw_file = open(self.draw_filename, "w", 1)
         queue = Common.SIMULATOR_FEEDBACK["DRAW"]
         m = queue.get()
-        draw_file = open(self.draw_filename, "w", 1)
         
         while m[0] != "Bye":
             draw_file.write(";".join(map(str,m))+"\n")
@@ -261,19 +136,27 @@ class Simulator(object):
 
         self.draw_net()
         self.plot_team()
+        self.draw_buffer()
         
         line = draw_file.readline()
         while line != "Bye":
             m = line.strip().split(";",3)
+            
             if m[0] == "O":
                 if m[1] == "Node":
-                    pass
                     self.update_net(m[2], None)
                 else:
-                    pass
                     self.update_net(None, (m[2],m[3]))
             if m[0] == "T":
                 self.update_team(m[1],m[2],m[3])
+            if m[0] == "B":
+                try:
+                    self.update_buffer(m[1],m[2])
+                except:
+                    e = sys.exc_info()[0]
+                    print("INDEX-ERROR", e)
+                    sys.exit(1)
+                
             line = draw_file.readline()
             
         plt.ioff()
