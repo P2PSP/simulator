@@ -70,7 +70,8 @@ class Simulator(object):
         self.lineMonitors, = self.team_ax.plot(1, 1, color = '#A9F5D0', label="# WIPs", marker='o',markeredgecolor='#A9F5D0', animated=True)
         self.team_figure.suptitle("Number of Peers in the Team", size=16)
         plt.legend(loc=2)
-        plt.axis([0, 2000, 0, 4])
+        total_peers = self.number_of_monitors + self.number_of_peers
+        plt.axis([0, 2000, 0, total_peers])
         self.team_figure.canvas.draw()
                 
     def update_team(self, node, quantity, n_round):
@@ -148,7 +149,11 @@ class Simulator(object):
                 else:
                     self.update_net(None, (m[2],m[3]))
             if m[0] == "T":
-                self.update_team(m[1],m[2],m[3])
+                try:
+                    self.update_team(m[1],m[2],m[3])
+                except:
+                    print("INDEX-ERROR:", m)
+                    sys.exit(1)
             if m[0] == "B":
                 try:
                     self.update_buffer(m[1],m[2])

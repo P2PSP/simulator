@@ -15,10 +15,14 @@ class Splitter_core():
         
     def send_chunk(self, message, destination):
         print("S -",self.chunk_number, "->", destination)
+        
+        print(self.id,"Put (INTENT)",message, destination)
         Common.UDP_SOCKETS[destination].put((self.id,message))
+        print(self.id,"Put (DONE)",message, destination)
 
+        
     def receive_chunk(self):
-        time.sleep(0.01) #bit-rate control
+        time.sleep(0.1) #bit-rate control
         #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
 

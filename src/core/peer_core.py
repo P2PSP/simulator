@@ -87,7 +87,7 @@ class Peer_core():
             chunks += c
         Common.SIMULATOR_FEEDBACK["DRAW"].put(("B",self.id,chunks))
         
-        print(self.id, "chunk", chunk_number, "consumed")
+        #print(self.id, "chunk", chunk_number, "consumed")
         return True
 
     def run(self):
