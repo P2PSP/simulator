@@ -44,14 +44,14 @@ class Simulator(object):
             
     def draw_net(self):
         self.G = nx.Graph()
-        self.labels={}
+        self.net_labels={}
         self.color_map={'peer':'#A9BCF5', 'monitor':'#A9F5D0'}
         self.net_figure = plt.figure(1)
 
     def update_net(self,node, edge):
         plt.figure(1)
         if node:
-            self.labels[node]=node
+            self.net_labels[node]=node
             if node[0] == "M":
                 self.G.add_node(node, {'type':'monitor'})
             else:
@@ -61,7 +61,7 @@ class Simulator(object):
 
         self.net_figure.clf()
         self.net_figure.suptitle("Overlay Network of the Team", size=16)
-        nx.draw_circular(self.G, node_color=[self.color_map[self.G.node[node]['type']]for node in self.G], node_size=400, edge_color='#cccccc', labels=self.labels, font_size=10, font_weight='bold')
+        nx.draw_circular(self.G, node_color=[self.color_map[self.G.node[node]['type']]for node in self.G], node_size=400, edge_color='#cccccc', labels=self.net_labels, font_size=10, font_weight='bold')
         self.net_figure.canvas.draw()
 
     def plot_team(self):
@@ -98,7 +98,8 @@ class Simulator(object):
         plt.axis([0, total_peers+1, 0, 1024])
         self.buffer_order = {}
         self.buffer_index = 1
-        #plt.xticks(x,labels)
+        self.buffer_labels = self.buffer_ax.get_xticks().tolist()
+        print("XTICKS", self.buffer_labels)
         plt.grid()
         self.buffer_figure.canvas.draw()
 
@@ -106,6 +107,8 @@ class Simulator(object):
 
         if self.buffer_order.get(node) == None:
             self.buffer_order[node] = self.buffer_index
+            self.buffer_labels[self.buffer_index] = node
+            self.buffer_ax.set_xticklabels(self.buffer_labels)
             self.buffer_index += 1
 
         buffer_out = [pos for pos, char in enumerate(buffer_shot) if char == "L"]
