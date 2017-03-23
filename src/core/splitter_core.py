@@ -22,7 +22,7 @@ class Splitter_core():
 
         
     def receive_chunk(self):
-        time.sleep(0.1) #bit-rate control
+        time.sleep(0.05) #bit-rate control
         #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
 

@@ -162,11 +162,9 @@ class Splitter_DBS(Splitter_core):
                 print("The monitor peer has died!")
 
             if self.peer_number == 0:
+                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
+                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
                 self.current_round += 1
-                if self.current_round % 2 == 1:
-                    #Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","Round",self.current_round))
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
                     
                 for peer in self.outgoing_peer_list:
                     say_goodbye(peer)

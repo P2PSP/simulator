@@ -65,7 +65,11 @@ class Peer_DBS(Peer_core):
 
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
             #Common.SIMULATOR_FEEDBACK["BUFFER"].put(("IN",self.id,(chunk_number % self.buffer_size)))
-            #NOTE: Would be insteresting to move here from play_chunk the part of sending buffer to DRAW?
+
+            chunks = ""
+            for n,c in self.chunks:
+                chunks += c
+            Common.SIMULATOR_FEEDBACK["DRAW"].put(("B",self.id,chunks))
             
             #print("Chunk",chunk_number,"received from",sender,"inserted in", (chunk_number % self.buffer_size))
             self.received_counter += 1
@@ -73,7 +77,10 @@ class Peer_DBS(Peer_core):
                 while((self.receive_and_feed_counter < len(self.peer_list)) and (self.receive_and_feed_counter > 0 or self.modified_list)):
                     peer = self.peer_list[self.receive_and_feed_counter]
                     print(self.id,"Put in burst mode (INTENT)",self.receive_and_feed_previous[0], peer)
-                    Common.UDP_SOCKETS[peer].put((self.id,self.receive_and_feed_previous))
+                    try:
+                        Common.UDP_SOCKETS[peer].put((self.id,self.receive_and_feed_previous))
+                    except:
+                        pass
                     print(self.id,"Put in burst mode (DONE)",self.receive_and_feed_previous[0], peer)
 
                     self.sendto_counter += 1
@@ -118,7 +125,10 @@ class Peer_DBS(Peer_core):
             if (self.receive_and_feed_counter < len(self.peer_list) and (self.receive_and_feed_previous)):
                 peer = self.peer_list[self.receive_and_feed_counter]
                 print(self.id,"Put in ac mode (INTENT)",self.receive_and_feed_previous[0], peer)
-                Common.UDP_SOCKETS[peer].put((self.id, self.receive_and_feed_previous))
+                try:
+                    Common.UDP_SOCKETS[peer].put((self.id, self.receive_and_feed_previous))
+                except:
+                    pass
                 print(self.id,"Put in ac mode (DONE)",self.receive_and_feed_previous[0], peer)
 
                 self.sendto_counter += 1

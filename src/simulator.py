@@ -66,10 +66,10 @@ class Simulator(object):
 
     def plot_team(self):
         self.team_figure, self.team_ax = plt.subplots()
-        self.lineWIPs, = self.team_ax.plot(1, 1, color = '#A9BCF5', label="# Monitor Peers", marker='o',markeredgecolor='#A9BCF5', animated=True)
-        self.lineMonitors, = self.team_ax.plot(1, 1, color = '#A9F5D0', label="# WIPs", marker='o',markeredgecolor='#A9F5D0', animated=True)
+        self.lineWIPs, = self.team_ax.plot([1,2], [10,10], color = '#A9BCF5', label="# Monitor Peers", marker='o', ls='None' ,markeredgecolor='#A9BCF5', animated=True)
+        self.lineMonitors, = self.team_ax.plot([1,2], [10,10], color = '#A9F5D0', label="# WIPs", marker='o', ls='None', markeredgecolor='#A9F5D0', animated=True)
         self.team_figure.suptitle("Number of Peers in the Team", size=16)
-        plt.legend(loc=2)
+        plt.legend(loc=2,numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers
         plt.axis([0, 2000, 0, total_peers])
         self.team_figure.canvas.draw()
@@ -90,15 +90,16 @@ class Simulator(object):
         
     def draw_buffer(self):
         self.buffer_figure, self.buffer_ax = plt.subplots()
-        self.lineIN, = self.buffer_ax.plot(1, 1, color = '#A9BCF5', ls="None",label="IN", marker='o',markeredgecolor='#A9BCF5',animated=True)
-        self.lineOUT, = self.buffer_ax.plot(1, 1, color = '#CCCCCC', ls="None", label="OUT", marker='o',markeredgecolor='#CCCCCC', animated=True)
+        self.lineIN, = self.buffer_ax.plot([1]*2, [1]*2, color = '#A9BCF5', ls="None",label="IN", marker='o',markeredgecolor='#A9BCF5',animated=True)
+        self.lineOUT, = self.buffer_ax.plot([1]*2, [1]*2, color = '#CCCCCC', ls="None", label="OUT", marker='o',markeredgecolor='#CCCCCC', animated=True)
         self.buffer_figure.suptitle("Buffer Status", size=16)
-        plt.legend(loc=2)
+        plt.legend(loc=2,numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers
         plt.axis([0, total_peers+1, 0, 1024])
         self.buffer_order = {}
         self.buffer_index = 1
         #plt.xticks(x,labels)
+        plt.grid()
         self.buffer_figure.canvas.draw()
 
     def update_buffer(self, node, buffer_shot):
@@ -125,12 +126,12 @@ class Simulator(object):
         m = queue.get()
         
         while m[0] != "Bye":
-            draw_file.write(";".join(map(str,m))+"\n")
+            draw_file.write(";".join(map(str,m))+'\n')
             m= queue.get()
 
         draw_file.close()
 
-    def draw(self, draw_file):
+    def draw(self):
         draw_file = open(self.draw_filename, "r")
 
         plt.ion()
@@ -152,15 +153,17 @@ class Simulator(object):
                 try:
                     self.update_team(m[1],m[2],m[3])
                 except:
-                    print("INDEX-ERROR:", m)
-                    sys.exit(1)
+                    #For visualization in real time (line is not fully written)
+                    print("IndexError:", m, line)
+                    pass
+
             if m[0] == "B":
                 try:
                     self.update_buffer(m[1],m[2])
                 except:
-                    e = sys.exc_info()[0]
-                    print("INDEX-ERROR:", m)
-                    sys.exit(1)
+                    #For visualization in real time (line is not fully written)
+                    print("IndexError:", m, line)
+                    pass
                 
             line = draw_file.readline()
             
@@ -172,7 +175,7 @@ class Simulator(object):
         #Listen to the team for drawing
         Common.SIMULATOR_FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
-        Process(target=self.draw, args=[self.draw_filename]).start()
+        Process(target=self.draw).start()
                 
         #create communication channels for the team and splitter
         Common.UDP_SOCKETS['S'] = Queue()
