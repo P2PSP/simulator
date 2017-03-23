@@ -4,15 +4,15 @@
 
 A complete stand-alone simulator of the P2PSP protocol using Threads (or Processes) and message passing in order to do the prototyping of new strategies easier.
 
-#Pre-requisites
-##Linux
+# Pre-requisites
+## Linux
 ```
 $ pip3 install fire
 $ pip3 install matplotlib
 $ pip3 install networkx
 ```
 
-#Usage
+# Usage
 
 ```
 $ ./simulator.py run --number-of-monitors NUMBER_OF_MONITORS --number-of-peers NUMBER_OF_PEERS --draw-filename FILENAME
