@@ -13,10 +13,10 @@ import sys
 
 class Simulator(object):
 
-    def __init__(self, number_of_monitors, number_of_peers, draw_filename):
+    def __init__(self, number_of_monitors, number_of_peers, drawing_log):
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
-        self.draw_filename = draw_filename
+        self.drawing_log = drawing_log
         
     def run_a_splitter(self):     
         splitter = Splitter_DBS()
@@ -121,18 +121,18 @@ class Simulator(object):
         self.buffer_figure.canvas.blit(self.buffer_ax.bbox)       
         
     def store(self):
-        draw_file = open(self.draw_filename, "w", 1)
+        drawing_log_file = open(self.drawing_log, "w", 1)
         queue = Common.SIMULATOR_FEEDBACK["DRAW"]
         m = queue.get()
         
         while m[0] != "Bye":
-            draw_file.write(";".join(map(str,m))+'\n')
+            drawing_log_file.write(";".join(map(str,m))+'\n')
             m= queue.get()
 
-        draw_file.close()
+        drawing_log_file.close()
 
     def draw(self):
-        draw_file = open(self.draw_filename, "r")
+        drawing_log_file = open(self.drawing_log, "r")
 
         plt.ion()
 
@@ -140,7 +140,7 @@ class Simulator(object):
         self.plot_team()
         self.draw_buffer()
         
-        line = draw_file.readline()
+        line = drawing_log_file.readline()
         while line != "Bye":
             m = line.strip().split(";",3)
             
@@ -165,7 +165,7 @@ class Simulator(object):
                     print("IndexError:", m, line)
                     pass
                 
-            line = draw_file.readline()
+            line = drawing_log_file.readline()
             
         plt.ioff()
         plt.show()

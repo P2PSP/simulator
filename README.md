@@ -15,5 +15,5 @@ $ pip3 install networkx
 # Usage
 
 ```
-$ ./simulator.py run --number-of-monitors NUMBER_OF_MONITORS --number-of-peers NUMBER_OF_PEERS --draw-filename FILENAME
+$ ./simulator.py run --number-of-monitors NUMBER_OF_MONITORS --number-of-peers NUMBER_OF_PEERS --drawing-log FILENAME
 ```
