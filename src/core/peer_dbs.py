@@ -76,12 +76,8 @@ class Peer_DBS(Peer_core):
             if (sender == self.splitter["id"]):
                 while((self.receive_and_feed_counter < len(self.peer_list)) and (self.receive_and_feed_counter > 0 or self.modified_list)):
                     peer = self.peer_list[self.receive_and_feed_counter]
-                    print(self.id,"Put in burst mode (INTENT)",self.receive_and_feed_previous[0], peer)
-                    try:
-                        Common.UDP_SOCKETS[peer].put((self.id,self.receive_and_feed_previous))
-                    except:
-                        pass
-                    print(self.id,"Put in burst mode (DONE)",self.receive_and_feed_previous[0], peer)
+
+                    Common.UDP_SOCKETS[peer].put((self.id,self.receive_and_feed_previous))
 
                     self.sendto_counter += 1
                     print(self.id,",",self.receive_and_feed_previous[0],"->", peer)
@@ -124,12 +120,8 @@ class Peer_DBS(Peer_core):
 
             if (self.receive_and_feed_counter < len(self.peer_list) and (self.receive_and_feed_previous)):
                 peer = self.peer_list[self.receive_and_feed_counter]
-                print(self.id,"Put in ac mode (INTENT)",self.receive_and_feed_previous[0], peer)
-                try:
-                    Common.UDP_SOCKETS[peer].put((self.id, self.receive_and_feed_previous))
-                except:
-                    pass
-                print(self.id,"Put in ac mode (DONE)",self.receive_and_feed_previous[0], peer)
+
+                Common.UDP_SOCKETS[peer].put((self.id, self.receive_and_feed_previous))
 
                 self.sendto_counter += 1
                 self.debt[peer] += 1
