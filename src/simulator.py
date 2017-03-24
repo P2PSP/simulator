@@ -19,10 +19,11 @@ class Simulator(object):
     P_MoP = 0.5
     P_WIP = 0.5
     
-    def __init__(self, number_of_monitors, number_of_peers, drawing_log):
+    def __init__(self, number_of_monitors, number_of_peers, drawing_log, number_of_rounds):
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
         self.drawing_log = drawing_log
+        self.number_of_rounds = number_of_rounds
         
     def run_a_splitter(self):     
         splitter = Splitter_DBS()
@@ -137,13 +138,14 @@ class Simulator(object):
             drawing_log_file.write(";".join(map(str,m))+'\n')
             m= queue.get()
 
+        drawing_log_file.write("Bye")
         drawing_log_file.close()
 
     def draw(self):
         drawing_log_file = open(self.drawing_log, "r")
 
         plt.ion()
-
+        
         self.draw_net()
         self.plot_team()
         self.draw_buffer()
@@ -175,8 +177,8 @@ class Simulator(object):
                 
             line = drawing_log_file.readline()
             
-        plt.ioff()
-        plt.show()
+        #plt.ioff()
+        #plt.show()
 
     def run(self):
 
@@ -207,7 +209,7 @@ class Simulator(object):
         #run monitor
         Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)]).start()
         self.attended_monitors += 1
-        
+
         queue = Common.SIMULATOR_FEEDBACK["STATUS"]
         m = queue.get()
         while m[0] != "Bye":
@@ -215,7 +217,10 @@ class Simulator(object):
                 r = random.randint(0,1)
                 if r <= Simulator.P_IN:
                     self.addPeer()
-            
+
+                if m[1] == self.number_of_rounds:
+                    Common.UDP_SOCKETS['S'].put(("SIM",(-1,"K")))
+                                                
             m= queue.get()     
 
     def addPeer(self):

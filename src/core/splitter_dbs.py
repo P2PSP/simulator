@@ -117,13 +117,17 @@ class Splitter_DBS(Splitter_core):
             content = self.udp_socket.get()
             sender = content[0]
             message = content[1]
-                        
-            if (message[1] == "L"):
-                lost_chunk_number = self.get_lost_chunk_number(message)
-                self.process_lost_chunk(lost_chunk_number, sender)
 
+            if (sender == "SIM"):
+                if (message[1] == "K"):
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("Bye","Bye"))
+                    self.alive = False
             else:
-                self.process_goodbye(sender)
+                if (message[1] == "L"):
+                    lost_chunk_number = self.get_lost_chunk_number(message)
+                    self.process_lost_chunk(lost_chunk_number, sender)
+                else:
+                    self.process_goodbye(sender)
 
     def reset_counters(self):
         for i in self.losses:
