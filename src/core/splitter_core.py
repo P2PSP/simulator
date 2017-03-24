@@ -14,7 +14,8 @@ class Splitter_core():
         print("Splitter Core initialized")
         
     def send_chunk(self, message, destination):
-        print("S -",self.chunk_number, "->", destination)
+        if __debug__:
+            print("S -",self.chunk_number, "->", destination)
         
         Common.UDP_SOCKETS[destination].put((self.id,message))
 

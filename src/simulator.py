@@ -10,9 +10,15 @@ import fire
 import networkx as nx
 import matplotlib.pyplot as plt
 import sys
+import numpy as np
+import random
 
 class Simulator(object):
 
+    P_IN = 0.8
+    P_MoP = 0.5
+    P_WIP = 0.5
+    
     def __init__(self, number_of_monitors, number_of_peers, drawing_log):
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
@@ -23,7 +29,6 @@ class Simulator(object):
         splitter.start()
         while splitter.alive:
             time.sleep(1)
-            print("Splitter's list of peers:", ', '.join(str(p) for p in splitter.peer_list))
 
     def run_a_peer(self, splitter_id, type, id):
         if type == "monitor":
@@ -66,8 +71,8 @@ class Simulator(object):
 
     def plot_team(self):
         self.team_figure, self.team_ax = plt.subplots()
-        self.lineWIPs, = self.team_ax.plot([1,2], [10,10], color = '#A9BCF5', label="# Monitor Peers", marker='o', ls='None' ,markeredgecolor='#A9BCF5', animated=True)
-        self.lineMonitors, = self.team_ax.plot([1,2], [10,10], color = '#A9F5D0', label="# WIPs", marker='o', ls='None', markeredgecolor='#A9F5D0', animated=True)
+        self.lineWIPs, = self.team_ax.plot([1,2], [10,10], color = '#A9BCF5', label="# WIPs", marker='o', ls='None' ,markeredgecolor='#A9BCF5', animated=True)
+        self.lineMonitors, = self.team_ax.plot([1,2], [10,10], color = '#A9F5D0', label="# Monitor Peers", marker='o', ls='None', markeredgecolor='#A9F5D0', animated=True)
         self.team_figure.suptitle("Number of Peers in the Team", size=16)
         plt.legend(loc=2,numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers
@@ -179,6 +184,9 @@ class Simulator(object):
         Common.SIMULATOR_FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
         Process(target=self.draw).start()
+
+        #Listen to the team for simulation life
+        Common.SIMULATOR_FEEDBACK["STATUS"] = Queue()
                 
         #create communication channels for the team and splitter
         Common.UDP_SOCKETS['S'] = Queue()
@@ -193,17 +201,37 @@ class Simulator(object):
         #run splitter
         Process(target=self.run_a_splitter).start()
 
-        #run monitor peers
-        for i in range(self.number_of_monitors):
-            time.sleep(0.5)
-            Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(i+1)]).start()
-            
-        #run regular peers
-        for i in range(self.number_of_peers):
-            time.sleep(1)
-            Process(target=self.run_a_peer, args=["S", "peer", "P"+str(i+1)]).start()
+        self.attended_monitors = 0
+        self.attended_peers = 0
 
-         
+        #run monitor
+        Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)]).start()
+        self.attended_monitors += 1
+        
+        queue = Common.SIMULATOR_FEEDBACK["STATUS"]
+        m = queue.get()
+        while m[0] != "Bye":
+            if (m[0] == "R"):
+                r = random.randint(0,1)
+                if r <= Simulator.P_IN:
+                    self.addPeer()
+            
+            m= queue.get()     
+
+    def addPeer(self):
+        probabilities = [Simulator.P_MoP,Simulator.P_WIP]
+        option = np.where(np.random.multinomial(1,probabilities))[0][0]
+        if option == 0:
+            if self.attended_monitors < self.number_of_monitors:
+                Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)]).start()
+                self.attended_monitors += 1
+        elif option == 1:
+            if self.attended_peers < self.number_of_peers:
+                Process(target=self.run_a_peer, args=["S", "peer", "P"+str(self.attended_peers+1)]).start()
+                self.attended_peers += 1
+
+
+        
 if __name__ == "__main__":
     fire.Fire(Simulator)
     

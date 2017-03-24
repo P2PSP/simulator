@@ -80,7 +80,8 @@ class Peer_DBS(Peer_core):
                     Common.UDP_SOCKETS[peer].put((self.id,self.receive_and_feed_previous))
 
                     self.sendto_counter += 1
-                    print(self.id,",",self.receive_and_feed_previous[0],"->", peer)
+                    if __debug__:
+                        print(self.id,",",self.receive_and_feed_previous[0],"->", peer)
                     
                     self.debt[peer] += 1
                     
@@ -102,16 +103,19 @@ class Peer_DBS(Peer_core):
                 self.receive_and_feed_counter = 0
                 self.receive_and_feed_previous = message
 
-                print(self.id, "<-", str(chunk_number), "-", sender)
+                if __debug__:
+                    print(self.id, "<-", str(chunk_number), "-", sender)
                 
             else:
-                
-                print(self.id, "<-", str(chunk_number), "-", sender)
+
+                if __debug__:
+                    print(self.id, "<-", str(chunk_number), "-", sender)
 
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
-                    print(sender, "added by chunk", chunk_number)
+                    if __debug__:
+                        print(sender, "added by chunk", chunk_number)
                     Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node",sender))
                     Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge",self.id,sender))
 
@@ -127,23 +131,28 @@ class Peer_DBS(Peer_core):
                 self.debt[peer] += 1
                       
                 if (self.debt[peer] > self.MAX_CHUNK_DEBT):
-                      print(peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
-                      del self.debt[peer]
-                      self.peer_list.remove(peer)
+                    print(peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
+                    del self.debt[peer]
+                    self.peer_list.remove(peer)
 
-                print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
+                if __debug__:
+                    print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
+                    
                 self.receive_and_feed_counter += 1
            
             return chunk_number
 
         else:
             # A control chunk has been received
-            print("Control message received", message)
+            if __debug__:
+                print("Control message received", message)
+                
             if message[1] == "H":
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
-                    print(sender, "added by [hello]")
+                    if __debug__:
+                        print(sender, "added by [hello]")
                     Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node",sender))
                     Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge",self.id,sender))
             else:

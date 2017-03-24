@@ -117,9 +117,7 @@ class Splitter_DBS(Splitter_core):
             content = self.udp_socket.get()
             sender = content[0]
             message = content[1]
-
-            print("MENSAJE:", content)
-            
+                        
             if (message[1] == "L"):
                 lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)
@@ -162,6 +160,7 @@ class Splitter_DBS(Splitter_core):
                 print("The monitor peer has died!")
 
             if self.peer_number == 0:
+                Common.SIMULATOR_FEEDBACK["STATUS"].put(("R", self.current_round))
                 Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
                 Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
                 self.current_round += 1
