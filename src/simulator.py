@@ -176,7 +176,7 @@ class Simulator(object):
                     pass
                 
             line = drawing_log_file.readline()
-            
+
         #plt.ioff()
         #plt.show()
 
