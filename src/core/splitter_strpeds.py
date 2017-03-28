@@ -1,6 +1,6 @@
 """
 @package p2psp-simulator
-splitter_dbs module
+splitter_strpeds module
 """
 from queue import Queue
 from threading import Thread
@@ -23,7 +23,7 @@ class Splitter_STRPEDS(Splitter_DBS):
         
 
     def send_dsa_key(self):
-        #it is not needed in terms of simulation
+        #Not needed for simulation
         return NotImplementedError
 
     def gather_bad_peers(self):
@@ -31,7 +31,7 @@ class Splitter_STRPEDS(Splitter_DBS):
             Common.UDP_SOCKETS[p].put(self.id,(-1,"S"))
 
     def init_key(self):
-        #it is not needed in terms of simulation
+        #Not needed for simulation
         return NotImplementedError
 
     def process_bad_peers_message(self, message, sender):
@@ -131,7 +131,7 @@ class Splitter_STRPEDS(Splitter_DBS):
             chunk = self.receive_chunk()
             try:
                 peer = self.peer_list[self.peer_number]
-                message = (self.chunk_number, chunk)
+                message = (self.chunk_number, chunk, self.current_round)
                 
                 self.send_chunk(message, peer)
 

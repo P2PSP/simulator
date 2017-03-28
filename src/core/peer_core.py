@@ -41,7 +41,7 @@ class Peer_core():
     def buffer_data(self):
 
         for i in range(self.buffer_size):
-            self.chunks.append((-1,"L"))
+            self.chunks.append((i,"L"))
         
         chunk_number = self.process_next_message()
         
@@ -74,7 +74,7 @@ class Peer_core():
     def play_next_chunks(self, last_received_chunk):
         for i in range(last_received_chunk - self.prev_received_chunk):
            self.player_alive = self.play_chunk(self.played_chunk)
-           self.chunks[self.played_chunk % self.buffer_size] = (-1,"L")
+           self.chunks[self.played_chunk % self.buffer_size] = (self.played_chunk,"L")
            self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
