@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
-from core.peer_dbs import Peer_DBS
-from core.monitor_dbs import Monitor_DBS
 from core.splitter_dbs import Splitter_DBS
+from core.splitter_strpeds import Splitter_STRPEDS
+from core.peer_dbs import Peer_DBS
+from core.peer_strpeds import Peer_STRPEDS
+from core.monitor_dbs import Monitor_DBS
+from core.monitor_strpeds import Monitor_STRPEDS
 from core.common import Common
 from multiprocessing import Process, Queue
 import time

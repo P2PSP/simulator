@@ -78,7 +78,7 @@ class Splitter_STRPEDS(Splitter_DBS):
             r = random.randint(0,1)
             if r <= self.p_tpl:
                 self.punish_peer(tp, "by splitter")
-                del self.trusted_peers_discovered.remove(tp)
+                self.trusted_peers_discovered.remove(tp)
 
     def increment_unsupportivity_of_peer(self, peer):
         try:
