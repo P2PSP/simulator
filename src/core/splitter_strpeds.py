@@ -19,6 +19,7 @@ class Splitter_STRPEDS(Splitter_DBS):
         self.trusted_peers_discovered = []
         self.complaints = {}
         self.p_mpl = 1
+        self.p_tpl = 1
         print("Splitter STRPEDS initialized")
         
 
