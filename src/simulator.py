@@ -34,15 +34,15 @@ class Simulator(object):
 
     def run_a_peer(self, splitter_id, type, id):
         if type == "monitor":
-            if self.sor == "dbs":
+            if self.set_of_rules == "dbs":
                 peer = Monitor_DBS(id)
-            elif self.sor == "cis":
-                print("Monitors are TPs in CIS"
+            elif self.set_of_rules == "cis":
+                print("Monitors are TPs in CIS")
                 peer = Monitor_STRPEDS(id)
         else:
-            if self.sor == "dbs":
+            if self.set_of_rules == "dbs":
                 peer = Peer_DBS(id)
-            elif self.sor == "cis":
+            elif self.set_of_rules == "cis":
                 peer = Peer_STRPEDS(id)
             
         peer.set_splitter(splitter_id)
