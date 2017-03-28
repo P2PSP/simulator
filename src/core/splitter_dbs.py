@@ -170,7 +170,7 @@ class Splitter_DBS(Splitter_core):
                 self.current_round += 1
                     
                 for peer in self.outgoing_peer_list:
-                    say_goodbye(peer)
-                    remove_peer(peer)
+                    self.say_goodbye(peer)
+                    self.remove_peer(peer)
 
             del self.outgoing_peer_list[:]
