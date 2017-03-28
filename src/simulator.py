@@ -19,7 +19,8 @@ class Simulator(object):
     P_MoP = 0.5
     P_WIP = 0.5
     
-    def __init__(self, number_of_monitors, number_of_peers, drawing_log, number_of_rounds):
+    def __init__(self, set_of_rules, number_of_monitors, number_of_peers, drawing_log, number_of_rounds):
+        self.set_of_rules = set_of_rules
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
         self.drawing_log = drawing_log
@@ -33,9 +34,16 @@ class Simulator(object):
 
     def run_a_peer(self, splitter_id, type, id):
         if type == "monitor":
-            peer = Monitor_DBS(id)
+            if self.sor == "dbs":
+                peer = Monitor_DBS(id)
+            elif self.sor == "cis":
+                print("Monitors are TPs in CIS"
+                peer = Monitor_STRPEDS(id)
         else:
-            peer = Peer_DBS(id)
+            if self.sor == "dbs":
+                peer = Peer_DBS(id)
+            elif self.sor == "cis":
+                peer = Peer_STRPEDS(id)
             
         peer.set_splitter(splitter_id)
         peer.connect_to_the_splitter()
