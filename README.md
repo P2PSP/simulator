@@ -16,6 +16,5 @@ $ pip3 install networkx
 
 ```
 $ ./simulator.py run --number-of-monitors NUMBER_OF_MONITORS --number-of-peers NUMBER_OF_PEERS \
-                     --number-of-rounds NUMBER_OF_ROUNDS --drawing-log FILENAME \
-		     --set-of-rules SET_OF_RULES
+--number-of-rounds NUMBER_OF_ROUNDS --drawing-log FILENAME --set-of-rules SET_OF_RULES
 ```
