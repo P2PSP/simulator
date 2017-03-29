@@ -9,7 +9,6 @@ from .peer_dbs import Peer_DBS
 import time
 
 class Peer_STRPEDS(Peer_DBS):
-    MAX_CHUNK_DEBT = 128
     
     def __init__(self,id):
         super().__init__(id)

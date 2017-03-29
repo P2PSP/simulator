@@ -9,5 +9,8 @@ class Common():
     UDP_SOCKETS= {}
     TCP_SOCKETS = {}
 
+    #shared lists between peers
+    SHARED_LISTS = {}
+
     #Communication channel with the simulator
     SIMULATOR_FEEDBACK = {}
