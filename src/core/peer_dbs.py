@@ -58,6 +58,10 @@ class Peer_DBS(Peer_core):
     def connect_to_the_splitter(self):
         Peer_core.connect_to_the_splitter(self)
 
+    def send_chunk(self, peer):
+        Common.UDP_SOCKETS[peer].put((self.id,self.receive_and_feed_previous))
+        self.sendto_counter += 1
+
     def process_message(self, message, sender):
         if (message[0] >= 0):
             chunk_number = message[0]
@@ -77,9 +81,8 @@ class Peer_DBS(Peer_core):
                 while((self.receive_and_feed_counter < len(self.peer_list)) and (self.receive_and_feed_counter > 0 or self.modified_list)):
                     peer = self.peer_list[self.receive_and_feed_counter]
 
-                    Common.UDP_SOCKETS[peer].put((self.id,self.receive_and_feed_previous))
-
-                    self.sendto_counter += 1
+                    self.send_chunk(peer)
+                    
                     if __debug__:
                         print(self.id,",",self.receive_and_feed_previous[0],"->", peer)
                     
@@ -125,9 +128,8 @@ class Peer_DBS(Peer_core):
             if (self.receive_and_feed_counter < len(self.peer_list) and (self.receive_and_feed_previous)):
                 peer = self.peer_list[self.receive_and_feed_counter]
 
-                Common.UDP_SOCKETS[peer].put((self.id, self.receive_and_feed_previous))
-
-                self.sendto_counter += 1
+                self.send_chunk(peer)
+                
                 self.debt[peer] += 1
                       
                 if (self.debt[peer] > self.MAX_CHUNK_DEBT):
