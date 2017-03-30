@@ -15,32 +15,37 @@ class Peer_Malicious(Peer_STRPEDS):
         super().__init__(id)
         self.MPTR = 5
         self.chunks_sent_to_main_target = 0
-        print("Peer STRPEDS initialized")
+        self.persistent_attack = True
+        print("INDEX",len(Common.SHARED_LIST["malicious"]), Common.SHARED_LIST["malicious"][0])
+        Common.SHARED_LIST["malicious"][len(Common.SHARED_LIST["malicious"])] = self.id
+        print("Peer Malicious initialized")
 
     def receive_the_list_of_peers(self):
-        PeerDBS.receive_the_list_of_peers()
+        Peer_STRPEDS.receive_the_list_of_peers(self)
         self.first_main_target()
         
     def first_main_target(self):
         self.main_target = self.choose_main_target()
 
     def choose_main_target(self):
-        attacked_list = common.SHARED_LIST["attacked"]
-        malicious_list = common.SHARED_LIST["malicious"]
-        availables = list(set(attacked_list)^set(malicious_list))
+        attacked_list = Common.SHARED_LIST["attacked"]
+        malicious_list = Common.SHARED_LIST["malicious"]
+        availables = list(set(attacked_list)^set(malicious_list)^set(self.peer_list))
 
         if availables:
             target = random.choice(availables)
+            Common.SHARED_LIST["attacked"][len(Common.SHARED_LIST["attacked"])] = target
+
         else:
             target = None
-            
+        
         return target
 
     def all_attack(self):
         if __debug__:
             print("All attack mode")
             
-        common.SHARED_LIST["regular"].put(self.main_target)
+        Common.SHARED_LIST["regular"][len(Common.SHARED_LIST["regular"])](self.main_target)
 
     def get_poisoned_chunk(self, chunk):
         return (chunk[0],"B")
@@ -64,7 +69,7 @@ class Peer_Malicious(Peer_STRPEDS):
                     if __debug__:
                         print("Attacking Main target", peer, ". Replaced by", self.main_target)
             else:
-                if peer in common.SHARED_LIST["regular"]:
+                if peer in Common.SHARED_LIST["regular"]:
                     Common.UDP_SOCKETS[peer].put((self.id, poisoned_chunk))
                     self.sendto_counter += 1
                     if __debug__:

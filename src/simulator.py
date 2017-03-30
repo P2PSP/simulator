@@ -4,10 +4,12 @@ from core.splitter_dbs import Splitter_DBS
 from core.splitter_strpeds import Splitter_STRPEDS
 from core.peer_dbs import Peer_DBS
 from core.peer_strpeds import Peer_STRPEDS
+from core.peer_malicious import Peer_Malicious
 from core.monitor_dbs import Monitor_DBS
 from core.monitor_strpeds import Monitor_STRPEDS
 from core.common import Common
 from multiprocessing import Process, Queue
+from multiprocessing.sharedctypes import Array
 import time
 import fire
 import networkx as nx
@@ -15,19 +17,22 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 import random
+import ctypes
 
 class Simulator(object):
 
     P_IN = 0.8
-    P_MoP = 0.5
-    P_WIP = 0.5
+    P_MoP = 0.4
+    P_WIP = 0.4
+    P_MP = 0.2
     
-    def __init__(self, set_of_rules, number_of_monitors, number_of_peers, drawing_log, number_of_rounds):
+    def __init__(self, set_of_rules, number_of_monitors, number_of_peers, drawing_log, number_of_rounds, number_of_malicious=0):
         self.set_of_rules = set_of_rules
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
         self.drawing_log = drawing_log
         self.number_of_rounds = number_of_rounds
+        self.number_of_malicious = number_of_malicious
         
     def run_a_splitter(self):     
         splitter = Splitter_DBS()
@@ -42,6 +47,8 @@ class Simulator(object):
             elif self.set_of_rules == "cis":
                 print("Monitors are TPs in CIS")
                 peer = Monitor_STRPEDS(id)
+        elif type == "malicious":
+            peer = Peer_Malicious(id)    
         else:
             if self.set_of_rules == "dbs":
                 peer = Peer_DBS(id)
@@ -205,19 +212,28 @@ class Simulator(object):
         Common.UDP_SOCKETS['S'] = Queue()
         Common.TCP_SOCKETS['S'] = Queue()
 
+        #create shared list for CIS set of rules (only when cis is choosen?)
+        Common.SHARED_LIST["malicious"] = Array(ctypes.c_wchar_p, self.number_of_malicious)
+        Common.SHARED_LIST["regular"] = Array(ctypes.c_wchar_p, self.number_of_peers)
+        Common.SHARED_LIST["attacked"] = Array(ctypes.c_wchar_p, self.number_of_peers)
+
         for i in range(self.number_of_monitors):
             Common.UDP_SOCKETS["M"+str(i+1)] = Queue()
 
         for i in range(self.number_of_peers):
             Common.UDP_SOCKETS["P"+str(i+1)] = Queue()
 
+        for i in range(self.number_of_malicious):
+            Common.UDP_SOCKETS["MP"+str(i+1)] = Queue()
+
         #run splitter
         Process(target=self.run_a_splitter).start()
 
         self.attended_monitors = 0
         self.attended_peers = 0
+        self.attended_mps = 0
 
-        #run monitor
+        #run a monitor
         Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)]).start()
         self.attended_monitors += 1
 
@@ -235,7 +251,7 @@ class Simulator(object):
             m= queue.get()     
 
     def addPeer(self):
-        probabilities = [Simulator.P_MoP,Simulator.P_WIP]
+        probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]
         option = np.where(np.random.multinomial(1,probabilities))[0][0]
         if option == 0:
             if self.attended_monitors < self.number_of_monitors:
@@ -245,6 +261,10 @@ class Simulator(object):
             if self.attended_peers < self.number_of_peers:
                 Process(target=self.run_a_peer, args=["S", "peer", "P"+str(self.attended_peers+1)]).start()
                 self.attended_peers += 1
+        elif option == 2:
+            if self.attended_mps < self.number_of_malicious:
+                Process(target=self.run_a_peer, args=["S", "malicious", "MP"+str(self.attended_mps+1)]).start()
+                self.attended_mps += 1
 
 
         

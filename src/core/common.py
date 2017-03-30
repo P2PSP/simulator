@@ -10,7 +10,7 @@ class Common():
     TCP_SOCKETS = {}
 
     #shared lists between peers
-    SHARED_LISTS = {}
+    SHARED_LIST = {}
 
     #Communication channel with the simulator
     SIMULATOR_FEEDBACK = {}
