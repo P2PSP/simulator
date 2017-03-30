@@ -123,7 +123,6 @@ class Simulator(object):
         self.buffer_order = {}
         self.buffer_index = 1
         self.buffer_labels = self.buffer_ax.get_xticks().tolist()
-        print("XTICKS", self.buffer_labels)
         plt.grid()
         self.buffer_figure.canvas.draw()
 

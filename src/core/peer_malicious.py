@@ -16,8 +16,8 @@ class Peer_Malicious(Peer_STRPEDS):
         self.MPTR = 5
         self.chunks_sent_to_main_target = 0
         self.persistent_attack = True
-        print("INDEX",len(Common.SHARED_LIST["malicious"]), Common.SHARED_LIST["malicious"][0])
-        Common.SHARED_LIST["malicious"][len(Common.SHARED_LIST["malicious"])] = self.id
+        append_index = len(Common.SHARED_LIST["malicious"]) - list(Common.SHARED_LIST["malicious"]).count(None)
+        Common.SHARED_LIST["malicious"][append_index] = self.id
         print("Peer Malicious initialized")
 
     def receive_the_list_of_peers(self):
@@ -30,11 +30,14 @@ class Peer_Malicious(Peer_STRPEDS):
     def choose_main_target(self):
         attacked_list = Common.SHARED_LIST["attacked"]
         malicious_list = Common.SHARED_LIST["malicious"]
-        availables = list(set(attacked_list)^set(malicious_list)^set(self.peer_list))
+        availables = list(set(self.peer_list)-set(attacked_list)-set(malicious_list))
 
         if availables:
             target = random.choice(availables)
-            Common.SHARED_LIST["attacked"][len(Common.SHARED_LIST["attacked"])] = target
+            append_index = len(Common.SHARED_LIST["attacked"]) - list(Common.SHARED_LIST["attacked"]).count(None)
+            Common.SHARED_LIST["attacked"][append_index] = target
+            if __debug__:
+                print("Main target selected:",target)
 
         else:
             target = None
@@ -44,8 +47,9 @@ class Peer_Malicious(Peer_STRPEDS):
     def all_attack(self):
         if __debug__:
             print("All attack mode")
-            
-        Common.SHARED_LIST["regular"][len(Common.SHARED_LIST["regular"])](self.main_target)
+
+        append_index = len(Common.SHARED_LIST["regular"]) - list(Common.SHARED_LIST["regular"]).count(None)
+        Common.SHARED_LIST["regular"][append_index] = self.main_target
 
     def get_poisoned_chunk(self, chunk):
         return (chunk[0],"B")

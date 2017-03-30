@@ -36,7 +36,7 @@ class Splitter_STRPEDS(Splitter_DBS):
         return NotImplementedError
 
     def process_bad_peers_message(self, message, sender):
-        bad_list = message[1]
+        bad_list = message[2]
         for bad_peer in bad_list:
             if sender in self.trusted_peers:
                 self.handle_bad_peer_from_trusted(bad_peer, sender)
