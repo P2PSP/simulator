@@ -109,7 +109,7 @@ class Simulator(object):
         self.lineMonitors, = self.team_ax.plot([1,2], [10,10], color = '#A9F5D0', label="# Monitor Peers", marker='o', ls='None', markeredgecolor='#A9F5D0', animated=True)
         self.team_figure.suptitle("Number of Peers in the Team", size=16)
         plt.legend(loc=2,numpoints=1)
-        total_peers = self.number_of_monitors + self.number_of_peers
+        total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         plt.axis([0, 2000, 0, total_peers])
         self.team_figure.canvas.draw()
                 
@@ -133,8 +133,9 @@ class Simulator(object):
         self.lineOUT, = self.buffer_ax.plot([1]*2, [1]*2, color = '#CCCCCC', ls="None", label="OUT", marker='o',markeredgecolor='#CCCCCC', animated=True)
         self.buffer_figure.suptitle("Buffer Status", size=16)
         plt.legend(loc=2,numpoints=1)
-        total_peers = self.number_of_monitors + self.number_of_peers
+        total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         plt.axis([0, total_peers+1, 0, 1024])
+        plt.xticks(range(0, total_peers+1,1))
         self.buffer_order = {}
         self.buffer_index = 1
         self.buffer_labels = self.buffer_ax.get_xticks().tolist()
