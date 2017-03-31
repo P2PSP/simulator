@@ -73,23 +73,32 @@ class Simulator(object):
     def draw_net(self):
         self.G = nx.Graph()
         self.net_labels={}
-        self.color_map={'peer':'#A9BCF5', 'monitor':'#A9F5D0'}
+        self.color_map={'peer':'#A9BCF5', 'monitor':'#A9F5D0', 'malicious':'#F78181'}
         self.net_figure = plt.figure(1)
 
     def update_net(self, node, edge, direction):
         plt.figure(1)
         if node:
             self.net_labels[node]=node
-            if node[0] == "M":
+            if node[0] == "M" and node[1] == "P":
                 if direction == "IN":
-                    self.G.add_node(node, {'type':'monitor'})
+                    self.G.add_node(node, behaviour='malicious')
                 else:
-                    self.G.remove_node(node, {'type':'monitor'})
+                    print("MP removed from graph")
+                    self.G.remove_node(node)
+                    del self.net_labels[node]
+            elif node[0] == "M":
+                if direction == "IN":
+                    self.G.add_node(node, behaviour='monitor')
+                else:
+                    self.G.remove_node(node)
+                    del self.net_labels[node]
             else:
                 if direction == "IN":
-                    self.G.add_node(node, {'type':'peer'})
+                    self.G.add_node(node, behaviour='peer')
                 else:
-                    self.G.remove_node(node, {'type':'peer'})
+                    self.G.remove_node(node)
+                    del self.net_labels[node]
         else:
             if direction == "IN":
                 self.G.add_edge(*edge, color='#000000')
@@ -99,8 +108,12 @@ class Simulator(object):
         self.net_figure.clf()
         edges = self.G.edges()
         edge_color = [self.G[u][v]['color'] for u,v in edges]
+        #print("NODOS", self.G.nodes())
+        #for node in self.G.nodes():
+        #    print("NODOS", self.G.node[node])
+        node_color = [self.color_map[self.G.node[node]['behaviour']]for node in self.G]
         self.net_figure.suptitle("Overlay Network of the Team", size=16)
-        nx.draw_circular(self.G, node_color=[self.color_map[self.G.node[node]['type']]for node in self.G], node_size=400, edge_color=edge_color, labels=self.net_labels, font_size=10, font_weight='bold')
+        nx.draw_circular(self.G, node_color=node_color, node_size=400, edge_color=edge_color, labels=self.net_labels, font_size=10, font_weight='bold')
         self.net_figure.canvas.draw()
 
     def plot_team(self):
@@ -185,13 +198,19 @@ class Simulator(object):
         
         line = drawing_log_file.readline()
         while line != "Bye":
-            m = line.strip().split(";",3)
-            
+            m = line.strip().split(";",4)
             if m[0] == "O":
                 if m[1] == "Node":
-                    self.update_net(m[2], None, "IN")
+                    if m[2] == "IN":
+                        self.update_net(m[3], None, "IN")
+                    else:
+                        self.update_net(m[3], None, "OUT")
                 else:
-                    self.update_net(None, (m[2],m[3]), "IN")
+                    if m[2] == "IN":
+                        self.update_net(None, (m[3],m[4]), "IN")
+                    else:
+                        self.update_net(None, (m[3],m[4]), "OUT")
+                        
             if m[0] == "T":
                 try:
                     self.update_team(m[1],m[2],m[3])
@@ -229,8 +248,8 @@ class Simulator(object):
 
         #create shared list for CIS set of rules (only when cis is choosen?)
         Common.SHARED_LIST["malicious"] = Array(ctypes.c_wchar_p, self.number_of_malicious)
-        Common.SHARED_LIST["regular"] = Array(ctypes.c_wchar_p, self.number_of_peers+self.number_of_monitors)
-        Common.SHARED_LIST["attacked"] = Array(ctypes.c_wchar_p, self.number_of_peers+self.number_of_monitors)
+        Common.SHARED_LIST["regular"] = Array(ctypes.c_wchar_p, self.number_of_peers + self.number_of_monitors)
+        Common.SHARED_LIST["attacked"] = Array(ctypes.c_wchar_p, self.number_of_peers + self.number_of_monitors)
 
         for i in range(self.number_of_monitors):
             Common.UDP_SOCKETS["M"+str(i+1)] = Queue()

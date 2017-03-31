@@ -58,7 +58,7 @@ class Splitter_STRPEDS(Splitter_DBS):
             m = self.tcp_socket.get()
             
         self.insert_peer(incoming_peer)
-        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node",incoming_peer))
+        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
     
     def process_bad_peers_message(self, message, sender):
         bad_list = message[2]
@@ -85,6 +85,7 @@ class Splitter_STRPEDS(Splitter_DBS):
     def punish_peer(self, peer, message):
         if peer in self.peer_list:
             self.remove_peer(peer)
+            Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","OUT",peer))
             if __debug__:
                 print("bad peer", peer, message)
 

@@ -15,6 +15,7 @@ class Peer_core():
         self.buffer_size = 1024
         self.player_alive = True
         self.chunks = []
+        print("Peer", self.id)
         print("Peer Core initialized")
 
     def set_splitter(self, splitter):

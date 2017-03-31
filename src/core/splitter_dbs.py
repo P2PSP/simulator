@@ -61,7 +61,7 @@ class Splitter_DBS(Splitter_core):
             m = self.tcp_socket.get()
             
         self.insert_peer(incoming_peer)
-        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node",incoming_peer))
+        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
         
     def increment_unsupportivity_of_peer(self, peer):
         try:

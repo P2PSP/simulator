@@ -93,6 +93,7 @@ class Peer_DBS(Peer_core):
                         print(peer, "removed by unsupportive (", str(self.debt[peer]) , "lossess)")
                         del self.debt[peer]
                         self.peer_list.remove(peer)
+                        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
 
                     self.receive_and_feed_counter += 1
 
@@ -119,8 +120,8 @@ class Peer_DBS(Peer_core):
                     self.debt[sender] = 0
                     if __debug__:
                         print(sender, "added by chunk", chunk_number)
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node",sender))
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge",self.id,sender))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
 
                 else:
                     self.debt[sender] -= 1
@@ -136,6 +137,7 @@ class Peer_DBS(Peer_core):
                     print(peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
                     del self.debt[peer]
                     self.peer_list.remove(peer)
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
 
                 if __debug__:
                     print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
@@ -155,8 +157,8 @@ class Peer_DBS(Peer_core):
                     self.debt[sender] = 0
                     if __debug__:
                         print(sender, "added by [hello]")
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node",sender))
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge",self.id,sender))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
+                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
             else:
                 if sender in self.peer_list:
                     print(self.id, "received goodbye from", sender)

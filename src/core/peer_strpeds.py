@@ -22,6 +22,7 @@ class Peer_STRPEDS(Peer_DBS):
     def process_bad_message(self, message, sender):
         self.bad_peers.append(sender)
         self.peer_list.remove(sender)
+        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,sender))
 
     def is_a_control_message(self, message):
         if message[0] == -1:

@@ -16,8 +16,11 @@ class Peer_Malicious(Peer_STRPEDS):
         self.MPTR = 5
         self.chunks_sent_to_main_target = 0
         self.persistent_attack = True
-        append_index = len(Common.SHARED_LIST["malicious"]) - list(Common.SHARED_LIST["malicious"]).count(None)
+        #append_index = len(Common.SHARED_LIST["malicious"]) - list(Common.SHARED_LIST["malicious"]).count(None)
+        append_index = int(self.id[2:])-1
+        print("Indice", append_index, "MPs", Common.SHARED_LIST["malicious"][:])
         Common.SHARED_LIST["malicious"][append_index] = self.id
+        print("MPs after", Common.SHARED_LIST["malicious"][:])
         print("Peer Malicious initialized")
 
     def receive_the_list_of_peers(self):
@@ -28,8 +31,11 @@ class Peer_Malicious(Peer_STRPEDS):
         self.main_target = self.choose_main_target()
 
     def choose_main_target(self):
-        attacked_list = Common.SHARED_LIST["attacked"]
-        malicious_list = Common.SHARED_LIST["malicious"]
+        malicious_list = Common.SHARED_LIST["malicious"][:]
+        print("MPs",malicious_list)
+        attacked_list = Common.SHARED_LIST["attacked"][:]
+        #import ipdb;ipdb.set_trace()
+        print("listas, attacked", attacked_list, "MPs", malicious_list)
         availables = list(set(self.peer_list)-set(attacked_list)-set(malicious_list))
 
         if availables:
