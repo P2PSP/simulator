@@ -34,8 +34,12 @@ class Simulator(object):
         self.number_of_rounds = number_of_rounds
         self.number_of_malicious = number_of_malicious
         
-    def run_a_splitter(self):     
-        splitter = Splitter_DBS()
+    def run_a_splitter(self):
+        if self.set_of_rules == "dbs":
+            splitter = Splitter_DBS()
+        elif self.set_of_rules == "cis":
+            splitter = Splitter_STRPEDS()
+        
         splitter.start()
         while splitter.alive:
             time.sleep(1)
@@ -72,20 +76,31 @@ class Simulator(object):
         self.color_map={'peer':'#A9BCF5', 'monitor':'#A9F5D0'}
         self.net_figure = plt.figure(1)
 
-    def update_net(self,node, edge):
+    def update_net(self, node, edge, direction):
         plt.figure(1)
         if node:
             self.net_labels[node]=node
             if node[0] == "M":
-                self.G.add_node(node, {'type':'monitor'})
+                if direction == "IN":
+                    self.G.add_node(node, {'type':'monitor'})
+                else:
+                    self.G.remove_node(node, {'type':'monitor'})
             else:
-                self.G.add_node(node, {'type':'peer'})
+                if direction == "IN":
+                    self.G.add_node(node, {'type':'peer'})
+                else:
+                    self.G.remove_node(node, {'type':'peer'})
         else:
-            self.G.add_edge(*edge)
+            if direction == "IN":
+                self.G.add_edge(*edge, color='#000000')
+            else:
+                self.G.add_edge(*edge, color='r')
 
         self.net_figure.clf()
+        edges = self.G.edges()
+        edge_color = [self.G[u][v]['color'] for u,v in edges]
         self.net_figure.suptitle("Overlay Network of the Team", size=16)
-        nx.draw_circular(self.G, node_color=[self.color_map[self.G.node[node]['type']]for node in self.G], node_size=400, edge_color='#cccccc', labels=self.net_labels, font_size=10, font_weight='bold')
+        nx.draw_circular(self.G, node_color=[self.color_map[self.G.node[node]['type']]for node in self.G], node_size=400, edge_color=edge_color, labels=self.net_labels, font_size=10, font_weight='bold')
         self.net_figure.canvas.draw()
 
     def plot_team(self):
@@ -173,9 +188,9 @@ class Simulator(object):
             
             if m[0] == "O":
                 if m[1] == "Node":
-                    self.update_net(m[2], None)
+                    self.update_net(m[2], None, "IN")
                 else:
-                    self.update_net(None, (m[2],m[3]))
+                    self.update_net(None, (m[2],m[3]), "IN")
             if m[0] == "T":
                 try:
                     self.update_team(m[1],m[2],m[3])
@@ -213,8 +228,8 @@ class Simulator(object):
 
         #create shared list for CIS set of rules (only when cis is choosen?)
         Common.SHARED_LIST["malicious"] = Array(ctypes.c_wchar_p, self.number_of_malicious)
-        Common.SHARED_LIST["regular"] = Array(ctypes.c_wchar_p, self.number_of_peers)
-        Common.SHARED_LIST["attacked"] = Array(ctypes.c_wchar_p, self.number_of_peers)
+        Common.SHARED_LIST["regular"] = Array(ctypes.c_wchar_p, self.number_of_peers+self.number_of_monitors)
+        Common.SHARED_LIST["attacked"] = Array(ctypes.c_wchar_p, self.number_of_peers+self.number_of_monitors)
 
         for i in range(self.number_of_monitors):
             Common.UDP_SOCKETS["M"+str(i+1)] = Queue()

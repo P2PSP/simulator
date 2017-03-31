@@ -105,7 +105,7 @@ class Splitter_DBS(Splitter_core):
         if peer not in self.outgoing_peer_list:
             if peer in self.peer_list:
                 self.outgoing_peer_list.append(peer)
-                print("marked for deletion, peer")
+                print("marked for deletion", peer)
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")

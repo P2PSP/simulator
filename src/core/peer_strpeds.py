@@ -32,7 +32,7 @@ class Peer_STRPEDS(Peer_DBS):
     def check_message(self, message, sender):
         if sender in self.bad_peers:
             if __debug__:
-                print("Sender is in bad peer list:",sender) 
+                print(self.id,"Sender is in bad peer list:",sender) 
             return false
 
         if not self.is_a_control_message(message):
@@ -57,7 +57,7 @@ class Peer_STRPEDS(Peer_DBS):
 
         if sender in self.bad_peers:
             if __debug__:
-                print("Sender is  in the bad peer list", sender)
+                print(self.id,"Sender is  in the bad peer list", sender)
             return -1
 
         # ------------

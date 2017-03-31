@@ -7,6 +7,7 @@ from threading import Thread
 from .splitter_dbs import Splitter_DBS
 from .common import Common
 import time
+import random
 
 class Splitter_STRPEDS(Splitter_DBS):
     MAX_NUMBER_OF_CHUNK_LOSS = 32
@@ -35,6 +36,30 @@ class Splitter_STRPEDS(Splitter_DBS):
         #Not needed for simulation
         return NotImplementedError
 
+    def handle_a_peer_arrival(self):
+        content = self.tcp_socket.get()
+        incoming_peer = content[0]
+        message = content[1]
+        print(self.id,"acepted connection from peer", incoming_peer)
+        print(self.id, "message", content)
+        if (message[1] == "M"):
+            self.number_of_monitors += 1
+            self.trusted_peers.append(incoming_peer)
+        print("NUMBER OF MONITORS", self.number_of_monitors)
+                
+        self.send_the_number_of_peers(incoming_peer)
+        self.send_the_list_of_peers(incoming_peer)
+
+        #receive_ready_for_receiving_chunks
+        #check if we receive confirmation from the incoming_peer
+        m = self.tcp_socket.get()
+        while m[0] != incoming_peer:
+            self.tcp_socket.put(m)
+            m = self.tcp_socket.get()
+            
+        self.insert_peer(incoming_peer)
+        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node",incoming_peer))
+    
     def process_bad_peers_message(self, message, sender):
         bad_list = message[2]
         for bad_peer in bad_list:
@@ -65,7 +90,7 @@ class Splitter_STRPEDS(Splitter_DBS):
 
     def on_round_beginning(self):
         self.punish_peers()
-        self.punish_TPs()
+        #self.punish_TPs()
 
     def punish_peers(self):
         for b in self.bad_peers:
