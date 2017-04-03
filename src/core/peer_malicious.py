@@ -40,7 +40,8 @@ class Peer_Malicious(Peer_STRPEDS):
             Common.SHARED_LIST["attacked"].append(target)
             if __debug__:
                 print("Main target selected:",target)
-
+                
+            self.chunks_sent_to_main_target = 0
         else:
             target = None
         
@@ -85,6 +86,9 @@ class Peer_Malicious(Peer_STRPEDS):
                     self.sendto_counter += 1
                     if __debug__:
                         print("No attack", peer)
+
+            if self.main_target == None:
+                self.main_target = self.choose_main_target()
 
         #TO-DO: on-off and selective attacks
         else:

@@ -77,6 +77,7 @@ class Simulator(object):
 
     def update_net(self, node, edge, direction):
         plt.figure(1)
+        #print("Update net", node, edge, direction)
         if node:
             self.net_labels[node]=node
             if node[0] == "M" and node[1] == "P":
