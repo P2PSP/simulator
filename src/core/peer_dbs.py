@@ -90,7 +90,7 @@ class Peer_DBS(Peer_core):
                     
                     if self.debt[peer] > self.MAX_CHUNK_DEBT:
                         
-                        print(peer, "removed by unsupportive (", str(self.debt[peer]) , "lossess)")
+                        print(self.id,":",peer, "removed by unsupportive (", str(self.debt[peer]) , "lossess)")
                         del self.debt[peer]
                         self.peer_list.remove(peer)
                         Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
@@ -134,7 +134,7 @@ class Peer_DBS(Peer_core):
                 self.debt[peer] += 1
                       
                 if (self.debt[peer] > self.MAX_CHUNK_DEBT):
-                    print(peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
+                    print(self.id,":",peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
                     del self.debt[peer]
                     self.peer_list.remove(peer)
                     Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))

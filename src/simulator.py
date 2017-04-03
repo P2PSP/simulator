@@ -8,8 +8,7 @@ from core.peer_malicious import Peer_Malicious
 from core.monitor_dbs import Monitor_DBS
 from core.monitor_strpeds import Monitor_STRPEDS
 from core.common import Common
-from multiprocessing import Process, Queue
-from multiprocessing.sharedctypes import Array
+from multiprocessing import Process, Queue, Array, Manager
 import time
 import fire
 import networkx as nx
@@ -100,10 +99,11 @@ class Simulator(object):
                     self.G.remove_node(node)
                     del self.net_labels[node]
         else:
-            if direction == "IN":
-                self.G.add_edge(*edge, color='#000000')
-            else:
-                self.G.add_edge(*edge, color='r')
+            if edge[0] and edge[1] in self.G.nodes():
+                if direction == "IN":
+                    self.G.add_edge(*edge, color='#000000')
+                else:
+                    self.G.add_edge(*edge, color='r')
 
         self.net_figure.clf()
         edges = self.G.edges()
@@ -247,9 +247,10 @@ class Simulator(object):
         Common.TCP_SOCKETS['S'] = Queue()
 
         #create shared list for CIS set of rules (only when cis is choosen?)
-        Common.SHARED_LIST["malicious"] = Array(ctypes.c_wchar_p, self.number_of_malicious)
-        Common.SHARED_LIST["regular"] = Array(ctypes.c_wchar_p, self.number_of_peers + self.number_of_monitors)
-        Common.SHARED_LIST["attacked"] = Array(ctypes.c_wchar_p, self.number_of_peers + self.number_of_monitors)
+        manager = Manager()
+        Common.SHARED_LIST["malicious"] = manager.list() #Array(ctypes.c_wchar_p, self.number_of_malicious)
+        Common.SHARED_LIST["regular"] = manager.list() #Array(ctypes.c_wchar_p, self.number_of_peers + self.number_of_monitors)
+        Common.SHARED_LIST["attacked"] = manager.list() #Array(ctypes.c_wchar_p, self.number_of_peers + self.number_of_monitors)
 
         for i in range(self.number_of_monitors):
             Common.UDP_SOCKETS["M"+str(i+1)] = Queue()
