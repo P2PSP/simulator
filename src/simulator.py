@@ -83,7 +83,7 @@ class Simulator(object):
                 if direction == "IN":
                     self.G.add_node(node, behaviour='malicious')
                 else:
-                    print("MP removed from graph")
+                    print(node,"removed from graph (MP)")
                     self.G.remove_node(node)
                     del self.net_labels[node]
             elif node[0] == "M":
