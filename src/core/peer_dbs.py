@@ -97,9 +97,9 @@ class Peer_DBS(Peer_core):
 
                     self.receive_and_feed_counter += 1
 
-                if (not self.receive_and_feed_previous):
-                    self.played_chunk = message[0]
-                    print("First chunk to play modified", str(self.played_chunk))
+                #if (not self.receive_and_feed_previous):
+                    #self.played_chunk = message[0]
+                    #print(self.id,"First chunk to play modified", str(self.played_chunk))
 
                 self.modified_list = False
                 #print("sent",str(self.receive_and_feed_counter),"of",len(self.peer_list))

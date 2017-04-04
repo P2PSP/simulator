@@ -12,7 +12,7 @@ class Peer_core():
         self.socket = Common.UDP_SOCKETS[self.id]
         self.played_chunk = 0
         self.prev_received_chunk = 0
-        self.buffer_size = 1024
+        self.buffer_size = 64
         self.player_alive = True
         self.chunks = []
         print("Peer", self.id)
@@ -51,7 +51,7 @@ class Peer_core():
 
         self.played_chunk = chunk_number
 
-        print("Position in the buffer of the first chunk to play", str(self.played_chunk % self.buffer_size))
+        print(self.id,"Position in the buffer of the first chunk to play", str(self.played_chunk))
         
         while (((chunk_number - self.played_chunk) % self.buffer_size) < (self.buffer_size / 2)):
             chunk_number = self.process_next_message()

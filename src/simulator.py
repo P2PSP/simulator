@@ -148,7 +148,7 @@ class Simulator(object):
         self.buffer_figure.suptitle("Buffer Status", size=16)
         plt.legend(loc=2,numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        plt.axis([0, total_peers+1, 0, 1024])
+        plt.axis([0, total_peers+1, 0, 64])
         plt.xticks(range(0, total_peers+1,1))
         self.buffer_order = {}
         self.buffer_index = 1
@@ -156,8 +156,11 @@ class Simulator(object):
         plt.grid()
         self.buffer_figure.canvas.draw()
 
-    def update_buffer(self, node, buffer_shot):
+    def update_buffer_round(self, number_of_round):
+        self.buffer_figure.suptitle("Buffer Status "+number_of_round, size=16)
 
+    def update_buffer(self, node, buffer_shot):
+        
         if self.buffer_order.get(node) == None:
             self.buffer_order[node] = self.buffer_index
             self.buffer_labels[self.buffer_index] = node
@@ -227,6 +230,9 @@ class Simulator(object):
                     #For visualization in real time (line is not fully written)
                     print("IndexError:", m, line)
                     pass
+
+            #if m[0] == "R":
+                #self.update_buffer_round(m[1])
                 
             line = drawing_log_file.readline()
 
@@ -249,9 +255,9 @@ class Simulator(object):
 
         #create shared list for CIS set of rules (only when cis is choosen?)
         manager = Manager()
-        Common.SHARED_LIST["malicious"] = manager.list() #Array(ctypes.c_wchar_p, self.number_of_malicious)
-        Common.SHARED_LIST["regular"] = manager.list() #Array(ctypes.c_wchar_p, self.number_of_peers + self.number_of_monitors)
-        Common.SHARED_LIST["attacked"] = manager.list() #Array(ctypes.c_wchar_p, self.number_of_peers + self.number_of_monitors)
+        Common.SHARED_LIST["malicious"] = manager.list()
+        Common.SHARED_LIST["regular"] = manager.list()
+        Common.SHARED_LIST["attacked"] = manager.list()
 
         for i in range(self.number_of_monitors):
             Common.UDP_SOCKETS["M"+str(i+1)] = Queue()

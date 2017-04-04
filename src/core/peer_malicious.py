@@ -16,8 +16,7 @@ class Peer_Malicious(Peer_STRPEDS):
         self.MPTR = 5
         self.chunks_sent_to_main_target = 0
         self.persistent_attack = True
-        #append_index = len(Common.SHARED_LIST["malicious"]) - list(Common.SHARED_LIST["malicious"]).count(None)
-        #append_index = int(self.id[2:])-1
+        self.attacked_count = 0
         Common.SHARED_LIST["malicious"].append(self.id)
         print("Peer Malicious initialized")
 
@@ -29,21 +28,22 @@ class Peer_Malicious(Peer_STRPEDS):
         self.main_target = self.choose_main_target()
 
     def choose_main_target(self):
-        malicious_list = Common.SHARED_LIST["malicious"]
-        attacked_list = Common.SHARED_LIST["attacked"]
-        #import ipdb;ipdb.set_trace()
-        availables = list(set(self.peer_list)-set(attacked_list)-set(malicious_list))
+        target = None
+        
+        if self.attacked_count < (len(self.peer_list)//2):
+            malicious_list = Common.SHARED_LIST["malicious"]
+            attacked_list = Common.SHARED_LIST["attacked"]
+            #import ipdb;ipdb.set_trace()
+            availables = list(set(self.peer_list)-set(attacked_list)-set(malicious_list))
 
-        if availables:
-            target = random.choice(availables)
-            #append_index = len(Common.SHARED_LIST["attacked"]) - list(Common.SHARED_LIST["attacked"]).count(None)
-            Common.SHARED_LIST["attacked"].append(target)
-            if __debug__:
-                print("Main target selected:",target)
+            if availables:
+                target = random.choice(availables)
+                Common.SHARED_LIST["attacked"].append(target)
+                if __debug__:
+                    print("Main target selected:",target)
                 
-            self.chunks_sent_to_main_target = 0
-        else:
-            target = None
+                self.chunks_sent_to_main_target = 0
+                self.attacked_count += 1
         
         return target
 
@@ -51,7 +51,6 @@ class Peer_Malicious(Peer_STRPEDS):
         if __debug__:
             print("All attack mode")
 
-        #append_index = len(Common.SHARED_LIST["regular"]) - list(Common.SHARED_LIST["regular"]).count(None)
         Common.SHARED_LIST["regular"].append(self.main_target)
 
     def get_poisoned_chunk(self, chunk):
