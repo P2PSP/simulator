@@ -10,8 +10,11 @@ class Monitor_STRPEDS(Peer_STRPEDS):
     
     def __init__(self,id):
         super().__init__(id)
-        self.buffer_size //= 2
         print("DBS initialized by monitor")
+
+    def receive_buffer_size(self):
+        self.buffer_size = self.socket.get()//2
+        print(self.id,"buffer size received", self.buffer_size)
 
     def say_hello(self, peer):
         hello = (-1,"H")

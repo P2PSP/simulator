@@ -10,8 +10,6 @@ import time
 import random
 
 class Splitter_STRPEDS(Splitter_DBS):
-    MAX_NUMBER_OF_CHUNK_LOSS = 32
-    BUFFER_SIZE = 1024
     
     def __init__(self):
         super().__init__()
@@ -21,6 +19,11 @@ class Splitter_STRPEDS(Splitter_DBS):
         self.complaints = {}
         self.p_mpl = 1
         self.p_tpl = 1
+        
+        #--- Only for simulation purposes ---
+        self.number_of_malicious = 0
+        #------------------------------------
+
         print("Splitter STRPEDS initialized")
         
 
@@ -45,8 +48,15 @@ class Splitter_STRPEDS(Splitter_DBS):
         if (message[1] == "M"):
             self.number_of_monitors += 1
             self.trusted_peers.append(incoming_peer)
+            
+        #---- Only for simulation purposes. Unknown in real implementation -----
+        if (message[1] == "MP"):
+            self.number_of_malicious += 1
+        #-----------------------------------------------------------------------
+        
         print("NUMBER OF MONITORS", self.number_of_monitors)
-                
+
+        self.send_buffer_size(incoming_peer)
         self.send_the_number_of_peers(incoming_peer)
         self.send_the_list_of_peers(incoming_peer)
 
@@ -99,6 +109,10 @@ class Splitter_STRPEDS(Splitter_DBS):
             if r <= self.p_mpl:
                 self.punish_peer(b, "by trusted")
                 self.bad_peers.remove(b)
+                
+                #--- Only for simulation purposes ---
+                self.number_of_malicious -= 1
+                #------------------------------------
 
     def punish_TPs(self):
         for tp in self.trusted_peers_discovered:
@@ -176,6 +190,8 @@ class Splitter_STRPEDS(Splitter_DBS):
                 Common.SIMULATOR_FEEDBACK["DRAW"].put(("R", self.current_round))
                 Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
                 Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
+                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","MP",self.number_of_malicious, self.current_round))
+
                 self.current_round += 1
                 
                 for peer in self.outgoing_peer_list:

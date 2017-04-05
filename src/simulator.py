@@ -34,6 +34,7 @@ class Simulator(object):
         self.number_of_malicious = number_of_malicious
         
     def run_a_splitter(self):
+        Common.BUFFER_SIZE = (self.number_of_monitors + self.number_of_peers + self.number_of_malicious)*2
         if self.set_of_rules == "dbs":
             splitter = Splitter_DBS()
         elif self.set_of_rules == "cis":
@@ -60,6 +61,7 @@ class Simulator(object):
             
         peer.set_splitter(splitter_id)
         peer.connect_to_the_splitter()
+        peer.receive_buffer_size()
         peer.receive_the_number_of_peers()
         peer.receive_the_list_of_peers()
         peer.send_ready_for_receiving_chunks()
@@ -121,10 +123,11 @@ class Simulator(object):
         self.team_figure, self.team_ax = plt.subplots()
         self.lineWIPs, = self.team_ax.plot([1,2], [10,10], color = '#A9BCF5', label="# WIPs", marker='o', ls='None' ,markeredgecolor='#A9BCF5', animated=True)
         self.lineMonitors, = self.team_ax.plot([1,2], [10,10], color = '#A9F5D0', label="# Monitor Peers", marker='o', ls='None', markeredgecolor='#A9F5D0', animated=True)
+        self.lineMPs, = self.team_ax.plot([1,2], [10,10], color = '#DF0101', label="# Malicious Peers", marker='o', ls='None', markeredgecolor='#DF0101', animated=True)
         self.team_figure.suptitle("Number of Peers in the Team", size=16)
         plt.legend(loc=2,numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        plt.axis([0, 2000, 0, total_peers])
+        plt.axis([0, self.number_of_rounds, 0, total_peers])
         self.team_figure.canvas.draw()
                 
     def update_team(self, node, quantity, n_round):
@@ -133,10 +136,14 @@ class Simulator(object):
             self.lineMonitors.set_xdata(n_round)
             self.lineMonitors.set_ydata(quantity)
             self.team_ax.draw_artist(self.lineMonitors)
-        else:
+        elif node == "P":
             self.lineWIPs.set_xdata(n_round)
             self.lineWIPs.set_ydata(quantity)
             self.team_ax.draw_artist(self.lineWIPs)
+        else:
+            self.lineMPs.set_xdata(n_round)
+            self.lineMPs.set_ydata(quantity)
+            self.team_ax.draw_artist(self.lineMPs)
 
         self.team_figure.canvas.blit(self.team_ax.bbox)
 
@@ -148,7 +155,7 @@ class Simulator(object):
         self.buffer_figure.suptitle("Buffer Status", size=16)
         plt.legend(loc=2,numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        plt.axis([0, total_peers+1, 0, 64])
+        plt.axis([0, total_peers+1, 0, total_peers*2])
         plt.xticks(range(0, total_peers+1,1))
         self.buffer_order = {}
         self.buffer_index = 1

@@ -13,6 +13,10 @@ class Monitor_DBS(Peer_DBS):
         self.buffer_size //= 2
         print("STRPEDS initialized by monitor")
 
+    def receive_buffer_size(self):
+        self.buffer_size = self.socket.get()//2
+        print(self.id,"buffer size received", self.buffer_size)
+        
     def say_hello(self, peer):
         hello = (-1,"H")
         Common.UDP_SOCKETS[peer].put((self.id,hello))
