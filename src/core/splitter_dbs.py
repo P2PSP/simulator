@@ -143,7 +143,7 @@ class Splitter_DBS(Splitter_core):
 
     def start(self):
         Thread(target=self.run).start()
-
+        
     def run(self):
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
