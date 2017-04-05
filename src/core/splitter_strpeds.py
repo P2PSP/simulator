@@ -10,8 +10,6 @@ import time
 import random
 
 class Splitter_STRPEDS(Splitter_DBS):
-    MAX_NUMBER_OF_CHUNK_LOSS = 32
-    BUFFER_SIZE = 1024
     
     def __init__(self):
         super().__init__()
@@ -57,7 +55,8 @@ class Splitter_STRPEDS(Splitter_DBS):
         #-----------------------------------------------------------------------
         
         print("NUMBER OF MONITORS", self.number_of_monitors)
-                
+
+        self.send_buffer_size(incoming_peer)
         self.send_the_number_of_peers(incoming_peer)
         self.send_the_list_of_peers(incoming_peer)
 

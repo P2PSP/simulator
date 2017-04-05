@@ -40,6 +40,10 @@ class Peer_DBS(Peer_core):
         Common.UDP_SOCKETS[peer].put((self.id,goodbye))
         print("Goodbye sent to", peer)
 
+    def receive_buffer_size(self):
+        self.buffer_size = self.socket.get()
+        print(self.id,"buffer size received", self.buffer_size)
+        
     def receive_the_number_of_peers(self):
         self.number_of_monitors = self.socket.get()
         print(self.id,"number of monitors received")

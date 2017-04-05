@@ -18,7 +18,6 @@ class Splitter_core():
             print("S -",self.chunk_number, "->", destination)
         
         Common.UDP_SOCKETS[destination].put((self.id,message))
-
         
     def receive_chunk(self):
         time.sleep(0.05) #bit-rate control

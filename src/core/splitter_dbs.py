@@ -10,7 +10,7 @@ import time
 
 class Splitter_DBS(Splitter_core):
     MAX_NUMBER_OF_CHUNK_LOSS = 32
-    BUFFER_SIZE = 1024
+    #BUFFER_SIZE = 128
     
     def __init__(self):
         super().__init__()
@@ -19,7 +19,7 @@ class Splitter_DBS(Splitter_core):
         self.tcp_socket = Common.TCP_SOCKETS[self.id]
         self.udp_socket = Common.UDP_SOCKETS[self.id]
         self.destination_of_chunk = []
-        self.buffer_size = self.BUFFER_SIZE
+        self.buffer_size = Common.BUFFER_SIZE
         self.peer_number = 0
         self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_CHUNK_LOSS
         self.number_of_monitors = 0
@@ -27,6 +27,9 @@ class Splitter_DBS(Splitter_core):
         self.current_round = 0
         print("Splitter DBS initialized")
 
+    def send_buffer_size(self, peer):
+        Common.UDP_SOCKETS[peer].put(self.buffer_size)
+        
     def send_the_number_of_peers(self, peer):
         Common.UDP_SOCKETS[peer].put(self.number_of_monitors)
         Common.UDP_SOCKETS[peer].put(len(self.peer_list))
@@ -49,7 +52,8 @@ class Splitter_DBS(Splitter_core):
         if (message[1] == "M"):
             self.number_of_monitors += 1
         print("NUMBER OF MONITORS", self.number_of_monitors)
-                
+
+        self.send_buffer_size(incoming_peer)
         self.send_the_number_of_peers(incoming_peer)
         self.send_the_list_of_peers(incoming_peer)
 

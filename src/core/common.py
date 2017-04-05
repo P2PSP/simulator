@@ -6,6 +6,7 @@ class Common():
 
     MAX_CHUNK_NUMBER = 65536
     COUNTERS_TIMING = 1
+    BUFFER_SIZE = 128
     UDP_SOCKETS= {}
     TCP_SOCKETS = {}
 
