@@ -121,10 +121,11 @@ class Simulator(object):
         self.team_figure, self.team_ax = plt.subplots()
         self.lineWIPs, = self.team_ax.plot([1,2], [10,10], color = '#A9BCF5', label="# WIPs", marker='o', ls='None' ,markeredgecolor='#A9BCF5', animated=True)
         self.lineMonitors, = self.team_ax.plot([1,2], [10,10], color = '#A9F5D0', label="# Monitor Peers", marker='o', ls='None', markeredgecolor='#A9F5D0', animated=True)
+        self.lineMPs, = self.team_ax.plot([1,2], [10,10], color = '#DF0101', label="# Malicous Peers", marker='o', ls='None', markeredgecolor='#DF0101', animated=True)
         self.team_figure.suptitle("Number of Peers in the Team", size=16)
         plt.legend(loc=2,numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        plt.axis([0, 2000, 0, total_peers])
+        plt.axis([0, self.number_of_rounds, 0, total_peers])
         self.team_figure.canvas.draw()
                 
     def update_team(self, node, quantity, n_round):
@@ -133,10 +134,14 @@ class Simulator(object):
             self.lineMonitors.set_xdata(n_round)
             self.lineMonitors.set_ydata(quantity)
             self.team_ax.draw_artist(self.lineMonitors)
-        else:
+        elif node == "P":
             self.lineWIPs.set_xdata(n_round)
             self.lineWIPs.set_ydata(quantity)
             self.team_ax.draw_artist(self.lineWIPs)
+        else:
+            self.lineMPs.set_xdata(n_round)
+            self.lineMPs.set_ydata(quantity)
+            self.team_ax.draw_artist(self.lineMPs)
 
         self.team_figure.canvas.blit(self.team_ax.bbox)
 
