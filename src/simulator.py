@@ -33,8 +33,11 @@ class Simulator(object):
         self.number_of_rounds = number_of_rounds
         self.number_of_malicious = number_of_malicious
         
+    def get_team_size(self, n):  
+        return 2**(n-1).bit_length()
+        
     def run_a_splitter(self):
-        Common.BUFFER_SIZE = (self.number_of_monitors + self.number_of_peers + self.number_of_malicious)*2
+        Common.BUFFER_SIZE = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious)*2)
         if self.set_of_rules == "dbs":
             splitter = Splitter_DBS()
         elif self.set_of_rules == "cis":
@@ -45,6 +48,9 @@ class Simulator(object):
             time.sleep(1)
 
     def run_a_peer(self, splitter_id, type, id):
+        total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
+        chunks_before_leave = np.random.weibull(5) * (total_peers*self.number_of_rounds)
+        print(id,": alive during",chunks_before_leave, "chunks")
         if type == "monitor":
             if self.set_of_rules == "dbs":
                 peer = Monitor_DBS(id)
@@ -67,9 +73,13 @@ class Simulator(object):
         peer.send_ready_for_receiving_chunks()
         peer.buffer_data()
         peer.start()
-
-        while peer.player_alive:
-            pass
+          
+        while not peer.ready_to_leave_the_team:
+            if peer.number_of_chunks_consumed >= chunks_before_leave and peer.player_alive:
+                print(id, "reached the number of chunks consumed before leave", peer.number_of_chunks_consumed)
+                peer.player_alive = False
+                
+        print(id, "left the team")
             
     def draw_net(self):
         self.G = nx.Graph()
@@ -155,7 +165,7 @@ class Simulator(object):
         self.buffer_figure.suptitle("Buffer Status", size=16)
         plt.legend(loc=2,numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        plt.axis([0, total_peers+1, 0, total_peers*2])
+        plt.axis([0, total_peers+1, 0, self.get_team_size(total_peers*2)])
         plt.xticks(range(0, total_peers+1,1))
         self.buffer_order = {}
         self.buffer_index = 1

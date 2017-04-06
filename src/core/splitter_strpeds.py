@@ -95,7 +95,6 @@ class Splitter_STRPEDS(Splitter_DBS):
     def punish_peer(self, peer, message):
         if peer in self.peer_list:
             self.remove_peer(peer)
-            Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","OUT",peer))
             if __debug__:
                 print("bad peer", peer, message)
 
@@ -198,4 +197,4 @@ class Splitter_STRPEDS(Splitter_DBS):
                     self.say_goodbye(peer)
                     self.remove_peer(peer)
 
-            del self.outgoing_peer_list[:]
+                del self.outgoing_peer_list[:]

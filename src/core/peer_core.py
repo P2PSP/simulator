@@ -15,6 +15,11 @@ class Peer_core():
         self.buffer_size = 64
         self.player_alive = True
         self.chunks = []
+
+        #---Only for simulation purposes----
+        self.number_of_chunks_consumed = 0
+        #----------------------------------
+        
         print("Peer", self.id)
         print("Peer Core initialized")
 
@@ -36,7 +41,7 @@ class Peer_core():
         raise NotImplementedError
 
     def process_next_message(self):
-        content = self.socket.get() #replaces receive_next_message
+        content = self.socket.get() #it replaces receive_next_message
         return self.process_message(content[1], content[0])
 
     def buffer_data(self):
@@ -82,7 +87,8 @@ class Peer_core():
     
     def play_chunk(self, chunk_number):        
         #print(self.id, "chunk", chunk_number, "consumed")
-        return True
+        self.number_of_chunks_consumed += 1
+        return self.player_alive
 
     def run(self):
         while(self.player_alive):

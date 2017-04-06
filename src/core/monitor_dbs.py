@@ -10,7 +10,6 @@ class Monitor_DBS(Peer_DBS):
     
     def __init__(self,id):
         super().__init__(id)
-        self.buffer_size //= 2
         print("STRPEDS initialized by monitor")
 
     def receive_buffer_size(self):

@@ -94,6 +94,7 @@ class Splitter_DBS(Splitter_core):
     def remove_peer(self, peer):
         try:
             self.peer_list.remove(peer)
+            Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","OUT",peer))
         except ValueError:
             pass
         else:
@@ -113,7 +114,7 @@ class Splitter_DBS(Splitter_core):
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        peer.put((self.id,goodbye))
+        Common.UDP_SOCKETS[peer].put((self.id,goodbye))
         print("goodbye sent to", peer)
     
     def moderate_the_team(self):
@@ -178,4 +179,4 @@ class Splitter_DBS(Splitter_core):
                     self.say_goodbye(peer)
                     self.remove_peer(peer)
 
-            del self.outgoing_peer_list[:]
+                del self.outgoing_peer_list[:]

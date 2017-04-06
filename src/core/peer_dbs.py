@@ -13,7 +13,6 @@ class Peer_DBS(Peer_core):
     
     def __init__(self,id):
         super().__init__(id)
-        self.ready_to_leave_the_team = False
         self.max_chunk_debt = self.MAX_CHUNK_DEBT
         self.peer_list = []
         self.debt = {}
@@ -147,7 +146,7 @@ class Peer_DBS(Peer_core):
                     print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
                     
                 self.receive_and_feed_counter += 1
-           
+
             return chunk_number
 
         else:
@@ -177,7 +176,7 @@ class Peer_DBS(Peer_core):
                         self.waiting_for_goodbye = False
             return -1
 
-    def pollite_farewell(self):
+    def polite_farewell(self):
         print("Goodbye!")
         while (self.receive_and_feed_counter < len(self.peer_list)):
             Common.UDP_SOCKETS[self.peer_list[self.receive_and_feed_counter]].put((self.id,self.receive_and_feed_previous))
@@ -187,7 +186,7 @@ class Peer_DBS(Peer_core):
             self.receive_and_feed_counter += 1
 
         for peer in self.peer_list:
-            say_goodbye(peer)
+            self.say_goodbye(peer)
 
         self.ready_to_leave_the_team = True
         print("Ready to leave the team")
