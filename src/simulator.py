@@ -20,9 +20,9 @@ import ctypes
 
 class Simulator(object):
 
-    P_IN = 0.8
-    P_MoP = 0.4
-    P_WIP = 0.4
+    P_IN = 0.2
+    P_MoP = 0.2
+    P_WIP = 0.6
     P_MP = 0.2
     
     def __init__(self, set_of_rules, number_of_monitors, number_of_peers, drawing_log, number_of_rounds, number_of_malicious=0):
@@ -32,6 +32,7 @@ class Simulator(object):
         self.drawing_log = drawing_log
         self.number_of_rounds = number_of_rounds
         self.number_of_malicious = number_of_malicious
+        self.current_round = 0
         
     def get_team_size(self, n):  
         return 2**(n-1).bit_length()
@@ -49,8 +50,8 @@ class Simulator(object):
 
     def run_a_peer(self, splitter_id, type, id):
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        chunks_before_leave = np.random.weibull(5) * (total_peers*self.number_of_rounds)
-        print(id,": alive during",chunks_before_leave, "chunks")
+        chunks_before_leave = np.random.weibull(2) * (total_peers*(self.number_of_rounds-self.current_round))
+        print(id,": alive till consuming",chunks_before_leave, "chunks")
         if type == "monitor":
             if self.set_of_rules == "dbs":
                 peer = Monitor_DBS(id)
@@ -75,7 +76,7 @@ class Simulator(object):
         peer.start()
           
         while not peer.ready_to_leave_the_team:
-            if peer.number_of_chunks_consumed >= chunks_before_leave and peer.player_alive:
+            if type != "malicious" and peer.number_of_chunks_consumed >= chunks_before_leave and peer.player_alive:
                 print(id, "reached the number of chunks consumed before leave", peer.number_of_chunks_consumed)
                 peer.player_alive = False
                 
@@ -300,11 +301,12 @@ class Simulator(object):
         m = queue.get()
         while m[0] != "Bye":
             if (m[0] == "R"):
-                r = random.randint(0,1)
+                self.current_round = m[1]
+                r = np.random.uniform(0,1)
                 if r <= Simulator.P_IN:
                     self.addPeer()
 
-                if m[1] == self.number_of_rounds:
+                if self.current_round == self.number_of_rounds:
                     Common.UDP_SOCKETS['S'].put(("SIM",(-1,"K")))
                                                 
             m= queue.get()     
