@@ -27,4 +27,11 @@ simulator.queues[0].put((4, -1)) # Peer, chunk, splitter
 simulator.queues[1].put((5, -1)) # Peer, chunk, splitter
 simulator.queues[2].put((6, -1)) # Peer, chunk, splitter
 
+simulator.queues[0].put((7, -1)) # Peer, chunk, splitter
+simulator.queues[1].put((8, -1)) # Peer, chunk, splitter
+simulator.queues[2].put((9, -1)) # Peer, chunk, splitter
+
+simulator.queues[0].put((10, -1)) # Peer, chunk, splitter
+simulator.queues[1].put((11, -1)) # Peer, chunk, splitter
+simulator.queues[2].put((12, -1)) # Peer, chunk, splitter
 
