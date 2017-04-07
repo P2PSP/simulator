@@ -77,6 +77,8 @@ class Peer_STRPEDS(Peer_DBS):
             if self.played > 0 and self.played >= len(self.peer_list):
                 clr = self.losses/self.played
                 Common.SIMULATOR_FEEDBACK["DRAW"].put(("CLR",self.id,clr))
+                self.losses = 0
+                self.played = 0
         # ------------
 
         if sender == self.splitter["id"] or self.check_message(message, sender):

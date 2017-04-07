@@ -195,7 +195,28 @@ class Simulator(object):
         self.lineIN.set_ydata(buffer_in)
         self.buffer_ax.draw_artist(self.lineIN)
 
-        self.buffer_figure.canvas.blit(self.buffer_ax.bbox)       
+        self.buffer_figure.canvas.blit(self.buffer_ax.bbox)
+
+    def plot_clr(self):
+        self.clrs_per_round = []
+        self.clr_figure, self.clr_ax = plt.subplots()
+        self.lineCLR, = self.clr_ax.plot([1,2], [10,10], color = '#000000', label="# WIPs", marker='o', ls='None' ,markeredgecolor='#000000', animated=True)
+        self.clr_figure.suptitle("Chunk Loss Ratio", size=16)
+        plt.legend(loc=2,numpoints=1)
+        plt.axis([0, self.number_of_rounds, 0, 1])
+        self.clr_figure.canvas.draw()
+                
+    def update_clrs(self, peer, clr):
+        if peer[:2] != "MP":
+            self.clrs_per_round.append(clr)
+
+    def update_clr_plot(self, n_round):
+         if len(self.clrs_per_round) > 0:
+             self.lineCLR.set_xdata(n_round)
+             self.lineCLR.set_ydata(np.mean(self.clrs_per_round))
+             self.clr_ax.draw_artist(self.lineCLR)
+             self.clr_figure.canvas.blit(self.clr_ax.bbox)
+             self.clrs_per_round = []
         
     def store(self):
         drawing_log_file = open(self.drawing_log, "w", 1)
@@ -222,6 +243,7 @@ class Simulator(object):
         self.draw_net()
         self.plot_team()
         self.draw_buffer()
+        self.plot_clr()
         
         line = drawing_log_file.readline()
         while line != "Bye":
@@ -254,7 +276,11 @@ class Simulator(object):
                     print("IndexError:", m, line)
                     pass
 
-            #if m[0] == "R":
+            if m[0] == "CLR":
+                self.update_clrs(m[1],float(m[2]))
+
+            if m[0] == "R":
+                self.update_clr_plot(m[1])
                 #self.update_buffer_round(m[1])
                 
             line = drawing_log_file.readline()
