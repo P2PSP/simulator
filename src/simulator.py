@@ -199,6 +199,11 @@ class Simulator(object):
         
     def store(self):
         drawing_log_file = open(self.drawing_log, "w", 1)
+
+        #Configuration in the first line
+        m = ["C",self.number_of_monitors, self.number_of_peers, self.number_of_malicious, self.number_of_rounds, self.set_of_rules]
+        drawing_log_file.write(";".join(map(str,m))+'\n')
+    
         queue = Common.SIMULATOR_FEEDBACK["DRAW"]
         m = queue.get()
         

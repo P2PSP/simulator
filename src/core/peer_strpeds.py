@@ -13,6 +13,8 @@ class Peer_STRPEDS(Peer_DBS):
     def __init__(self,id):
         super().__init__(id)
         self.bad_peers = []
+        self.losses = 0
+        self.played = 0
         print("Peer STRPEDS initialized")
 
     def receive_dsa_key(self):
@@ -54,6 +56,15 @@ class Peer_STRPEDS(Peer_DBS):
 
         return -1
 
+    def play_chunk(self, chunk_number):
+        if self.chunks[chunk_number%self.buffer_size][1] == "C":
+            self.played +=1
+        else:
+            self.losses += 1
+            
+        self.number_of_chunks_consumed += 1
+        return self.player_alive
+
     def process_message(self, message, sender):
 
         if sender in self.bad_peers:
@@ -61,8 +72,11 @@ class Peer_STRPEDS(Peer_DBS):
                 print(self.id,"Sender is  in the bad peer list", sender)
             return -1
 
-        # ------------
-        # Update SIMULATOR INFO (probably not necessary)
+        # ----- Check if new round for peer -------
+        if not self.is_a_control_message(message) and sender == self.splitter["id"]:
+            if self.played > 0 and self.played >= len(self.peer_list):
+                clr = self.losses/self.played
+                Common.SIMULATOR_FEEDBACK["DRAW"].put(("CLR",self.id,clr))
         # ------------
 
         if sender == self.splitter["id"] or self.check_message(message, sender):
