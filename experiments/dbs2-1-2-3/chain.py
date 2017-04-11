@@ -36,14 +36,15 @@ class Node():
 
             # Receive a chunk
             chunk, ttl, sender = queues[self.node].get()
-            print('Node', self.node, ': received chunk', chunk, 'from', sender)
+            print('Node {}: {} from {}'.format(self.node, chunk, sender))
+            #print('Node', self.node, ': received chunk', chunk, 'from', sender)
 
             # Store the chunk in the buffer
             self.buffer[chunk % buffer_size] = chunk
 
             # Flooding pattern: send the received chunk to the next
             # peer of the chain.
-            destination_node = self.neighbors[len(self.neighbors)-1]
+            destination_node = (self.node + 1) % number_of_nodes
 
             # Send the chunk
             if(ttl>0):
