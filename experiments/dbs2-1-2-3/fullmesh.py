@@ -1,5 +1,5 @@
-# Chain simulation
-# Peers send to their higher peer id.
+# Full-mesh simulation
+# Peers send only the splitter's chunk to the rest of the team
 
 import threading
 import queue
