@@ -15,6 +15,10 @@ class Monitor_DBS(Peer_DBS):
     def receive_buffer_size(self):
         self.buffer_size = self.socket.get()//2
         print(self.id,"buffer size received", self.buffer_size)
+
+        #--- Only for simulation purposes ----
+        self.sender_of_chunks = [""]*self.buffer_size
+        #-------------------------------------
         
     def say_hello(self, peer):
         hello = (-1,"H")

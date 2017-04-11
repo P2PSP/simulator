@@ -25,7 +25,7 @@ class Peer_DBS(Peer_core):
         self.modified_list = False
         self.number_of_peers = 0
         self.sendto_counter = 0
-        self.ready_to_leave_the_team = False
+        self.ready_to_leave_the_team = False        
         print("max_chunk_debt", self.MAX_CHUNK_DEBT)
         print("Peer DBS initialized")
 
@@ -42,6 +42,10 @@ class Peer_DBS(Peer_core):
     def receive_buffer_size(self):
         self.buffer_size = self.socket.get()
         print(self.id,"buffer size received", self.buffer_size)
+
+        #--- Only for simulation purposes ----
+        self.sender_of_chunks = [""]*self.buffer_size
+        #-------------------------------------
         
     def receive_the_number_of_peers(self):
         self.number_of_monitors = self.socket.get()
@@ -71,12 +75,15 @@ class Peer_DBS(Peer_core):
             chunk = message[1]
 
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
-
+            
             #--- for simulation purposes only ----
+            self.sender_of_chunks[chunk_number % self.buffer_size] = sender
+
             chunks = ""
             for n,c in self.chunks:
                 chunks += c
             Common.SIMULATOR_FEEDBACK["DRAW"].put(("B",self.id,chunks))
+            Common.SIMULATOR_FEEDBACK["DRAW"].put(("S",self.id,",".join(self.sender_of_chunks)))
             #--------------------------------------
             
             self.received_counter += 1
