@@ -71,14 +71,14 @@ class Peer_DBS(Peer_core):
             chunk = message[1]
 
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
-            #Common.SIMULATOR_FEEDBACK["BUFFER"].put(("IN",self.id,(chunk_number % self.buffer_size)))
 
+            #--- for simulation purposes only ----
             chunks = ""
             for n,c in self.chunks:
                 chunks += c
             Common.SIMULATOR_FEEDBACK["DRAW"].put(("B",self.id,chunks))
+            #--------------------------------------
             
-            #print("Chunk",chunk_number,"received from",sender,"inserted in", (chunk_number % self.buffer_size))
             self.received_counter += 1
             if (sender == self.splitter["id"]):
                 while((self.receive_and_feed_counter < len(self.peer_list)) and (self.receive_and_feed_counter > 0 or self.modified_list)):
@@ -105,8 +105,6 @@ class Peer_DBS(Peer_core):
                     #print(self.id,"First chunk to play modified", str(self.played_chunk))
 
                 self.modified_list = False
-                #print("sent",str(self.receive_and_feed_counter),"of",len(self.peer_list))
-                #print("Last chunk saved in receive and feed", str(message[0]))
                 self.receive_and_feed_counter = 0
                 self.receive_and_feed_previous = message
 
