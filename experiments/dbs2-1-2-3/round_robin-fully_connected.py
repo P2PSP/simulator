@@ -1,4 +1,4 @@
-# Create a team and serve the peers using round-robin scheduling
+# Create a full-connected team and serve the peers using round-robin scheduling
 
 import simulator
 import time
