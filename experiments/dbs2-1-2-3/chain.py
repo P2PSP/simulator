@@ -1,3 +1,6 @@
+# Chain simulation
+# Peers send to their higher peer id.
+
 import threading
 import queue
 import sys
@@ -11,11 +14,10 @@ queues = [None]*number_of_nodes
 
 class Node():
 
-    def __init__(self, node):
+    def __init__(self, node_number):
         super(Node,self).__init__()
-        self.node = node # Node number
+        self.node = node_number
         self.neighbors = []
-        self.distances = [1000] * number_of_nodes
         self.gw = [None] * number_of_nodes # GW of each peer
         self.chunks_to_send = {} # To each neighbor
         self.buffer = [None] * buffer_size
@@ -30,35 +32,23 @@ class Node():
     def get_neighbors(self):
         return self.neighbors
 
-    def det_distances(self):
-        return self.distances
-    
     # Run forwarding algorithm
     def run(self):
 
         print('Node', self.node, ': running')
 
-        neighbors_counter = 0
-        found_new_route = False
-        
         while True:
             # Receive a chunk
             chunk, received_distances, sender = queues[self.node].get()
             print('Node', self.node, ': received chunk', chunk, 'from', sender)
 
-            # Compute shorter distances
-            for i, distance in enumerate(received_distances):
-                if distance + self.distances[sender] < self.distances[i]:
-                    self.distances[i] = distance + self.distances[sender]
-                    self.gw[i] = sender
-                    found_new_route = True
-            
             # Store the chunk in the buffer
             self.buffer[chunk % buffer_size] = chunk
 
-            # Determine the flooding pattern for the received chunk
-            # (exclude the sender of the chunk and those neighbors
-            # which are closer than me from the destination).
+            # Flooding pattern: send the received chunk to the next
+            # peer of the chain.
+            destination_peer = (self.node + 1) % number_of_nodes 
+            queues[destination_node].put((chunk, self.node))
 
             for node in self.neighbors:
                 if node != sender:

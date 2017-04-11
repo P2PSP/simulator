@@ -1,3 +1,5 @@
+# Create a team and serve the peers using round-robin scheduling
+
 import simulator
 import time
 
