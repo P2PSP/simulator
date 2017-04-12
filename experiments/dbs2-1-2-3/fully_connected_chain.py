@@ -34,7 +34,6 @@ class Node():
             chunk, ttl, sender = queues[self.node].get()
             if __debug__:
                 print('Node {}: received {} from {} (TTL={})'.format(self.node, chunk, sender, ttl))
-            #print('Node', self.node, ': received chunk', chunk, 'from', sender)
 
             # Store the chunk in the buffer
             self.buffer[chunk % buffer_size] = chunk
