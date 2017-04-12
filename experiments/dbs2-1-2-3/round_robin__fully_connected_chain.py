@@ -17,15 +17,16 @@ simulator.queues[1].put((3, 1, -1))
 n2 = simulator.Node(2)
 n2.start()
 
-simulator.queues[0].put((4, 2, -1))
-simulator.queues[1].put((5, 2, -1))
-simulator.queues[2].put((6, 2, -1))
+for i in range(10):
+    simulator.queues[0].put((4+i*3, 2, -1))
+    simulator.queues[1].put((5+i*3, 2, -1))
+    simulator.queues[2].put((6+i*3, 2, -1))
 
-simulator.queues[0].put((7, 2, -1))
-simulator.queues[1].put((8, 2, -1))
-simulator.queues[2].put((9, 2, -1))
+#simulator.queues[0].put((7, 2, -1))
+#simulator.queues[1].put((8, 2, -1))
+#simulator.queues[2].put((9, 2, -1))
 
-simulator.queues[0].put((10, 2, -1))
-simulator.queues[1].put((11, 2, -1))
-simulator.queues[2].put((12, 2, -1))
+#simulator.queues[0].put((10, 2, -1))
+#simulator.queues[1].put((11, 2, -1))
+#simulator.queues[2].put((12, 2, -1))
 
