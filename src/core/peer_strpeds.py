@@ -61,6 +61,8 @@ class Peer_STRPEDS(Peer_DBS):
             self.played +=1
         else:
             self.losses += 1
+            print(self.id,"LOST:", chunk_number, "from", self.sender_of_chunks[chunk_number%self.buffer_size], "position", chunk_number%self.buffer_size)
+            print(self.id, "CONTENT:",  self.chunks)
             
         self.number_of_chunks_consumed += 1
         return self.player_alive

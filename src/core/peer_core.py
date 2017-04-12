@@ -58,7 +58,7 @@ class Peer_core():
 
         print(self.id,"Position in the buffer of the first chunk to play", str(self.played_chunk))
         
-        while (((chunk_number - self.played_chunk) % self.buffer_size) < (self.buffer_size / 2)):
+        while (chunk_number < self.played_chunk or ((chunk_number - self.played_chunk) % self.buffer_size) < (self.buffer_size // 2)):
             chunk_number = self.process_next_message()
             #while (chunk_number < 0 or chunk_number < self.played_chunk):
             while (chunk_number < self.played_chunk):
@@ -74,12 +74,12 @@ class Peer_core():
         self.play_next_chunks(last_received_chunk)
 
     def play_next_chunks(self, last_received_chunk):
-        for i in range(last_received_chunk - self.prev_received_chunk):
-           self.player_alive = self.play_chunk(self.played_chunk)
-           self.chunks[self.played_chunk % self.buffer_size] = (self.played_chunk,"L")
-           self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
-        if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
-            self.prev_received_chunk = last_received_chunk
+        #for i in range(last_received_chunk - self.prev_received_chunk):
+        self.player_alive = self.play_chunk(self.played_chunk)
+        self.chunks[self.played_chunk % self.buffer_size] = (self.played_chunk,"L")
+        self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
+        #if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
+        #    self.prev_received_chunk = last_received_chunk
     
     def play_chunk(self, chunk_number):        
         self.number_of_chunks_consumed += 1
