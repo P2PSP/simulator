@@ -1,5 +1,5 @@
-# Full-mesh simulation
-# Peers send only the splitter's chunk to the rest of the team
+# Full-mesh simulation (original DBS) over a fully connected team.
+# Peers send only the splitter's chunk to the rest of the team.
 
 import threading
 import queue
