@@ -1,5 +1,6 @@
+# Create a full-connected team and serve the peers using round-robin scheduling
+
 import fully_connected_mesh as simulator
-import time
 
 n0 = simulator.Node(0)
 n0.start()
@@ -11,12 +12,13 @@ n1 = simulator.Node(1)
 n1.start()
 
 simulator.queues[0].put((2, -1))
-simulator.queues[0].put((3, -1))
+simulator.queues[1].put((3, -1))
 
 n2 = simulator.Node(2)
 n2.start()
 
-for i in range(30):
+for i in range(10):
     simulator.queues[0].put((i+4, -1))
-
+    simulator.queues[1].put((i+5, -1))
+    simulator.queues[2].put((i+6, -1))
 

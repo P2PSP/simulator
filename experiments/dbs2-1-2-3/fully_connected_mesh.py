@@ -13,6 +13,8 @@ queues = [None] * max_number_of_nodes
 
 class Node():
 
+    number_of_nodes = 0
+    
     def __init__(self, node_number):
         super(Node,self).__init__()
         self.node = node_number
@@ -30,10 +32,10 @@ class Node():
         while True:
             
             # Receive a chunk
-            chunk, ttl, sender = queues[self.node].get() # TTL field unused
+            chunk, sender = queues[self.node].get()
 
             if __debug__:
-                print('Node {}: received {} from {} (TTL={})'.format(self.node, chunk, sender, ttl))
+                print('Node {}: received {} from {}'.format(self.node, chunk, sender))
 
             # Store the chunk in the buffer
             self.buffer[chunk % buffer_size] = chunk
@@ -41,25 +43,25 @@ class Node():
             # Print the content of the buffer
             print('Node {}: buffer = |'.format(self.node), end='')
             for i in self.buffer:
-                if i!= None:
+                if i != None:
                     print('{:2d}|'.format(i), end='')
-            else:
-                print('--|', end='')
+                else:
+                    print('  |', end='')
             print()
             
             # Flooding pattern: send the chunk received from the
             # splitter to the rest of peers of the team
 
             if destination_node != self.node:
-                queues[destination_node].put((chunk, 0, self.node))
+                queues[destination_node].put((chunk, self.node))
                 if __debug__:
                     print('Node {}: sent {} to {} (number_of_nodes={})'.\
                           format(self.node, chunk, destination_node, Node.number_of_nodes))
-            destination_node += 1
+            destination_node = (destination_node + 1) % Node.number_of_nodes
             
             sys.stdout.flush()
             time.sleep(0.1)
 
     def start(self):
         threading.Thread(target=self.run).start()
-        
+
