@@ -32,11 +32,13 @@ class Node():
             # Receive a chunk
             chunk, ttl, sender = queues[self.node].get()
             if __debug__:
-                print('Node {}: {} from {}'.format(self.node, chunk, sender))
+                print('Node {}: received {} from {}'.format(self.node, chunk, sender))
             #print('Node', self.node, ': received chunk', chunk, 'from', sender)
 
             # Store the chunk in the buffer
             self.buffer[chunk % buffer_size] = chunk
+
+            # Print the content of the buffer
             print('Node {}: buffer=|'.format(self.node), end='')
             for i in self.buffer:
                 if i!= None:
@@ -54,9 +56,8 @@ class Node():
                 queues[destination_node].put((chunk, ttl-1, self.node))
                 
             if __debug__:
-                print('Node', self.node, \
-                      'destination_node =', destination_node, \
-                      'chunk =', chunk)
+                print('Node {}: sent {} to {}'.\
+                      format(self.node, chunk, destination_node))
             
             sys.stdout.flush()
             time.sleep(0.1)
