@@ -1,4 +1,4 @@
-import chain__fully_connected as simulator
+import fully_connected_chain as simulator
 import time
 
 n0 = simulator.Node(0)
