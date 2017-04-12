@@ -8,7 +8,7 @@ import io
 import time
 
 max_number_of_nodes = 3
-buffer_size = max_number_of_nodes
+buffer_size = 40
 queues = [None] * max_number_of_nodes
 
 class Node():
@@ -19,6 +19,7 @@ class Node():
         super(Node,self).__init__()
         self.node = node_number
         self.buffer = [None] * buffer_size
+        self.sender = [None] * buffer_size
         queues[self.node] = queue.Queue()
         
     # Run forwarding algorithm
@@ -37,14 +38,18 @@ class Node():
 
             # Store the chunk in the buffer
             self.buffer[chunk % buffer_size] = chunk
+            self.sender[chunk % buffer_size] = sender
 
             # Print the content of the buffer
-            print('Node {}: buffer = |'.format(self.node), end='')
+            print('Node {}: buffer = '.format(self.node), end='')
             for i in self.buffer:
                 if i!= None:
-                    print('{:2d}|'.format(i), end='')
+                    if self.sender[i] == -1:
+                        print('{:2d}*'.format(i), end='')
+                    else:
+                        print('{:2d}.'.format(i), end='')
                 else:
-                    print('--|', end='')
+                    print('  |', end='')
             print()
             
             # Flooding pattern: send the received chunk to the next

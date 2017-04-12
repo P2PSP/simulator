@@ -8,7 +8,7 @@ import io
 import time
 
 max_number_of_nodes = 3
-buffer_size = max_number_of_nodes
+buffer_size = 40
 queues = [None] * max_number_of_nodes
 
 class Node():
