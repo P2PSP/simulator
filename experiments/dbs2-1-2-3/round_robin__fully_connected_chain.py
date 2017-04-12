@@ -1,6 +1,6 @@
 # Create a full-connected team and serve the peers using round-robin scheduling
 
-import chain as simulator
+import fully_connected_chain as simulator
 import time
 
 n0 = simulator.Node(0)
