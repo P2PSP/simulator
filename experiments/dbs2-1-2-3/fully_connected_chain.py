@@ -8,7 +8,7 @@ import io
 import time
 
 max_number_of_nodes = 3
-buffer_size = 1
+buffer_size = 3
 queues = [None] * max_number_of_nodes
 
 class Node():
@@ -25,7 +25,7 @@ class Node():
     # Run forwarding algorithm
     def run(self):
 
-        print('Node', self.node, ': running')
+        print('Node {}: running'.format(self.node))
 
         while True:
 
@@ -37,7 +37,13 @@ class Node():
 
             # Store the chunk in the buffer
             self.buffer[chunk % buffer_size] = chunk
-            print('Node {}: buffer[{}]={}'.format(self.node, chunk % buffer_size, chunk))
+            print('Node {}: buffer=|'.format(self.node), end='')
+            for i in self.buffer:
+                if i!= None:
+                    print('{:2d}|'.format(i), end='')
+                else:
+                    print('--|', end='')
+            print()
             
             # Flooding pattern: send the received chunk to the next
             # peer of the chain.
