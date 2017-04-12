@@ -107,7 +107,7 @@ class Peer_DBS(Peer_core):
 
                     self.receive_and_feed_counter += 1
 
-                #Modifying the first chunk to play
+                #Modifying the first chunk to play (it increases the delay)
                 #if (not self.receive_and_feed_previous):
                     #self.played_chunk = message[0]
                     #print(self.id,"First chunk to play modified", str(self.played_chunk))
