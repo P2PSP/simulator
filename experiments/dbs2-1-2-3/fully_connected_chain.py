@@ -1,5 +1,5 @@
 # Chain simulation over a fully connected mesh.
-# Peer i sends to i+1.
+# Peer i sends to peer i+1.
 
 import threading
 import queue
@@ -8,7 +8,7 @@ import io
 import time
 
 max_number_of_nodes = 3
-buffer_size = 3
+buffer_size = max_number_of_nodes
 queues = [None] * max_number_of_nodes
 
 class Node():
