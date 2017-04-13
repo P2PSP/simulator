@@ -7,7 +7,7 @@ import sys
 import io
 import time
 
-max_number_of_nodes = 3
+max_number_of_nodes = 10
 buffer_size = 40
 queues = [None] * max_number_of_nodes
 
@@ -16,7 +16,7 @@ class Node():
     number_of_nodes = 0
     
     def __init__(self, node_number):
-        super(Node,self).__init__()
+        super(Node, self).__init__()
         self.node = node_number
         self.buffer = [None] * buffer_size
         self.sender = [None] * buffer_size
@@ -42,14 +42,23 @@ class Node():
             # Print the content of the buffer
             print('Node {}: buffer = '.format(self.node), end='')
             for i in self.buffer:
-                if i!= None:
-                    if self.sender[i] == -1:
-                        print('{:2d}*'.format(i), end='')
-                    else:
-                        print('{:2d}.'.format(i), end='')
+                if i != None:
+                    print('{:2d},{:2d} '.format(i, self.sender[i]), end='')
                 else:
-                    print('  |', end='')
+                    print('  ,   ', end='')
             print()
+                    
+            # Print the content of the buffer
+            #print('Node {}: buffer = '.format(self.node), end='')
+            #for i in self.buffer:
+            #    if i!= None:
+            #        if self.sender[i] == -1:
+            #            print('{:2d}*'.format(i), end='')
+            #        else:
+            #            print('{:2d}.'.format(i), end='')
+            #    else:
+            #        print('  |', end='')
+            #print()
             
             # Flooding pattern: send the received chunk to the next
             # peer of the chain

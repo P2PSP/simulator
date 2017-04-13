@@ -1,5 +1,4 @@
 import fully_connected_chain as simulator
-import time
 
 n0 = simulator.Node(0)
 n0.start()
@@ -16,6 +15,12 @@ simulator.queues[0].put((3, 1, -1))
 n2 = simulator.Node(2)
 n2.start()
 
+simulator.queues[0].put((4, 2, -1))
+simulator.queues[0].put((5, 2, -1))
+
+n3 = simulator.Node(3)
+n3.start()
+
 for i in range(30):
-    simulator.queues[0].put((i+4, 2, -1))
+    simulator.queues[0].put((i+6, 3, -1))
 
