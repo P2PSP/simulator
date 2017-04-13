@@ -8,8 +8,8 @@ import io
 import time
 #import colorama
 
-max_number_of_nodes = 3
-buffer_size = 40
+max_number_of_nodes = 4
+buffer_size = 50
 queues = [None] * max_number_of_nodes
 
 class Node():
@@ -50,7 +50,7 @@ class Node():
             for i in self.buffer:
                 if i != None:
                     #print(colorama.Fore.RED + '{:2d}*'.format(i), end=colorama.Style.RESET_ALL + '')
-                    print('{:2d},{:2d} '.format(i, self.sender[i]), end='')
+                    print('{:2d},{:2d} '.format(i, self.sender[i % buffer_size]), end='')
                 else:
                     print('  ,   ', end='')
             print()

@@ -43,7 +43,7 @@ class Node():
             print('Node {}: buffer = '.format(self.node), end='')
             for i in self.buffer:
                 if i != None:
-                    print('{:2d},{:2d} '.format(i, self.sender[i]), end='')
+                    print('{:2d},{:2d} '.format(i, self.sender[i % buffer_size]), end='')
                 else:
                     print('  ,   ', end='')
             print()

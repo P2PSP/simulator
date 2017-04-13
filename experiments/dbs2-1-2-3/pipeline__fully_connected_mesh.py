@@ -16,7 +16,10 @@ simulator.queues[0].put((3, -1))
 n2 = simulator.Node(2)
 n2.start()
 
+n3 = simulator.Node(3)
+n3.start()
+
 for i in range(30):
-    simulator.queues[0].put((i+4, -1))
+    simulator.queues[0].put((i+6, -1))
 
 
