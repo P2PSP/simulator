@@ -18,13 +18,13 @@ n2 = simulator.Node(2)
 n2.start()
 
 simulator.queues[0].put((4, 2, -1))
-simulator.queues[1].put((5, 2, -1))
-simulator.queues[2].put((6, 2, -1))
+simulator.queues[1].put((5, 3, -1))
+simulator.queues[2].put((6, 3, -1))
 
 n3 = simulator.Node(3)
 n3.start()
 
-for i in range(10):
+for i in range(12):
     simulator.queues[0].put((7+i*4, 3, -1))
     simulator.queues[1].put((8+i*4, 3, -1))
     simulator.queues[2].put((9+i*4, 3, -1))
