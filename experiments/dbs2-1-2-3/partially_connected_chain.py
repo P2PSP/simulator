@@ -1,4 +1,4 @@
-# Full-mesh simulation (original DBS) over a fully connected team.
+# Chain commnication over a partially connected mesh.simulation (original DBS) over a fully connected team.
 # Peers send only the splitter's chunk to the rest of the team.
 
 import threading
