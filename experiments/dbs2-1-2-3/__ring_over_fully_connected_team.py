@@ -1,5 +1,5 @@
-# Chain simulation over a fully connected mesh.
-# Peer i sends to peer i+1.
+# Simulation of a ring-based transmission model over a fully connected
+# mesh.  Peer i sends to peer i+1.
 
 import threading
 import queue
