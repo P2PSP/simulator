@@ -1,4 +1,4 @@
-import fully_connected_chain as simulator
+import __ring_over_fully_connected_team as simulator
 
 n0 = simulator.Node(0)
 n0.start()
@@ -21,6 +21,6 @@ simulator.queues[0].put((5, 2, -1))
 n3 = simulator.Node(3)
 n3.start()
 
-for i in range(30):
+for i in range(50):
     simulator.queues[0].put((i+6, 3, -1))
 

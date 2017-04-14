@@ -1,4 +1,5 @@
-import fully_connected_mesh as simulator
+# This configuration does not work
+import __star_over_fully_connected_team as simulator
 import time
 
 n0 = simulator.Node(0)
@@ -19,7 +20,7 @@ n2.start()
 n3 = simulator.Node(3)
 n3.start()
 
-for i in range(30):
+for i in range(50):
     simulator.queues[0].put((i+6, -1))
 
 

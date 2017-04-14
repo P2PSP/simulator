@@ -18,18 +18,20 @@ import sys
 import io
 import time
 
-max_number_of_nodes = 3
-buffer_size = max_number_of_nodes
+max_number_of_nodes = 10
+buffer_size = 50
 queues = [None] * max_number_of_nodes
 
 class Node():
 
+    number_of_nodes = 0
+    
     def __init__(self, node_number):
         super(Node,self).__init__()
         self.node = node_number
         self.neighbors = []
-        self.distances = [1000] * number_of_nodes
-        self.gw = [None] * number_of_nodes # GW of each peer
+        self.distances = [1000] * max_number_of_nodes
+        #self.gw = [None] * number_of_nodes # GW of each peer
         self.chunks_to_send = {} # To each neighbor
         self.buffer = [None] * buffer_size
         queues[self.node] = queue.Queue(10)
