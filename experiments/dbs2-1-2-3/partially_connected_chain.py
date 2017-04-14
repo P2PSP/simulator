@@ -1,5 +1,16 @@
-# Chain commnication over a partially connected mesh.simulation (original DBS) over a fully connected team.
-# Peers send only the splitter's chunk to the rest of the team.
+# Chain commnication over a partially connected mesh.  All peers
+# communicate with the splitter. Peers test all the feasible
+# connections with the rest of the team to determine its neighbors
+# (this is not simulated here). The splitter sends a creation chain
+# message to one of the peers, which selects one of its neighbors and
+# sends this packet appending to it its id (ip and port in the real
+# workd). The peer which receives this packet does the same and relays
+# it to a different neighbors, which test if the packet has been
+# retransmitted by the rest of the team (except itself). If this is
+# true, the packet is sent to the origin peer and the process of the
+# creation of the chain ends. If false, the packet it sent to a
+# different peer. For a peer i, the chain is defined for the neighbor
+# peer it selected.
 
 import threading
 import queue
