@@ -74,12 +74,12 @@ class Peer_core():
         self.play_next_chunks(last_received_chunk)
 
     def play_next_chunks(self, last_received_chunk):
-        #for i in range(last_received_chunk - self.prev_received_chunk):
-        self.player_alive = self.play_chunk(self.played_chunk)
-        self.chunks[self.played_chunk % self.buffer_size] = (self.played_chunk,"L")
-        self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
-        #if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
-        #    self.prev_received_chunk = last_received_chunk
+        for i in range(last_received_chunk - self.prev_received_chunk):
+            self.player_alive = self.play_chunk(self.played_chunk)
+            self.chunks[self.played_chunk % self.buffer_size] = (self.played_chunk,"L")
+            self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
+        if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
+            self.prev_received_chunk = last_received_chunk
     
     def play_chunk(self, chunk_number):        
         self.number_of_chunks_consumed += 1
