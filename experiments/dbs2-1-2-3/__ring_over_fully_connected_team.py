@@ -72,7 +72,7 @@ class Node():
                           format(self.node, chunk, destination_node, Node.number_of_nodes))
             
             sys.stdout.flush()
-            time.sleep(0.1)
+            time.sleep(0.5)
 
     def start(self):
         threading.Thread(target=self.run).start()

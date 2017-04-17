@@ -1,6 +1,6 @@
 # Create a full-connected team and serve the peers using round-robin scheduling
 
-import __ring_over_fully_conntected_team as simulator
+import __ring_over_fully_connected_team as simulator
 
 n0 = simulator.Node(0)
 n0.start()
