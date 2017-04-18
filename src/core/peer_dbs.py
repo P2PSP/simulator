@@ -70,6 +70,7 @@ class Peer_DBS(Peer_core):
         self.sendto_counter += 1
 
     def process_message(self, message, sender):
+        Peer_core.process_message(self, message, sender)
         if (message[0] >= 0):
             chunk_number = message[0]
             chunk = message[1]

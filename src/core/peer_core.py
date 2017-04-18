@@ -17,6 +17,8 @@ class Peer_core():
         self.chunks = []
 
         #---Only for simulation purposes----
+        self.losses = 0
+        self.played = 0
         self.number_of_chunks_consumed = 0
         #----------------------------------
         
@@ -37,8 +39,22 @@ class Peer_core():
         ready = (-1, "R")
         self.splitter["socketTCP"].put((self.id,ready))
 
+    def is_a_control_message(self, message):
+        if message[0] == -1:
+            return True
+        else:
+            return False
+    
     def process_message(self, message, sender):
-        raise NotImplementedError
+        # ----- Only for simulation purposes ------
+        # ----- Check if new round for peer -------
+        if not self.is_a_control_message(message) and sender == self.splitter["id"]:
+            if self.played > 0 and self.played >= len(self.peer_list):
+                clr = self.losses/self.played
+                Common.SIMULATOR_FEEDBACK["DRAW"].put(("CLR",self.id,clr))
+                self.losses = 0
+                self.played = 0
+        # ------------------------------------------
 
     def process_next_message(self):
         content = self.socket.get() #it replaces receive_next_message
@@ -81,7 +97,11 @@ class Peer_core():
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
     
-    def play_chunk(self, chunk_number):        
+    def play_chunk(self, chunk_number):
+        if self.chunks[chunk_number%self.buffer_size][1] == "C":
+            self.played +=1
+        else:
+            self.losses += 1            
         self.number_of_chunks_consumed += 1
         return self.player_alive
 
