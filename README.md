@@ -15,7 +15,7 @@ $ pip3 install networkx
 # Usage
 
 ```
-$ ./simulator.py run --number-of-monitors NUMBER_OF_MONITORS --number-of-peers NUMBER_OF_PEERS \
+$ ./simulator.py run --set_of_rules SET_OF_RULES --number-of-monitors NUMBER_OF_MONITORS --number-of-peers NUMBER_OF_PEERS \
 --number-of-malicious NUMBER_OF_MALICIOUS --number-of-rounds NUMBER_OF_ROUNDS --drawing-log FILENAME \
 --set-of-rules SET_OF_RULES
 ```
