@@ -83,8 +83,7 @@ class Peer_DBS(Peer_core):
             chunks = ""
             for n,c in self.chunks:
                 chunks += c
-            Common.SIMULATOR_FEEDBACK["DRAW"].put(("B",self.id,chunks))
-            Common.SIMULATOR_FEEDBACK["DRAW"].put(("S",self.id,",".join(self.sender_of_chunks)))
+            Common.SIMULATOR_FEEDBACK["DRAW"].put(("B",self.id,chunks,":".join(self.sender_of_chunks)))
             #--------------------------------------
             
             self.received_counter += 1

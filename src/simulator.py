@@ -13,6 +13,7 @@ import time
 import fire
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import sys
 import numpy as np
 import random
@@ -161,11 +162,12 @@ class Simulator(object):
         
     def draw_buffer(self):
         self.buffer_figure, self.buffer_ax = plt.subplots()
-        self.lineIN, = self.buffer_ax.plot([1]*2, [1]*2, color = '#A9BCF5', ls="None",label="IN", marker='o',markeredgecolor='#A9BCF5',animated=True)
+        self.lineIN, = self.buffer_ax.plot([1]*2, [1]*2, color = '#000000', ls="None",label="IN", marker='o',markeredgecolor='#000000',animated=True)
         self.lineOUT, = self.buffer_ax.plot([1]*2, [1]*2, color = '#CCCCCC', ls="None", label="OUT", marker='o',markeredgecolor='#CCCCCC', animated=True)
         self.buffer_figure.suptitle("Buffer Status", size=16)
         plt.legend(loc=2,numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
+        self.buffer_colors = cm.rainbow(np.linspace(0, 1, total_peers))
         plt.axis([0, total_peers+1, 0, self.get_team_size(total_peers*2)])
         plt.xticks(range(0, total_peers+1,1))
         self.buffer_order = {}
@@ -177,12 +179,13 @@ class Simulator(object):
     def update_buffer_round(self, number_of_round):
         self.buffer_figure.suptitle("Buffer Status "+number_of_round, size=16)
 
-    def update_buffer(self, node, buffer_shot):
+    def update_buffer(self, node, buffer_shot, senders_shot):
         
         if self.buffer_order.get(node) == None:
             self.buffer_order[node] = self.buffer_index
             self.buffer_labels[self.buffer_index] = node
             self.buffer_ax.set_xticklabels(self.buffer_labels)
+            self.buffer_ax.get_xticklabels()[self.buffer_index].set_color(self.buffer_colors[(self.buffer_index-1)])
             self.buffer_index += 1
 
         buffer_out = [pos for pos, char in enumerate(buffer_shot) if char == "L"]
@@ -191,9 +194,17 @@ class Simulator(object):
         self.buffer_ax.draw_artist(self.lineOUT)
             
         buffer_in = [pos for pos, char in enumerate(buffer_shot) if char == "C"]
+        sender_list = senders_shot.split(":")
         self.lineIN.set_xdata([self.buffer_order[node]]*len(buffer_in))
-        self.lineIN.set_ydata(buffer_in)
-        self.buffer_ax.draw_artist(self.lineIN)
+        for pos in buffer_in:
+            sender_node = sender_list[pos]
+            if ( sender_node != "S"):
+                color_position = self.buffer_order[sender_node]-1
+                self.lineIN.set_color(self.buffer_colors[color_position])
+            else:
+                self.lineIN.set_color("#000000")
+            self.lineIN.set_ydata(pos)
+            self.buffer_ax.draw_artist(self.lineIN)
 
         self.buffer_figure.canvas.blit(self.buffer_ax.bbox)
 
@@ -244,7 +255,7 @@ class Simulator(object):
         self.plot_team()
         self.draw_buffer()
         self.plot_clr()
-        
+        time.sleep(2)
         line = drawing_log_file.readline()
         while line != "Bye":
             m = line.strip().split(";",4)
@@ -267,13 +278,15 @@ class Simulator(object):
                     #For visualization in real time (line is not fully written)
                     print("IndexError:", m, line)
                     pass
-
+                
             if m[0] == "B":
                 try:
-                    self.update_buffer(m[1],m[2])
-                except:
+                    self.update_buffer(m[1], m[2], m[3])
+                    buffer_shot = None
+                except Exception as inst:
                     #For visualization in real time (line is not fully written)
                     print("IndexError:", m, line)
+                    print(inst.args)
                     pass
 
             if m[0] == "CLR":
