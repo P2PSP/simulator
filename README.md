@@ -21,7 +21,8 @@ $ ./simulator.py run --set_of_rules SET_OF_RULES --number-of-monitors NUMBER_OF_
 ```
 
 # Drawing file format
-- First line -> experiment configuration
+- First line -> experiment configuration:
+  C;[NumberOfMonitor];[NumberOfPeers];[NumberOfMalicious];[NumberOfRounds];[SetOfRules]
 - Nodes -> O;Node;[Direction];[NodeID]. Example: O;Node;IN;M1
 - Round -> R;[Number]
 - Team Status -> T;[NodeID];[Quantity];[RoundNumber]
