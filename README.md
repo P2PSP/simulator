@@ -19,3 +19,12 @@ $ ./simulator.py run --set_of_rules SET_OF_RULES --number-of-monitors NUMBER_OF_
 --number-of-malicious NUMBER_OF_MALICIOUS --number-of-rounds NUMBER_OF_ROUNDS --drawing-log FILENAME \
 --set-of-rules SET_OF_RULES
 ```
+
+# Drawing file format
+- First line -> experiment configuration
+- Nodes -> O;Node;[Direction];[NodeID]. Example: O;Node;IN;M1
+- Round -> R;[Number]
+- Team Status -> T;[NodeID];[Quantity];[RoundNumber]
+- Buffer Status (following lines are related)
+  - Buffer -> B;[NodeID];[C][L][...]. C-> Chunk, L -> Gap
+  - Sender -> S;[NodeID];[NodeID][...]
