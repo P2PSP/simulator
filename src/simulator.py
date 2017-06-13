@@ -302,6 +302,7 @@ class Simulator(object):
         #plt.show()
 
     def run(self):
+        plt.switch_backend("TkAgg")
 
         #Listen to the team for drawing
         Common.SIMULATOR_FEEDBACK["DRAW"] = Queue()
