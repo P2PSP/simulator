@@ -22,10 +22,12 @@ $ ./simulator.py run --set_of_rules SET_OF_RULES --number-of-monitors NUMBER_OF_
 
 # Drawing file format
 - First line -> experiment configuration:
-  C;[NumberOfMonitor];[NumberOfPeers];[NumberOfMalicious];[NumberOfRounds];[SetOfRules]
-- Nodes -> O;Node;[Direction];[NodeID]. Example: O;Node;IN;M1
-- Round -> R;[Number]
-- Team Status -> T;[NodeID];[Quantity];[RoundNumber]
+```
+C;[NumberOfMonitor];[NumberOfPeers];[NumberOfMalicious];[NumberOfRounds];[SetOfRules]
+```
+- Nodes -> `O;Node;[Direction];[NodeID]`. Example: `O;Node;IN;M1`
+- Round -> `R;[Number]`
+- Team Status -> `T;[NodeID];[Quantity];[RoundNumber]`
 - Buffer Status (following lines are related)
-  - Buffer -> B;[NodeID];[C][L][...]. C-> Chunk, L -> Gap
-  - Sender -> S;[NodeID];[NodeID][...]
+  - Buffer -> `B;[NodeID];[C][L][...]. C-> Chunk, L -> Gap`
+  - Sender -> `S;[NodeID];[NodeID][...]`
