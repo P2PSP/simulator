@@ -31,3 +31,4 @@ C;[NumberOfMonitor];[NumberOfPeers];[NumberOfMalicious];[NumberOfRounds];[SetOfR
 - Buffer Status (following lines are related)
   - Buffer -> `B;[NodeID];[C][L][...]. C-> Chunk, L -> Gap`
   - Sender -> `S;[NodeID];[NodeID][...]`
+- Chunk Loss Ratio -> CLR;[NodeID];[Value]
