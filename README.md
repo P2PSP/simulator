@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/P2PSP/Simulator](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/P2PSP/Simulator?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A complete stand-alone simulator of the P2PSP protocol using Threads (or Processes) and message passing in order to do the prototyping of new strategies easier.
+A complete stand-alone simulator of the P2PSP protocol using Processes and message passing in order to do the prototyping of new strategies easier.
 
 # Pre-requisites
 ## Linux
@@ -36,6 +36,14 @@ C;[NumberOfMonitor];[NumberOfPeers];[NumberOfMalicious];[NumberOfRounds];[SetOfR
 # GUI
 
 ## Network Overlay
+It shows how the network overlay evolves during the simulation. 
+**Nodes** represent the following entities:
+- green: monitor/trusted peer
+- blue: regular peer
+- red: malicious peer
+**Edges** represent the existence of communication (or not) among the nodes:
+- black: There is communication
+- red: There is not communication
 ![overlay](res/overlay.gif)
 
 ## Team Status 
