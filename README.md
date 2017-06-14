@@ -40,19 +40,24 @@ It shows how the network overlay evolves during the simulation.
 
 
 **Nodes** represent the following entities:
-- green: monitor/trusted peer
-- blue: regular peer
-- red: malicious peer 
+- green: monitor/trusted peer (M/TPs)
+- blue: regular peer (WIPs)
+- red: malicious peer (MPs)
 
  
 **Edges** represent the existence of communication (or not) among the nodes:
-- black: There is communication
-- red: There is not communication
+- black: there is communication
+- red: there is not communication
 ![overlay](res/overlay.gif)
 
 ## Team Status 
+It shows the number of each type of peer into the team (same colors as used in Network Overlay).
 ![team](res/team.gif)
 
 ## Buffer Status
+Buffer status for each peer. Each point in the chart represents a chunk in the buffer of a peer:
+- black: chunk from the splitter.
+- gray: chunk consumed.
+- others: chunk from other peers. One different color for each peer.
 ![buffer](res/buffer.gif)
 
