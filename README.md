@@ -32,3 +32,15 @@ C;[NumberOfMonitor];[NumberOfPeers];[NumberOfMalicious];[NumberOfRounds];[SetOfR
   - Buffer -> `B;[NodeID];[C][L][...]. C-> Chunk, L -> Gap`
   - Sender -> `S;[NodeID];[NodeID][...]`
 - Chunk Loss Ratio -> `CLR;[NodeID];[Value]`
+
+# GUI
+
+## Network Overlay
+![overlay](res/overlay.gif)
+
+## Team Status 
+![team](res/team.gif)
+
+## Buffer Status
+![buffer](res/buffer.gif)
+
