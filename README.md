@@ -36,12 +36,12 @@ C;[NumberOfMonitor];[NumberOfPeers];[NumberOfMalicious];[NumberOfRounds];[SetOfR
 # GUI
 
 ## Network Overlay
-It shows how the network overlay evolves during the simulation. 
-**Nodes** represent the following entities:
+It shows how the network overlay evolves during the simulation.  
+**Nodes** represent the following entities:  
 - green: monitor/trusted peer
 - blue: regular peer
 - red: malicious peer
-**Edges** represent the existence of communication (or not) among the nodes:
+**Edges** represent the existence of communication (or not) among the nodes:  
 - black: There is communication
 - red: There is not communication
 ![overlay](res/overlay.gif)
