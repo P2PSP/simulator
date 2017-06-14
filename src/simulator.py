@@ -303,7 +303,8 @@ class Simulator(object):
 
     def run(self):
         plt.switch_backend("TkAgg")
-
+        plt.style.use("seaborn-white")
+        
         #Listen to the team for drawing
         Common.SIMULATOR_FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
@@ -371,7 +372,6 @@ class Simulator(object):
             if self.attended_mps < self.number_of_malicious:
                 Process(target=self.run_a_peer, args=["S", "malicious", "MP"+str(self.attended_mps+1)]).start()
                 self.attended_mps += 1
-
 
         
 if __name__ == "__main__":
