@@ -101,7 +101,8 @@ class Peer_core():
         if self.chunks[chunk_number%self.buffer_size][1] == "C":
             self.played +=1
         else:
-            self.losses += 1            
+            self.losses += 1
+            print (self.id, "Lost Chunk!", chunk_number)
         self.number_of_chunks_consumed += 1
         return self.player_alive
 

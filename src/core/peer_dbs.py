@@ -37,7 +37,7 @@ class Peer_DBS(Peer_core):
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
         Common.UDP_SOCKETS[peer].put((self.id,goodbye))
-        print("Goodbye sent to", peer)
+        print(self.id,"Goodbye sent to", peer)
 
     def receive_buffer_size(self):
         self.buffer_size = self.socket.get()

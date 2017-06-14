@@ -211,7 +211,7 @@ class Simulator(object):
     def plot_clr(self):
         self.clrs_per_round = []
         self.clr_figure, self.clr_ax = plt.subplots()
-        self.lineCLR, = self.clr_ax.plot([1,2], [10,10], color = '#000000', label="# WIPs", marker='o', ls='None' ,markeredgecolor='#000000', animated=True)
+        self.lineCLR, = self.clr_ax.plot([1,2], [10,10], color = '#000000', label="CLR", marker='o', ls='None' ,markeredgecolor='#000000', animated=True)
         self.clr_figure.suptitle("Chunk Loss Ratio", size=16)
         plt.legend(loc=2,numpoints=1)
         plt.axis([0, self.number_of_rounds, 0, 1])
