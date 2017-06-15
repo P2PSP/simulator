@@ -18,6 +18,7 @@ import sys
 import numpy as np
 import random
 import ctypes
+import platform
 
 class Simulator(object):
 
@@ -302,7 +303,11 @@ class Simulator(object):
         #plt.show()
 
     def run(self):
-        plt.switch_backend("TkAgg")
+        print("platform.system() = ", platform.system())
+        if platform.system() == 'Linux':
+            plt.switch_backend("TkAgg")
+        elif platform.system() == 'Darwin':
+            plt.switch_backend("macosx")
         plt.style.use("seaborn-white")
         
         #Listen to the team for drawing
