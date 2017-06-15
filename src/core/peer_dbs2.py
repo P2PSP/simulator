@@ -20,7 +20,7 @@ class Peer_DBS(Peer_core):
         self.number_of_monitors = 0
         self.receive_and_feed_counter = 0
         self.receive_and_feed_previous = ()
-        self.debt_memory = 0
+        #self.debt_memory = 0
         self.waiting_for_goodbye = False
         self.modified_list = False
         self.number_of_peers = 0
@@ -206,7 +206,7 @@ class Peer_DBS(Peer_core):
         self.receive_and_feed_counter = 0
         self.receive_and_feed_previous = ()
         self.sendto_counter = 0
-        self.debt_memory = 1 << self.MAX_CHUNK_DEBT
+        #self.debt_memory = 1 << self.MAX_CHUNK_DEBT
         self.waiting_for_goodbye = True
         Peer_core.buffer_data(self)
 
