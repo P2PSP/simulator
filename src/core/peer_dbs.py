@@ -83,6 +83,9 @@ class Peer_DBS(Peer_core):
             chunks = ""
             for n,c in self.chunks:
                 chunks += c
+                if c == "L":
+                    self.sender_of_chunks[n % self.buffer_size] = ""
+                    
             Common.SIMULATOR_FEEDBACK["DRAW"].put(("B",self.id,chunks,":".join(self.sender_of_chunks)))
             #--------------------------------------
             
@@ -129,8 +132,10 @@ class Peer_DBS(Peer_core):
                     self.debt[sender] = 0
                     if __debug__:
                         print(sender, "added by chunk", chunk_number)
+                    #-------- For simulation purposes only -----------
                     Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
                     Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
+                    #-------------------------------------------------
 
                 else:
                     self.debt[sender] -= 1
