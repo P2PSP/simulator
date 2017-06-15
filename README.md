@@ -11,6 +11,10 @@ $ pip3 install fire
 $ pip3 install matplotlib
 $ pip3 install networkx
 ```
+### Arch
+```
+sudo pacman -S python-pmw
+```
 
 # Usage
 
