@@ -17,7 +17,8 @@ class Peer_SSS(Peer_STRPEDS):
         # To do shamir secret sharing instead of using this
         self.previous_t = -1
         self.current_t = 0
-        self.splitter_t = -1
+        self.splitter_previous_t = -1
+        self.splitter_current_t = -1
         self.previous_round = -1
         #---------------------------------------------------
 
@@ -43,16 +44,18 @@ class Peer_SSS(Peer_STRPEDS):
                 else:
                     if self.previous_round == message[2]: #current round
                         self.current_t += 1
-                        if self.previous_t >= self.splitter_t:
+                        if self.previous_t >= self.splitter_previous_t:
                             return Peer_STRPEDS.process_message(self, message, sender)
                         else:
                             encrypted_message = (message[0],"B")
                             return Peer_STRPEDS.process_message(self, encrypted_message, sender)
                     elif self.previous_round != message[2]: #change of round
                         if self.previous_round == -1:
-                            self.splitter_t = 0
+                            self.splitter_previous_t = 0
+                            self.splitter_current_t = message[3]
                         else:
-                            self.splitter_t = message[3]
+                            self.splitter_previous_t = self.splitter_current_t
+                            self.splitter_current_t = message[3]
                             
                         self.previous_round = message[2]
                         self.previous_t = self.current_t

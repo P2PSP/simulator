@@ -280,7 +280,7 @@ class Simulator(object):
         self.plot_team()
         self.draw_buffer()
         self.plot_clr()
-        time.sleep(0.5)
+        time.sleep(1)
         line = drawing_log_file.readline()
         while line != "Bye":
             m = line.strip().split(";",4)

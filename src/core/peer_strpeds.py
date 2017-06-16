@@ -44,7 +44,7 @@ class Peer_STRPEDS(Peer_DBS):
         self.splitter["socketUDP"].put((self.id, (-1,"S",self.bad_peers)))
         
         if __debug__:
-            print("Bad peers sent to the Splitter")
+            print(self.id, "Bad peers sent to the Splitter", self.bad_peers)
 
         return -1
 
