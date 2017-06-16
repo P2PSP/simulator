@@ -44,6 +44,8 @@ class Simulator(object):
             splitter = Splitter_DBS()
         elif self.set_of_rules == "cis":
             splitter = Splitter_STRPEDS()
+        elif self.set_of_rules == "cis-sss":
+            splitter = Splitter_SSS()
         
         splitter.start()
         while splitter.alive:
@@ -59,13 +61,23 @@ class Simulator(object):
             elif self.set_of_rules == "cis":
                 print("Monitors are TPs in CIS")
                 peer = Monitor_STRPEDS(id)
+            elif self.set_of_rules == "cis-sss":
+                print("Monitors are TPs in CIS")
+                peer = Monitor_SSS(id)
         elif type == "malicious":
-            peer = Peer_Malicious(id)    
+            if self.set_of_rules == "cis":
+                peer = Peer_Malicious(id)
+            elif self.set_of_rules == "cis-sss":
+                peer = Peer_Malicious_SSS(id)
+            else:
+                print("Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "dbs":
                 peer = Peer_DBS(id)
             elif self.set_of_rules == "cis":
                 peer = Peer_STRPEDS(id)
+            elif self.set_of_rules == "cis-sss":
+                peer = Peer_SSS(id)
             
         peer.set_splitter(splitter_id)
         peer.connect_to_the_splitter()
