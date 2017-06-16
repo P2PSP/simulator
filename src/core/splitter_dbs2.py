@@ -2,18 +2,21 @@
 @package p2psp-simulator
 splitter_dbs module
 """
+
+#from .splitter_core import Splitter_core
+from .common import Common
 from queue import Queue
 from threading import Thread
-from .splitter_core import Splitter_core
-from .common import Common
 import time
 
-class Splitter_DBS(Splitter_core):
+class Splitter_DBS():
     MAX_NUMBER_OF_CHUNK_LOSS = 32
     #BUFFER_SIZE = 128
     
     def __init__(self):
-        super().__init__()
+        self.id = "S"
+        self.alive = True
+        self.chunk_number = 0
         self.peer_list = []
         self.losses = {}
         self.tcp_socket = Common.TCP_SOCKETS[self.id]
@@ -27,21 +30,16 @@ class Splitter_DBS(Splitter_core):
         self.current_round = 0
         print("Splitter DBS initialized")
 
-    def send_buffer_size(self, peer):
-        Common.UDP_SOCKETS[peer].put(self.buffer_size)
+    def send_chunk(self, message, destination):
+        if __debug__:
+            print("S -",self.chunk_number, "->", destination)
         
-    def send_the_number_of_peers(self, peer):
-        Common.UDP_SOCKETS[peer].put(self.number_of_monitors)
-        Common.UDP_SOCKETS[peer].put(len(self.peer_list))
+        Common.UDP_SOCKETS[destination].put((self.id,message))
 
-    def send_the_list_of_peers(self, peer):
-        Common.UDP_SOCKETS[peer].put(self.peer_list)
-        
-    def insert_peer(self, peer):
-        if peer not in self.peer_list:
-            self.peer_list.append(peer)
-        self.losses[peer] = 0
-        print("peer inserted on splitter list", peer)
+    def receive_chunk(self):
+        time.sleep(0.05) #bit-rate control
+        #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
+        return "C"
 
     def handle_a_peer_arrival(self):
         content = self.tcp_socket.get()
@@ -66,6 +64,27 @@ class Splitter_DBS(Splitter_core):
             
         self.insert_peer(incoming_peer)
         Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
+
+    def handle_arrivals(self):
+        while(self.alive):
+            #Thread(target=self.handle_a_peer_arrival).start()
+            self.handle_a_peer_arrival()
+        
+    def send_buffer_size(self, peer):
+        Common.UDP_SOCKETS[peer].put(self.buffer_size)
+        
+    def send_the_number_of_peers(self, peer):
+        Common.UDP_SOCKETS[peer].put(self.number_of_monitors)
+        Common.UDP_SOCKETS[peer].put(len(self.peer_list))
+
+    def send_the_list_of_peers(self, peer):
+        Common.UDP_SOCKETS[peer].put(self.peer_list)
+        
+    def insert_peer(self, peer):
+        if peer not in self.peer_list:
+            self.peer_list.append(peer)
+        self.losses[peer] = 0
+        print("peer inserted on splitter list", peer)
         
     def increment_unsupportivity_of_peer(self, peer):
         try:

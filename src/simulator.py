@@ -20,7 +20,7 @@ import random
 import ctypes
 import platform
 
-class Simulator(object):
+class Simulator():
 
     P_IN = 0.2
     P_MoP = 0.2
