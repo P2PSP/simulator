@@ -2,18 +2,21 @@
 @package p2psp-simulator
 splitter_dbs module
 """
+
+#from .splitter_core import Splitter_core
+from .common import Common
 from queue import Queue
 from threading import Thread
-from .splitter_core import Splitter_core
-from .common import Common
 import time
 
-class Splitter_DBS(Splitter_core):
+class Splitter_DBS():
     MAX_NUMBER_OF_CHUNK_LOSS = 32
     #BUFFER_SIZE = 128
     
     def __init__(self):
-        super().__init__()
+        self.id = "S"
+        self.alive = True
+        self.chunk_number = 0
         self.peer_list = []
         self.losses = {}
         self.tcp_socket = Common.TCP_SOCKETS[self.id]
@@ -27,6 +30,22 @@ class Splitter_DBS(Splitter_core):
         self.current_round = 0
         print("Splitter DBS initialized")
 
+    def send_chunk(self, message, destination):
+        if __debug__:
+            print("S -",self.chunk_number, "->", destination)
+        
+        Common.UDP_SOCKETS[destination].put((self.id,message))
+
+    def receive_chunk(self):
+        time.sleep(0.05) #bit-rate control
+        #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
+        return "C"
+
+    def handle_arrivals(self):
+        while(self.alive):
+            #Thread(target=self.handle_a_peer_arrival).start()
+            self.handle_a_peer_arrival()
+        
     def send_buffer_size(self, peer):
         Common.UDP_SOCKETS[peer].put(self.buffer_size)
         
