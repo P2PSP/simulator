@@ -31,7 +31,7 @@ class Simulator(object):
     P_WIP = 0.6
     P_MP = 0.2
     
-    def __init__(self, set_of_rules, number_of_monitors, number_of_peers, drawing_log, number_of_rounds, number_of_malicious=0):
+    def __init__(self, set_of_rules, number_of_monitors, number_of_peers, drawing_log, number_of_rounds, number_of_malicious=0, gui = False):
         self.set_of_rules = set_of_rules
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
@@ -39,6 +39,7 @@ class Simulator(object):
         self.number_of_rounds = number_of_rounds
         self.number_of_malicious = number_of_malicious
         self.current_round = 0
+        self.gui = gui
         
     def get_team_size(self, n):  
         return 2**(n-1).bit_length()
@@ -329,7 +330,9 @@ class Simulator(object):
         #Listen to the team for drawing
         Common.SIMULATOR_FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
-        Process(target=self.draw).start()
+        
+        if self.gui == True:
+            Process(target=self.draw).start()
 
         #Listen to the team for simulation life
         Common.SIMULATOR_FEEDBACK["STATUS"] = Queue()
