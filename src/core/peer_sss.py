@@ -49,9 +49,13 @@ class Peer_SSS(Peer_STRPEDS):
                             encrypted_message = (message[0],"B")
                             return Peer_STRPEDS.process_message(self, encrypted_message, sender)
                     elif self.previous_round != message[2]: #change of round
+                        if self.previous_round == -1:
+                            self.splitter_t = 0
+                        else:
+                            self.splitter_t = message[3]
+                            
                         self.previous_round = message[2]
                         self.previous_t = self.current_t
-                        self.splitter_t = message[3]
                         self.current_t = 1
                         return Peer_STRPEDS.process_message(self, message, sender)
         else:
