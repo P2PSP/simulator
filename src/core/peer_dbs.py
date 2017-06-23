@@ -6,7 +6,6 @@ peer_dbs module
 from queue import Queue
 from threading import Thread
 from .common import Common
-#from .peer_core import Peer_core
 import time
 
 class Peer_DBS():
