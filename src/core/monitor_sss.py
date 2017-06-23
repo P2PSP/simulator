@@ -1,16 +1,16 @@
 """
 @package simulator
-monitor_strpeds module
+monitor_sss module
 """
 from queue import Queue
 from .common import Common
-from .peer_strpeds import Peer_STRPEDS
+from .peer_sss import Peer_SSS
 
-class Monitor_STRPEDS(Peer_STRPEDS):
+class Monitor_SSS(Peer_SSS):
     
     def __init__(self,id):
         super().__init__(id)
-        print("STRPEDS initialized by monitor")
+        print("SSS initialized by monitor")
 
     def receive_buffer_size(self):
         self.buffer_size = self.socket.get()//2

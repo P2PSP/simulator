@@ -2,11 +2,15 @@
 
 from core.splitter_dbs import Splitter_DBS
 from core.splitter_strpeds import Splitter_STRPEDS
+from core.splitter_sss import Splitter_SSS
 from core.peer_dbs import Peer_DBS
 from core.peer_strpeds import Peer_STRPEDS
+from core.peer_sss import Peer_SSS
 from core.peer_malicious import Peer_Malicious
+from core.peer_malicious_sss import Peer_Malicious_SSS
 from core.monitor_dbs import Monitor_DBS
 from core.monitor_strpeds import Monitor_STRPEDS
+from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from multiprocessing import Process, Queue, Array, Manager
 import time
@@ -27,7 +31,7 @@ class Simulator():
     P_WIP = 0.6
     P_MP = 0.2
     
-    def __init__(self, set_of_rules, number_of_monitors, number_of_peers, drawing_log, number_of_rounds, number_of_malicious=0):
+    def __init__(self, set_of_rules, number_of_monitors, number_of_peers, drawing_log, number_of_rounds, number_of_malicious=0, gui = False):
         self.set_of_rules = set_of_rules
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
@@ -35,16 +39,26 @@ class Simulator():
         self.number_of_rounds = number_of_rounds
         self.number_of_malicious = number_of_malicious
         self.current_round = 0
+        self.gui = gui
         
     def get_team_size(self, n):  
         return 2**(n-1).bit_length()
+
+    def get_buffer_size(self):
+        team_size = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious)*2)
+        if (team_size < 32):
+            return 32
+        else:
+            return team_size
         
     def run_a_splitter(self):
-        Common.BUFFER_SIZE = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious)*2)
+        Common.BUFFER_SIZE = self.get_buffer_size()
         if self.set_of_rules == "dbs":
             splitter = Splitter_DBS()
         elif self.set_of_rules == "cis":
             splitter = Splitter_STRPEDS()
+        elif self.set_of_rules == "cis-sss":
+            splitter = Splitter_SSS()
         
         splitter.start()
         while splitter.alive:
@@ -60,13 +74,23 @@ class Simulator():
             elif self.set_of_rules == "cis":
                 print("Monitors are TPs in CIS")
                 peer = Monitor_STRPEDS(id)
+            elif self.set_of_rules == "cis-sss":
+                print("Monitors are TPs in CIS")
+                peer = Monitor_SSS(id)
         elif type == "malicious":
-            peer = Peer_Malicious(id)    
+            if self.set_of_rules == "cis":
+                peer = Peer_Malicious(id)
+            elif self.set_of_rules == "cis-sss":
+                peer = Peer_Malicious_SSS(id)
+            else:
+                print("Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "dbs":
                 peer = Peer_DBS(id)
             elif self.set_of_rules == "cis":
                 peer = Peer_STRPEDS(id)
+            elif self.set_of_rules == "cis-sss":
+                peer = Peer_SSS(id)
             
         peer.set_splitter(splitter_id)
         peer.connect_to_the_splitter()
@@ -256,7 +280,7 @@ class Simulator():
         self.plot_team()
         self.draw_buffer()
         self.plot_clr()
-        time.sleep(0.5)
+        time.sleep(1)
         line = drawing_log_file.readline()
         while line != "Bye":
             m = line.strip().split(";",4)
@@ -313,7 +337,9 @@ class Simulator():
         #Listen to the team for drawing
         Common.SIMULATOR_FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
-        Process(target=self.draw).start()
+        
+        if self.gui == True:
+            Process(target=self.draw).start()
 
         #Listen to the team for simulation life
         Common.SIMULATOR_FEEDBACK["STATUS"] = Queue()

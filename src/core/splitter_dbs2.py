@@ -33,8 +33,20 @@ class Splitter_DBS():
     def send_chunk(self, message, destination):
         if __debug__:
             print("S -",self.chunk_number, "->", destination)
-        
         Common.UDP_SOCKETS[destination].put((self.id,message))
+
+    def receive_chunk(self):
+        time.sleep(0.05) #bit-rate control
+        #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
+        return "C"
+
+    def handle_arrivals(self):
+        while(self.alive):
+            #Thread(target=self.handle_a_peer_arrival).start()
+            self.handle_a_peer_arrival()
+        
+    def send_buffer_size(self, peer):
+        Common.UDP_SOCKETS[peer].put(self.buffer_size)
 
     def receive_chunk(self):
         time.sleep(0.05) #bit-rate control
