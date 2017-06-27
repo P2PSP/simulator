@@ -32,7 +32,7 @@ class Peer_SSS(Peer_STRPEDS):
 
         if sender in self.bad_peers:
             if __debug__:
-                print(self.id,"Sender is  in the bad peer list", sender)
+                print(self.id,"Sender is in the bad peer list", sender)
             return -1
 
         if sender == self.splitter["id"] or self.check_message(message, sender):
@@ -42,11 +42,14 @@ class Peer_SSS(Peer_STRPEDS):
                 if self.is_a_control_message(message):
                     return Peer_STRPEDS.process_message(self, message, sender)
                 else:
+                    print("Current Round", message[2], "Previous Round", self.previous_round)
                     if self.previous_round == message[2]: #current round
                         self.current_t += 1
+                        print(self.id, "from", self.previous_t ,"to", self.current_t)
                         if self.previous_t >= self.splitter_previous_t:
                             return Peer_STRPEDS.process_message(self, message, sender)
                         else:
+                            print(self.id, "Need more shares, I had", self.previous_t, "from", self.splitter_previous_t, "needed")
                             encrypted_message = (message[0],"B")
                             return Peer_STRPEDS.process_message(self, encrypted_message, sender)
                     elif self.previous_round != message[2]: #change of round
@@ -60,6 +63,7 @@ class Peer_SSS(Peer_STRPEDS):
                         self.previous_round = message[2]
                         self.previous_t = self.current_t
                         self.current_t = 1
+                        print(self.id, "from", self.previous_t ,"to", self.current_t)
                         return Peer_STRPEDS.process_message(self, message, sender)
         else:
             self.process_bad_message(message, sender)
