@@ -16,7 +16,7 @@ class Monitor_DBS(Peer_DBS):
     def receive_buffer_size(self):
         #self.buffer_size = self.socket.get()//2
         #self.buffer_size = sim.TCP_SOCKETS[self.id].get()//2
-        self.buffer_size = sim.receive(self.id)//2
+        self.buffer_size = sim.TCP_receive(self.id)//2
         print(self.id,"buffer size received", self.buffer_size)
 
         #--- Only for simulation purposes ----

@@ -38,7 +38,7 @@ class Splitter_DBS():
             print("S -",self.chunk_number, "->", destination)
         
         #sim.UDP_SOCKETS[destination].put((self.id,message))
-        sim.sendto(message, self.id, destination)
+        sim.UDP_send((message, self.id), destination)
 
     def receive_chunk(self):
         time.sleep(0.05) #bit-rate control
@@ -54,14 +54,17 @@ class Splitter_DBS():
         #sim.team_socket__sendto(self.buffer_size, self.id, peer)
         #sim.UDP_SOCKETS[peer].put(self.buffer_size)
         #sim.TCP_SOCKETS[peer].put(self.buffer_size)
-        sim.send(self.buffer_size, peer)
+        sim.TCP_send(self.buffer_size, peer)
         
     def send_the_number_of_peers(self, peer):
-        sim.UDP_SOCKETS[peer].put(self.number_of_monitors)
-        sim.UDP_SOCKETS[peer].put(len(self.peer_list))
+        sim.TCP_send(self.number_of_monitors, peer)
+        #sim.UDP_SOCKETS[peer].put(self.number_of_monitors)
+        sim.TCP_send(len(self.peer_list), peer)
+        #sim.UDP_SOCKETS[peer].put(len(self.peer_list))
 
     def send_the_list_of_peers(self, peer):
-        sim.UDP_SOCKETS[peer].put(self.peer_list)
+        #sim.UDP_SOCKETS[peer].put(self.peer_list)
+        sim.TCP_send(self.peer_list, peer)
         
     def insert_peer(self, peer):
         if peer not in self.peer_list:
@@ -71,6 +74,7 @@ class Splitter_DBS():
 
     def handle_a_peer_arrival(self):
         content = self.tcp_socket.get()
+        #content = sim.TCP_receive(self.id)
         incoming_peer = content[0]
         message = content[1]
         print(self.id,"acepted connection from peer", incoming_peer)

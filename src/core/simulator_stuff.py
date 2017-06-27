@@ -17,12 +17,14 @@ class Simulator_stuff:
     # Communication channel with the simulator.
     SIMULATOR_FEEDBACK = {}
 
-    def sendto(message, origin, destination):
-        Simulator_stuff.UDP_SOCKETS[destination].put((origin, message))
+    def UDP_send(message, receiver):
+        Simulator_stuff.UDP_SOCKETS[receiver].put((message))
 
-
-    def send(message, destination):
-        Simulator_stuff.TCP_SOCKETS[destination].put(message)
+    def UDP_receive(sender):
+        Simulator_stuff.UDP_SOCKETS[sender].get()
         
-    def receive(from_who):
-        return Simulator_stuff.TCP_SOCKETS[from_who].get()
+    def TCP_send(message, receiver):
+        Simulator_stuff.TCP_SOCKETS[receiver].put(message)
+        
+    def TCP_receive(sender):
+        return Simulator_stuff.TCP_SOCKETS[sender].get()
