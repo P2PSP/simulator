@@ -5,8 +5,6 @@ splitter_dbs module
 
 #from .splitter_core import Splitter_core
 from .common import Common
-from .simulator_stuff import Simulator_stuff as si
-
 from queue import Queue
 from threading import Thread
 import time
