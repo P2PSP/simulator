@@ -6,6 +6,7 @@ from queue import Queue
 from threading import Thread
 from .splitter_dbs import Splitter_DBS
 from .common import Common
+from .simulator_stuff import Simulator_stuff as sim
 import time
 import random
 
@@ -33,7 +34,7 @@ class Splitter_STRPEDS(Splitter_DBS):
 
     def gather_bad_peers(self):
         for p in self.peer_list:
-            Common.UDP_SOCKETS[p].put(self.id,(-1,"S"))
+            sim.UDP_SOCKETS[p].put(self.id,(-1,"S"))
 
     def init_key(self):
         #Not needed for simulation
@@ -68,7 +69,7 @@ class Splitter_STRPEDS(Splitter_DBS):
             m = self.tcp_socket.get()
             
         self.insert_peer(incoming_peer)
-        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
+        sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
     
     def process_bad_peers_message(self, message, sender):
         bad_list = message[2]
@@ -143,7 +144,7 @@ class Splitter_STRPEDS(Splitter_DBS):
 
             if (sender == "SIM"):
                 if (message[1] == "K"):
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("Bye","Bye"))
+                    sim.SIMULATOR_FEEDBACK["DRAW"].put(("Bye","Bye"))
                     self.alive = False
             else:
                 if message[1] == "L":
@@ -185,11 +186,11 @@ class Splitter_STRPEDS(Splitter_DBS):
 
                 self.on_round_beginning()
                 
-                Common.SIMULATOR_FEEDBACK["STATUS"].put(("R", self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("R", self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","MP",self.number_of_malicious, self.current_round))
+                sim.SIMULATOR_FEEDBACK["STATUS"].put(("R", self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("R", self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","MP",self.number_of_malicious, self.current_round))
 
                 self.current_round += 1
                 

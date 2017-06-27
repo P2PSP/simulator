@@ -4,6 +4,7 @@ monitor_sss module
 """
 from queue import Queue
 from .common import Common
+from .simulator_stuff import Simulator_stuff as sim
 from .peer_sss import Peer_SSS
 
 class Monitor_SSS(Peer_SSS):
@@ -22,7 +23,7 @@ class Monitor_SSS(Peer_SSS):
 
     def say_hello(self, peer):
         hello = (-1,"H")
-        Common.UDP_SOCKETS[peer].put((self.id,hello))
+        sim.UDP_SOCKETS[peer].put((self.id,hello))
         print("Hello sent to", peer)
 
     def connect_to_the_splitter(self):

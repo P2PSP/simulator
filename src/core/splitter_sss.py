@@ -6,6 +6,7 @@ from queue import Queue
 from threading import Thread
 from .splitter_strpeds import Splitter_STRPEDS
 from .common import Common
+from .simulator_stuff import Simulator_stuff as sim
 import time
 import random
 
@@ -16,7 +17,6 @@ class Splitter_SSS(Splitter_STRPEDS):
         self.t = len(self.peer_list) // 2
         print("Splitter SSS initialized")
         
-
     def generate_secret_key(self, peer, r):
         #Not needed for simulation
         return NotImplementedError
@@ -55,11 +55,11 @@ class Splitter_SSS(Splitter_STRPEDS):
 
                 self.on_round_beginning()
                 
-                Common.SIMULATOR_FEEDBACK["STATUS"].put(("R", self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("R", self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","MP",self.number_of_malicious, self.current_round))
+                sim.SIMULATOR_FEEDBACK["STATUS"].put(("R", self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("R", self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","MP",self.number_of_malicious, self.current_round))
 
                 self.current_round += 1
                 

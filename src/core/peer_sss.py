@@ -4,9 +4,8 @@ peer_sss module
 """
 from queue import Queue
 from threading import Thread
-from .common import Common
 from .peer_strpeds import Peer_STRPEDS
-import time
+import time, sys
 
 class Peer_SSS(Peer_STRPEDS):
     
@@ -15,11 +14,8 @@ class Peer_SSS(Peer_STRPEDS):
         
         #--------- For simulation purposes only ------------
         # To do shamir secret sharing instead of using this
-        self.previous_t = -1
-        self.current_t = 0
-        self.splitter_previous_t = -1
-        self.splitter_current_t = -1
-        self.previous_round = -1
+        self.t = {}
+        self.splitter_t = {}
         #---------------------------------------------------
 
         print("Peer SSS initialized")
@@ -42,6 +38,28 @@ class Peer_SSS(Peer_STRPEDS):
                 if self.is_a_control_message(message):
                     return Peer_STRPEDS.process_message(self, message, sender)
                 else:
+                    current_round = message[2]
+                    if (current_round in self.t):
+                        self.t[current_round] += 1
+                    else:
+                        self.t[current_round] = 1
+
+                    self.splitter_t[current_round] = message[3]              
+
+                    print(self.id, "current_round", current_round, "previous one", (current_round-1))
+
+                    if ((current_round-1) in self.t):
+                        print(self.id, "t", self.t[(current_round-1)], "splitter_t", self.splitter_t[(current_round-1)])
+                        if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
+                            return Peer_STRPEDS.process_message(self, message, sender)
+                        else:
+                            print(self.id, "Need more shares, I had", self.t[(current_round-1)], "from", self.splitter_t[(current_round-1)], "needed")
+                            encrypted_message = (message[0],"B")
+                            return Peer_STRPEDS.process_message(self, encrypted_message, sender)
+                    else:
+                        print(self.id, "is my first round")
+                        
+                    '''
                     print("Current Round", message[2], "Previous Round", self.previous_round)
                     if self.previous_round == message[2]: #current round
                         self.current_t += 1
@@ -65,6 +83,7 @@ class Peer_SSS(Peer_STRPEDS):
                         self.current_t = 1
                         print(self.id, "from", self.previous_t ,"to", self.current_t)
                         return Peer_STRPEDS.process_message(self, message, sender)
+                    '''
         else:
             self.process_bad_message(message, sender)
             return self.handle_bad_peers_request()
