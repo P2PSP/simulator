@@ -6,7 +6,7 @@ peer_dbs module
 from queue import Queue
 from threading import Thread
 from .common import Common
-#from .peer_core import Peer_core
+from .simulator_stuff import Simulator_stuff as sim
 import time
 
 class Peer_DBS():
@@ -14,7 +14,7 @@ class Peer_DBS():
     
     def __init__(self, id):
         self.id = id
-        self.socket = Common.UDP_SOCKETS[self.id]
+        self.socket = sim.UDP_SOCKETS[self.id]
         self.played_chunk = 0
         self.prev_received_chunk = 0
         self.buffer_size = 64
@@ -47,20 +47,21 @@ class Peer_DBS():
     def set_splitter(self, splitter):
         self.splitter = {}
         self.splitter["id"] = splitter
-        self.splitter["socketTCP"] = Common.TCP_SOCKETS[splitter]
-        self.splitter["socketUDP"] = Common.UDP_SOCKETS[splitter]
+        self.splitter["socketTCP"] = sim.TCP_SOCKETS[splitter]
+        self.splitter["socketUDP"] = sim.UDP_SOCKETS[splitter]
 
     def say_hello(self, peer):
         hello = (-1,"H")
-        Common.UDP_SOCKETS[peer].put((self.id,hello))
+        sim.UDP_SOCKETS[peer].put((self.id,hello))
         print("Hello sent to", peer)
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        Common.UDP_SOCKETS[peer].put((self.id,goodbye))
+        sim.UDP_SOCKETS[peer].put((self.id,goodbye))
         print(self.id,"Goodbye sent to", peer)
 
     def receive_buffer_size(self):
+        #self.buffer_size, from_who = self.socket.get()
         self.buffer_size = self.socket.get()
         print(self.id,"buffer size received", self.buffer_size)
 
@@ -92,7 +93,7 @@ class Peer_DBS():
         self.splitter["socketTCP"].put((self.id, ready))
 
     def send_chunk(self, peer):
-        Common.UDP_SOCKETS[peer].put((self.id,self.receive_and_feed_previous))
+        sim.UDP_SOCKETS[peer].put((self.id,self.receive_and_feed_previous))
         self.sendto_counter += 1
 
     def is_a_control_message(self, message):
@@ -107,7 +108,7 @@ class Peer_DBS():
         if not self.is_a_control_message(message) and sender == self.splitter["id"]:
             if self.played > 0 and self.played >= len(self.peer_list):
                 clr = self.losses/self.played
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("CLR",self.id,clr))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("CLR",self.id,clr))
                 self.losses = 0
                 self.played = 0
         # ------------------------------------------
@@ -127,7 +128,7 @@ class Peer_DBS():
                 if c == "L":
                     self.sender_of_chunks[n % self.buffer_size] = ""
                     
-            Common.SIMULATOR_FEEDBACK["DRAW"].put(("B",self.id,chunks,":".join(self.sender_of_chunks)))
+            sim.SIMULATOR_FEEDBACK["DRAW"].put(("B",self.id,chunks,":".join(self.sender_of_chunks)))
             #--------------------------------------
             
             self.received_counter += 1
@@ -147,7 +148,7 @@ class Peer_DBS():
                         print(self.id,":",peer, "removed by unsupportive (", str(self.debt[peer]) , "lossess)")
                         del self.debt[peer]
                         self.peer_list.remove(peer)
-                        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
+                        sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
 
                     self.receive_and_feed_counter += 1
 
@@ -174,8 +175,8 @@ class Peer_DBS():
                     if __debug__:
                         print(sender, "added by chunk", chunk_number)
                     #-------- For simulation purposes only -----------
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
+                    sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
+                    sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
                     #-------------------------------------------------
 
                 else:
@@ -192,7 +193,7 @@ class Peer_DBS():
                     print(self.id,":",peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
                     del self.debt[peer]
                     self.peer_list.remove(peer)
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
+                    sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
 
                 if __debug__:
                     print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
@@ -212,8 +213,8 @@ class Peer_DBS():
                     self.debt[sender] = 0
                     if __debug__:
                         print(sender, "added by [hello]")
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
+                    sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
+                    sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
             else:
                 if sender in self.peer_list:
                     print(self.id, "received goodbye from", sender)
@@ -235,7 +236,7 @@ class Peer_DBS():
     def polite_farewell(self):
         print("Goodbye!")
         while (self.receive_and_feed_counter < len(self.peer_list)):
-            Common.UDP_SOCKETS[self.peer_list[self.receive_and_feed_counter]].put((self.id,self.receive_and_feed_previous))
+            sim.UDP_SOCKETS[self.peer_list[self.receive_and_feed_counter]].put((self.id,self.receive_and_feed_previous))
             content = self.socket.get()
             sender = content[0]
             message = content[1]
