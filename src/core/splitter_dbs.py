@@ -38,7 +38,7 @@ class Splitter_DBS():
             print("S -",self.chunk_number, "->", destination)
         
         #sim.UDP_SOCKETS[destination].put((self.id,message))
-        sim.team_socket__sendto(message, self.id, destination)
+        sim.sendto(message, self.id, destination)
 
     def receive_chunk(self):
         time.sleep(0.05) #bit-rate control
@@ -52,7 +52,9 @@ class Splitter_DBS():
         
     def send_buffer_size(self, peer):
         #sim.team_socket__sendto(self.buffer_size, self.id, peer)
-        sim.UDP_SOCKETS[peer].put(self.buffer_size)
+        #sim.UDP_SOCKETS[peer].put(self.buffer_size)
+        #sim.TCP_SOCKETS[peer].put(self.buffer_size)
+        sim.send(self.buffer_size, peer)
         
     def send_the_number_of_peers(self, peer):
         sim.UDP_SOCKETS[peer].put(self.number_of_monitors)

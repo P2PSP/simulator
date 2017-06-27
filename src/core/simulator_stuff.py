@@ -17,7 +17,12 @@ class Simulator_stuff:
     # Communication channel with the simulator.
     SIMULATOR_FEEDBACK = {}
 
-    def team_socket__sendto(message, origin, destination):
+    def sendto(message, origin, destination):
         Simulator_stuff.UDP_SOCKETS[destination].put((origin, message))
 
-    
+
+    def send(message, destination):
+        Simulator_stuff.TCP_SOCKETS[destination].put(message)
+        
+    def receive(from_who):
+        return Simulator_stuff.TCP_SOCKETS[from_who].get()

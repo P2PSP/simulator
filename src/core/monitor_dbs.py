@@ -5,6 +5,7 @@ monitor_dbs module
 from queue import Queue
 from .common import Common
 from .peer_dbs import Peer_DBS
+from .simulator_stuff import Simulator_stuff as sim
 
 class Monitor_DBS(Peer_DBS):
     
@@ -13,7 +14,9 @@ class Monitor_DBS(Peer_DBS):
         print("STRPEDS initialized by monitor")
 
     def receive_buffer_size(self):
-        self.buffer_size = self.socket.get()//2
+        #self.buffer_size = self.socket.get()//2
+        #self.buffer_size = sim.TCP_SOCKETS[self.id].get()//2
+        self.buffer_size = sim.receive(self.id)//2
         print(self.id,"buffer size received", self.buffer_size)
 
         #--- Only for simulation purposes ----

@@ -349,20 +349,23 @@ class Simulator():
         sim.UDP_SOCKETS['S'] = Queue()
         sim.TCP_SOCKETS['S'] = Queue()
 
+        for i in range(self.number_of_monitors):
+            sim.UDP_SOCKETS["M"+str(i+1)] = Queue()
+            sim.TCP_SOCKETS["M"+str(i+1)] = Queue()
+
+        for i in range(self.number_of_peers):
+            sim.UDP_SOCKETS["P"+str(i+1)] = Queue()
+            sim.TCP_SOCKETS["P"+str(i+1)] = Queue()
+
+        for i in range(self.number_of_malicious):
+            sim.UDP_SOCKETS["MP"+str(i+1)] = Queue()
+            sim.TCP_SOCKETS["MP"+str(i+1)] = Queue()
+
         #create shared list for CIS set of rules (only when cis is choosen?)
         manager = Manager()
         sim.SHARED_LIST["malicious"] = manager.list()
         sim.SHARED_LIST["regular"] = manager.list()
         sim.SHARED_LIST["attacked"] = manager.list()
-
-        for i in range(self.number_of_monitors):
-            sim.UDP_SOCKETS["M"+str(i+1)] = Queue()
-
-        for i in range(self.number_of_peers):
-            sim.UDP_SOCKETS["P"+str(i+1)] = Queue()
-
-        for i in range(self.number_of_malicious):
-            sim.UDP_SOCKETS["MP"+str(i+1)] = Queue()
 
         #run splitter
         Process(target=self.run_a_splitter).start()

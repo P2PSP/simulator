@@ -62,7 +62,11 @@ class Peer_DBS():
 
     def receive_buffer_size(self):
         #self.buffer_size, from_who = self.socket.get()
-        self.buffer_size = self.socket.get()
+        #self.buffer_size = self.socket.get()
+        #self.buffer_size = sim.UDP_SOCKETS[self.id].get()
+        #self.buffer_size = sim.TCP_SOCKETS[self.id].get()
+        self.buffer_size = sim.receive(self.id)
+
         print(self.id,"buffer size received", self.buffer_size)
 
         #--- Only for simulation purposes ----
