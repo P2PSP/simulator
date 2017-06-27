@@ -4,6 +4,7 @@ monitor_strpeds module
 """
 from queue import Queue
 from .common import Common
+from .simulator_stuff import Simulator_stuff as sim
 from .peer_strpeds import Peer_STRPEDS
 
 class Monitor_STRPEDS(Peer_STRPEDS):
@@ -22,7 +23,7 @@ class Monitor_STRPEDS(Peer_STRPEDS):
 
     def say_hello(self, peer):
         hello = (-1,"H")
-        Common.UDP_SOCKETS[peer].put((self.id,hello))
+        sim.UDP_SOCKETS[peer].put((self.id,hello))
         print("Hello sent to", peer)
 
     def connect_to_the_splitter(self):

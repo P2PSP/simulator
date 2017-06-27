@@ -5,6 +5,7 @@ peer_strpeds module
 from queue import Queue
 from threading import Thread
 from .common import Common
+from .simulator_stuff import Simulator_stuff as sim
 from .peer_dbs import Peer_DBS
 import time
 
@@ -22,7 +23,7 @@ class Peer_STRPEDS(Peer_DBS):
     def process_bad_message(self, message, sender):
         self.bad_peers.append(sender)
         self.peer_list.remove(sender)
-        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,sender))
+        sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,sender))
 
     def check_message(self, message, sender):
         if sender in self.bad_peers:
