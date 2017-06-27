@@ -5,12 +5,15 @@ splitter_dbs module
 
 #from .splitter_core import Splitter_core
 from .common import Common
+from .simulator_stuff import Simulator_stuff as si
+
 from queue import Queue
 from threading import Thread
 import time
+from .simulator_stuff import Simulator_stuff as sim
 
 class Splitter_DBS():
-    MAX_NUMBER_OF_CHUNK_LOSS = 32
+    MAX_NUMBER_OF_LOST_CHUNKS = 32
     #BUFFER_SIZE = 128
     
     def __init__(self):
@@ -19,22 +22,25 @@ class Splitter_DBS():
         self.chunk_number = 0
         self.peer_list = []
         self.losses = {}
-        self.tcp_socket = Common.TCP_SOCKETS[self.id]
-        self.udp_socket = Common.UDP_SOCKETS[self.id]
+        self.tcp_socket = sim.TCP_SOCKETS[self.id]
+        self.udp_socket = sim.UDP_SOCKETS[self.id]
         self.destination_of_chunk = []
         self.buffer_size = Common.BUFFER_SIZE
         self.peer_number = 0
-        self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_CHUNK_LOSS
+        self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_LOST_CHUNKS
         self.number_of_monitors = 0
         self.outgoing_peer_list = []
         self.current_round = 0
+
+        
         print("Splitter DBS initialized")
 
     def send_chunk(self, message, destination):
         if __debug__:
             print("S -",self.chunk_number, "->", destination)
         
-        Common.UDP_SOCKETS[destination].put((self.id,message))
+        #sim.UDP_SOCKETS[destination].put((self.id,message))
+        sim.team_socket__sendto(message, self.id, destination)
 
     def receive_chunk(self):
         time.sleep(0.05) #bit-rate control
@@ -47,14 +53,15 @@ class Splitter_DBS():
             self.handle_a_peer_arrival()
         
     def send_buffer_size(self, peer):
-        Common.UDP_SOCKETS[peer].put(self.buffer_size)
+        #sim.team_socket__sendto(self.buffer_size, self.id, peer)
+        sim.UDP_SOCKETS[peer].put(self.buffer_size)
         
     def send_the_number_of_peers(self, peer):
-        Common.UDP_SOCKETS[peer].put(self.number_of_monitors)
-        Common.UDP_SOCKETS[peer].put(len(self.peer_list))
+        sim.UDP_SOCKETS[peer].put(self.number_of_monitors)
+        sim.UDP_SOCKETS[peer].put(len(self.peer_list))
 
     def send_the_list_of_peers(self, peer):
-        Common.UDP_SOCKETS[peer].put(self.peer_list)
+        sim.UDP_SOCKETS[peer].put(self.peer_list)
         
     def insert_peer(self, peer):
         if peer not in self.peer_list:
@@ -84,7 +91,7 @@ class Splitter_DBS():
             m = self.tcp_socket.get()
             
         self.insert_peer(incoming_peer)
-        Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
+        sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
         
     def increment_unsupportivity_of_peer(self, peer):
         try:
@@ -113,7 +120,7 @@ class Splitter_DBS():
     def remove_peer(self, peer):
         try:
             self.peer_list.remove(peer)
-            Common.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","OUT",peer))
+            sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","OUT",peer))
         except ValueError:
             pass
         else:
@@ -133,7 +140,7 @@ class Splitter_DBS():
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        Common.UDP_SOCKETS[peer].put((self.id,goodbye))
+        sim.UDP_SOCKETS[peer].put((self.id,goodbye))
         print("goodbye sent to", peer)
     
     def moderate_the_team(self):
@@ -144,7 +151,7 @@ class Splitter_DBS():
 
             if (sender == "SIM"):
                 if (message[1] == "K"):
-                    Common.SIMULATOR_FEEDBACK["DRAW"].put(("Bye","Bye"))
+                    sim.SIMULATOR_FEEDBACK["DRAW"].put(("Bye","Bye"))
                     self.alive = False
             else:
                 if (message[1] == "L"):
@@ -188,10 +195,10 @@ class Splitter_DBS():
                 print("The monitor peer has died!")
 
             if self.peer_number == 0:
-                Common.SIMULATOR_FEEDBACK["STATUS"].put(("R", self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("R", self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
-                Common.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
+                sim.SIMULATOR_FEEDBACK["STATUS"].put(("R", self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("R", self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
+                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
                 self.current_round += 1
                     
                 for peer in self.outgoing_peer_list:
