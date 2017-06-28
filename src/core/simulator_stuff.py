@@ -25,6 +25,9 @@ class Simulator_stuff:
         
     def TCP_send(message, receiver):
         Simulator_stuff.TCP_SOCKETS[receiver].put(message)
+        print("Sending", message, "to", receiver)
         
-    def TCP_receive(sender):
-        return Simulator_stuff.TCP_SOCKETS[sender].get()
+    def TCP_receive(id):
+        m = Simulator_stuff.TCP_SOCKETS[id].get()
+        print("Receiving", m, "id" , id)
+        return m

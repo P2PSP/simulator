@@ -64,6 +64,7 @@ class Splitter_DBS():
 
     def send_the_list_of_peers(self, peer):
         #sim.UDP_SOCKETS[peer].put(self.peer_list)
+        print("splitter: ", self.peer_list, peer)
         sim.TCP_send(self.peer_list, peer)
         
     def insert_peer(self, peer):
@@ -78,7 +79,7 @@ class Splitter_DBS():
         message = content[0]
         incoming_peer = content[1]
         print(self.id,"acepted connection from peer", incoming_peer)
-        print(self.id, "----> message <----", message)
+        #print(self.id, "----> message <----", message)
         if (message[1] == "M"):
             self.number_of_monitors += 1
         print("NUMBER OF MONITORS", self.number_of_monitors)
@@ -86,15 +87,14 @@ class Splitter_DBS():
         self.send_buffer_size(incoming_peer)
         self.send_the_number_of_peers(incoming_peer)
         self.send_the_list_of_peers(incoming_peer)
-
+        print("Splitter waiting for outgoing peer")
         #receive_ready_for_receiving_chunks
         #check if we receive confirmation from the incoming_peer
         #m = self.tcp_socket.get()
-        m = sim.TCP_receive(self.id)
-        while m[1] != incoming_peer:
+        m = sim.TCP_receive(incoming_peer)
+        #while m[1] != incoming_peer:
             #self.tcp_socket.put(m)
-            sim.TCP_send(m
-            m = self.tcp_socket.get()
+            #m = self.tcp_socket.get()
             
         self.insert_peer(incoming_peer)
         sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
