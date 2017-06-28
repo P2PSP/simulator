@@ -351,15 +351,15 @@ class Simulator():
 
         for i in range(self.number_of_monitors):
             sim.UDP_SOCKETS["M"+str(i+1)] = Queue()
-            sim.TCP_SOCKETS["M"+str(i+1)] = Queue()
+            sim.TCP_SOCKETS["M"+str(i+1)] = Queue(1)
 
         for i in range(self.number_of_peers):
             sim.UDP_SOCKETS["P"+str(i+1)] = Queue()
-            sim.TCP_SOCKETS["P"+str(i+1)] = Queue()
+            sim.TCP_SOCKETS["P"+str(i+1)] = Queue(1)
 
         for i in range(self.number_of_malicious):
             sim.UDP_SOCKETS["MP"+str(i+1)] = Queue()
-            sim.TCP_SOCKETS["MP"+str(i+1)] = Queue()
+            sim.TCP_SOCKETS["MP"+str(i+1)] = Queue(1)
 
         #create shared list for CIS set of rules (only when cis is choosen?)
         manager = Manager()

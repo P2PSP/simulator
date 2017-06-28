@@ -83,9 +83,9 @@ class Peer_DBS():
         
     def receive_the_list_of_peers(self):
         #self.peer_list = self.socket.get()[:]
-        print("1")
+        print("-------------> 1 <------------")
         self.peer_list = sim.TCP_receive(self.id)[:]
-        print("2")
+        print("------------------> 2 <----------------")
         for peer in self.peer_list:
             self.say_hello(peer)
             self.debt[peer] = 0
@@ -245,7 +245,7 @@ class Peer_DBS():
     def process_next_message(self):
         #content = self.socket.get() #it replaces receive_next_message
         content = sim.UDP_receive(self.id)
-        print("-------------___", content)
+        #print("-------------___", content)
         message = content[0]
         sender = content[1]
         return self.process_message(message, sender)

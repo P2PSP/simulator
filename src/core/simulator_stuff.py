@@ -19,15 +19,21 @@ class Simulator_stuff:
 
     def UDP_send(message, receiver):
         Simulator_stuff.UDP_SOCKETS[receiver].put((message))
-
+        if __debug__:
+            print("UDP_send ({}) {}".format(receiver, message))
     def UDP_receive(sender):
-        return Simulator_stuff.UDP_SOCKETS[sender].get()
+        m = Simulator_stuff.UDP_SOCKETS[sender].get()
+        if __debug__:
+            print("UDP_receive ({}) {}".format(sender, m))
+        return m
         
     def TCP_send(message, receiver):
         Simulator_stuff.TCP_SOCKETS[receiver].put(message)
-        print("Sending", message, "to", receiver)
+        if __debug__:
+            print("TCP_send ({}) {}".format(receiver, message))
         
-    def TCP_receive(id):
-        m = Simulator_stuff.TCP_SOCKETS[id].get()
-        print("Receiving", m, "id" , id)
+    def TCP_receive(me):
+        m = Simulator_stuff.TCP_SOCKETS[me].get()
+        if __debug__:
+            print("TCP_receive ({}) {}".format(me, m))
         return m

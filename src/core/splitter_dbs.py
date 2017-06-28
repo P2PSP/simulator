@@ -188,7 +188,7 @@ class Splitter_DBS():
 
         while self.alive:
             chunk = self.receive_chunk()
-            print("--------------->", len(self.peer_list))
+            #print("--------------->", len(self.peer_list))
             try:
                 peer = self.peer_list[self.peer_number]
                 message = (self.chunk_number, chunk)
