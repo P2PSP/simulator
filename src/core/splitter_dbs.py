@@ -35,7 +35,7 @@ class Splitter_DBS():
 
     def send_chunk(self, message, destination):
         if __debug__:
-            print("S -",self.chunk_number, "->", destination)
+            print("S -",message, self.chunk_number, "->", destination)
         
         #sim.UDP_SOCKETS[destination].put((self.id,message))
         sim.UDP_send((message, self.id), destination)
@@ -73,12 +73,12 @@ class Splitter_DBS():
         print("peer inserted on splitter list", peer)
 
     def handle_a_peer_arrival(self):
-        content = self.tcp_socket.get()
-        #content = sim.TCP_receive(self.id)
-        incoming_peer = content[0]
-        message = content[1]
+        #content = self.tcp_socket.get()
+        content = sim.TCP_receive(self.id)
+        message = content[0]
+        incoming_peer = content[1]
         print(self.id,"acepted connection from peer", incoming_peer)
-        print(self.id, "message", content)
+        print(self.id, "----> message <----", message)
         if (message[1] == "M"):
             self.number_of_monitors += 1
         print("NUMBER OF MONITORS", self.number_of_monitors)
@@ -89,9 +89,11 @@ class Splitter_DBS():
 
         #receive_ready_for_receiving_chunks
         #check if we receive confirmation from the incoming_peer
-        m = self.tcp_socket.get()
-        while m[0] != incoming_peer:
-            self.tcp_socket.put(m)
+        #m = self.tcp_socket.get()
+        m = sim.TCP_receive(self.id)
+        while m[1] != incoming_peer:
+            #self.tcp_socket.put(m)
+            sim.TCP_send(m
             m = self.tcp_socket.get()
             
         self.insert_peer(incoming_peer)
@@ -144,14 +146,14 @@ class Splitter_DBS():
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        sim.UDP_SOCKETS[peer].put((self.id,goodbye))
+        sim.UDP_SOCKETS[peer].put((goodbye, self.id))
         print("goodbye sent to", peer)
     
     def moderate_the_team(self):
         while self.alive:
             content = self.udp_socket.get()
-            sender = content[0]
-            message = content[1]
+            message = content[0]
+            sender = content[1]
 
             if (sender == "SIM"):
                 if (message[1] == "K"):
@@ -186,6 +188,7 @@ class Splitter_DBS():
 
         while self.alive:
             chunk = self.receive_chunk()
+            print("--------------->", len(self.peer_list))
             try:
                 peer = self.peer_list[self.peer_number]
                 message = (self.chunk_number, chunk)

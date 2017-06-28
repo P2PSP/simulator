@@ -11,7 +11,7 @@ class Monitor_DBS(Peer_DBS):
     
     def __init__(self,id):
         super().__init__(id)
-        print("STRPEDS initialized by monitor")
+        print("DBS initialized by monitor")
 
     def receive_buffer_size(self):
         #self.buffer_size = self.socket.get()//2
@@ -25,15 +25,15 @@ class Monitor_DBS(Peer_DBS):
         
     def say_hello(self, peer):
         hello = (-1,"H")
-        Common.UDP_SOCKETS[peer].put((self.id,hello))
+        sim.UDP_SOCKETS[peer].put((hello, self.id))
         print("Hello sent to", peer)
 
     def connect_to_the_splitter(self):
         hello = (-1,"M")
-        self.splitter["socketTCP"].put((self.id,hello))
+        self.splitter["socketTCP"].put((hello, self.id))
 
     def complain(self, chunk_position):
         lost = (chunk_position,"L")
-        self.splitter["socketUDP"].put((self.id,lost))
+        self.splitter["socketUDP"].put((lost, self.id))
 
     #def PlayNextChunk (with complaints)

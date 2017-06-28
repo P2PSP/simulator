@@ -21,7 +21,7 @@ class Simulator_stuff:
         Simulator_stuff.UDP_SOCKETS[receiver].put((message))
 
     def UDP_receive(sender):
-        Simulator_stuff.UDP_SOCKETS[sender].get()
+        return Simulator_stuff.UDP_SOCKETS[sender].get()
         
     def TCP_send(message, receiver):
         Simulator_stuff.TCP_SOCKETS[receiver].put(message)
