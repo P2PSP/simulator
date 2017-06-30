@@ -7,14 +7,15 @@ from queue import Queue
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
+from .simulator_stuff import team_socket
 import time
 
-class Peer_DBS():
+class Peer_DBS(team_socket):
     MAX_CHUNK_DEBT = 128
     
     def __init__(self, id):
         self.id = id
-        self.socket = sim.UDP_SOCKETS[self.id]
+        #self.socket = sim.UDP_SOCKETS[self.id]
         self.played_chunk = 0
         self.prev_received_chunk = 0
         self.buffer_size = 64
@@ -52,13 +53,15 @@ class Peer_DBS():
 
     def say_hello(self, peer):
         hello = (-1,"H")
-        sim.UDP_SOCKETS[peer].put((hello, self.id))
-        print("Hello sent to", peer)
+        #sim.UDP_SOCKETS[peer].put((hello, self.id))
+        self.sendto(hello, peer)
+        #print("*********** {} sent to {}".format((hello, self.id),peer))
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        sim.UDP_SOCKETS[peer].put((goodbye, self.id))
-        print(self.id,"Goodbye sent to", peer)
+        #sim.UDP_SOCKETS[peer].put((goodbye, self.id))
+        self.sendto(goodbyw, peer)
+        #print(self.id,"Goodbye sent to", peer)
 
     def receive_buffer_size(self):
         #self.buffer_size, from_who = self.socket.get()
@@ -106,7 +109,8 @@ class Peer_DBS():
         sim.TCP_send(ready, self.id)
 
     def send_chunk(self, peer):
-        sim.UDP_SOCKETS[peer].put((self.receive_and_feed_previous, self.id))
+        #sim.UDP_SOCKETS[peer].put((self.receive_and_feed_previous, self.id))
+        self.sendto(self.receive_and_feed_previous, peer)
         self.sendto_counter += 1
 
     def is_a_control_message(self, message):
@@ -244,7 +248,8 @@ class Peer_DBS():
 
     def process_next_message(self):
         #content = self.socket.get() #it replaces receive_next_message
-        content = sim.UDP_receive(self.id)
+        #content = sim.UDP_receive(self.id)
+        content = self.recvfrom()
         #print("-------------___", content)
         message = content[0]
         sender = content[1]
@@ -253,9 +258,11 @@ class Peer_DBS():
     def polite_farewell(self):
         print("Goodbye!")
         while (self.receive_and_feed_counter < len(self.peer_list)):
-            sim.UDP_SOCKETS[self.peer_list[self.receive_and_feed_counter]].put((self.receive_and_feed_previous, self.id))
+            #sim.UDP_SOCKETS[self.peer_list[self.receive_and_feed_counter]].put((self.receive_and_feed_previous, self.id))
+            self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
             #content = self.socket.get()
-            conent = sim.UDP_receive(self.id)
+            #conent = sim.UDP_receive(self.id)
+            content = self.recvfrom()
             message = content[0]
             sender = content[1]
             self.receive_and_feed_counter += 1

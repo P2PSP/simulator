@@ -18,12 +18,12 @@ class team_socket:
         message = (message, self.id)
         Simulator_stuff.UDP_SOCKETS[receiver].put((message))
         if __debug__:
-            print("{} -{}-> {}".format(self.id, message, receiver))
+            print("{} - {} -> {}".format(self.id, message, receiver))
             
-    def UDP_receive(id):
-        message = Simulator_stuff.UDP_SOCKETS[id].get()
+    def recvfrom(self):
+        message = Simulator_stuff.UDP_SOCKETS[self.id].get()
         if __debug__:
-            print("{} <-{}".format(id, message))
+            print("{} <- {}".format(self.id, message))
         return message
 
 """ Socket used by the splitter to serve to the incoming peer the data

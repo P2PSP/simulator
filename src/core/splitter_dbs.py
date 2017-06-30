@@ -34,8 +34,8 @@ class Splitter_DBS(Simulator_stuff):
         print("Splitter DBS initialized")
 
     def send_chunk(self, message, destination):
-        if __debug__:
-            print("S -",message, self.chunk_number, "->", destination)
+        #if __debug__:
+        #    print("send_chunk: S -",message, self.chunk_number, "->", destination)
         
         #sim.UDP_SOCKETS[destination].put((self.id,message))
         #sim.UDP_send((message, self.id), destination)
