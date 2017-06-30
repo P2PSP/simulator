@@ -8,9 +8,10 @@ from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import team_socket
+from .simulator_stuff import serve_socket #as sim
 import time
 
-class Peer_DBS(team_socket):
+class Peer_DBS(team_socket, serve_socket):
     MAX_CHUNK_DEBT = 128
     
     def __init__(self, id):
@@ -68,7 +69,8 @@ class Peer_DBS(team_socket):
         #self.buffer_size = self.socket.get()
         #self.buffer_size = sim.UDP_SOCKETS[self.id].get()
         #self.buffer_size = sim.TCP_SOCKETS[self.id].get()
-        self.buffer_size = sim.TCP_receive(self.id)
+        #self.buffer_size = sim.TCP_receive(self.id)
+        self.buffer_size = self.recv()
 
         print(self.id,"buffer size received", self.buffer_size)
 
@@ -78,10 +80,12 @@ class Peer_DBS(team_socket):
         
     def receive_the_number_of_peers(self):
         #self.number_of_monitors = self.socket.get()
-        self.number_of_monitors = sim.TCP_receive(self.id)
+        #self.number_of_monitors = sim.TCP_receive(self.id)
+        self.number_of_monitors = self.recv()
         print(self.id,"number of monitors received")
         #self.number_of_peers = self.socket.get()
-        self.number_of_peers = sim.TCP_receive(self.id)
+        #self.number_of_peers = sim.TCP_receive(self.id)
+        self.number_of_peers = self.recv()
         print(self.id,"number of peers received")
         
     def receive_the_list_of_peers(self):
