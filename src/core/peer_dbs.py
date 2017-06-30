@@ -60,7 +60,7 @@ class Peer_DBS(team_socket):
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
         #sim.UDP_SOCKETS[peer].put((goodbye, self.id))
-        self.sendto(goodbyw, peer)
+        self.sendto(goodbye, peer)
         #print(self.id,"Goodbye sent to", peer)
 
     def receive_buffer_size(self):

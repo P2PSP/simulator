@@ -32,16 +32,16 @@ class serve_socket:
 
     TCP_SOCKETS = {}
     
-    def TCP_send(message, receiver):
+    def send(self, message, receiver):
         Simulator_stuff.TCP_SOCKETS[receiver].put(message)
         if __debug__:
-            print("TCP_send ({}) {}".format(receiver, message))
+            print("{} = {} => {}".format(self.id, message, receiver))
         
-    def TCP_receive(me):
-        m = Simulator_stuff.TCP_SOCKETS[me].get()
+    def recv(self):
+        message = Simulator_stuff.TCP_SOCKETS[self.id].get()
         if __debug__:
-            print("TCP_receive ({}) {}".format(me, m))
-        return m
+            print("{} <- {}".format(self.id, message))
+        return message
 
 class Simulator_stuff:
 
