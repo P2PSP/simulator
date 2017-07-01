@@ -3,13 +3,31 @@
 simulator module
 """
 
+class Socket:
+    
+    def socket(self, queue, id):
+        self.queue = queue
+        self.id = id
+
+    def connect(self, server):
+        self.server = server
+        
+    def sendall(self, message):
+        if __debug__:
+            print("{} = {} => {}".format(self.id, message, self.server))
+        self.queue.put(message)
+
+    def recv(self):
+        message = self.queue.get()
+        if __debug__:
+            print("{} <- {}".format(self.id, message))
+        return message
+
 """Socket used by the splitter to send chunks to the peers and by
 peers to send data (chunks for example) without ARQ.
 
 """
-class team_socket:
-
-    UDP_SOCKETS= {}
+class team_socket: # -> UDP_Socket
 
     #def __init__(self, id):
     #    self.id = id
@@ -30,9 +48,13 @@ class team_socket:
 without loss.  """
 class serve_socket:
 
-    TCP_SOCKETS = {}
-    
     def send(self, message, receiver):
+        Simulator_stuff.TCP_SOCKETS[receiver].put(message)
+        if __debug__:
+            print("{} = {} => {}".format(self.id, message, receiver))
+
+    def send_xx(self, message, receiver):
+        message = (message, self.id)
         Simulator_stuff.TCP_SOCKETS[receiver].put(message)
         if __debug__:
             print("{} = {} => {}".format(self.id, message, receiver))
@@ -61,7 +83,7 @@ class Simulator_stuff:
     #def __init__(self, id):
     #    self.id = id
     
-    def sendto(self, message, receiver):
+    def sendtox(self, message, receiver):
         message = (message, self.id)
         Simulator_stuff.UDP_SOCKETS[receiver].put((message))
         if __debug__:

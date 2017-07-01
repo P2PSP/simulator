@@ -90,9 +90,10 @@ class Peer_DBS(team_socket, serve_socket):
         
     def receive_the_list_of_peers(self):
         #self.peer_list = self.socket.get()[:]
-        print("-------------> 1 <------------")
-        self.peer_list = sim.TCP_receive(self.id)[:]
-        print("------------------> 2 <----------------")
+        #print("-------------> 1 <------------")
+        #self.peer_list = sim.TCP_receive(self.id)[:]
+        self.peer_list = self.recv()[:]
+        #print("------------------> 2 <----------------")
         for peer in self.peer_list:
             self.say_hello(peer)
             self.debt[peer] = 0
@@ -105,12 +106,14 @@ class Peer_DBS(team_socket, serve_socket):
     def connect_to_the_splitter(self):
         hello = (-1,"P")
         #self.splitter["socketTCP"].put((self.id, hello))
-        sim.TCP_send((hello, self.id), self.splitter['id'])
+        #sim.TCP_send((hello, self.id), self.splitter['id'])
+        self.send_xx(hello, self.splitter['id'])
 
     def send_ready_for_receiving_chunks(self):
         ready = (-1, "R")
         #self.splitter["socketTCP"].put((self.id, ready))
         sim.TCP_send(ready, self.id)
+        #self.send(ready)
 
     def send_chunk(self, peer):
         #sim.UDP_SOCKETS[peer].put((self.receive_and_feed_previous, self.id))
