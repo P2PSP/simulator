@@ -2,16 +2,9 @@
 @package simulator
 common module
 """
+
 class Common():
 
-    MAX_CHUNK_NUMBER = 65536
-    COUNTERS_TIMING = 1
-    BUFFER_SIZE = 128
-    UDP_SOCKETS= {}
-    TCP_SOCKETS = {}
-
-    #shared lists between peers
-    SHARED_LIST = {}
-
-    #Communication channel with the simulator
-    SIMULATOR_FEEDBACK = {}
+    MAX_CHUNK_NUMBER = 65536 # 65535? 32767?.
+    COUNTERS_TIMING = 1      # Seconds.
+    BUFFER_SIZE = 128        # Chunks.

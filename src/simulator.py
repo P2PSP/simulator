@@ -12,6 +12,8 @@ from core.monitor_dbs import Monitor_DBS
 from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
 from core.common import Common
+from core.simulator_stuff import Simulator_stuff as sim
+from core.simulator_stuff import Socket_queue
 from multiprocessing import Process, Queue, Array, Manager
 import time
 import fire
@@ -24,7 +26,7 @@ import random
 import ctypes
 import platform
 
-class Simulator(object):
+class Simulator():
 
     P_IN = 0.2
     P_MoP = 0.2
@@ -52,7 +54,7 @@ class Simulator(object):
             return team_size
         
     def run_a_splitter(self):
-        Common.BUFFER_SIZE = self.get_buffer_size()
+        sim.BUFFER_SIZE = self.get_buffer_size()
         if self.set_of_rules == "dbs":
             splitter = Splitter_DBS()
         elif self.set_of_rules == "cis":
@@ -261,7 +263,7 @@ class Simulator(object):
         m = ["C",self.number_of_monitors, self.number_of_peers, self.number_of_malicious, self.number_of_rounds, self.set_of_rules]
         drawing_log_file.write(";".join(map(str,m))+'\n')
     
-        queue = Common.SIMULATOR_FEEDBACK["DRAW"]
+        queue = sim.FEEDBACK["DRAW"]
         m = queue.get()
         
         while m[0] != "Bye":
@@ -280,7 +282,7 @@ class Simulator(object):
         self.plot_team()
         self.draw_buffer()
         self.plot_clr()
-        time.sleep(0.5)
+        time.sleep(1)
         line = drawing_log_file.readline()
         while line != "Bye":
             m = line.strip().split(";",4)
@@ -335,33 +337,36 @@ class Simulator(object):
         plt.style.use("seaborn-white")
         
         #Listen to the team for drawing
-        Common.SIMULATOR_FEEDBACK["DRAW"] = Queue()
+        sim.FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
         
         if self.gui == True:
             Process(target=self.draw).start()
 
         #Listen to the team for simulation life
-        Common.SIMULATOR_FEEDBACK["STATUS"] = Queue()
+        sim.FEEDBACK["STATUS"] = Queue()
                 
         #create communication channels for the team and splitter
-        Common.UDP_SOCKETS['S'] = Queue()
-        Common.TCP_SOCKETS['S'] = Queue()
+        Socket_queue.UDP_SOCKETS['S'] = Queue()
+        Socket_queue.TCP_SOCKETS['S'] = Queue()
+
+        for i in range(self.number_of_monitors):
+            Socket_queue.UDP_SOCKETS["M"+str(i+1)] = Queue()
+            Socket_queue.TCP_SOCKETS["M"+str(i+1)] = Queue(1)
+
+        for i in range(self.number_of_peers):
+            Socket_queue.UDP_SOCKETS["P"+str(i+1)] = Queue()
+            Socket_queue.TCP_SOCKETS["P"+str(i+1)] = Queue(1)
+
+        for i in range(self.number_of_malicious):
+            Socket_queue.UDP_SOCKETS["MP"+str(i+1)] = Queue()
+            Socket_queue.TCP_SOCKETS["MP"+str(i+1)] = Queue(1)
 
         #create shared list for CIS set of rules (only when cis is choosen?)
         manager = Manager()
-        Common.SHARED_LIST["malicious"] = manager.list()
-        Common.SHARED_LIST["regular"] = manager.list()
-        Common.SHARED_LIST["attacked"] = manager.list()
-
-        for i in range(self.number_of_monitors):
-            Common.UDP_SOCKETS["M"+str(i+1)] = Queue()
-
-        for i in range(self.number_of_peers):
-            Common.UDP_SOCKETS["P"+str(i+1)] = Queue()
-
-        for i in range(self.number_of_malicious):
-            Common.UDP_SOCKETS["MP"+str(i+1)] = Queue()
+        sim.SHARED_LIST["malicious"] = manager.list()
+        sim.SHARED_LIST["regular"] = manager.list()
+        sim.SHARED_LIST["attacked"] = manager.list()
 
         #run splitter
         Process(target=self.run_a_splitter).start()
@@ -374,7 +379,7 @@ class Simulator(object):
         Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)]).start()
         self.attended_monitors += 1
 
-        queue = Common.SIMULATOR_FEEDBACK["STATUS"]
+        queue = sim.FEEDBACK["STATUS"]
         m = queue.get()
         while m[0] != "Bye":
             if (m[0] == "R"):
@@ -384,7 +389,7 @@ class Simulator(object):
                     self.addPeer()
 
                 if self.current_round == self.number_of_rounds:
-                    Common.UDP_SOCKETS['S'].put(("SIM",(-1,"K")))
+                    Socket_queue.UDP_SOCKETS['S'].put(((-1,"K"),"SIM"))
                                                 
             m= queue.get()     
 
