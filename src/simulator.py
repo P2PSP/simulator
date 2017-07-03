@@ -389,7 +389,7 @@ class Simulator():
                     self.addPeer()
 
                 if self.current_round == self.number_of_rounds:
-                    sim.UDP_SOCKETS['S'].put(("SIM",(-1,"K")))
+                    Socket_queue.UDP_SOCKETS['S'].put(((-1,"K"),"SIM"))
                                                 
             m= queue.get()     
 

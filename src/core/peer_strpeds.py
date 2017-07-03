@@ -23,7 +23,7 @@ class Peer_STRPEDS(Peer_DBS):
     def process_bad_message(self, message, sender):
         self.bad_peers.append(sender)
         self.peer_list.remove(sender)
-        sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,sender))
+        sim.FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,sender))
 
     def check_message(self, message, sender):
         if sender in self.bad_peers:

@@ -66,7 +66,7 @@ class Splitter_STRPEDS(Splitter_DBS):
         print(self.id, ": received", m, "from", x)
             
         self.insert_peer(incoming_peer)
-        sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
+        sim.FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
     
     def process_bad_peers_message(self, message, sender):
         bad_list = message[2]
@@ -141,7 +141,7 @@ class Splitter_STRPEDS(Splitter_DBS):
 
             if (sender == "SIM"):
                 if (action[1] == "K"):
-                    sim.SIMULATOR_FEEDBACK["DRAW"].put(("Bye","Bye"))
+                    sim.FEEDBACK["DRAW"].put(("Bye","Bye"))
                     self.alive = False
             else:
                 if action[1] == "L":
@@ -183,11 +183,11 @@ class Splitter_STRPEDS(Splitter_DBS):
 
                 self.on_round_beginning()
                 
-                sim.SIMULATOR_FEEDBACK["STATUS"].put(("R", self.current_round))
-                sim.SIMULATOR_FEEDBACK["DRAW"].put(("R", self.current_round))
-                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
-                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
-                sim.SIMULATOR_FEEDBACK["DRAW"].put(("T","MP",self.number_of_malicious, self.current_round))
+                sim.FEEDBACK["STATUS"].put(("R", self.current_round))
+                sim.FEEDBACK["DRAW"].put(("R", self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T","MP",self.number_of_malicious, self.current_round))
 
                 self.current_round += 1
                 

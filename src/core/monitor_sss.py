@@ -31,7 +31,7 @@ class Monitor_SSS(Peer_SSS):
     def connect_to_the_splitter(self):
         hello = (-1,"M")
         #self.splitter["socketTCP"].put((self.id,hello))
-        self.connect(hello, self.splitter)
+        self.send(hello, self.splitter)
 
     def complain(self, chunk_position):
         lost = (chunk_position,"L")

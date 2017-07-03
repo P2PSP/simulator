@@ -46,10 +46,11 @@ class Peer_SSS(Peer_STRPEDS):
 
                     self.splitter_t[current_round] = message[3]              
 
-                    print(self.id, "current_round", current_round, "previous one", (current_round-1))
+                    print(self.id, "current_round", current_round)
 
                     if ((current_round-1) in self.t):
                         print(self.id, "t", self.t[(current_round-1)], "splitter_t", self.splitter_t[(current_round-1)])
+                        print(self.id, "this.t", self.t[(current_round)], "this.splitter_t", self.splitter_t[(current_round)])
                         if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
                             return Peer_STRPEDS.process_message(self, message, sender)
                         else:
@@ -58,6 +59,7 @@ class Peer_SSS(Peer_STRPEDS):
                             return Peer_STRPEDS.process_message(self, encrypted_message, sender)
                     else:
                         print(self.id, "is my first round")
+                        return Peer_STRPEDS.process_message(self, message, sender)
                         
                     '''
                     print("Current Round", message[2], "Previous Round", self.previous_round)
