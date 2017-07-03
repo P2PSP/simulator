@@ -11,7 +11,7 @@ from .simulator_stuff import team_socket
 from .simulator_stuff import serve_socket #as sim
 import time
 
-class Peer_DBS(team_socket, serve_socket):
+class Peer_DBS(sim):
     MAX_CHUNK_DEBT = 128
     
     def __init__(self, id):
@@ -42,25 +42,26 @@ class Peer_DBS(team_socket, serve_socket):
         self.number_of_peers = 0
         self.sendto_counter = 0
         self.ready_to_leave_the_team = False        
-        print("max_chunk_debt", self.MAX_CHUNK_DEBT)
-        print("Peer", self.id)
-        print("Peer DBS initialized")
+        print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
+        print(self.id, ": DBS initialized")
 
     def set_splitter(self, splitter):
         self.splitter = {}
         self.splitter["id"] = splitter
-        self.splitter["socketTCP"] = sim.TCP_SOCKETS[splitter]
-        self.splitter["socketUDP"] = sim.UDP_SOCKETS[splitter]
+        #self.splitter["socketTCP"] = sim.TCP_SOCKETS[splitter]
+        #self.splitter["socketUDP"] = sim.UDP_SOCKETS[splitter]
 
     def say_hello(self, peer):
         hello = (-1,"H")
         #sim.UDP_SOCKETS[peer].put((hello, self.id))
+        print(self.id, ": sending", hello, "to", peer)
         self.sendto(hello, peer)
         #print("*********** {} sent to {}".format((hello, self.id),peer))
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
         #sim.UDP_SOCKETS[peer].put((goodbye, self.id))
+        print(self.id, ": sending", goodbye, "to", peer)
         self.sendto(goodbye, peer)
         #print(self.id,"Goodbye sent to", peer)
 
@@ -70,9 +71,9 @@ class Peer_DBS(team_socket, serve_socket):
         #self.buffer_size = sim.UDP_SOCKETS[self.id].get()
         #self.buffer_size = sim.TCP_SOCKETS[self.id].get()
         #self.buffer_size = sim.TCP_receive(self.id)
-        self.buffer_size = self.recv()
+        (self.buffer_size, sender) = self.recv()
 
-        print(self.id,"buffer size received", self.buffer_size)
+        print(self.id,": received buffer_size =", self.buffer_size, "from", sender)
 
         #--- Only for simulation purposes ----
         self.sender_of_chunks = [""]*self.buffer_size
@@ -81,39 +82,40 @@ class Peer_DBS(team_socket, serve_socket):
     def receive_the_number_of_peers(self):
         #self.number_of_monitors = self.socket.get()
         #self.number_of_monitors = sim.TCP_receive(self.id)
-        self.number_of_monitors = self.recv()
-        print(self.id,"number of monitors received")
+        (self.number_of_monitors, sender) = self.recv()
+        print(self.id,": received number_of_monitors =", self.number_of_monitors, "from", sender)
         #self.number_of_peers = self.socket.get()
         #self.number_of_peers = sim.TCP_receive(self.id)
-        self.number_of_peers = self.recv()
-        print(self.id,"number of peers received")
+        (self.number_of_peers, sender) = self.recv()
+        print(self.id,": received number_of_peers =", self.number_of_peers, "from", sender)
         
     def receive_the_list_of_peers(self):
         #self.peer_list = self.socket.get()[:]
         #print("-------------> 1 <------------")
         #self.peer_list = sim.TCP_receive(self.id)[:]
-        self.peer_list = self.recv()[:]
+        (self.peer_list, sender) = self.recv()[:]
         #print("------------------> 2 <----------------")
         for peer in self.peer_list:
             self.say_hello(peer)
             self.debt[peer] = 0
 
-        print("list of peers received. Size",len(self.peer_list))
-
-        if __debug__:
-            print(self.id, self.peer_list)
+        print(self.id, ": received len(peer_list) =",len(self.peer_list), "from", sender)
+        print(self.id, ":", self.peer_list)
 
     def connect_to_the_splitter(self):
         hello = (-1,"P")
         #self.splitter["socketTCP"].put((self.id, hello))
         #sim.TCP_send((hello, self.id), self.splitter['id'])
-        self.send_xx(hello, self.splitter['id'])
+        self.connect(hello, self.splitter['id'])
+        print(self.id, ": sent", hello, "to", self.splitter['id'])
 
     def send_ready_for_receiving_chunks(self):
         ready = (-1, "R")
         #self.splitter["socketTCP"].put((self.id, ready))
-        sim.TCP_send(ready, self.id)
+        #sim.TCP_send(ready, self.id)
+        self.send(ready, self.splitter['id'])
         #self.send(ready)
+        print(self.id, ": sent", ready, "to", self.splitter['id'])
 
     def send_chunk(self, peer):
         #sim.UDP_SOCKETS[peer].put((self.receive_and_feed_previous, self.id))
@@ -162,9 +164,6 @@ class Peer_DBS(team_socket, serve_socket):
 
                     self.send_chunk(peer)
                     
-                    if __debug__:
-                        print(self.id,",",self.receive_and_feed_previous[0],"->", peer)
-                    
                     self.debt[peer] += 1
                     
                     if self.debt[peer] > self.MAX_CHUNK_DEBT:
@@ -185,19 +184,19 @@ class Peer_DBS(team_socket, serve_socket):
                 self.receive_and_feed_counter = 0
                 self.receive_and_feed_previous = message
 
-                if __debug__:
-                    print(self.id, "<-", str(chunk_number), "-", sender)
+                #if __debug__:
+                #    print(self.id, "<-", str(chunk_number), "-", sender)
                 
             else:
 
-                if __debug__:
-                    print(self.id, "<-", str(chunk_number), "-", sender)
+                #if __debug__:
+                #    print(self.id, "<-", str(chunk_number), "-", sender)
 
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     if __debug__:
-                        print(sender, "added by chunk", chunk_number)
+                        print(self.id, ":", sender, "added by chunk", chunk_number)
                     #-------- For simulation purposes only -----------
                     sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
                     sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
@@ -236,12 +235,12 @@ class Peer_DBS(team_socket, serve_socket):
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     if __debug__:
-                        print(sender, "added by [hello]")
+                        print(self.id, ":", sender, "added by [hello]")
                     sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
                     sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
             else:
                 if sender in self.peer_list:
-                    print(self.id, "received goodbye from", sender)
+                    print(self.id, ": received goodbye from", sender)
                     self.peer_list.remove(sender)
                     del self.debt[sender]
                     if (self.receive_and_feed_counter > 0):
@@ -249,7 +248,7 @@ class Peer_DBS(team_socket, serve_socket):
                         self.receive_and_feed_counter -= 1
                 else:
                     if (sender == self.splitter["id"]):
-                        print("goodbye received from splitter")
+                        print(self.id, ": received goodbye from splitter")
                         self.waiting_for_goodbye = False
             return -1
 
@@ -263,7 +262,7 @@ class Peer_DBS(team_socket, serve_socket):
         return self.process_message(message, sender)
         
     def polite_farewell(self):
-        print("Goodbye!")
+        print(self.id, ": goodbye! (see you later)")
         while (self.receive_and_feed_counter < len(self.peer_list)):
             #sim.UDP_SOCKETS[self.peer_list[self.receive_and_feed_counter]].put((self.receive_and_feed_previous, self.id))
             self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
@@ -278,7 +277,7 @@ class Peer_DBS(team_socket, serve_socket):
             self.say_goodbye(peer)
 
         self.ready_to_leave_the_team = True
-        print("Ready to leave the team")
+        print(self.id, ": ready to leave the team")
 
     def buffer_data(self):
         self.receive_and_feed_counter = 0
@@ -296,7 +295,7 @@ class Peer_DBS(team_socket, serve_socket):
 
         self.played_chunk = chunk_number
 
-        print(self.id,"Position in the buffer of the first chunk to play", str(self.played_chunk))
+        print(self.id,": position in the buffer of the first chunk to play", str(self.played_chunk))
         
         while (chunk_number < self.played_chunk or ((chunk_number - self.played_chunk) % self.buffer_size) < (self.buffer_size // 2)):
             chunk_number = self.process_next_message()
@@ -319,7 +318,7 @@ class Peer_DBS(team_socket, serve_socket):
             self.played +=1
         else:
             self.losses += 1
-            print (self.id, "Lost Chunk!", chunk_number)
+            print (self.id, ": lost Chunk!", chunk_number)
         self.number_of_chunks_consumed += 1
         return self.player_alive
 
