@@ -9,9 +9,6 @@ from queue import Queue
 from threading import Thread
 import time
 from .simulator_stuff import Simulator_stuff #as sim
-from .simulator_stuff import team_socket #as sim
-from .simulator_stuff import serve_socket #as sim
-from .simulator_stuff import Socket #as sim
 
 class Splitter_DBS(Simulator_stuff):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
@@ -23,8 +20,6 @@ class Splitter_DBS(Simulator_stuff):
         self.chunk_number = 0
         self.peer_list = []
         self.losses = {}
-        #self.tcp_socket = Simulator_stuff.TCP_SOCKETS[self.id]
-        #self.udp_socket = Simulator_stuff.UDP_SOCKETS[self.id]
         self.destination_of_chunk = []
         self.buffer_size = Common.BUFFER_SIZE
         self.peer_number = 0
@@ -32,18 +27,10 @@ class Splitter_DBS(Simulator_stuff):
         self.number_of_monitors = 0
         self.outgoing_peer_list = []
         self.current_round = 0
-        #self.peer_connection_socket = Socket(self.id)
-        #Simulator_stuff.init(self.id)
 
         print(self.id, ": DBS initialized")
 
     def send_chunk(self, chunk, peer):
-        #if __debug__:
-        #    print("send_chunk: S -",message, self.chunk_number, "->", destination)
-        
-        #sim.UDP_SOCKETS[destination].put((self.id,message))
-        #sim.UDP_send((message, self.id), destination)
-        #Simulator_stuff.UDP_send((message, self.id), destination)
         self.sendto(chunk, peer)
 
     def receive_chunk(self):
@@ -54,17 +41,13 @@ class Splitter_DBS(Simulator_stuff):
     def handle_arrivals(self):
         while(self.alive):
             #Thread(target=self.handle_a_peer_arrival).start()
-            #sock = self.peer_connection_socket.accept(Simulator_stuff.TCP_SOCKETS[self.id])
             self.handle_a_peer_arrival()
         
     def handle_a_peer_arrival(self):
-        #content = self.tcp_socket.get()
-        #content = Simulator_stuff.TCP_receive(self.id)
         content = self.recv()
         message = content[0]
         incoming_peer = content[1]
         print(self.id, ": acepted connection from peer", incoming_peer)
-        #print(self.id, "----> message <----", message)
         if (message[1] == "M"):
             self.number_of_monitors += 1
         print(self.id, ": number of monitors", self.number_of_monitors)
@@ -73,42 +56,24 @@ class Splitter_DBS(Simulator_stuff):
         self.send_the_number_of_peers(incoming_peer)
         self.send_the_list_of_peers(incoming_peer)
         print(self.id, ": waiting for outgoing peer")
-        #receive_ready_for_receiving_chunks
-        #check if we receive confirmation from the incoming_peer
-        #m = self.tcp_socket.get()
-        #m, x = Simulator_stuff.TCP_receive(incoming_peer)
-        (m, x) = self.recv()
-        print(self.id, ": received", m, "from", x)
-        #m = self.recv()
-        #while m[1] != incoming_peer:
-            #self.tcp_socket.put(m)
-            #m = self.tcp_socket.get()
+        (message, sender) = self.recv()
+        print(self.id, ": received", message, "from", sender)
             
         self.insert_peer(incoming_peer)
         Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
         
     def send_buffer_size(self, peer):
-        #sim.team_socket__sendto(self.buffer_size, self.id, peer)
-        #sim.UDP_SOCKETS[peer].put(self.buffer_size)
-        #sim.TCP_SOCKETS[peer].put(self.buffer_size)
-        #Simulator_stuff.TCP_send(self.buffer_size, peer)
         print(self.id, ": sending buffer size =", self.buffer_size, "to", peer)
         self.send(self.buffer_size, peer)
         
     def send_the_number_of_peers(self, peer):
-        #Simulator_stuff.TCP_send(self.number_of_monitors, peer)
         print(self.id, ": sending number of monitors =", self.number_of_monitors, "to", peer)
         self.send(self.number_of_monitors, peer)
-        #sim.UDP_SOCKETS[peer].put(self.number_of_monitors)
-        #Simulator_stuff.TCP_send(len(self.peer_list), peer)
         print(self.id, ": sending list of peers of length =", self.peer_list, "to", peer)
         self.send(len(self.peer_list), peer)
-        #sim.UDP_SOCKETS[peer].put(len(self.peer_list))
 
     def send_the_list_of_peers(self, peer):
-        #sim.UDP_SOCKETS[peer].put(self.peer_list)
         print(self.id, ": sending peer list =", self.peer_list, "to", peer)
-        #Simulator_stuff.TCP_send(self.peer_list, peer)
         self.send(self.peer_list, peer)
         
     def insert_peer(self, peer):
@@ -164,14 +129,11 @@ class Splitter_DBS(Simulator_stuff):
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        #Simulator_stuff.UDP_SOCKETS[peer].put((goodbye, self.id))
         self.sendto(goodbye, peer)
-
-        #print("goodbye sent to", peer)
+        print(self.id, ": sent", goodbye, "to", peer)
     
     def moderate_the_team(self):
         while self.alive:
-            #content = self.udp_socket.get()
             message = self.recvfrom()
             action = message[0]
             sender = message[1]
@@ -209,7 +171,6 @@ class Splitter_DBS(Simulator_stuff):
 
         while self.alive:
             chunk = self.receive_chunk()
-            #print("--------------->", len(self.peer_list))
             try:
                 peer = self.peer_list[self.peer_number]
                 message = (self.chunk_number, chunk)

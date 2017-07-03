@@ -7,8 +7,6 @@ from queue import Queue
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
-from .simulator_stuff import team_socket
-from .simulator_stuff import serve_socket #as sim
 import time
 
 class Peer_DBS(sim):
@@ -16,7 +14,6 @@ class Peer_DBS(sim):
     
     def __init__(self, id):
         self.id = id
-        #self.socket = sim.UDP_SOCKETS[self.id]
         self.played_chunk = 0
         self.prev_received_chunk = 0
         self.buffer_size = 64
@@ -47,31 +44,20 @@ class Peer_DBS(sim):
 
     def set_splitter(self, splitter):
         self.splitter = splitter
-        #self.splitter["socketTCP"] = sim.TCP_SOCKETS[splitter]
-        #self.splitter["socketUDP"] = sim.UDP_SOCKETS[splitter]
 
     def say_hello(self, peer):
         hello = (-1,"H")
-        #sim.UDP_SOCKETS[peer].put((hello, self.id))
-        print(self.id, ": sending", hello, "to", peer)
         self.sendto(hello, peer)
-        #print("*********** {} sent to {}".format((hello, self.id),peer))
+        print(self.id, ": sent", hello, "to", peer)
+
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        #sim.UDP_SOCKETS[peer].put((goodbye, self.id))
-        print(self.id, ": sending", goodbye, "to", peer)
         self.sendto(goodbye, peer)
-        #print(self.id,"Goodbye sent to", peer)
+        print(self.id, ": sent", goodbye, "to", peer)
 
     def receive_buffer_size(self):
-        #self.buffer_size, from_who = self.socket.get()
-        #self.buffer_size = self.socket.get()
-        #self.buffer_size = sim.UDP_SOCKETS[self.id].get()
-        #self.buffer_size = sim.TCP_SOCKETS[self.id].get()
-        #self.buffer_size = sim.TCP_receive(self.id)
         (self.buffer_size, sender) = self.recv()
-
         print(self.id,": received buffer_size =", self.buffer_size, "from", sender)
 
         #--- Only for simulation purposes ----
@@ -79,21 +65,13 @@ class Peer_DBS(sim):
         #-------------------------------------
         
     def receive_the_number_of_peers(self):
-        #self.number_of_monitors = self.socket.get()
-        #self.number_of_monitors = sim.TCP_receive(self.id)
         (self.number_of_monitors, sender) = self.recv()
         print(self.id,": received number_of_monitors =", self.number_of_monitors, "from", sender)
-        #self.number_of_peers = self.socket.get()
-        #self.number_of_peers = sim.TCP_receive(self.id)
         (self.number_of_peers, sender) = self.recv()
         print(self.id,": received number_of_peers =", self.number_of_peers, "from", sender)
         
     def receive_the_list_of_peers(self):
-        #self.peer_list = self.socket.get()[:]
-        #print("-------------> 1 <------------")
-        #self.peer_list = sim.TCP_receive(self.id)[:]
         (self.peer_list, sender) = self.recv()[:]
-        #print("------------------> 2 <----------------")
         for peer in self.peer_list:
             self.say_hello(peer)
             self.debt[peer] = 0
@@ -103,21 +81,15 @@ class Peer_DBS(sim):
 
     def connect_to_the_splitter(self):
         hello = (-1,"P")
-        #self.splitter["socketTCP"].put((self.id, hello))
-        #sim.TCP_send((hello, self.id), self.splitter['id'])
-        self.connect(hello, self.splitter)
+        self.send(hello, self.splitter)
         print(self.id, ": sent", hello, "to", self.splitter)
 
     def send_ready_for_receiving_chunks(self):
         ready = (-1, "R")
-        #self.splitter["socketTCP"].put((self.id, ready))
-        #sim.TCP_send(ready, self.id)
         self.send(ready, self.splitter)
-        #self.send(ready)
         print(self.id, ": sent", ready, "to", self.splitter)
 
     def send_chunk(self, peer):
-        #sim.UDP_SOCKETS[peer].put((self.receive_and_feed_previous, self.id))
         self.sendto(self.receive_and_feed_previous, peer)
         self.sendto_counter += 1
 
@@ -182,20 +154,13 @@ class Peer_DBS(sim):
                 self.modified_list = False
                 self.receive_and_feed_counter = 0
                 self.receive_and_feed_previous = message
-
-                #if __debug__:
-                #    print(self.id, "<-", str(chunk_number), "-", sender)
                 
             else:
-
-                #if __debug__:
-                #    print(self.id, "<-", str(chunk_number), "-", sender)
 
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
-                    if __debug__:
-                        print(self.id, ":", sender, "added by chunk", chunk_number)
+                    print(self.id, ":", sender, "added by chunk", chunk_number)
                     #-------- For simulation purposes only -----------
                     sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
                     sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
@@ -217,8 +182,8 @@ class Peer_DBS(sim):
                     self.peer_list.remove(peer)
                     sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
 
-                if __debug__:
-                    print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
+                #if __debug__:
+                #    print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
                     
                 self.receive_and_feed_counter += 1
 
@@ -227,14 +192,13 @@ class Peer_DBS(sim):
         else:
             # A control chunk has been received
             if __debug__:
-                print("Control message received", message)
+                print(self.id, ": control message received:", message)
                 
             if message[1] == "H":
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
-                    if __debug__:
-                        print(self.id, ":", sender, "added by [hello]")
+                    print(self.id, ":", sender, "added by [hello]")
                     sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",sender))
                     sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
             else:
@@ -252,10 +216,7 @@ class Peer_DBS(sim):
             return -1
 
     def process_next_message(self):
-        #content = self.socket.get() #it replaces receive_next_message
-        #content = sim.UDP_receive(self.id)
         content = self.recvfrom()
-        #print("-------------___", content)
         message = content[0]
         sender = content[1]
         return self.process_message(message, sender)
@@ -263,10 +224,7 @@ class Peer_DBS(sim):
     def polite_farewell(self):
         print(self.id, ": goodbye! (see you later)")
         while (self.receive_and_feed_counter < len(self.peer_list)):
-            #sim.UDP_SOCKETS[self.peer_list[self.receive_and_feed_counter]].put((self.receive_and_feed_previous, self.id))
             self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
-            #content = self.socket.get()
-            #conent = sim.UDP_receive(self.id)
             content = self.recvfrom()
             message = content[0]
             sender = content[1]
