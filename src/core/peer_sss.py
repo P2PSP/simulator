@@ -31,7 +31,7 @@ class Peer_SSS(Peer_STRPEDS):
                 print(self.id,"Sender is in the bad peer list", sender)
             return -1
 
-        if sender == self.splitter["id"] or self.check_message(message, sender):
+        if sender == self.splitter or self.check_message(message, sender):
             if self.is_a_control_message(message) and message[1] == "S":
                 return self.handle_bad_peers_request()
             else:

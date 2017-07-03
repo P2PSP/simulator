@@ -41,9 +41,9 @@ class Splitter_STRPEDS(Splitter_DBS):
         return NotImplementedError
 
     def handle_a_peer_arrival(self):
-        content = self.tcp_socket.get()
-        incoming_peer = content[0]
-        message = content[1]
+        content = self.recv()
+        message = content[0]
+        incoming_peer = content[1]
         print(self.id,"acepted connection from peer", incoming_peer)
         print(self.id, "message", content)
         if (message[1] == "M"):
@@ -61,12 +61,9 @@ class Splitter_STRPEDS(Splitter_DBS):
         self.send_the_number_of_peers(incoming_peer)
         self.send_the_list_of_peers(incoming_peer)
 
-        #receive_ready_for_receiving_chunks
-        #check if we receive confirmation from the incoming_peer
-        m = self.tcp_socket.get()
-        while m[0] != incoming_peer:
-            self.tcp_socket.put(m)
-            m = self.tcp_socket.get()
+        print(self.id, ": waiting for outgoing peer")
+        (m, x) = self.recv()
+        print(self.id, ": received", m, "from", x)
             
         self.insert_peer(incoming_peer)
         sim.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
@@ -138,27 +135,27 @@ class Splitter_STRPEDS(Splitter_DBS):
 
     def moderate_the_team(self):
         while self.alive:
-            content = self.udp_socket.get()
-            sender = content[0]
-            message = content[1]
+            message = self.recvfrom()
+            action = message[0]
+            sender = message[1]
 
             if (sender == "SIM"):
-                if (message[1] == "K"):
+                if (action[1] == "K"):
                     sim.SIMULATOR_FEEDBACK["DRAW"].put(("Bye","Bye"))
                     self.alive = False
             else:
-                if message[1] == "L":
-                    lost_chunk_number = self.get_lost_chunk_number(message)
+                if action[1] == "L":
+                    lost_chunk_number = self.get_lost_chunk_number(action)
                     self.process_lost_chunk(lost_chunk_number, sender)
 
-                elif message[1] == "S":
+                elif action[1] == "S":
                     if __debug__:
                         print("Bad complaint received")
                     if sender in self.trusted_peers:
                         if __debug__:
                             print("Complaint about bad peers from", sender)
                         self.trusted_peers_discovered.append(sender)
-                        self.process_bad_peers_message(message, sender)
+                        self.process_bad_peers_message(action, sender)
                     
                 else:
                     self.process_goodbye(sender)

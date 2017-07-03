@@ -46,8 +46,7 @@ class Peer_DBS(sim):
         print(self.id, ": DBS initialized")
 
     def set_splitter(self, splitter):
-        self.splitter = {}
-        self.splitter["id"] = splitter
+        self.splitter = splitter
         #self.splitter["socketTCP"] = sim.TCP_SOCKETS[splitter]
         #self.splitter["socketUDP"] = sim.UDP_SOCKETS[splitter]
 
@@ -106,16 +105,16 @@ class Peer_DBS(sim):
         hello = (-1,"P")
         #self.splitter["socketTCP"].put((self.id, hello))
         #sim.TCP_send((hello, self.id), self.splitter['id'])
-        self.connect(hello, self.splitter['id'])
-        print(self.id, ": sent", hello, "to", self.splitter['id'])
+        self.connect(hello, self.splitter)
+        print(self.id, ": sent", hello, "to", self.splitter)
 
     def send_ready_for_receiving_chunks(self):
         ready = (-1, "R")
         #self.splitter["socketTCP"].put((self.id, ready))
         #sim.TCP_send(ready, self.id)
-        self.send(ready, self.splitter['id'])
+        self.send(ready, self.splitter)
         #self.send(ready)
-        print(self.id, ": sent", ready, "to", self.splitter['id'])
+        print(self.id, ": sent", ready, "to", self.splitter)
 
     def send_chunk(self, peer):
         #sim.UDP_SOCKETS[peer].put((self.receive_and_feed_previous, self.id))
@@ -131,7 +130,7 @@ class Peer_DBS(sim):
     def process_message(self, message, sender):
         # ----- Only for simulation purposes ------
         # ----- Check if new round for peer -------
-        if not self.is_a_control_message(message) and sender == self.splitter["id"]:
+        if not self.is_a_control_message(message) and sender == self.splitter:
             if self.played > 0 and self.played >= len(self.peer_list):
                 clr = self.losses/self.played
                 sim.SIMULATOR_FEEDBACK["DRAW"].put(("CLR",self.id,clr))
@@ -158,7 +157,7 @@ class Peer_DBS(sim):
             #--------------------------------------
             
             self.received_counter += 1
-            if (sender == self.splitter["id"]):
+            if (sender == self.splitter):
                 while((self.receive_and_feed_counter < len(self.peer_list)) and (self.receive_and_feed_counter > 0 or self.modified_list)):
                     peer = self.peer_list[self.receive_and_feed_counter]
 
@@ -247,7 +246,7 @@ class Peer_DBS(sim):
                         self.modified_list = True
                         self.receive_and_feed_counter -= 1
                 else:
-                    if (sender == self.splitter["id"]):
+                    if (sender == self.splitter):
                         print(self.id, ": received goodbye from splitter")
                         self.waiting_for_goodbye = False
             return -1
@@ -336,7 +335,7 @@ class Peer_DBS(sim):
         while (self.player_alive or self.waiting_for_goodbye):
             self.keep_the_buffer_full()
             if not self.player_alive:
-                self.say_goodbye(self.splitter["id"])
+                self.say_goodbye(self.splitter)
         self.polite_farewell()
 
     def am_i_a_monitor(self):

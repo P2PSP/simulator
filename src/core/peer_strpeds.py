@@ -42,11 +42,10 @@ class Peer_STRPEDS(Peer_DBS):
             return True
 
     def handle_bad_peers_request(self):
-        self.splitter["socketUDP"].put((self.id, (-1,"S",self.bad_peers)))
-        
+        #self.splitter["socketUDP"].put((self.id, (-1,"S",self.bad_peers)))
+        self.sendto((-1,"S",self.bad_peers), self.splitter)
         if __debug__:
             print(self.id, "Bad peers sent to the Splitter", self.bad_peers)
-
         return -1
 
     def process_message(self, message, sender):
@@ -56,7 +55,7 @@ class Peer_STRPEDS(Peer_DBS):
                 print(self.id,"Sender is  in the bad peer list", sender)
             return -1
 
-        if sender == self.splitter["id"] or self.check_message(message, sender):
+        if sender == self.splitter or self.check_message(message, sender):
             if self.is_a_control_message(message) and message[1] == "S":
                 return self.handle_bad_peers_request()
             else:

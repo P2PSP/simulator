@@ -33,13 +33,13 @@ class Monitor_DBS(Peer_DBS):
     def connect_to_the_splitter(self):
         hello = (-1,"M")
         #self.splitter["socketTCP"].put((hello, self.id))
-        self.connect(hello, self.splitter['id'])
-        print(self.id, ":", hello, "sent to", self.splitter['id'])
+        self.connect(hello, self.splitter)
+        print(self.id, ":", hello, "sent to", self.splitter)
 
     def complain(self, chunk_position):
         lost = (chunk_position,"L")
         #self.splitter["socketUDP"].put((lost, self.id))
-        self.sendto(lost,  self.splitter['id'])
-        print(self.id, ": lost chunk =", lost, "sent to", self.splitter['id'])
+        self.sendto(lost,  self.splitter)
+        print(self.id, ": lost chunk =", lost, "sent to", self.splitter)
 
     #def PlayNextChunk (with complaints)

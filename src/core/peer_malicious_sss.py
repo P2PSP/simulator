@@ -23,7 +23,7 @@ class Peer_Malicious_SSS(Peer_SSS):
 
     def connect_to_the_splitter(self):
         hello = (-1,"MP")
-        self.splitter["socketTCP"].put((self.id,hello))
+        self.connect(hello, self.splitter)
         
     def receive_the_list_of_peers(self):
         Peer_SSS.receive_the_list_of_peers(self)
@@ -60,33 +60,33 @@ class Peer_Malicious_SSS(Peer_SSS):
 
     def get_poisoned_chunk(self, chunk):
         return (chunk[0],"B")
-        
+
     def send_chunk(self, peer):
         poisoned_chunk = self.get_poisoned_chunk(self.receive_and_feed_previous)
         
         if self.persistent_attack:
             if peer == self.main_target:
                 if self.chunks_sent_to_main_target < self.MPTR:
-                    sim.UDP_SOCKETS[peer].put((self.id, poisoned_chunk))
+                    self.sendto(poisoned_chunk, peer)
                     self.sendto_counter += 1
                     self.chunks_sent_to_main_target += 1
                     if __debug__:
                         print("Attacking Main target", self.main_target, "attack", self.chunks_sent_to_main_target)
                 else:
                     self.all_attack()
-                    sim.UDP_SOCKETS[peer].put((self.id, poisoned_chunk))
+                    self.sendto(poisoned_chunk, peer)
                     self.sendto_counter += 1
                     self.main_target = self.choose_main_target()
                     if __debug__:
                         print("Attacking Main target", peer, ". Replaced by", self.main_target)
             else:
                 if peer in sim.SHARED_LIST["regular"]:
-                    sim.UDP_SOCKETS[peer].put((self.id, poisoned_chunk))
+                    self.sendto(poisoned_chunk, peer)
                     self.sendto_counter += 1
                     if __debug__:
                         print("All Attack:",peer)
                 else:
-                    sim.UDP_SOCKETS[peer].put((self.id, self.receive_and_feed_previous))
+                    self.sendto(self.receive_and_feed_previous, peer)
                     self.sendto_counter += 1
                     if __debug__:
                         print("No attack", peer)
@@ -96,7 +96,5 @@ class Peer_Malicious_SSS(Peer_SSS):
 
         #TO-DO: on-off and selective attacks
         else:
-            sim.UDP_SOCKETS[peer].put((self.id, self.receive_and_feed_previous))
+            self.sendto(self.receive_and_feed_previous, peer)
             self.sendto_counter += 1
-
-    
