@@ -61,7 +61,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         print(self.id, ": received", message, "from", sender)
         self.insert_peer(incoming_peer)
         # ------------------
-        Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
+        Simulator_stuff.FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
         # ------------------
         
     def send_buffer_size(self, peer):
@@ -112,7 +112,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         try:
             self.peer_list.remove(peer)
             # --------------------
-            Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","OUT",peer))
+            Simulator_stuff.FEEDBACK["DRAW"].put(("O","Node","OUT",peer))
             # --------------------
         except ValueError:
             pass
@@ -146,7 +146,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
             if (sender == "SIM"):
                 if (action[1] == "K"):
                     
-                    Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("Bye","Bye"))
+                    Simulator_stuff.FEEDBACK["DRAW"].put(("Bye","Bye"))
                     self.alive = False
             else:
             # -------------------------
@@ -194,10 +194,10 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
 
             if self.peer_number == 0:
                 # -------------------
-                Simulator_stuff.SIMULATOR_FEEDBACK["STATUS"].put(("R", self.current_round))
-                Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("R", self.current_round))
-                Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
-                Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
+                Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
                 # -------------------
                 self.current_round += 1
                     

@@ -263,7 +263,7 @@ class Simulator():
         m = ["C",self.number_of_monitors, self.number_of_peers, self.number_of_malicious, self.number_of_rounds, self.set_of_rules]
         drawing_log_file.write(";".join(map(str,m))+'\n')
     
-        queue = sim.SIMULATOR_FEEDBACK["DRAW"]
+        queue = sim.FEEDBACK["DRAW"]
         m = queue.get()
         
         while m[0] != "Bye":
@@ -337,14 +337,14 @@ class Simulator():
         plt.style.use("seaborn-white")
         
         #Listen to the team for drawing
-        sim.SIMULATOR_FEEDBACK["DRAW"] = Queue()
+        sim.FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
         
         if self.gui == True:
             Process(target=self.draw).start()
 
         #Listen to the team for simulation life
-        sim.SIMULATOR_FEEDBACK["STATUS"] = Queue()
+        sim.FEEDBACK["STATUS"] = Queue()
                 
         #create communication channels for the team and splitter
         Socket_queue.UDP_SOCKETS['S'] = Queue()
@@ -379,7 +379,7 @@ class Simulator():
         Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)]).start()
         self.attended_monitors += 1
 
-        queue = sim.SIMULATOR_FEEDBACK["STATUS"]
+        queue = sim.FEEDBACK["STATUS"]
         m = queue.get()
         while m[0] != "Bye":
             if (m[0] == "R"):

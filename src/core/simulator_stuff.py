@@ -9,8 +9,7 @@ class Simulator_stuff:
     SHARED_LIST = {}
 
     # Communication channel with the simulator.
-    SIMULATOR_FEEDBACK = {}
-
+    FEEDBACK = {}
 
 class Socket_queue:
 
