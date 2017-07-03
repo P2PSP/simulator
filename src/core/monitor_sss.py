@@ -25,7 +25,7 @@ class Monitor_SSS(Peer_SSS):
     def say_hello(self, peer):
         hello = (-1,"H")
         #sim.UDP_SOCKETS[peer].put((self.id,hello))
-        self.senndto(hello, peer)
+        self.sendto(hello, peer)
         print("Hello sent to", peer)
 
     def connect_to_the_splitter(self):
