@@ -9,8 +9,9 @@ from queue import Queue
 from threading import Thread
 import time
 from .simulator_stuff import Simulator_stuff #as sim
+from .simulator_stuff import Socket_queue
 
-class Splitter_DBS(Simulator_stuff):
+class Splitter_DBS(Simulator_stuff, Socket_queue):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
     #BUFFER_SIZE = 128
     
@@ -58,9 +59,10 @@ class Splitter_DBS(Simulator_stuff):
         print(self.id, ": waiting for outgoing peer")
         (message, sender) = self.recv()
         print(self.id, ": received", message, "from", sender)
-            
         self.insert_peer(incoming_peer)
+        # ------------------
         Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
+        # ------------------
         
     def send_buffer_size(self, peer):
         print(self.id, ": sending buffer size =", self.buffer_size, "to", peer)
@@ -109,7 +111,9 @@ class Splitter_DBS(Simulator_stuff):
     def remove_peer(self, peer):
         try:
             self.peer_list.remove(peer)
+            # --------------------
             Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("O","Node","OUT",peer))
+            # --------------------
         except ValueError:
             pass
         else:
@@ -138,11 +142,14 @@ class Splitter_DBS(Simulator_stuff):
             action = message[0]
             sender = message[1]
 
+            # -------------------------
             if (sender == "SIM"):
                 if (action[1] == "K"):
+                    
                     Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("Bye","Bye"))
                     self.alive = False
             else:
+            # -------------------------
                 if (action[1] == "L"):
                     lost_chunk_number = self.get_lost_chunk_number(action)
                     self.process_lost_chunk(lost_chunk_number, sender)
@@ -186,10 +193,12 @@ class Splitter_DBS(Simulator_stuff):
                 print(self.id, ": peer_number =", self.peer_number)
 
             if self.peer_number == 0:
+                # -------------------
                 Simulator_stuff.SIMULATOR_FEEDBACK["STATUS"].put(("R", self.current_round))
                 Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("R", self.current_round))
                 Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
                 Simulator_stuff.SIMULATOR_FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
+                # -------------------
                 self.current_round += 1
                     
                 for peer in self.outgoing_peer_list:

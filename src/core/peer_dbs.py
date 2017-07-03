@@ -7,9 +7,10 @@ from queue import Queue
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
+from .simulator_stuff import Socket_queue
 import time
 
-class Peer_DBS(sim):
+class Peer_DBS(sim, Socket_queue):
     MAX_CHUNK_DEBT = 128
     
     def __init__(self, id):

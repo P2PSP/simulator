@@ -13,6 +13,7 @@ from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
+from core.simulator_stuff import Socket_queue
 from multiprocessing import Process, Queue, Array, Manager
 import time
 import fire
@@ -346,20 +347,20 @@ class Simulator():
         sim.SIMULATOR_FEEDBACK["STATUS"] = Queue()
                 
         #create communication channels for the team and splitter
-        sim.UDP_SOCKETS['S'] = Queue()
-        sim.TCP_SOCKETS['S'] = Queue()
+        Socket_queue.UDP_SOCKETS['S'] = Queue()
+        Socket_queue.TCP_SOCKETS['S'] = Queue()
 
         for i in range(self.number_of_monitors):
-            sim.UDP_SOCKETS["M"+str(i+1)] = Queue()
-            sim.TCP_SOCKETS["M"+str(i+1)] = Queue(1)
+            Socket_queue.UDP_SOCKETS["M"+str(i+1)] = Queue()
+            Socket_queue.TCP_SOCKETS["M"+str(i+1)] = Queue(1)
 
         for i in range(self.number_of_peers):
-            sim.UDP_SOCKETS["P"+str(i+1)] = Queue()
-            sim.TCP_SOCKETS["P"+str(i+1)] = Queue(1)
+            Socket_queue.UDP_SOCKETS["P"+str(i+1)] = Queue()
+            Socket_queue.TCP_SOCKETS["P"+str(i+1)] = Queue(1)
 
         for i in range(self.number_of_malicious):
-            sim.UDP_SOCKETS["MP"+str(i+1)] = Queue()
-            sim.TCP_SOCKETS["MP"+str(i+1)] = Queue(1)
+            Socket_queue.UDP_SOCKETS["MP"+str(i+1)] = Queue()
+            Socket_queue.TCP_SOCKETS["MP"+str(i+1)] = Queue(1)
 
         #create shared list for CIS set of rules (only when cis is choosen?)
         manager = Manager()

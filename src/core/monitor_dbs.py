@@ -5,7 +5,8 @@ monitor_dbs module
 from queue import Queue
 from .common import Common
 from .peer_dbs import Peer_DBS
-from .simulator_stuff import Simulator_stuff as sim
+#from .simulator_stuff import Simulator_stuff as sim
+#from .simulator_stuff import Socket_queue
 
 class Monitor_DBS(Peer_DBS):
     
