@@ -15,8 +15,8 @@ class Monitor_STRPEDS(Peer_STRPEDS):
 
     def receive_buffer_size(self):
         (self.buffer_size, sender) = self.recv()
-        self.buffer_size = self.buffer_size//2
-        print(self.id,"buffer size received", self.buffer_size)
+        print(self.id,": received buffer_size =", self.buffer_size, "from", sender)
+        self.buffer_size //= 2
 
         #--- Only for simulation purposes ----
         self.sender_of_chunks = [""]*self.buffer_size

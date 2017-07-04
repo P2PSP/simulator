@@ -191,8 +191,8 @@ class Splitter_STRPEDS(Splitter_DBS):
 
                 self.current_round += 1
                 
-                for peer in self.outgoing_peer_list:
-                    self.say_goodbye(peer)
-                    self.remove_peer(peer)
+                for p in self.outgoing_peer_list:
+                    self.say_goodbye(p)
+                    self.remove_peer(p)
 
                 del self.outgoing_peer_list[:]
