@@ -116,8 +116,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
             # --------------------
         except ValueError:
             pass
-        else:
-            self.peer_number -= 1
+        #else:
+            #self.peer_number -= 1
 
         try:
             del self.losses[peer]
@@ -201,8 +201,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
                 # -------------------
                 self.current_round += 1
                     
-                for peer in self.outgoing_peer_list:
-                    self.say_goodbye(peer)
-                    self.remove_peer(peer)
+                for p in self.outgoing_peer_list:
+                    self.say_goodbye(p)
+                    self.remove_peer(p)
 
                 del self.outgoing_peer_list[:]

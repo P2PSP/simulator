@@ -32,6 +32,11 @@ class Splitter_SSS(Splitter_STRPEDS):
         #   self.generate_secret_key()
         #   self.generate_shares()
 
+    def receive_chunk(self):
+        time.sleep(0.05) #bit-rate control
+        #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
+        return "C"
+        
     def run(self):
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
@@ -48,6 +53,7 @@ class Splitter_SSS(Splitter_STRPEDS):
                 self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
                 self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER                
                 self.compute_next_peer_number(peer)
+                print("------> Next Peer Number ----->", self.peer_number)
             except IndexError:
                 print("The monitor peer has died!")
 
@@ -63,8 +69,8 @@ class Splitter_SSS(Splitter_STRPEDS):
 
                 self.current_round += 1
                 
-                for peer in self.outgoing_peer_list:
-                    self.say_goodbye(peer)
-                    self.remove_peer(peer)
+                for p in self.outgoing_peer_list:
+                    self.say_goodbye(p)
+                    self.remove_peer(p)
 
                 del self.outgoing_peer_list[:]

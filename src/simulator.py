@@ -54,7 +54,7 @@ class Simulator():
             return team_size
         
     def run_a_splitter(self):
-        sim.BUFFER_SIZE = self.get_buffer_size()
+        Common.BUFFER_SIZE = self.get_buffer_size()
         if self.set_of_rules == "dbs":
             splitter = Splitter_DBS()
         elif self.set_of_rules == "cis":
@@ -195,7 +195,7 @@ class Simulator():
         plt.legend(loc=2,numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         self.buffer_colors = cm.rainbow(np.linspace(0, 1, total_peers))
-        plt.axis([0, total_peers+1, 0, self.get_team_size(total_peers*2)])
+        plt.axis([0, total_peers+1, 0, self.get_buffer_size()])
         plt.xticks(range(0, total_peers+1,1))
         self.buffer_order = {}
         self.buffer_index = 1
@@ -282,7 +282,7 @@ class Simulator():
         self.plot_team()
         self.draw_buffer()
         self.plot_clr()
-        time.sleep(1)
+        time.sleep(2)
         line = drawing_log_file.readline()
         while line != "Bye":
             m = line.strip().split(";",4)
@@ -347,8 +347,8 @@ class Simulator():
         sim.FEEDBACK["STATUS"] = Queue()
                 
         #create communication channels for the team and splitter
-        Socket_queue.UDP_SOCKETS['S'] = Queue()
-        Socket_queue.TCP_SOCKETS['S'] = Queue()
+        Socket_queue.UDP_SOCKETS['S'] = Queue(1)
+        Socket_queue.TCP_SOCKETS['S'] = Queue(1)
 
         for i in range(self.number_of_monitors):
             Socket_queue.UDP_SOCKETS["M"+str(i+1)] = Queue()

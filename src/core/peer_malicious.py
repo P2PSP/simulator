@@ -23,7 +23,7 @@ class Peer_Malicious(Peer_STRPEDS):
 
     def connect_to_the_splitter(self):
         hello = (-1,"MP")
-        self.connect(hello, self.splitter)
+        self.send(hello, self.splitter)
         
     def receive_the_list_of_peers(self):
         Peer_STRPEDS.receive_the_list_of_peers(self)

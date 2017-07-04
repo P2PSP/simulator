@@ -21,6 +21,7 @@ class Peer_STRPEDS(Peer_DBS):
         return NotImplementedError
 
     def process_bad_message(self, message, sender):
+        print(self.id, "adding", sender, "to bad list", message)
         self.bad_peers.append(sender)
         self.peer_list.remove(sender)
         sim.FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,sender))
