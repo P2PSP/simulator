@@ -59,7 +59,7 @@ class Peer_Malicious_SSS(Peer_SSS):
         sim.SHARED_LIST["regular"].append(self.main_target)
 
     def get_poisoned_chunk(self, chunk):
-        return (chunk[0],"B")
+        return (chunk[0], "B")
 
     def send_chunk(self, peer):
         poisoned_chunk = self.get_poisoned_chunk(self.receive_and_feed_previous)

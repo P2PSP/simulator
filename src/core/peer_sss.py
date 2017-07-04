@@ -73,4 +73,5 @@ class Peer_SSS(Peer_STRPEDS):
                 self.sendto_counter += 1
         else:
             print(self.id, "is my first round")
-            self.sendto(self.receive_and_feed_previous, peer)    
+            self.sendto(self.receive_and_feed_previous, peer)
+            self.sendto_counter += 1
