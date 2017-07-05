@@ -125,7 +125,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
             pass
 
     def process_goodbye(self, peer):
-        print(self.id,": received goodbye from", peer)
+        print(self.id, ": received goodbye from", peer)
         if peer not in self.outgoing_peer_list:
             if peer in self.peer_list:
                 self.outgoing_peer_list.append(peer)

@@ -3,16 +3,15 @@
 peer_dbs module
 """
 
-from queue import Queue
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Socket_queue
-import time
+
 
 class Peer_DBS(sim, Socket_queue):
     MAX_CHUNK_DEBT = 128
-    
+
     def __init__(self, id):
         self.id = id
         self.played_chunk = 0
@@ -21,11 +20,11 @@ class Peer_DBS(sim, Socket_queue):
         self.player_alive = True
         self.chunks = []
 
-        #---Only for simulation purposes----
+        # ---Only for simulation purposes----
         self.losses = 0
         self.played = 0
         self.number_of_chunks_consumed = 0
-        #----------------------------------
+        # ----------------------------------
 
         self.max_chunk_debt = self.MAX_CHUNK_DEBT
         self.peer_list = []
@@ -39,7 +38,7 @@ class Peer_DBS(sim, Socket_queue):
         self.modified_list = False
         self.number_of_peers = 0
         self.sendto_counter = 0
-        self.ready_to_leave_the_team = False        
+        self.ready_to_leave_the_team = False
         print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
 
@@ -47,41 +46,40 @@ class Peer_DBS(sim, Socket_queue):
         self.splitter = splitter
 
     def say_hello(self, peer):
-        hello = (-1,"H")
+        hello = (-1, "H")
         self.sendto(hello, peer)
         print(self.id, ": sent", hello, "to", peer)
 
-
     def say_goodbye(self, peer):
-        goodbye = (-1,"G")
+        goodbye = (-1, "G")
         self.sendto(goodbye, peer)
         print(self.id, ": sent", goodbye, "to", peer)
 
     def receive_buffer_size(self):
         (self.buffer_size, sender) = self.recv()
-        print(self.id,": received buffer_size =", self.buffer_size, "from", sender)
+        print(self.id, ": received buffer_size =", self.buffer_size, "from", sender)
 
-        #--- Only for simulation purposes ----
+        # --- Only for simulation purposes ----
         self.sender_of_chunks = [""]*self.buffer_size
-        #-------------------------------------
-        
+        # -------------------------------------
+
     def receive_the_number_of_peers(self):
         (self.number_of_monitors, sender) = self.recv()
-        print(self.id,": received number_of_monitors =", self.number_of_monitors, "from", sender)
+        print(self.id, ": received number_of_monitors =", self.number_of_monitors, "from", sender)
         (self.number_of_peers, sender) = self.recv()
-        print(self.id,": received number_of_peers =", self.number_of_peers, "from", sender)
-        
+        print(self.id, ": received number_of_peers =", self.number_of_peers, "from", sender)
+
     def receive_the_list_of_peers(self):
         (self.peer_list, sender) = self.recv()[:]
         for peer in self.peer_list:
             self.say_hello(peer)
             self.debt[peer] = 0
 
-        print(self.id, ": received len(peer_list) =",len(self.peer_list), "from", sender)
+        print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
         print(self.id, ":", self.peer_list)
 
     def connect_to_the_splitter(self):
-        hello = (-1,"P")
+        hello = (-1, "P")
         self.send(hello, self.splitter)
         print(self.id, ": sent", hello, "to", self.splitter)
 
@@ -99,55 +97,53 @@ class Peer_DBS(sim, Socket_queue):
             return True
         else:
             return False
-    
+
     def process_message(self, message, sender):
         # ----- Only for simulation purposes ------
         # ----- Check if new round for peer -------
         if not self.is_a_control_message(message) and sender == self.splitter:
             if self.played > 0 and self.played >= len(self.peer_list):
                 clr = self.losses/self.played
-                sim.FEEDBACK["DRAW"].put(("CLR",self.id,clr))
+                sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))
                 self.losses = 0
                 self.played = 0
         # ------------------------------------------
-        
+
         if (message[0] >= 0):
             chunk_number = message[0]
             chunk = message[1]
 
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
-            
-            #--- for simulation purposes only ----
+
+            # --- for simulation purposes only ----
             self.sender_of_chunks[chunk_number % self.buffer_size] = sender
 
             chunks = ""
-            for n,c in self.chunks:
+            for n, c in self.chunks:
                 chunks += c
                 if c == "L":
                     self.sender_of_chunks[n % self.buffer_size] = ""
-                    
-            sim.FEEDBACK["DRAW"].put(("B",self.id,chunks,":".join(self.sender_of_chunks)))
-            #--------------------------------------
-            
+
+            sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))
+            # --------------------------------------
+
             self.received_counter += 1
             if (sender == self.splitter):
                 while((self.receive_and_feed_counter < len(self.peer_list)) and (self.receive_and_feed_counter > 0 or self.modified_list)):
                     peer = self.peer_list[self.receive_and_feed_counter]
 
                     self.send_chunk(peer)
-                    
                     self.debt[peer] += 1
-                    
+
                     if self.debt[peer] > self.MAX_CHUNK_DEBT:
-                        
-                        print(self.id,":",peer, "removed by unsupportive (", str(self.debt[peer]) , "lossess)")
+                        print(self.id, ":", peer, "removed by unsupportive (", str(self.debt[peer]), "lossess)")
                         del self.debt[peer]
                         self.peer_list.remove(peer)
-                        sim.FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
+                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, peer))
 
                     self.receive_and_feed_counter += 1
 
-                #Modifying the first chunk to play (it increases the delay)
+                # Modifying the first chunk to play (it increases the delay)
                 #if (not self.receive_and_feed_previous):
                     #self.played_chunk = message[0]
                     #print(self.id,"First chunk to play modified", str(self.played_chunk))
@@ -155,17 +151,17 @@ class Peer_DBS(sim, Socket_queue):
                 self.modified_list = False
                 self.receive_and_feed_counter = 0
                 self.receive_and_feed_previous = message
-                
+
             else:
 
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by chunk", chunk_number)
-                    #-------- For simulation purposes only -----------
-                    sim.FEEDBACK["DRAW"].put(("O","Node","IN",sender))
-                    sim.FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
-                    #-------------------------------------------------
+                    # -------- For simulation purposes only -----------
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
+                    # -------------------------------------------------
 
                 else:
                     self.debt[sender] -= 1
@@ -174,9 +170,8 @@ class Peer_DBS(sim, Socket_queue):
                 peer = self.peer_list[self.receive_and_feed_counter]
 
                 self.send_chunk(peer)
-                
                 self.debt[peer] += 1
-                      
+
                 if (self.debt[peer] > self.MAX_CHUNK_DEBT):
                     print(self.id,":",peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
                     del self.debt[peer]
@@ -185,7 +180,7 @@ class Peer_DBS(sim, Socket_queue):
 
                 #if __debug__:
                 #    print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
-                    
+
                 self.receive_and_feed_counter += 1
 
             return chunk_number
@@ -194,14 +189,14 @@ class Peer_DBS(sim, Socket_queue):
             # A control chunk has been received
             if __debug__:
                 print(self.id, ": control message received:", message)
-                
+
             if message[1] == "H":
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")
-                    sim.FEEDBACK["DRAW"].put(("O","Node","IN",sender))
-                    sim.FEEDBACK["DRAW"].put(("O","Edge","IN",self.id,sender))
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
             else:
                 if sender in self.peer_list:
                     print(self.id, ": received goodbye from", sender)
@@ -221,7 +216,7 @@ class Peer_DBS(sim, Socket_queue):
         message = content[0]
         sender = content[1]
         return self.process_message(message, sender)
-        
+
     def polite_farewell(self):
         print(self.id, ": goodbye! (see you later)")
         while (self.receive_and_feed_counter < len(self.peer_list)):
@@ -244,29 +239,28 @@ class Peer_DBS(sim, Socket_queue):
         self.debt_memory = 1 << self.MAX_CHUNK_DEBT
         self.waiting_for_goodbye = True
         for i in range(self.buffer_size):
-            self.chunks.append((i,"L"))
-        
+            self.chunks.append((i, "L"))
+
         chunk_number = self.process_next_message()
-        
+
         while(chunk_number < 0):
             chunk_number = self.process_next_message()
 
         self.played_chunk = chunk_number
 
-        print(self.id,": position in the buffer of the first chunk to play", str(self.played_chunk))
-        
+        print(self.id, ": position in the buffer of the first chunk to play", str(self.played_chunk))
+
         while (chunk_number < self.played_chunk or ((chunk_number - self.played_chunk) % self.buffer_size) < (self.buffer_size // 2)):
             chunk_number = self.process_next_message()
-            #while (chunk_number < 0 or chunk_number < self.played_chunk):
+            # while (chunk_number < 0 or chunk_number < self.played_chunk):
             while (chunk_number < self.played_chunk):
                 chunk_number = self.process_next_message()
-                    
         self.prev_received_chunk = chunk_number
 
     def play_next_chunks(self, last_received_chunk):
         for i in range(last_received_chunk - self.prev_received_chunk):
             self.player_alive = self.play_chunk(self.played_chunk)
-            self.chunks[self.played_chunk % self.buffer_size] = (self.played_chunk,"L")
+            self.chunks[self.played_chunk % self.buffer_size] = (self.played_chunk, "L")
             self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
@@ -286,10 +280,10 @@ class Peer_DBS(sim, Socket_queue):
             last_received_chunk = self.process_next_message()
 
         self.play_next_chunks(last_received_chunk)
-    
+
     def start(self):
         Thread(target=self.run).start()
-        
+
     def run(self):
         while (self.player_alive or self.waiting_for_goodbye):
             self.keep_the_buffer_full()
