@@ -56,10 +56,10 @@ class Peer_Malicious_SSS(Peer_SSS):
         sim.SHARED_LIST["regular"].append(self.main_target)
 
     def get_poisoned_chunk(self, chunk):
-        return (chunk[0], "B")
+        return (chunk[0], "B", chunk[2], chunk[3])
 
     def send_chunk(self, peer):
-        encrypted_chunk = (self.receive_and_feed_previous[0], "B")
+        encrypted_chunk = (self.receive_and_feed_previous[0], "B", self.receive_and_feed_previous[2], self.receive_and_feed_previous[3])
         current_round = self.receive_and_feed_previous[2]
         if ((current_round-1) in self.t):
             if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
@@ -69,7 +69,7 @@ class Peer_Malicious_SSS(Peer_SSS):
                 self.sendto(encrypted_chunk, peer)
                 self.sendto_counter += 1
         else:
-            print(self.id, "is my first round")
+            #print(self.id, "is my first round")
             self.send_chunk_attack(peer)
     
     def send_chunk_attack(self, peer):
@@ -81,28 +81,28 @@ class Peer_Malicious_SSS(Peer_SSS):
                     self.sendto(poisoned_chunk, peer)
                     self.sendto_counter += 1
                     self.chunks_sent_to_main_target += 1
-                    if __debug__:
-                        print("Attacking Main target", self.main_target, "attack", self.chunks_sent_to_main_target)
+                    #if __debug__:
+                        #print("Attacking Main target", self.main_target, "attack", self.chunks_sent_to_main_target)
                 else:
                     self.all_attack()
                     self.sendto(poisoned_chunk, peer)
                     self.sendto_counter += 1
                     self.main_target = self.choose_main_target()
-                    if __debug__:
-                        print("Attacking Main target", peer, ". Replaced by", self.main_target)
+                    #if __debug__:
+                       # print("Attacking Main target", peer, ". Replaced by", self.main_target)
             else:
                 if peer in sim.SHARED_LIST["regular"]:
                     self.sendto(poisoned_chunk, peer)
                     self.sendto_counter += 1
-                    if __debug__:
-                        print("All Attack:",peer)
+                    #if __debug__:
+                        #print("All Attack:", peer)
                 else:
                     self.sendto(self.receive_and_feed_previous, peer)
                     self.sendto_counter += 1
-                    if __debug__:
-                        print("No attack", peer)
+                    #if __debug__:
+                        #print("No attack", peer)
 
-            if self.main_target == None:
+            if self.main_target is None:
                 self.main_target = self.choose_main_target()
 
         #TO-DO: on-off and selective attacks

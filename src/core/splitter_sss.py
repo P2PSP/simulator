@@ -25,7 +25,14 @@ class Splitter_SSS(Splitter_STRPEDS):
         #Not needed for simulation
         return NotImplementedError
 
+    def remove_outgoing_peers(self):
+        for p in self.outgoing_peer_list:
+            self.say_goodbye(p)
+            self.remove_peer(p)
+        del self.outgoing_peer_list[:]
+
     def on_round_beginning(self):
+        self.remove_outgoing_peers()
         self.punish_peers()
         self.t = (len(self.peer_list) // 2) + 1
         #For each peer in this round:
@@ -33,7 +40,7 @@ class Splitter_SSS(Splitter_STRPEDS):
         #   self.generate_shares()
 
     def receive_chunk(self):
-        time.sleep(0.05) #bit-rate control
+        time.sleep(0.08) # bit-rate control
         #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
         
@@ -68,9 +75,3 @@ class Splitter_SSS(Splitter_STRPEDS):
                 sim.FEEDBACK["DRAW"].put(("T","MP",self.number_of_malicious, self.current_round))
 
                 self.current_round += 1
-                
-                for p in self.outgoing_peer_list:
-                    self.say_goodbye(p)
-                    self.remove_peer(p)
-
-                del self.outgoing_peer_list[:]

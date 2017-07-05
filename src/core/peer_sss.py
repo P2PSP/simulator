@@ -44,11 +44,11 @@ class Peer_SSS(Peer_STRPEDS):
 
                     self.splitter_t[current_round] = message[3]
 
-                    print(self.id, "current_round", current_round)
+                    #print(self.id, "current_round", current_round)
 
-                    if ((current_round-1) in self.t):
-                        print(self.id, "t", self.t[(current_round-1)], "splitter_t", self.splitter_t[(current_round-1)])
-                        print(self.id, "this.t", self.t[(current_round)], "this.splitter_t", self.splitter_t[(current_round)])
+                    #if ((current_round-1) in self.t):
+                        #print(self.id, "t", self.t[(current_round-1)], "splitter_t", self.splitter_t[(current_round-1)])
+                        #print(self.id, "this.t", self.t[(current_round)], "this.splitter_t", self.splitter_t[(current_round)])
 
                     return self.process_message_burst(message, sender)
 
@@ -59,7 +59,7 @@ class Peer_SSS(Peer_STRPEDS):
         return -1
 
     def send_chunk(self, peer):
-        encrypted_chunk = (self.receive_and_feed_previous[0], "B")
+        encrypted_chunk = (self.receive_and_feed_previous[0], "B", self.receive_and_feed_previous[2], self.receive_and_feed_previous[3])
         current_round = self.receive_and_feed_previous[2]
         if ((current_round-1) in self.t):
             if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
