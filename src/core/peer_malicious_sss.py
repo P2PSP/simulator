@@ -2,16 +2,13 @@
 @package simulator
 peer_malicious_sss module
 """
-from queue import Queue
-from threading import Thread
-from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .peer_sss import Peer_SSS
-import time
 import random
 
+
 class Peer_Malicious_SSS(Peer_SSS):
-    
+
     def __init__(self,id):
         super().__init__(id)
         self.MPTR = 5
@@ -62,6 +59,20 @@ class Peer_Malicious_SSS(Peer_SSS):
         return (chunk[0], "B")
 
     def send_chunk(self, peer):
+        encrypted_chunk = (self.receive_and_feed_previous[0], "B")
+        current_round = self.receive_and_feed_previous[2]
+        if ((current_round-1) in self.t):
+            if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
+                self.send_chunk_attack(peer)
+            else:
+                print("###########=================>>>>", self.id, "Need more shares, I had", self.t[(current_round-1)], "from", self.splitter_t[(current_round-1)], "needed")
+                self.sendto(encrypted_chunk, peer)
+                self.sendto_counter += 1
+        else:
+            print(self.id, "is my first round")
+            self.send_chunk_attack(peer)
+    
+    def send_chunk_attack(self, peer):
         poisoned_chunk = self.get_poisoned_chunk(self.receive_and_feed_previous)
         
         if self.persistent_attack:

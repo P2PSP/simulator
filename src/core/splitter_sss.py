@@ -14,7 +14,7 @@ class Splitter_SSS(Splitter_STRPEDS):
     
     def __init__(self):
         super().__init__()
-        self.t = len(self.peer_list) // 2
+        self.t = (len(self.peer_list) // 2) + 1
         print("Splitter SSS initialized")
         
     def generate_secret_key(self, peer, r):
@@ -27,7 +27,7 @@ class Splitter_SSS(Splitter_STRPEDS):
 
     def on_round_beginning(self):
         self.punish_peers()
-        self.t = len(self.peer_list) // 2
+        self.t = (len(self.peer_list) // 2) + 1
         #For each peer in this round:
         #   self.generate_secret_key()
         #   self.generate_shares()
