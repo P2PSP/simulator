@@ -131,7 +131,7 @@ class Splitter_STRPEDS(Splitter_DBS):
                     print(peer, 'removed')
                     self.bad_peers.append(peer)
         finally:
-           pass
+            pass
 
     def moderate_the_team(self):
         while self.alive:
@@ -141,8 +141,9 @@ class Splitter_STRPEDS(Splitter_DBS):
 
             if (sender == "SIM"):
                 if (action[1] == "K"):
-                    sim.FEEDBACK["DRAW"].put(("Bye","Bye"))
+                    sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
                     self.alive = False
+                    print("Killing Splitter...")
             else:
                 if action[1] == "L":
                     lost_chunk_number = self.get_lost_chunk_number(action)
@@ -182,7 +183,7 @@ class Splitter_STRPEDS(Splitter_DBS):
             if self.peer_number == 0:
 
                 self.on_round_beginning()
-                
+
                 sim.FEEDBACK["STATUS"].put(("R", self.current_round))
                 sim.FEEDBACK["DRAW"].put(("R", self.current_round))
                 sim.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
@@ -190,9 +191,12 @@ class Splitter_STRPEDS(Splitter_DBS):
                 sim.FEEDBACK["DRAW"].put(("T", "MP", self.number_of_malicious, self.current_round))
 
                 self.current_round += 1
-                
+
                 for p in self.outgoing_peer_list:
                     self.say_goodbye(p)
                     self.remove_peer(p)
 
                 del self.outgoing_peer_list[:]
+        sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+        print("Splitter killed")
+        exit()

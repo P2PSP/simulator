@@ -340,7 +340,7 @@ class Simulator():
         sim.FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
         
-        if self.gui == True:
+        if self.gui is True:
             Process(target=self.draw).start()
 
         #Listen to the team for simulation life
@@ -384,14 +384,21 @@ class Simulator():
         while m[0] != "Bye":
             if (m[0] == "R"):
                 self.current_round = m[1]
-                r = np.random.uniform(0,1)
+                r = np.random.uniform(0, 1)
                 if r <= Simulator.P_IN:
                     self.addPeer()
 
                 if self.current_round == self.number_of_rounds:
-                    Socket_queue.UDP_SOCKETS['S'].put(((-1,"K"),"SIM"))
-                                                
-            m= queue.get()     
+                    Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
+                    for i in range(self.number_of_monitors):
+                        Socket_queue.UDP_SOCKETS["M"+str(i+1)].put(((-1, "K"), "SIM"))
+
+                    for i in range(self.number_of_peers):
+                        Socket_queue.UDP_SOCKETS["P"+str(i+1)].put(((-1, "K"), "SIM"))
+
+                    for i in range(self.number_of_malicious):
+                        Socket_queue.UDP_SOCKETS["MP"+str(i+1)].put(((-1, "K"), "SIM"))
+            m= queue.get()
 
     def addPeer(self):
         probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]
