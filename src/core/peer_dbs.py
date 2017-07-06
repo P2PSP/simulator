@@ -42,7 +42,8 @@ class Peer_DBS(sim, Socket_queue):
         self.ready_to_leave_the_team = False
 
         self.RTTs = []
-        self.max_degree = 256
+        self.max_degree = 5
+        self.neighborhood = []
         
         print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
@@ -89,14 +90,19 @@ class Peer_DBS(sim, Socket_queue):
         for peer in self.peer_list:
             self.say_hello(peer)
             self.debt[peer] = 0
-
-        while len(self.RTTs) < len(self.peer_list):
-            time.sleep(1)
-        # sort_by_type(self.RTTs)
-        print(self.id, ": RTTs =", self.RTTs)
-            
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
         print(self.id, ":", self.peer_list)
+
+        # Computing RTT's
+        while len(self.RTTs) < len(self.peer_list):
+            time.sleep(1)
+
+        # Determining neighborhood
+        sorted_RTTs = sorted(self.RTTs, key=lambda x: x[1])
+        print(self.id, ": RTTs =", sorted_RTTs)
+        for p in range(min(len(sorted_RTTs), self.max_degree)):
+            self.neighborhood.append(sorted_RTTs[p][0])
+        print(self.id, ": neighborhood =", self.neighborhood)
 
     def connect_to_the_splitter(self):
         hello = (-1, "P")
