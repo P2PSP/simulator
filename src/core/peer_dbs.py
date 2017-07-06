@@ -3,6 +3,7 @@
 peer_dbs module
 """
 
+import time
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
@@ -39,6 +40,10 @@ class Peer_DBS(sim, Socket_queue):
         self.number_of_peers = 0
         self.sendto_counter = 0
         self.ready_to_leave_the_team = False
+
+        self.RTTs = []
+        self.max_degree = 256
+        
         print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
 
@@ -47,9 +52,13 @@ class Peer_DBS(sim, Socket_queue):
 
     def say_hello(self, peer):
         hello = (-1, "H")
+        start = time.time()
         self.sendto(hello, peer)
         print(self.id, ": sent", hello, "to", peer)
-
+        (m, s) = self.recvfrom()
+        end = time.time()
+        self.RTTs.append((s, end-start))
+        
     def say_goodbye(self, peer):
         goodbye = (-1, "G")
         self.sendto(goodbye, peer)
@@ -69,12 +78,23 @@ class Peer_DBS(sim, Socket_queue):
         (self.number_of_peers, sender) = self.recv()
         print(self.id, ": received number_of_peers =", self.number_of_peers, "from", sender)
 
+    # Thread(target=self.run).start()
+
+    #ef set_neighborhood(self, peer):
+    #    if len(self.neighborhood) < self.degree:
+    #        self.neighborhood.append(peer)
+    
     def receive_the_list_of_peers(self):
         (self.peer_list, sender) = self.recv()[:]
         for peer in self.peer_list:
             self.say_hello(peer)
             self.debt[peer] = 0
 
+        while len(self.RTTs) < len(self.peer_list):
+            time.sleep(1)
+        # sort_by_type(self.RTTs)
+        print(self.id, ": RTTs =", self.RTTs)
+            
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
         print(self.id, ":", self.peer_list)
 
@@ -191,12 +211,13 @@ class Peer_DBS(sim, Socket_queue):
                 print(self.id, ": control message received:", message)
 
             if message[1] == "H":
-                if sender not in self.peer_list:
-                    self.peer_list.append(sender)
-                    self.debt[sender] = 0
-                    print(self.id, ":", sender, "added by [hello]")
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
+                self.sendto((-1, 'H'), sender)
+                #if sender not in self.peer_list:
+                #    self.peer_list.append(sender)
+                #    self.debt[sender] = 0
+                #    print(self.id, ":", sender, "added by [hello]")
+                #    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
+                #    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
             else:
                 if sender in self.peer_list:
                     print(self.id, ": received goodbye from", sender)
