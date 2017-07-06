@@ -94,7 +94,7 @@ class Splitter_STRPEDS(Splitter_DBS):
         if peer in self.peer_list:
             self.remove_peer(peer)
             if __debug__:
-                print("bad peer", peer, message)
+                print(self.id, "bad peer", peer, message)
 
     def on_round_beginning(self):
         self.punish_peers()
@@ -102,7 +102,7 @@ class Splitter_STRPEDS(Splitter_DBS):
 
     def punish_peers(self):
         for b in self.bad_peers:
-            r = random.randint(0,1)
+            r = random.randint(0, 1)
             if r <= self.p_mpl:
                 self.punish_peer(b, "by trusted")
                 self.bad_peers.remove(b)
@@ -185,9 +185,9 @@ class Splitter_STRPEDS(Splitter_DBS):
                 
                 sim.FEEDBACK["STATUS"].put(("R", self.current_round))
                 sim.FEEDBACK["DRAW"].put(("R", self.current_round))
-                sim.FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
-                sim.FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
-                sim.FEEDBACK["DRAW"].put(("T","MP",self.number_of_malicious, self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T", "MP", self.number_of_malicious, self.current_round))
 
                 self.current_round += 1
                 

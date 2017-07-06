@@ -112,7 +112,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         try:
             self.peer_list.remove(peer)
             # --------------------
-            Simulator_stuff.FEEDBACK["DRAW"].put(("O","Node","OUT",peer))
+            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", peer))
             # --------------------
         except ValueError:
             pass

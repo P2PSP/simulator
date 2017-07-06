@@ -40,7 +40,7 @@ class Splitter_SSS(Splitter_STRPEDS):
         #   self.generate_shares()
 
     def receive_chunk(self):
-        time.sleep(0.08) # bit-rate control
+        time.sleep(0.05)  # bit-rate control
         #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
         
@@ -70,8 +70,8 @@ class Splitter_SSS(Splitter_STRPEDS):
                 
                 sim.FEEDBACK["STATUS"].put(("R", self.current_round))
                 sim.FEEDBACK["DRAW"].put(("R", self.current_round))
-                sim.FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
-                sim.FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
-                sim.FEEDBACK["DRAW"].put(("T","MP",self.number_of_malicious, self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T", "MP", self.number_of_malicious, self.current_round))
 
                 self.current_round += 1

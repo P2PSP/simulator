@@ -20,13 +20,24 @@ def main(argv):
             inputfile = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
-            
-    drawing_log_file = open(self.drawing_log, "r")
-    line = drawing_log_file.readline()
+
+    print("inputfile", inputfile)
+    draw_log_file = open(inputfile, "r")
+    dat_log_file = open(outputfile, "w", 1)
+
+    line = draw_log_file.readline()
     while line != "Bye":
-        m = line.strip().split(";",4)
-        if m[0] == "T":
-            
+        m = line.strip().split(";", 4)
+        if m[0] == "R":
+            dat_log_file.write(m[1] + '\t')
+
+        if m[0] == "T" and m[1] == "M":
+            dat_log_file.write(m[2] + '\t')
+
+        if m[0] == "T" and m[1] == "MP":
+            dat_log_file.write(m[2] + '\n')
+
+        line = draw_log_file.readline()
             
 if __name__ == "__main__":
    main(sys.argv[1:])
