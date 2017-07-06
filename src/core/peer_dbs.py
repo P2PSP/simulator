@@ -221,9 +221,7 @@ class Peer_DBS(sim, Socket_queue):
         print(self.id, ": goodbye! (see you later)")
         while (self.receive_and_feed_counter < len(self.peer_list)):
             self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
-            content = self.recvfrom()
-            message = content[0]
-            sender = content[1]
+            self.recvfrom()
             self.receive_and_feed_counter += 1
 
         for peer in self.peer_list:
@@ -264,13 +262,13 @@ class Peer_DBS(sim, Socket_queue):
             self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
-    
+
     def play_chunk(self, chunk_number):
-        if self.chunks[chunk_number%self.buffer_size][1] == "C":
-            self.played +=1
+        if self.chunks[chunk_number % self.buffer_size][1] == "C":
+            self.played += 1
         else:
             self.losses += 1
-            print (self.id, ": lost Chunk!", chunk_number)
+            print(self.id, ": lost Chunk!", chunk_number)
         self.number_of_chunks_consumed += 1
         return self.player_alive
 
