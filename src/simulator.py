@@ -317,11 +317,11 @@ class Simulator():
                     pass
 
             if m[0] == "CLR":
-                self.update_clrs(m[1],float(m[2]))
+                self.update_clrs(m[1], float(m[2]))
 
             if m[0] == "R":
                 self.update_clr_plot(m[1])
-                #self.update_buffer_round(m[1])
+                # self.update_buffer_round(m[1])
                 
             line = drawing_log_file.readline()
 
