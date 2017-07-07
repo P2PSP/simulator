@@ -98,5 +98,3 @@ class Peer_Malicious(Peer_STRPEDS):
         else:
             self.sendto(self.receive_and_feed_previous, peer)
             self.sendto_counter += 1
-
-    

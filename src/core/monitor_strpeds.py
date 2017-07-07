@@ -22,11 +22,6 @@ class Monitor_STRPEDS(Peer_STRPEDS):
         self.sender_of_chunks = [""]*self.buffer_size
         #-------------------------------------
 
-    def say_hello(self, peer):
-        hello = (-1,"H")
-        self.sendto(hello, peer)
-        print("Hello sent to", peer)
-
     def connect_to_the_splitter(self):
         hello = (-1,"M")
         self.send(hello, self.splitter)
