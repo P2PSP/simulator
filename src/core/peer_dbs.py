@@ -227,12 +227,21 @@ class Peer_DBS(sim, Socket_queue):
             else:
                 if sender in self.peer_list:
                     print(self.id, ": received goodbye from", sender)
-                    self.peer_list.remove(sender)
+                    try:
+                        self.peer_list.remove(sender)
+                        print(self.id, ":", sender, "removed from peer_list")
+                    except:
+                        print(self.id, ": failed to remove peer", sender, "from peer_list", self.peer_list)
+                        
                     del self.debt[sender]
+                    
                     if (self.receive_and_feed_counter > 0):
                         self.modified_list = True
                         self.receive_and_feed_counter -= 1
-                    self.neighborhood.remove(sender)
+                    try:
+                        self.neighborhood.remove(sender)
+                    except:
+                        print(self.id, ": failed to remove peer", sender, "from neighborhood", self.neighborhood)
                 else:
                     if (sender == self.splitter):
                         print(self.id, ": received goodbye from splitter")
@@ -246,7 +255,7 @@ class Peer_DBS(sim, Socket_queue):
         return self.process_message(message, sender)
 
     def polite_farewell(self):
-        print(self.id, ": goodbye! (see you later)")
+        print(self.id, ": (see you later)")
         while (self.receive_and_feed_counter < len(self.peer_list)):
             self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
             self.recvfrom()
