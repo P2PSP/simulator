@@ -127,6 +127,7 @@ class Peer_DBS(sim, Socket_queue):
     def process_message(self, message, sender):
         # ----- Only for simulation purposes ------
         if sender == "SIM" and message[1] == "K":
+            print(self.id, "Killed")
             self.ready_to_leave_the_team = True
             exit()
 
