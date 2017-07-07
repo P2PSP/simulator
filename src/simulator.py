@@ -42,6 +42,7 @@ class Simulator():
         self.number_of_malicious = number_of_malicious
         self.current_round = 0
         self.gui = gui
+        self.first_monitor_created = False
         
     def get_team_size(self, n):  
         return 2**(n-1).bit_length()
@@ -69,15 +70,17 @@ class Simulator():
     def run_a_peer(self, splitter_id, type, id):
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         chunks_before_leave = np.random.weibull(2) * (total_peers*(self.number_of_rounds-self.current_round))
-        print(id,": alive till consuming",chunks_before_leave, "chunks")
         if type == "monitor":
+            if self.first_monitor_created == False:
+                chunks_before_leave = 99999999
+                self.first_monitor_created = True
             if self.set_of_rules == "dbs":
                 peer = Monitor_DBS(id)
             elif self.set_of_rules == "cis":
-                print("Monitors are TPs in CIS")
+                print("simulator: Monitors are TPs in CIS")
                 peer = Monitor_STRPEDS(id)
             elif self.set_of_rules == "cis-sss":
-                print("Monitors are TPs in CIS")
+                print("simulator: Monitors are TPs in CIS")
                 peer = Monitor_SSS(id)
         elif type == "malicious":
             if self.set_of_rules == "cis":
@@ -85,7 +88,7 @@ class Simulator():
             elif self.set_of_rules == "cis-sss":
                 peer = Peer_Malicious_SSS(id)
             else:
-                print("Malicious peers are only compatible with CIS")
+                print("simulator: Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "dbs":
                 peer = Peer_DBS(id)
@@ -93,6 +96,7 @@ class Simulator():
                 peer = Peer_STRPEDS(id)
             elif self.set_of_rules == "cis-sss":
                 peer = Peer_SSS(id)
+        print("simulator:", id,": alive till consuming",chunks_before_leave, "chunks")
             
         peer.set_splitter(splitter_id)
         peer.connect_to_the_splitter()
@@ -105,10 +109,10 @@ class Simulator():
           
         while not peer.ready_to_leave_the_team:
             if type != "malicious" and peer.number_of_chunks_consumed >= chunks_before_leave and peer.player_alive:
-                print(id, "reached the number of chunks consumed before leave", peer.number_of_chunks_consumed)
+                print("simulator:", id, "reached the number of chunks consumed before leave", peer.number_of_chunks_consumed)
                 peer.player_alive = False
                 
-        print(id, "left the team")
+        print("simulator:", id, "left the team")
             
     def draw_net(self):
         self.G = nx.Graph()
@@ -125,7 +129,7 @@ class Simulator():
                 if direction == "IN":
                     self.G.add_node(node, behaviour='malicious')
                 else:
-                    print(node,"removed from graph (MP)")
+                    print("simulator: ", node,"removed from graph (MP)")
                     self.G.remove_node(node)
                     del self.net_labels[node]
             elif node[0] == "M":
@@ -303,7 +307,7 @@ class Simulator():
                     self.update_team(m[1],m[2],m[3])
                 except:
                     #For visualization in real time (line is not fully written)
-                    print("IndexError:", m, line)
+                    print("simulator: ", "IndexError:", m, line)
                     pass
                 
             if m[0] == "B":
@@ -312,8 +316,8 @@ class Simulator():
                     buffer_shot = None
                 except Exception as inst:
                     #For visualization in real time (line is not fully written)
-                    print("IndexError:", m, line)
-                    print(inst.args)
+                    print("simulator: ", "IndexError:", m, line)
+                    print("simulator: ", inst.args)
                     pass
 
             if m[0] == "CLR":
@@ -329,7 +333,7 @@ class Simulator():
         #plt.show()
 
     def run(self):
-        print("platform.system() = ", platform.system())
+        print("simulator:", "platform.system() = ", platform.system())
         if platform.system() == 'Linux':
             plt.switch_backend("TkAgg")
         elif platform.system() == 'Darwin':

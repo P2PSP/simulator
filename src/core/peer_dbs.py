@@ -3,6 +3,7 @@
 peer_dbs module
 """
 
+import time
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
@@ -39,6 +40,11 @@ class Peer_DBS(sim, Socket_queue):
         self.number_of_peers = 0
         self.sendto_counter = 0
         self.ready_to_leave_the_team = False
+
+        self.RTTs = []
+        self.max_degree = 5
+        self.neighborhood = []
+        
         print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
 
@@ -47,9 +53,13 @@ class Peer_DBS(sim, Socket_queue):
 
     def say_hello(self, peer):
         hello = (-1, "H")
+        start = time.time()
         self.sendto(hello, peer)
         print(self.id, ": sent", hello, "to", peer)
-
+        (m, s) = self.recvfrom()
+        end = time.time()
+        self.RTTs.append((s, end-start))
+        
     def say_goodbye(self, peer):
         goodbye = (-1, "G")
         self.sendto(goodbye, peer)
@@ -69,14 +79,30 @@ class Peer_DBS(sim, Socket_queue):
         (self.number_of_peers, sender) = self.recv()
         print(self.id, ": received number_of_peers =", self.number_of_peers, "from", sender)
 
+    # Thread(target=self.run).start()
+
+    #ef set_neighborhood(self, peer):
+    #    if len(self.neighborhood) < self.degree:
+    #        self.neighborhood.append(peer)
+    
     def receive_the_list_of_peers(self):
         (self.peer_list, sender) = self.recv()[:]
         for peer in self.peer_list:
             self.say_hello(peer)
             self.debt[peer] = 0
-
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
         print(self.id, ":", self.peer_list)
+
+        # Computing RTTs ("run" method must be running in a thread)
+        while len(self.RTTs) < len(self.peer_list):
+            time.sleep(1)
+
+        # Determining neighborhood
+        sorted_RTTs = sorted(self.RTTs, key=lambda x: x[1])
+        print(self.id, ": RTTs =", sorted_RTTs)
+        for p in range(min(len(sorted_RTTs), self.max_degree)):
+            self.neighborhood.append(sorted_RTTs[p][0])
+        print(self.id, ": neighborhood =", self.neighborhood)
 
     def connect_to_the_splitter(self):
         hello = (-1, "P")
@@ -119,17 +145,17 @@ class Peer_DBS(sim, Socket_queue):
 
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
 
-            # --- for simulation purposes only ----
-            self.sender_of_chunks[chunk_number % self.buffer_size] = sender
-
-            chunks = ""
-            for n, c in self.chunks:
-                chunks += c
-                if c == "L":
-                    self.sender_of_chunks[n % self.buffer_size] = ""
-
-            sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))
-            # --------------------------------------
+            # --- for simulation purposes only ---- ###########################################
+            self.sender_of_chunks[chunk_number % self.buffer_size] = sender                   #
+                                                                                              #
+            chunks = ""                                                                       #
+            for n, c in self.chunks:                                                          #
+                chunks += c                                                                   #
+                if c == "L":                                                                  #
+                    self.sender_of_chunks[n % self.buffer_size] = ""                          #
+                                                                                              #
+            sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))  #
+            # ------------------------------------- ###########################################
 
             self.received_counter += 1
             if (sender == self.splitter):
@@ -162,10 +188,10 @@ class Peer_DBS(sim, Socket_queue):
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by chunk", chunk_number)
-                    # -------- For simulation purposes only -----------
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
-                    # -------------------------------------------------
+                    # -------- For simulation purposes only ----------- ############
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
+                    # ------------------------------------------------- ############
 
                 else:
                     self.debt[sender] -= 1
@@ -195,20 +221,31 @@ class Peer_DBS(sim, Socket_queue):
                 print(self.id, ": control message received:", message)
 
             if message[1] == "H":
-                if sender not in self.peer_list:
-                    self.peer_list.append(sender)
-                    self.debt[sender] = 0
-                    print(self.id, ":", sender, "added by [hello]")
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
+                self.sendto((-1, 'H'), sender)
+                #if sender not in self.peer_list:
+                #    self.peer_list.append(sender)
+                #    self.debt[sender] = 0
+                #    print(self.id, ":", sender, "added by [hello]")
+                #    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
+                #    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
             else:
                 if sender in self.peer_list:
                     print(self.id, ": received goodbye from", sender)
-                    self.peer_list.remove(sender)
+                    try:
+                        self.peer_list.remove(sender)
+                        print(self.id, ":", sender, "removed from peer_list")
+                    except:
+                        print(self.id, ": failed to remove peer", sender, "from peer_list", self.peer_list)
+                        
                     del self.debt[sender]
+                    
                     if (self.receive_and_feed_counter > 0):
                         self.modified_list = True
                         self.receive_and_feed_counter -= 1
+                    try:
+                        self.neighborhood.remove(sender)
+                    except:
+                        print(self.id, ": failed to remove peer", sender, "from neighborhood", self.neighborhood)
                 else:
                     if (sender == self.splitter):
                         print(self.id, ": received goodbye from splitter")
@@ -222,7 +259,7 @@ class Peer_DBS(sim, Socket_queue):
         return self.process_message(message, sender)
 
     def polite_farewell(self):
-        print(self.id, ": goodbye! (see you later)")
+        print(self.id, ": (see you later)")
         while (self.receive_and_feed_counter < len(self.peer_list)):
             self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
             self.recvfrom()
