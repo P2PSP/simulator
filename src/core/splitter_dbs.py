@@ -142,14 +142,12 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
             action = message[0]
             sender = message[1]
 
-            # -------------------------
             if (sender == "SIM"):
                 if (action[1] == "K"):
-                    
-                    Simulator_stuff.FEEDBACK["DRAW"].put(("Bye","Bye"))
+                    Simulator_stuff.FEEDBACK["DRAW"].put(("Bye", "Bye"))
                     self.alive = False
+                    print("Killing Splitter...")
             else:
-            # -------------------------
                 if (action[1] == "L"):
                     lost_chunk_number = self.get_lost_chunk_number(action)
                     self.process_lost_chunk(lost_chunk_number, sender)
@@ -206,3 +204,6 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
                     self.remove_peer(p)
 
                 del self.outgoing_peer_list[:]
+        Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+        print("Splitter killed")
+        exit()

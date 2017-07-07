@@ -126,6 +126,10 @@ class Peer_DBS(sim, Socket_queue):
 
     def process_message(self, message, sender):
         # ----- Only for simulation purposes ------
+        if sender == "SIM" and message[1] == "K":
+            self.ready_to_leave_the_team = True
+            exit()
+
         # ----- Check if new round for peer -------
         if not self.is_a_control_message(message) and sender == self.splitter:
             if self.played > 0 and self.played >= len(self.peer_list):
