@@ -33,7 +33,7 @@ class Simulator():
     P_WIP = 0.6
     P_MP = 0.2
     
-    def __init__(self, set_of_rules, number_of_monitors, number_of_peers, drawing_log, number_of_rounds, number_of_malicious=0, gui = False):
+    def __init__(self, drawing_log, set_of_rules=None, number_of_monitors=0, number_of_peers=0, number_of_rounds=0, number_of_malicious=0, gui = False):
         self.set_of_rules = set_of_rules
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
@@ -124,12 +124,12 @@ class Simulator():
         plt.figure(1)
         #print("Update net", node, edge, direction)
         if node:
-            self.net_labels[node]=node
+            self.net_labels[node] = node
             if node[0] == "M" and node[1] == "P":
                 if direction == "IN":
                     self.G.add_node(node, behaviour='malicious')
                 else:
-                    print("simulator: ", node,"removed from graph (MP)")
+                    print("simulator: ", node, "removed from graph (MP)")
                     self.G.remove_node(node)
                     del self.net_labels[node]
             elif node[0] == "M":
@@ -145,7 +145,7 @@ class Simulator():
                     self.G.remove_node(node)
                     del self.net_labels[node]
         else:
-            if edge[0] and edge[1] in self.G.nodes():
+            if edge[0] in self.G.nodes() and edge[1] in self.G.nodes():
                 if direction == "IN":
                     self.G.add_edge(*edge, color='#000000')
                 else:
@@ -154,9 +154,6 @@ class Simulator():
         self.net_figure.clf()
         edges = self.G.edges()
         edge_color = [self.G[u][v]['color'] for u,v in edges]
-        #print("NODOS", self.G.nodes())
-        #for node in self.G.nodes():
-        #    print("NODOS", self.G.node[node])
         node_color = [self.color_map[self.G.node[node]['behaviour']]for node in self.G]
         self.net_figure.suptitle("Overlay Network of the Team", size=16)
         nx.draw_circular(self.G, node_color=node_color, node_size=400, edge_color=edge_color, labels=self.net_labels, font_size=10, font_weight='bold')
@@ -168,13 +165,13 @@ class Simulator():
         self.lineMonitors, = self.team_ax.plot([1,2], [10,10], color = '#A9F5D0', label="# Monitor Peers", marker='o', ls='None', markeredgecolor='#A9F5D0', animated=True)
         self.lineMPs, = self.team_ax.plot([1,2], [10,10], color = '#DF0101', label="# Malicious Peers", marker='o', ls='None', markeredgecolor='#DF0101', animated=True)
         self.team_figure.suptitle("Number of Peers in the Team", size=16)
-        plt.legend(loc=2,numpoints=1)
+        plt.legend(loc=2, numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         plt.axis([0, self.number_of_rounds, 0, total_peers])
         self.team_figure.canvas.draw()
-                
+
     def update_team(self, node, quantity, n_round):
-        
+
         if node == "M":
             self.lineMonitors.set_xdata(n_round)
             self.lineMonitors.set_ydata(quantity)
@@ -190,7 +187,6 @@ class Simulator():
 
         self.team_figure.canvas.blit(self.team_ax.bbox)
 
-        
     def draw_buffer(self):
         self.buffer_figure, self.buffer_ax = plt.subplots()
         self.lineIN, = self.buffer_ax.plot([1]*2, [1]*2, color = '#000000', ls="None",label="IN", marker='o',markeredgecolor='#000000',animated=True)
@@ -211,8 +207,7 @@ class Simulator():
         self.buffer_figure.suptitle("Buffer Status "+number_of_round, size=16)
 
     def update_buffer(self, node, buffer_shot, senders_shot):
-        
-        if self.buffer_order.get(node) == None:
+        if self.buffer_order.get(node) is None:
             self.buffer_order[node] = self.buffer_index
             self.buffer_labels[self.buffer_index] = node
             self.buffer_ax.set_xticklabels(self.buffer_labels)
@@ -223,15 +218,18 @@ class Simulator():
         self.lineOUT.set_xdata([self.buffer_order[node]]*len(buffer_out))
         self.lineOUT.set_ydata(buffer_out)
         self.buffer_ax.draw_artist(self.lineOUT)
-            
+
         buffer_in = [pos for pos, char in enumerate(buffer_shot) if char == "C"]
         sender_list = senders_shot.split(":")
         self.lineIN.set_xdata([self.buffer_order[node]]*len(buffer_in))
         for pos in buffer_in:
             sender_node = sender_list[pos]
-            if ( sender_node != "S"):
-                color_position = self.buffer_order[sender_node]-1
-                self.lineIN.set_color(self.buffer_colors[color_position])
+            if sender_node != "S":
+                if self.buffer_order.get(sender_node) is not None:
+                    color_position = self.buffer_order[sender_node]-1
+                    self.lineIN.set_color(self.buffer_colors[color_position])
+                else:
+                    self.lineIN.set_color("#FFFFFF")
             else:
                 self.lineIN.set_color("#000000")
             self.lineIN.set_ydata(pos)
@@ -244,7 +242,7 @@ class Simulator():
         self.clr_figure, self.clr_ax = plt.subplots()
         self.lineCLR, = self.clr_ax.plot([1,2], [10,10], color = '#000000', label="CLR", marker='o', ls='None' ,markeredgecolor='#000000', animated=True)
         self.clr_figure.suptitle("Chunk Loss Ratio", size=16)
-        plt.legend(loc=2,numpoints=1)
+        plt.legend(loc=2, numpoints=1)
         plt.axis([0, self.number_of_rounds, 0, 1])
         self.clr_figure.canvas.draw()
                 
@@ -253,26 +251,26 @@ class Simulator():
             self.clrs_per_round.append(clr)
 
     def update_clr_plot(self, n_round):
-         if len(self.clrs_per_round) > 0:
-             self.lineCLR.set_xdata(n_round)
-             self.lineCLR.set_ydata(np.mean(self.clrs_per_round))
-             self.clr_ax.draw_artist(self.lineCLR)
-             self.clr_figure.canvas.blit(self.clr_ax.bbox)
-             self.clrs_per_round = []
-        
+        if len(self.clrs_per_round) > 0:
+            self.lineCLR.set_xdata(n_round)
+            self.lineCLR.set_ydata(np.mean(self.clrs_per_round))
+            self.clr_ax.draw_artist(self.lineCLR)
+            self.clr_figure.canvas.blit(self.clr_ax.bbox)
+            self.clrs_per_round = []
+
     def store(self):
         drawing_log_file = open(self.drawing_log, "w", 1)
 
-        #Configuration in the first line
-        m = ["C",self.number_of_monitors, self.number_of_peers, self.number_of_malicious, self.number_of_rounds, self.set_of_rules]
-        drawing_log_file.write(";".join(map(str,m))+'\n')
-    
+        # Configuration in the first line
+        m = ["C", self.number_of_monitors, self.number_of_peers, self.number_of_malicious, self.number_of_rounds, self.set_of_rules]
+        drawing_log_file.write(";".join(map(str, m))+'\n')
+
         queue = sim.FEEDBACK["DRAW"]
         m = queue.get()
         
         while m[0] != "Bye":
-            drawing_log_file.write(";".join(map(str,m))+'\n')
-            m= queue.get()
+            drawing_log_file.write(";".join(map(str, m))+'\n')
+            m = queue.get()
 
         drawing_log_file.write("Bye")
         drawing_log_file.close()
@@ -280,8 +278,22 @@ class Simulator():
     def draw(self):
         drawing_log_file = open(self.drawing_log, "r")
 
+        # Read configuration from the first line
+        line = drawing_log_file.readline()
+        m = line.strip().split(";", 6)
+        if self.gui is False:
+            if m[0] == "C":
+                self.number_of_monitors = int(m[1])
+                self.number_of_peers = int(m[2])
+                self.number_of_malicious = int(m[3])
+                self.number_of_rounds = int(m[4])
+                self.set_of_rules = m[5]
+            else:
+                print("Invalid forma file", self.drawing_log)
+                exit()
+
         plt.ion()
-        
+
         self.draw_net()
         self.plot_team()
         self.draw_buffer()
@@ -289,7 +301,7 @@ class Simulator():
         time.sleep(2)
         line = drawing_log_file.readline()
         while line != "Bye":
-            m = line.strip().split(";",4)
+            m = line.strip().split(";", 4)
             if m[0] == "O":
                 if m[1] == "Node":
                     if m[2] == "IN":
@@ -298,27 +310,27 @@ class Simulator():
                         self.update_net(m[3], None, "OUT")
                 else:
                     if m[2] == "IN":
-                        self.update_net(None, (m[3],m[4]), "IN")
+                        self.update_net(None, (m[3], m[4]), "IN")
                     else:
-                        self.update_net(None, (m[3],m[4]), "OUT")
-                        
+                        self.update_net(None, (m[3], m[4]), "OUT")
+
             if m[0] == "T":
                 try:
                     self.update_team(m[1],m[2],m[3])
                 except:
-                    #For visualization in real time (line is not fully written)
+                    # For visualization in real time (line is not fully written)
                     print("simulator: ", "IndexError:", m, line)
                     pass
                 
             if m[0] == "B":
-                try:
-                    self.update_buffer(m[1], m[2], m[3])
-                    buffer_shot = None
-                except Exception as inst:
-                    #For visualization in real time (line is not fully written)
-                    print("simulator: ", "IndexError:", m, line)
-                    print("simulator: ", inst.args)
-                    pass
+                #try:
+                self.update_buffer(m[1], m[2], m[3])
+                buffer_shot = None
+                #except Exception as inst:
+                #    # For visualization in real time (line is not fully written)
+                #    print("simulator: ", "IndexError:", m, line)
+                #    print("simulator: ", inst.args)
+                #    pass
 
             if m[0] == "CLR":
                 self.update_clrs(m[1], float(m[2]))
@@ -340,17 +352,17 @@ class Simulator():
             plt.switch_backend("macosx")
         plt.style.use("seaborn-white")
         
-        #Listen to the team for drawing
+        # Listen to the team for drawing
         sim.FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
         
         if self.gui is True:
             Process(target=self.draw).start()
 
-        #Listen to the team for simulation life
+        # Listen to the team for simulation life
         sim.FEEDBACK["STATUS"] = Queue()
-                
-        #create communication channels for the team and splitter
+
+        # create communication channels for the team and splitter
         Socket_queue.UDP_SOCKETS['S'] = Queue(1)
         Socket_queue.TCP_SOCKETS['S'] = Queue(1)
 
@@ -366,20 +378,20 @@ class Simulator():
             Socket_queue.UDP_SOCKETS["MP"+str(i+1)] = Queue()
             Socket_queue.TCP_SOCKETS["MP"+str(i+1)] = Queue(1)
 
-        #create shared list for CIS set of rules (only when cis is choosen?)
+        # create shared list for CIS set of rules (only when cis is choosen?)
         manager = Manager()
         sim.SHARED_LIST["malicious"] = manager.list()
         sim.SHARED_LIST["regular"] = manager.list()
         sim.SHARED_LIST["attacked"] = manager.list()
 
-        #run splitter
+        # run splitter
         Process(target=self.run_a_splitter).start()
 
         self.attended_monitors = 0
         self.attended_peers = 0
         self.attended_mps = 0
 
-        #run a monitor
+        # run a monitor
         Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)]).start()
         self.attended_monitors += 1
 
@@ -393,7 +405,6 @@ class Simulator():
                     self.addPeer()
 
                 if self.current_round == self.number_of_rounds:
-                    Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
                     for i in range(self.number_of_monitors):
                         Socket_queue.UDP_SOCKETS["M"+str(i+1)].put(((-1, "K"), "SIM"))
 
@@ -402,6 +413,9 @@ class Simulator():
 
                     for i in range(self.number_of_malicious):
                         Socket_queue.UDP_SOCKETS["MP"+str(i+1)].put(((-1, "K"), "SIM"))
+
+                    Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
+
             m= queue.get()
 
     def addPeer(self):
@@ -420,7 +434,6 @@ class Simulator():
                 Process(target=self.run_a_peer, args=["S", "malicious", "MP"+str(self.attended_mps+1)]).start()
                 self.attended_mps += 1
 
-        
+
 if __name__ == "__main__":
     fire.Fire(Simulator)
-    

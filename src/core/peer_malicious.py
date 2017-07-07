@@ -22,19 +22,19 @@ class Peer_Malicious(Peer_STRPEDS):
         print("Peer Malicious initialized")
 
     def connect_to_the_splitter(self):
-        hello = (-1,"MP")
+        hello = (-1, "MP")
         self.send(hello, self.splitter)
-        
+
     def receive_the_list_of_peers(self):
         Peer_STRPEDS.receive_the_list_of_peers(self)
         self.first_main_target()
-        
+
     def first_main_target(self):
         self.main_target = self.choose_main_target()
 
     def choose_main_target(self):
         target = None
-        
+
         if self.attacked_count < (len(self.peer_list)//2):
             malicious_list = sim.SHARED_LIST["malicious"]
             attacked_list = sim.SHARED_LIST["attacked"]
@@ -49,7 +49,7 @@ class Peer_Malicious(Peer_STRPEDS):
                 
                 self.chunks_sent_to_main_target = 0
                 self.attacked_count += 1
-        
+
         return target
 
     def all_attack(self):
@@ -60,7 +60,7 @@ class Peer_Malicious(Peer_STRPEDS):
 
     def get_poisoned_chunk(self, chunk):
         return (chunk[0],"B")
-        
+
     def send_chunk(self, peer):
         poisoned_chunk = self.get_poisoned_chunk(self.receive_and_feed_previous)
         
