@@ -416,7 +416,7 @@ class Simulator():
 
                     Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
             m= queue.get()
-        print("Run finished")
+        print("Run finished!")
 
     def addPeer(self):
         probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]
