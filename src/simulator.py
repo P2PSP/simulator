@@ -351,11 +351,11 @@ class Simulator():
         elif platform.system() == 'Darwin':
             plt.switch_backend("macosx")
         plt.style.use("seaborn-white")
-        
+
         # Listen to the team for drawing
         sim.FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
-        
+
         if self.gui is True:
             Process(target=self.draw).start()
 
@@ -415,12 +415,12 @@ class Simulator():
                         Socket_queue.UDP_SOCKETS["MP"+str(i+1)].put(((-1, "K"), "SIM"))
 
                     Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
-
+                    time.sleep(1)
             m= queue.get()
 
     def addPeer(self):
         probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]
-        option = np.where(np.random.multinomial(1,probabilities))[0][0]
+        option = np.where(np.random.multinomial(1, probabilities))[0][0]
         if option == 0:
             if self.attended_monitors < self.number_of_monitors:
                 Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)]).start()
