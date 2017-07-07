@@ -23,7 +23,7 @@ class Monitor_DBS(Peer_DBS):
         #--- Only for simulation purposes ----
         self.sender_of_chunks = [""]*self.buffer_size
         #-------------------------------------
-        
+    '''    
     def say_hello(self, peer):
         hello = (-1,"H")
         start = time.time()
@@ -32,7 +32,7 @@ class Monitor_DBS(Peer_DBS):
         (m, s) = self.recvfrom()
         end = time.time()
         self.RTTs.append((s, end-start))
-        
+    '''    
     def connect_to_the_splitter(self):
         hello = (-1,"M")
         self.send(hello, self.splitter)

@@ -31,7 +31,7 @@ def main(argv):
     while line != "Bye":
         m = line.strip().split(";", 4)
         if m[0] == "R":
-            dat_log_file.write(m[1] + '\t')
+            dat_log_file.write('\n' + m[1] + '\t')
 
         if m[0] == "T" and m[1] == "M":
             dat_log_file.write(m[2] + '\t')
@@ -40,7 +40,7 @@ def main(argv):
             dat_log_file.write(m[2] + '\t')
 
         if m[0] == "T" and m[1] == "MP":
-            dat_log_file.write(m[2] + '\n')
+            dat_log_file.write(m[2])
 
         line = draw_log_file.readline()
 

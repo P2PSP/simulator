@@ -71,5 +71,3 @@ class Peer_STRPEDS(Peer_DBS):
             return self.handle_bad_peers_request()
 
         return -1
-
-    
