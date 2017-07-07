@@ -2,6 +2,8 @@
 @package simulator
 monitor_dbs module
 """
+
+import time
 from queue import Queue
 from .common import Common
 from .peer_dbs import Peer_DBS
@@ -24,9 +26,13 @@ class Monitor_DBS(Peer_DBS):
         
     def say_hello(self, peer):
         hello = (-1,"H")
+        start = time.time()
         self.sendto(hello, peer)
         print(self.id, ":", hello, "sent to", peer)
-
+        (m, s) = self.recvfrom()
+        end = time.time()
+        self.RTTs.append((s, end-start))
+        
     def connect_to_the_splitter(self):
         hello = (-1,"M")
         self.send(hello, self.splitter)
