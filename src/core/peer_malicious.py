@@ -2,17 +2,14 @@
 @package simulator
 peer_malicious module
 """
-from queue import Queue
-from threading import Thread
-from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .peer_strpeds import Peer_STRPEDS
-import time
 import random
 
+
 class Peer_Malicious(Peer_STRPEDS):
-    
-    def __init__(self,id):
+
+    def __init__(self, id):
         super().__init__(id)
         self.MPTR = 5
         self.chunks_sent_to_main_target = 0
@@ -38,15 +35,14 @@ class Peer_Malicious(Peer_STRPEDS):
         if self.attacked_count < (len(self.peer_list)//2):
             malicious_list = sim.SHARED_LIST["malicious"]
             attacked_list = sim.SHARED_LIST["attacked"]
-            #import ipdb;ipdb.set_trace()
             availables = list(set(self.peer_list)-set(attacked_list)-set(malicious_list))
 
             if availables:
                 target = random.choice(availables)
                 sim.SHARED_LIST["attacked"].append(target)
                 if __debug__:
-                    print("Main target selected:",target)
-                
+                    print("Main target selected:", target)
+
                 self.chunks_sent_to_main_target = 0
                 self.attacked_count += 1
 
@@ -84,17 +80,17 @@ class Peer_Malicious(Peer_STRPEDS):
                     self.sendto(poisoned_chunk, peer)
                     self.sendto_counter += 1
                     if __debug__:
-                        print("All Attack:",peer)
+                        print("All Attack:", peer)
                 else:
                     self.sendto(self.receive_and_feed_previous, peer)
                     self.sendto_counter += 1
                     if __debug__:
                         print("No attack", peer)
 
-            if self.main_target == None:
+            if self.main_target is None:
                 self.main_target = self.choose_main_target()
 
-        #TO-DO: on-off and selective attacks
+        # TO-DO: on-off
         else:
             self.sendto(self.receive_and_feed_previous, peer)
             self.sendto_counter += 1
