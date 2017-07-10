@@ -8,6 +8,7 @@ from .simulator_stuff import Simulator_stuff as sim
 class Peer_SSS(Peer_STRPEDS):
 
     def __init__(self, id):
+        self.first_round = 0
         super().__init__(id)
 
         # --------- For simulation purposes only ------------
@@ -44,11 +45,11 @@ class Peer_SSS(Peer_STRPEDS):
 
                     self.splitter_t[current_round] = message[3]
 
-                    #print(self.id, "current_round", current_round)
+                    print(self.id, "current_round", current_round)
 
-                    #if ((current_round-1) in self.t):
-                        #print(self.id, "t", self.t[(current_round-1)], "splitter_t", self.splitter_t[(current_round-1)])
-                        #print(self.id, "this.t", self.t[(current_round)], "this.splitter_t", self.splitter_t[(current_round)])
+                    if ((current_round-1) in self.t):
+                        print(self.id, "t", self.t[(current_round-1)], "splitter_t", self.splitter_t[(current_round-1)])
+                        print(self.id, "this.t", self.t[(current_round)], "this.splitter_t", self.splitter_t[(current_round)])
 
                     return self.process_message_burst(message, sender)
 
@@ -61,7 +62,7 @@ class Peer_SSS(Peer_STRPEDS):
     def send_chunk(self, peer):
         encrypted_chunk = (self.receive_and_feed_previous[0], "B", self.receive_and_feed_previous[2], self.receive_and_feed_previous[3])
         current_round = self.receive_and_feed_previous[2]
-        if ((current_round-1) in self.t):
+        if ((current_round-1) in self.t) and (self.first_round != (current_round-1)):
             if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
                 self.sendto(self.receive_and_feed_previous, peer)
                 self.sendto_counter += 1
@@ -70,7 +71,11 @@ class Peer_SSS(Peer_STRPEDS):
                 self.sendto(encrypted_chunk, peer)
                 self.sendto_counter += 1
         else:
-            print(self.id, "is my first round")
+            if (current_round-1) == self.first_round:
+                print(self.id, "I cant get enough shares in my first round")
+            else:
+                print(self.id, "is my first round")
+                self.first_round = current_round
             self.sendto(self.receive_and_feed_previous, peer)
             self.sendto_counter += 1
 
@@ -167,20 +172,31 @@ class Peer_SSS(Peer_STRPEDS):
                 print(self.id, ": control message received:", message)
 
             if message[1] == "H":
-                if sender not in self.peer_list:
-                    self.peer_list.append(sender)
-                    self.debt[sender] = 0
-                    print(self.id, ":", sender, "added by [hello]")
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
+                self.sendto((-1, 'H'), sender)
+                #if sender not in self.peer_list:
+                #    self.peer_list.append(sender)
+                #    self.debt[sender] = 0
+                #    print(self.id, ":", sender, "added by [hello]")
+                #    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
+                #    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
             else:
                 if sender in self.peer_list:
                     print(self.id, ": received goodbye from", sender)
-                    self.peer_list.remove(sender)
+                    try:
+                        self.peer_list.remove(sender)
+                        print(self.id, ":", sender, "removed from peer_list")
+                    except:
+                        print(self.id, ": failed to remove peer", sender, "from peer_list", self.peer_list)
+                        
                     del self.debt[sender]
+                    
                     if (self.receive_and_feed_counter > 0):
                         self.modified_list = True
                         self.receive_and_feed_counter -= 1
+                    try:
+                        self.neighborhood.remove(sender)
+                    except:
+                        print(self.id, ": failed to remove peer", sender, "from neighborhood", self.neighborhood)
                 else:
                     if (sender == self.splitter):
                         print(self.id, ": received goodbye from splitter")

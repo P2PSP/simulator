@@ -40,7 +40,7 @@ class Splitter_SSS(Splitter_STRPEDS):
         #   self.generate_shares()
 
     def receive_chunk(self):
-        time.sleep(0.05)  # bit-rate control
+        time.sleep(0.08)  # bit-rate control
         #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
         

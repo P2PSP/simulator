@@ -32,7 +32,7 @@ class Simulator():
     P_WIP = 0.6
     P_MP = 0.2
 
-    def __init__(self, drawing_log, set_of_rules=None, number_of_monitors=0, number_of_peers=0, number_of_rounds=0, number_of_malicious=0, gui = False):
+    def __init__(self, drawing_log, set_of_rules=None, number_of_monitors=0, number_of_peers=0, number_of_rounds=0, number_of_malicious=0, gui=False):
         self.set_of_rules = set_of_rules
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
@@ -41,9 +41,8 @@ class Simulator():
         self.number_of_malicious = number_of_malicious
         self.current_round = 0
         self.gui = gui
-        self.first_monitor_created = False
 
-    def get_team_size(self, n): 
+    def get_team_size(self, n):
         return 2**(n-1).bit_length()
 
     def get_buffer_size(self):
@@ -66,13 +65,12 @@ class Simulator():
         while splitter.alive:
             time.sleep(1)
 
-    def run_a_peer(self, splitter_id, type, id):
+    def run_a_peer(self, splitter_id, type, id, first_monitor=False):
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         chunks_before_leave = np.random.weibull(2) * (total_peers*(self.number_of_rounds-self.current_round))
         if type == "monitor":
-            if self.first_monitor_created is False:
+            if first_monitor is True:
                 chunks_before_leave = 99999999
-                self.first_monitor_created = True
             if self.set_of_rules == "dbs":
                 peer = Monitor_DBS(id)
             elif self.set_of_rules == "cis":
@@ -315,17 +313,17 @@ class Simulator():
 
             if m[0] == "T":
                 try:
-                    self.update_team(m[1],m[2],m[3])
+                    self.update_team(m[1], m[2], m[3])
                 except:
                     # For visualization in real time (line is not fully written)
                     print("simulator: ", "IndexError:", m, line)
                     pass
-                
+
             if m[0] == "B":
-                #try:
+                # try:
                 self.update_buffer(m[1], m[2], m[3])
                 buffer_shot = None
-                #except Exception as inst:
+                # except Exception as inst:
                 #    # For visualization in real time (line is not fully written)
                 #    print("simulator: ", "IndexError:", m, line)
                 #    print("simulator: ", inst.args)
@@ -391,7 +389,7 @@ class Simulator():
         self.attended_mps = 0
 
         # run a monitor
-        Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)]).start()
+        Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1), True]).start()
         self.attended_monitors += 1
 
         queue = sim.FEEDBACK["STATUS"]
@@ -419,7 +417,7 @@ class Simulator():
 
                     Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
                     '''
-            m= queue.get()
+            m = queue.get()
 
     def addPeer(self):
         probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]
