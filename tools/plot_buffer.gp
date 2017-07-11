@@ -33,4 +33,4 @@ plot  f1 u 1:2 w l title columnheader(2) ls 4, f1 u 1:2 smooth bezier title colu
 set terminal x11
 replot
 
-pause -1
+#pause -1
