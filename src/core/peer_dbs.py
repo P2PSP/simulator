@@ -21,11 +21,11 @@ class Peer_DBS(sim, Socket_queue):
         self.player_alive = True
         self.chunks = []
 
-        # ---Only for simulation purposes----
-        self.losses = 0
-        self.played = 0
-        self.number_of_chunks_consumed = 0
-        # ----------------------------------
+        # ---Only for simulation purposes--- #
+        self.losses = 0                      #
+        self.played = 0                      #
+        self.number_of_chunks_consumed = 0   #
+        # ---------------------------------- #
 
         self.max_chunk_debt = self.MAX_CHUNK_DEBT
         self.peer_list = []
@@ -69,9 +69,9 @@ class Peer_DBS(sim, Socket_queue):
         (self.buffer_size, sender) = self.recv()
         print(self.id, ": received buffer_size =", self.buffer_size, "from", sender)
 
-        # --- Only for simulation purposes ----
-        self.sender_of_chunks = [""]*self.buffer_size
-        # -------------------------------------
+        # --- Only for simulation purposes ---------- #
+        self.sender_of_chunks = [""]*self.buffer_size #
+        # ------------------------------------------- #
 
     def receive_the_number_of_peers(self):
         (self.number_of_monitors, sender) = self.recv()
@@ -146,7 +146,7 @@ class Peer_DBS(sim, Socket_queue):
 
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
 
-            # --- for simulation purposes only ---- ###########################################
+            # --- for simulation purposes only ---------------------------------------------- #
             self.sender_of_chunks[chunk_number % self.buffer_size] = sender                   #
                                                                                               #
             chunks = ""                                                                       #
@@ -156,7 +156,7 @@ class Peer_DBS(sim, Socket_queue):
                     self.sender_of_chunks[n % self.buffer_size] = ""                          #
                                                                                               #
             sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))  #
-            # ------------------------------------- ###########################################
+            # ------------------------------------------------------------------------------- #
 
             self.received_counter += 1
             if (sender == self.splitter):
@@ -189,13 +189,17 @@ class Peer_DBS(sim, Socket_queue):
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by chunk", chunk_number)
-                    # -------- For simulation purposes only ----------- ############
+                    print(self.id, ":", "peer_list =", self.peer_list)
+                    # -------- For simulation purposes only ---------------------- #
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
-                    # ------------------------------------------------- ############
-
+                    # ------------------------------------------------------------ #
                 else:
                     self.debt[sender] -= 1
+
+                if sender not in self.neighborhood:
+                    self.neighborhood.append(sender)
+                    print(self.id, ":", "neighborhood =", self.neighborhood)
 
             if (self.receive_and_feed_counter < len(self.peer_list) and (self.receive_and_feed_previous)):
                 peer = self.peer_list[self.receive_and_feed_counter]
@@ -207,6 +211,9 @@ class Peer_DBS(sim, Socket_queue):
                     print(self.id,":",peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
                     del self.debt[peer]
                     self.peer_list.remove(peer)
+                    print(self.id, ":", "peer_list =", self.peer_list)
+                    print(self.id, ":", "neighborhood =", self.neighborhood)
+
                     sim.FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
 
                 #if __debug__:
@@ -223,12 +230,14 @@ class Peer_DBS(sim, Socket_queue):
 
             if message[1] == "H":
                 self.sendto((-1, 'H'), sender)
-                #if sender not in self.peer_list:
-                #    self.peer_list.append(sender)
-                #    self.debt[sender] = 0
-                #    print(self.id, ":", sender, "added by [hello]")
-                #    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
-                #    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
+                if sender not in self.peer_list:
+                    self.peer_list.append(sender)
+                    self.debt[sender] = 0
+                    print(self.id, ":", sender, "added by [hello]")
+                    # --- simulator ---------------------------------------------- #
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
+                    # ------------------------------------------------------------ #
             else:
                 if sender in self.peer_list:
                     print(self.id, ": received goodbye from", sender)
@@ -240,6 +249,7 @@ class Peer_DBS(sim, Socket_queue):
                         
                     del self.debt[sender]
                     
+                if sender in self.neighborhood:
                     if (self.receive_and_feed_counter > 0):
                         self.modified_list = True
                         self.receive_and_feed_counter -= 1
@@ -247,6 +257,10 @@ class Peer_DBS(sim, Socket_queue):
                         self.neighborhood.remove(sender)
                     except:
                         print(self.id, ": failed to remove peer", sender, "from neighborhood", self.neighborhood)
+
+                    print(self.id, ":", "peer_list =", self.peer_list)
+                    print(self.id, ":", "neighborhood =", self.neighborhood)
+
                 else:
                     if (sender == self.splitter):
                         print(self.id, ": received goodbye from splitter")
