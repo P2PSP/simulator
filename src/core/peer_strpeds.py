@@ -37,7 +37,7 @@ class Peer_STRPEDS(Peer_DBS):
                 return False
         else:
             if __debug__:
-                print("Sender sent a control message", message)
+                print(self.id, "Sender sent a control message", message)
             return True
 
     def handle_bad_peers_request(self):

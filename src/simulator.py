@@ -403,20 +403,9 @@ class Simulator():
 
                 if self.current_round == self.number_of_rounds:
                     Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
-                    time.sleep(1)
+                    time.sleep(3)
                     os.system("killall -9 python3")
-                    '''
-                    for i in range(self.number_of_monitors):
-                        Socket_queue.UDP_SOCKETS["M"+str(i+1)].put(((-1, "K"), "SIM"))
 
-                    for i in range(self.number_of_peers):
-                        Socket_queue.UDP_SOCKETS["P"+str(i+1)].put(((-1, "K"), "SIM"))
-
-                    for i in range(self.number_of_malicious):
-                        Socket_queue.UDP_SOCKETS["MP"+str(i+1)].put(((-1, "K"), "SIM"))
-
-                    Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
-                    '''
             m = queue.get()
 
     def addPeer(self):
