@@ -27,7 +27,7 @@ import os
 
 class Simulator():
 
-    P_IN = 0.2
+    P_IN = 0.4
     P_MoP = 0.2
     P_WIP = 0.6
     P_MP = 0.2
