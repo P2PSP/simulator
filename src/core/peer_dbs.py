@@ -52,13 +52,12 @@ class Peer_DBS(sim, Socket_queue):
         self.splitter = splitter
 
     def say_hello(self, peer):
-        hello = (-1, "H")
-        start = time.time()
+        hello = (-1, "H", time.time())
         self.sendto(hello, peer)
         print(self.id, ": sent", hello, "to", peer)
-        (m, s) = self.recvfrom()
-        end = time.time()
-        self.RTTs.append((s, end-start))
+        #(m, s) = self.recvfrom()
+        #end = time.time()
+        #self.RTTs.append((s, end-start))
         
     def say_goodbye(self, peer):
         goodbye = (-1, "G")
@@ -94,8 +93,8 @@ class Peer_DBS(sim, Socket_queue):
 
         # Ojo, esto no se puede llamar desde process_message porque tarda en regresar ...
         # Computing RTTs ("run" method must be running in a thread)
-        while len(self.RTTs) < len(self.peer_list) - len(self.neighborhood):
-            time.sleep(1)
+        #while len(self.RTTs) < len(self.peer_list) - len(self.neighborhood):
+        #    time.sleep(1)
 
         # Determining neighborhood
         sorted_RTTs = sorted(self.RTTs, key=lambda x: x[1])
@@ -237,8 +236,15 @@ class Peer_DBS(sim, Socket_queue):
                 print(self.id, ": control message received:", message)
 
             if message[1] == "H":
+
+                print(self.id, ": received", message, "from", sender)
+                
+                # Compute RTT of hello received from peer "sender"
+                self.RTTs.append((sender, time.time()-message[2]))
+                print(self.id, ": RTTs =", self.RTTs)
+                
                 if sender not in self.peer_list:
-                    self.sendto((-1, 'H'), sender)
+                    self.sendto((-1, 'H', time.time()), sender)
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")
@@ -269,7 +275,7 @@ class Peer_DBS(sim, Socket_queue):
                     finally:
                         print(self.id, ":", "neighborhood =", self.neighborhood)
 
-                    self.send_hellos(number_of_new_neighbors = 1)
+#                    self.send_hellos(number_of_new_neighbors = 1)
 
                 else:
                     if (sender == self.splitter):
