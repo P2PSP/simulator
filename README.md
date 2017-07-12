@@ -26,9 +26,11 @@ $ python3 -u simulator.py run --set_of_rules SET_OF_RULES --number-of-monitors N
 ```
 
 ## Drawing the simulation
+```
 $ python3 simulator.py draw --drawing-log FILENAME
+```
 
-Note: If you want to draw in simulation time, you can add --gui option as a flag in the run command.
+Note: If you want to draw in simulation time, you can add `--gui` option as a flag in the run command.
 
 # Drawing file format
 - First line -> experiment configuration:
