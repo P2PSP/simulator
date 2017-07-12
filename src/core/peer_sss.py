@@ -139,6 +139,7 @@ class Peer_SSS(Peer_STRPEDS):
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by chunk", chunk_number)
+                    print(self.id, ":", "peer_list =", self.peer_list)
                     # -------- For simulation purposes only -----------
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
@@ -146,24 +147,7 @@ class Peer_SSS(Peer_STRPEDS):
 
                 else:
                     self.debt[sender] -= 1
-            '''
-            if (self.receive_and_feed_counter < len(self.peer_list) and (self.receive_and_feed_previous)):
-                peer = self.peer_list[self.receive_and_feed_counter]
 
-                self.send_chunk(peer)
-                self.debt[peer] += 1
-
-                if (self.debt[peer] > self.MAX_CHUNK_DEBT):
-                    print(self.id,":",peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
-                    del self.debt[peer]
-                    self.peer_list.remove(peer)
-                    sim.FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
-
-                #if __debug__:
-                #    print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
-
-                self.receive_and_feed_counter += 1
-            '''
             return chunk_number
 
         else:
@@ -172,13 +156,15 @@ class Peer_SSS(Peer_STRPEDS):
                 print(self.id, ": control message received:", message)
 
             if message[1] == "H":
-                self.sendto((-1, 'H'), sender)
-                #if sender not in self.peer_list:
-                #    self.peer_list.append(sender)
-                #    self.debt[sender] = 0
-                #    print(self.id, ":", sender, "added by [hello]")
-                #    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
-                #    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
+                if sender not in self.peer_list:
+                    self.sendto((-1, 'H'), sender)
+                    self.peer_list.append(sender)
+                    self.debt[sender] = 0
+                    print(self.id, ":", sender, "added by [hello]")
+                    # --- simulator ---------------------------------------------- #
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
+                    # ------------------------------------------------------------ #
             else:
                 if sender in self.peer_list:
                     print(self.id, ": received goodbye from", sender)
@@ -190,6 +176,7 @@ class Peer_SSS(Peer_STRPEDS):
                         
                     del self.debt[sender]
                     
+                if sender in self.neighborhood:
                     if (self.receive_and_feed_counter > 0):
                         self.modified_list = True
                         self.receive_and_feed_counter -= 1
@@ -197,6 +184,10 @@ class Peer_SSS(Peer_STRPEDS):
                         self.neighborhood.remove(sender)
                     except:
                         print(self.id, ": failed to remove peer", sender, "from neighborhood", self.neighborhood)
+
+                    print(self.id, ":", "peer_list =", self.peer_list)
+                    print(self.id, ":", "neighborhood =", self.neighborhood)
+
                 else:
                     if (sender == self.splitter):
                         print(self.id, ": received goodbye from splitter")

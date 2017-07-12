@@ -98,8 +98,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
            pass     
 
     def process_lost_chunk(self, lost_chunk_number, sender):
-        destination = get_losser(lost_chunk_number)
-        print(self.id, ":", sender,"complains about lost chunk",lost_chunk_number)
+        destination = self.get_losser(lost_chunk_number)
+        print(self.id, ":", sender, "complains about lost chunk", lost_chunk_number)
         self.increment_unsupportivity_of_peer(destination)
 
     def get_lost_chunk_number(self, message):
@@ -113,6 +113,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
             self.peer_list.remove(peer)
             # --------------------
             Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", peer))
+            if peer[0] == "M" and peer[1] != "P":
+                self.number_of_monitors -= 1
             # --------------------
         except ValueError:
             pass

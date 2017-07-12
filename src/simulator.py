@@ -271,6 +271,7 @@ class Simulator():
             m = queue.get()
 
         drawing_log_file.write("Bye")
+        print("CLOSING STORE")
         drawing_log_file.close()
 
     def draw(self):
@@ -405,15 +406,15 @@ class Simulator():
                 if r <= Simulator.P_IN:
                     self.addPeer()
 
-                if self.current_round == self.number_of_rounds:
-                    Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
-                    sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-                    sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
+                if self.current_round == self.number_of_rounds:                    
                     for name, pid in self.processes.items():
                         print("Killing", name, "...")
                         os.system("kill -9 "+str(pid))
                         print(name, "killed")
-                    
+
+                    sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
+                    sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+
             m = queue.get()
 
     def addPeer(self):
