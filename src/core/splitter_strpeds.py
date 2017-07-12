@@ -139,27 +139,21 @@ class Splitter_STRPEDS(Splitter_DBS):
             action = message[0]
             sender = message[1]
 
-            if (sender == "SIM"):
-                if (action[1] == "K"):
-                    sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
-                    self.alive = False
-                    print("Killing Splitter...")
-            else:
-                if action[1] == "L":
-                    lost_chunk_number = self.get_lost_chunk_number(action)
-                    self.process_lost_chunk(lost_chunk_number, sender)
+            if action[1] == "L":
+                lost_chunk_number = self.get_lost_chunk_number(action)
+                self.process_lost_chunk(lost_chunk_number, sender)
 
-                elif action[1] == "S":
+            elif action[1] == "S":
+                if __debug__:
+                    print("Bad complaint received")
+                if sender in self.trusted_peers:
                     if __debug__:
-                        print("Bad complaint received")
-                    if sender in self.trusted_peers:
-                        if __debug__:
-                            print("Complaint about bad peers from", sender)
+                        print("Complaint about bad peers from", sender)
                         self.trusted_peers_discovered.append(sender)
                         self.process_bad_peers_message(action, sender)
-                    
-                else:
-                    self.process_goodbye(sender)
+                            
+            else:
+                self.process_goodbye(sender)
 
     def run(self):
         Thread(target=self.handle_arrivals).start()
@@ -197,6 +191,3 @@ class Splitter_STRPEDS(Splitter_DBS):
                     self.remove_peer(p)
 
                 del self.outgoing_peer_list[:]
-        sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-        print("Splitter killed")
-        exit()

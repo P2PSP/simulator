@@ -408,12 +408,11 @@ class Simulator():
                 if self.current_round == self.number_of_rounds:
                     Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
                     sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+                    sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
                     for name, pid in self.processes.items():
-                        if name != "S":
-                            print("Killing", name, "...")
-                            os.system("kill -9 "+str(pid))
-                            print(name, "killed")
-                    os.system("kill -9 "+str(self.processes["S"]))
+                        print("Killing", name, "...")
+                        os.system("kill -9 "+str(pid))
+                        print(name, "killed")
                     
             m = queue.get()
 
