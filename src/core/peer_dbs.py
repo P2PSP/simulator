@@ -84,26 +84,34 @@ class Peer_DBS(sim, Socket_queue):
     #ef set_neighborhood(self, peer):
     #    if len(self.neighborhood) < self.degree:
     #        self.neighborhood.append(peer)
-    
-    def receive_the_list_of_peers(self):
-        (self.peer_list, sender) = self.recv()[:]
+
+    def send_hellos(self, number_of_new_neighbors):
+        print(self.id, ": number_of_new_neighbors =", number_of_new_neighbors)
         for peer in self.peer_list:
-            self.say_hello(peer)
-            self.debt[peer] = 0
-        print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
+            if peer not in self.neighborhood: # You don't need to compute RTT with neighbors
+                self.say_hello(peer)
         print(self.id, ":", self.peer_list)
 
+        # Ojo, esto no se puede llamar desde process_message porque tarda en regresar ...
         # Computing RTTs ("run" method must be running in a thread)
-        while len(self.RTTs) < len(self.peer_list):
+        while len(self.RTTs) < len(self.peer_list) - len(self.neighborhood):
             time.sleep(1)
 
         # Determining neighborhood
         sorted_RTTs = sorted(self.RTTs, key=lambda x: x[1])
         print(self.id, ": RTTs =", sorted_RTTs)
-        for p in range(min(len(sorted_RTTs), self.max_degree)):
-            self.neighborhood.append(sorted_RTTs[p][0])
+        for p in range(min(len(sorted_RTTs), number_of_new_neighbors)):
+            if sorted_RTTs[p][0] not in self.neighborhood:
+                self.neighborhood.append(sorted_RTTs[p][0])
         print(self.id, ": neighborhood =", self.neighborhood)
-
+    
+    def receive_the_list_of_peers(self):
+        (self.peer_list, sender) = self.recv()[:]
+        print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
+        self.send_hellos(self.max_degree)
+        for peer in self.peer_list:
+            self.debt[peer] = 0            
+        
     def connect_to_the_splitter(self):
         hello = (-1, "P")
         self.send(hello, self.splitter)
@@ -246,6 +254,7 @@ class Peer_DBS(sim, Socket_queue):
                         print(self.id, ":", sender, "removed from peer_list")
                     except:
                         print(self.id, ": failed to remove peer", sender, "from peer_list", self.peer_list)
+                    print(self.id, ":", "peer_list =", self.peer_list)
                         
                     del self.debt[sender]
                     
@@ -257,9 +266,10 @@ class Peer_DBS(sim, Socket_queue):
                         self.neighborhood.remove(sender)
                     except:
                         print(self.id, ": failed to remove peer", sender, "from neighborhood", self.neighborhood)
+                    finally:
+                        print(self.id, ":", "neighborhood =", self.neighborhood)
 
-                    print(self.id, ":", "peer_list =", self.peer_list)
-                    print(self.id, ":", "neighborhood =", self.neighborhood)
+                    self.send_hellos(number_of_new_neighbors = 1)
 
                 else:
                     if (sender == self.splitter):
