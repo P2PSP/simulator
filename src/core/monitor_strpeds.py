@@ -30,4 +30,12 @@ class Monitor_STRPEDS(Peer_STRPEDS):
         lost = (chunk_position,"L")
         self.sendto(lost, self.splitter)
 
-    #def PlayNextChunk (with complaints)
+    def play_chunk(self, chunk_number):
+        if self.chunks[chunk_number % self.buffer_size][1] == "C":
+            self.played += 1
+        else:
+            self.losses += 1
+            print(self.id, ": lost Chunk!", chunk_number)
+            self.complain(chunk_number)
+        self.number_of_chunks_consumed += 1
+        return self.player_alive

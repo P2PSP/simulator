@@ -64,9 +64,9 @@ class Splitter_STRPEDS(Splitter_DBS):
         print(self.id, ": waiting for outgoing peer")
         (m, x) = self.recv()
         print(self.id, ": received", m, "from", x)
-            
+
         self.insert_peer(incoming_peer)
-        sim.FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
+        sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
     
     def process_bad_peers_message(self, message, sender):
         bad_list = message[2]
@@ -104,12 +104,12 @@ class Splitter_STRPEDS(Splitter_DBS):
         for b in self.bad_peers:
             r = random.randint(0, 1)
             if r <= self.p_mpl:
+                #--- Only for simulation purposes ---
+                if b in self.peer_list:
+                    self.number_of_malicious -= 1
+                #------------------------------------
                 self.punish_peer(b, "by trusted")
                 self.bad_peers.remove(b)
-                
-                #--- Only for simulation purposes ---
-                self.number_of_malicious -= 1
-                #------------------------------------
 
     def punish_TPs(self):
         for tp in self.trusted_peers_discovered:
@@ -139,27 +139,21 @@ class Splitter_STRPEDS(Splitter_DBS):
             action = message[0]
             sender = message[1]
 
-            if (sender == "SIM"):
-                if (action[1] == "K"):
-                    sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
-                    self.alive = False
-                    print("Killing Splitter...")
-            else:
-                if action[1] == "L":
-                    lost_chunk_number = self.get_lost_chunk_number(action)
-                    self.process_lost_chunk(lost_chunk_number, sender)
+            if action[1] == "L":
+                lost_chunk_number = self.get_lost_chunk_number(action)
+                self.process_lost_chunk(lost_chunk_number, sender)
 
-                elif action[1] == "S":
+            elif action[1] == "S":
+                if __debug__:
+                    print("Bad complaint received")
+                if sender in self.trusted_peers:
                     if __debug__:
-                        print("Bad complaint received")
-                    if sender in self.trusted_peers:
-                        if __debug__:
-                            print("Complaint about bad peers from", sender)
+                        print("Complaint about bad peers from", sender)
                         self.trusted_peers_discovered.append(sender)
                         self.process_bad_peers_message(action, sender)
-                    
-                else:
-                    self.process_goodbye(sender)
+                            
+            else:
+                self.process_goodbye(sender)
 
     def run(self):
         Thread(target=self.handle_arrivals).start()
@@ -197,6 +191,3 @@ class Splitter_STRPEDS(Splitter_DBS):
                     self.remove_peer(p)
 
                 del self.outgoing_peer_list[:]
-        sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-        print("Splitter killed")
-        exit()

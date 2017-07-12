@@ -15,7 +15,7 @@ class Socket_queue:
 
     # UDP sockets for transmitting chunks from the splitter to the
     # peers. We should have so many UDP_SOCKETS as number of peers.
-    UDP_SOCKETS= {}
+    UDP_SOCKETS = {}
 
     # TCP sockets for serving incomming peers.
     TCP_SOCKETS = {}

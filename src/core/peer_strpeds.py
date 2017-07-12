@@ -47,13 +47,6 @@ class Peer_STRPEDS(Peer_DBS):
         return -1
 
     def process_message(self, message, sender):
-        # ----- For simulation purposes only ------
-        if sender == "SIM" and message[1] == "K":
-            print(self.id, "Killed")
-            self.ready_to_leave_the_team = True
-            exit()
-        # -----------------------------------------
-
         if sender in self.bad_peers:
             if __debug__:
                 print(self.id, "Sender is  in the bad peer list", sender)
