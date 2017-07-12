@@ -41,6 +41,7 @@ class Simulator():
         self.number_of_malicious = number_of_malicious
         self.current_round = 0
         self.gui = gui
+        self.processes = {}
 
     def get_team_size(self, n):
         return 2**(n-1).bit_length()
@@ -382,14 +383,17 @@ class Simulator():
         sim.SHARED_LIST["attacked"] = manager.list()
 
         # run splitter
-        Process(target=self.run_a_splitter).start()
-
+        p = Process(target=self.run_a_splitter)
+        p.start()
+        self.processes["S"] = p.pid
         self.attended_monitors = 0
         self.attended_peers = 0
         self.attended_mps = 0
 
         # run a monitor
-        Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1), True]).start()
+        p = Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1), True])
+        p.start()
+        self.processes["M"+str(self.attended_monitors+1)] = p.pid
         self.attended_monitors += 1
 
         queue = sim.FEEDBACK["STATUS"]
@@ -403,9 +407,14 @@ class Simulator():
 
                 if self.current_round == self.number_of_rounds:
                     Socket_queue.UDP_SOCKETS['S'].put(((-1, "K"), "SIM"))
-                    time.sleep(3)
-                    os.system("killall -9 python3")
-
+                    sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+                    for name, pid in self.processes.items():
+                        if name != "S":
+                            print("Killing", name, "...")
+                            os.system("kill -9 "+str(pid))
+                            print(name, "killed")
+                    os.system("kill -9 "+str(self.processes["S"]))
+                    
             m = queue.get()
 
     def addPeer(self):
@@ -413,15 +422,21 @@ class Simulator():
         option = np.where(np.random.multinomial(1, probabilities))[0][0]
         if option == 0:
             if self.attended_monitors < self.number_of_monitors:
-                Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)]).start()
+                p = Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)])
+                p.start()
+                self.processes["M"+str(self.attended_monitors+1)] = p.pid
                 self.attended_monitors += 1
         elif option == 1:
             if self.attended_peers < self.number_of_peers:
-                Process(target=self.run_a_peer, args=["S", "peer", "P"+str(self.attended_peers+1)]).start()
+                p = Process(target=self.run_a_peer, args=["S", "peer", "P"+str(self.attended_peers+1)])
+                p.start()
+                self.processes["P"+str(self.attended_peers+1)] = p.pid
                 self.attended_peers += 1
         elif option == 2:
             if self.attended_mps < self.number_of_malicious:
-                Process(target=self.run_a_peer, args=["S", "malicious", "MP"+str(self.attended_mps+1)]).start()
+                p = Process(target=self.run_a_peer, args=["S", "malicious", "MP"+str(self.attended_mps+1)])
+                p.start()
+                self.processes["MP"+str(self.attended_mps+1)] = p.pid
                 self.attended_mps += 1
 
 

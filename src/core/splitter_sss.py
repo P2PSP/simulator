@@ -75,3 +75,6 @@ class Splitter_SSS(Splitter_STRPEDS):
                 sim.FEEDBACK["DRAW"].put(("T", "MP", self.number_of_malicious, self.current_round))
 
                 self.current_round += 1
+        sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+        print("Splitter killed")
+        exit()
