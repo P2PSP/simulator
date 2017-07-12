@@ -18,11 +18,17 @@ sudo pacman -S python-pmw
 
 # Usage
 
+## Running a simulation
 ```
-$ ./simulator.py run --set_of_rules SET_OF_RULES --number-of-monitors NUMBER_OF_MONITORS --number-of-peers NUMBER_OF_PEERS \
+$ python3 -u simulator.py run --set_of_rules SET_OF_RULES --number-of-monitors NUMBER_OF_MONITORS --number-of-peers NUMBER_OF_PEERS \
 --number-of-malicious NUMBER_OF_MALICIOUS --number-of-rounds NUMBER_OF_ROUNDS --drawing-log FILENAME \
 --set-of-rules SET_OF_RULES [--gui]
 ```
+
+## Drawing the simulation
+$ python3 simulator.py draw --drawing-log FILENAME
+
+Note: If you want to draw in simulation time, you can add --gui option as a flag in the run command.
 
 # Drawing file format
 - First line -> experiment configuration:
