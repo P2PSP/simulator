@@ -125,20 +125,15 @@ class Peer_DBS(sim, Socket_queue):
             return False
 
     def process_message(self, message, sender):
-        # ----- Only for simulation purposes ------
-        if sender == "SIM" and message[1] == "K":
-            print(self.id, "Killed")
-            self.ready_to_leave_the_team = True
-            exit()
 
-        # ----- Check if new round for peer -------
-        if not self.is_a_control_message(message) and sender == self.splitter:
-            if self.played > 0 and self.played >= len(self.peer_list):
-                clr = self.losses/self.played
-                sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))
-                self.losses = 0
-                self.played = 0
-        # ------------------------------------------
+        # ----- Check if new round for peer (simulation purposes) ------------- #
+        if not self.is_a_control_message(message) and sender == self.splitter:  #
+            if self.played > 0 and self.played >= len(self.peer_list):          #
+                clr = self.losses/self.played                                   #
+                sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))                 #
+                self.losses = 0                                                 #
+                self.played = 0                                                 #
+        # --------------------------------------------------------------------- #
 
         if (message[0] >= 0):
             chunk_number = message[0]
@@ -160,7 +155,8 @@ class Peer_DBS(sim, Socket_queue):
 
             self.received_counter += 1
             if (sender == self.splitter):
-                while((self.receive_and_feed_counter < len(self.peer_list)) and (self.receive_and_feed_counter > 0 or self.modified_list)):
+                while((self.receive_and_feed_counter < len(self.peer_list)) and \
+                      (self.receive_and_feed_counter > 0 or self.modified_list)):
                     peer = self.peer_list[self.receive_and_feed_counter]
 
                     self.send_chunk(peer)
@@ -170,7 +166,9 @@ class Peer_DBS(sim, Socket_queue):
                         print(self.id, ":", peer, "removed by unsupportive (", str(self.debt[peer]), "lossess)")
                         del self.debt[peer]
                         self.peer_list.remove(peer)
-                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, peer))
+                        # --- simulator --------------------------------------------- #
+                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, peer)) #
+                        # ----------------------------------------------------------- #
 
                     self.receive_and_feed_counter += 1
 
@@ -212,9 +210,11 @@ class Peer_DBS(sim, Socket_queue):
                     del self.debt[peer]
                     self.peer_list.remove(peer)
                     print(self.id, ":", "peer_list =", self.peer_list)
+                    self.neighborhood.remove(peer)
                     print(self.id, ":", "neighborhood =", self.neighborhood)
-
-                    sim.FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer))
+                    # --- simulator ----------------------------------------- #
+                    sim.FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer)) #
+                    # ------------------------------------------------------- #
 
                 #if __debug__:
                 #    print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
@@ -229,8 +229,8 @@ class Peer_DBS(sim, Socket_queue):
                 print(self.id, ": control message received:", message)
 
             if message[1] == "H":
-                self.sendto((-1, 'H'), sender)
                 if sender not in self.peer_list:
+                    self.sendto((-1, 'H'), sender)
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")
