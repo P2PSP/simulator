@@ -2,13 +2,12 @@
 @package p2psp-simulator
 splitter_strpeds module
 """
-from queue import Queue
 from threading import Thread
 from .splitter_dbs import Splitter_DBS
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
-import time
 import random
+
 
 class Splitter_STRPEDS(Splitter_DBS):
     
@@ -21,15 +20,15 @@ class Splitter_STRPEDS(Splitter_DBS):
         self.p_mpl = 1
         self.p_tpl = 1
         
-        #--- Only for simulation purposes ---
+        # --- Only for simulation purposes ---
         self.number_of_malicious = 0
-        #------------------------------------
+        # ------------------------------------
 
         print("Splitter STRPEDS initialized")
         
 
     def send_dsa_key(self):
-        #Not needed for simulation
+        # Not needed for simulation
         return NotImplementedError
 
     def gather_bad_peers(self):
@@ -44,16 +43,16 @@ class Splitter_STRPEDS(Splitter_DBS):
         content = self.recv()
         message = content[0]
         incoming_peer = content[1]
-        print(self.id,"acepted connection from peer", incoming_peer)
+        print(self.id, "acepted connection from peer", incoming_peer)
         print(self.id, "message", content)
         if (message[1] == "M"):
             self.number_of_monitors += 1
             self.trusted_peers.append(incoming_peer)
             
-        #---- Only for simulation purposes. Unknown in real implementation -----
+        # ---- Only for simulation purposes. Unknown in real implementation -----
         if (message[1] == "MP"):
             self.number_of_malicious += 1
-        #-----------------------------------------------------------------------
+        # -----------------------------------------------------------------------
         
         print("NUMBER OF MONITORS", self.number_of_monitors)
 
