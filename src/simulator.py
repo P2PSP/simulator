@@ -268,8 +268,12 @@ class Simulator():
 
         while m[0] != "Bye":
             drawing_log_file.write(";".join(map(str, m))+'\n')
-            m = queue.get(True,1)
-            print("Leido", m[0])
+
+            # Sometimes the queue doesn't receive Bye message.
+            try:
+                m = queue.get(True, 1)
+            except:
+                break
 
         drawing_log_file.write("Bye")
         print("CLOSING STORE")
