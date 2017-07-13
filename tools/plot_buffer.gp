@@ -7,7 +7,7 @@ reset
 #set output 'plotting_data1.png'
 
 # svg
-set terminal svg size 800,600 fname 'Verdana, Helvetica, Arial, sans-serif' fsize '10'
+set terminal svg size 800,600 font "Verdana{10}"
 set output 'fullness.svg'
 
 # color definitions
