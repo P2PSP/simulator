@@ -406,14 +406,13 @@ class Simulator():
                 if r <= Simulator.P_IN:
                     self.addPeer()
 
-                if self.current_round == self.number_of_rounds:                    
+                if self.current_round == self.number_of_rounds:
+                    sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
+                    sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
                     for name, pid in self.processes.items():
                         print("Killing", name, "...")
                         os.system("kill -9 "+str(pid))
                         print(name, "killed")
-
-                    sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
-                    sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
 
             m = queue.get()
 
