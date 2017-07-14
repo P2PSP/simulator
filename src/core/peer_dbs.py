@@ -108,7 +108,12 @@ class Peer_DBS(sim, Socket_queue):
     def receive_the_list_of_peers(self):
         (self.peer_list, sender) = self.recv()[:]
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
-        self.send_hellos(self.neighborhood_degree)
+
+        # This line should be un commented (and the next one
+        # commented) when DBS2 is fully active.
+        #self.send_hellos(self.neighborhood_degree)
+        self.send_hellos(len(self.peer_list))
+        
         for peer in self.peer_list:
             self.debt[peer] = 0            
         
