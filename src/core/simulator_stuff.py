@@ -36,13 +36,18 @@ class Socket_queue:
             print("{:.6f} {} <= [{}] = {}".format(time.time(), self.id, message, sender))
         return (message, sender)
 
-    # Non-blocking sendto
     def sendto(self, message, receiver):
         message = (message, self.id)
-        try:
-            Socket_queue.UDP_SOCKETS[receiver].put((message))
-        except:
-            print("simulator_stuff: warning, possible channel congestion!!!")
+
+        # Blocking 
+        Socket_queue.UDP_SOCKETS[receiver].put((message))
+
+        # Non-blocking
+        #try:
+        #    Socket_queue.UDP_SOCKETS[receiver].put_nowait((message))
+        #except:
+        #    print("simulator_stuff: warning, possible channel congestion!!!")
+
         if __debug__:
             print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, message, receiver))
 
