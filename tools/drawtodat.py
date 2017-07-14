@@ -53,8 +53,9 @@ def main(argv):
             team_log_file.write(m[2])
 
         if m[0] == "CLR":
-            clr += float(m[2])
-            number_of_peers += 1
+            if "MP" not in m[1]:
+                clr += float(m[2])
+                number_of_peers += 1
 
         line = draw_log_file.readline()
 

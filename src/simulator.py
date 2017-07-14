@@ -47,7 +47,7 @@ class Simulator():
         return 2**(n-1).bit_length()
 
     def get_buffer_size(self):
-        team_size = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious)*2)
+        team_size = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious)*4)
         if (team_size < 32):
             return 32
         else:

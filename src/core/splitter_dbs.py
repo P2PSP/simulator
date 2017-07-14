@@ -190,8 +190,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
                 # -------------------
                 Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
                 Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
                 # -------------------
                 self.current_round += 1
                     

@@ -3,6 +3,9 @@
 simulator module
 """
 
+import time
+
+
 class Simulator_stuff:
 
     # Shared lists between malicious peers.
@@ -24,23 +27,22 @@ class Socket_queue:
         message = (message, self.id)
         Socket_queue.TCP_SOCKETS[receiver].put(message)
         if __debug__:
-            print("{} = [{}] => {}".format(self.id, message, receiver))
+            print("{:.6f} {} = [{}] => {}".format(time.time(), self.id, message, receiver))
 
     def recv(self):
         (message, sender) = Socket_queue.TCP_SOCKETS[self.id].get()
         if __debug__:
-            print("{} <= [{}] = {}".format(self.id, message, sender))
+            print("{:.6f} {} <= [{}] = {}".format(time.time(), self.id, message, sender))
         return (message, sender)
 
     def sendto(self, message, receiver):
         message = (message, self.id)
         Socket_queue.UDP_SOCKETS[receiver].put((message))
         if __debug__:
-            print("{} - [{}] -> {}".format(self.id, message, receiver))
+            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, message, receiver))
 
     def recvfrom(self):
         message = Socket_queue.UDP_SOCKETS[self.id].get()
         if __debug__:
-            print("{} <- [{}]".format(self.id, message))
+            print("{:.6f} {} <- [{}]".format(time.time(), self.id, message))
         return message
-
