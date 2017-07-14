@@ -12,7 +12,8 @@ from .simulator_stuff import Socket_queue
 
 class Peer_DBS(sim, Socket_queue):
     MAX_CHUNK_DEBT = 128
-
+    NEIGHBORHOOD_DEGREE = 5
+    
     def __init__(self, id):
         self.id = id
         self.played_chunk = 0
@@ -42,7 +43,7 @@ class Peer_DBS(sim, Socket_queue):
         self.ready_to_leave_the_team = False
 
         self.RTTs = []
-        self.max_degree = 5
+        self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE
         self.neighborhood = []
         
         print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
@@ -107,7 +108,7 @@ class Peer_DBS(sim, Socket_queue):
     def receive_the_list_of_peers(self):
         (self.peer_list, sender) = self.recv()[:]
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
-        self.send_hellos(self.max_degree)
+        self.send_hellos(self.neighborhood_degree)
         for peer in self.peer_list:
             self.debt[peer] = 0            
         
