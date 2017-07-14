@@ -13,6 +13,8 @@ class Simulator_stuff:
     # Communication channel with the simulator.
     FEEDBACK = {}
 
+    LOCK = ""
+
 class Socket_queue:
 
     # UDP sockets for transmitting chunks from the splitter to the
@@ -38,7 +40,7 @@ class Socket_queue:
     def sendto(self, message, receiver):
         message = (message, self.id)
         try:
-            Socket_queue.UDP_SOCKETS[receiver].put_nowait((message))
+            Socket_queue.UDP_SOCKETS[receiver].put((message))
         except:
             print("simulator_stuff: warning, possible channel congestion!!!")
         if __debug__:

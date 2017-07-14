@@ -35,7 +35,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         self.sendto(chunk, peer)
 
     def receive_chunk(self):
-        time.sleep(0.05) #bit-rate control
+        #Simulator_stuff.LOCK.acquire(True,0.1)
+        time.sleep(0.02) # bit-rate control
         #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
 

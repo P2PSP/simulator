@@ -14,7 +14,7 @@ from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
 from core.simulator_stuff import Socket_queue
-from multiprocessing import Process, Queue, Manager
+from multiprocessing import Process, Queue, Manager, Semaphore
 import time
 import fire
 import networkx as nx
@@ -47,7 +47,8 @@ class Simulator():
         return 2**(n-1).bit_length()
 
     def get_buffer_size(self):
-        team_size = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious)*4)
+        #return self.number_of_monitors + self.number_of_peers + self.number_of_malicious
+        team_size = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious)*8)
         if (team_size < 32):
             return 32
         else:
@@ -371,15 +372,15 @@ class Simulator():
         Socket_queue.TCP_SOCKETS['S'] = Queue(1)
 
         for i in range(self.number_of_monitors):
-            Socket_queue.UDP_SOCKETS["M"+str(i+1)] = Queue(10)
+            Socket_queue.UDP_SOCKETS["M"+str(i+1)] = Queue()
             Socket_queue.TCP_SOCKETS["M"+str(i+1)] = Queue(1)
 
         for i in range(self.number_of_peers):
-            Socket_queue.UDP_SOCKETS["P"+str(i+1)] = Queue(10)
+            Socket_queue.UDP_SOCKETS["P"+str(i+1)] = Queue()
             Socket_queue.TCP_SOCKETS["P"+str(i+1)] = Queue(1)
 
         for i in range(self.number_of_malicious):
-            Socket_queue.UDP_SOCKETS["MP"+str(i+1)] = Queue(10)
+            Socket_queue.UDP_SOCKETS["MP"+str(i+1)] = Queue()
             Socket_queue.TCP_SOCKETS["MP"+str(i+1)] = Queue(1)
 
         # create shared list for CIS set of rules (only when cis is choosen?)
@@ -387,6 +388,8 @@ class Simulator():
         sim.SHARED_LIST["malicious"] = manager.list()
         sim.SHARED_LIST["regular"] = manager.list()
         sim.SHARED_LIST["attacked"] = manager.list()
+
+        #sim.LOCK = Semaphore()
 
         # run splitter
         p = Process(target=self.run_a_splitter)

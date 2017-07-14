@@ -151,7 +151,7 @@ class Peer_DBS(sim, Socket_queue):
         if (message[0] >= 0):
             chunk_number = message[0]
             chunk = message[1]
-
+            
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
 
             # --- for simulation purposes only ---------------------------------------------- #
@@ -342,6 +342,8 @@ class Peer_DBS(sim, Socket_queue):
             self.prev_received_chunk = last_received_chunk
 
     def play_chunk(self, chunk_number):
+        #if chunk_number % len(self.peer_list) != 0:
+            #sim.LOCK.release()
         if self.chunks[chunk_number % self.buffer_size][1] == "C":
             self.played += 1
         else:
