@@ -22,11 +22,6 @@ class Monitor_STRPEDS(Peer_STRPEDS):
         self.sender_of_chunks = [""]*self.buffer_size
         #-------------------------------------
 
-    def say_hello(self, peer):
-        hello = (-1,"H")
-        self.sendto(hello, peer)
-        print("Hello sent to", peer)
-
     def connect_to_the_splitter(self):
         hello = (-1,"M")
         self.send(hello, self.splitter)
@@ -35,4 +30,12 @@ class Monitor_STRPEDS(Peer_STRPEDS):
         lost = (chunk_position,"L")
         self.sendto(lost, self.splitter)
 
-    #def PlayNextChunk (with complaints)
+    def play_chunk(self, chunk_number):
+        if self.chunks[chunk_number % self.buffer_size][1] == "C":
+            self.played += 1
+        else:
+            self.losses += 1
+            print(self.id, ": lost Chunk!", chunk_number)
+            self.complain(chunk_number)
+        self.number_of_chunks_consumed += 1
+        return self.player_alive

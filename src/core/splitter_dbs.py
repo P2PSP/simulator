@@ -35,7 +35,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         self.sendto(chunk, peer)
 
     def receive_chunk(self):
-        time.sleep(0.05) #bit-rate control
+        #Simulator_stuff.LOCK.acquire(True,0.1)
+        time.sleep(0.02) # bit-rate control
         #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
 
@@ -98,8 +99,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
            pass     
 
     def process_lost_chunk(self, lost_chunk_number, sender):
-        destination = get_losser(lost_chunk_number)
-        print(self.id, ":", sender,"complains about lost chunk",lost_chunk_number)
+        destination = self.get_losser(lost_chunk_number)
+        print(self.id, ":", sender, "complains about lost chunk", lost_chunk_number)
         self.increment_unsupportivity_of_peer(destination)
 
     def get_lost_chunk_number(self, message):
@@ -112,7 +113,9 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         try:
             self.peer_list.remove(peer)
             # --------------------
-            Simulator_stuff.FEEDBACK["DRAW"].put(("O","Node","OUT",peer))
+            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", peer))
+            if peer[0] == "M" and peer[1] != "P":
+                self.number_of_monitors -= 1
             # --------------------
         except ValueError:
             pass
@@ -142,19 +145,11 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
             action = message[0]
             sender = message[1]
 
-            # -------------------------
-            if (sender == "SIM"):
-                if (action[1] == "K"):
-                    
-                    Simulator_stuff.FEEDBACK["DRAW"].put(("Bye","Bye"))
-                    self.alive = False
+            if (action[1] == "L"):
+                lost_chunk_number = self.get_lost_chunk_number(action)
+                self.process_lost_chunk(lost_chunk_number, sender)
             else:
-            # -------------------------
-                if (action[1] == "L"):
-                    lost_chunk_number = self.get_lost_chunk_number(action)
-                    self.process_lost_chunk(lost_chunk_number, sender)
-                else:
-                    self.process_goodbye(sender)
+                self.process_goodbye(sender)
 
     def reset_counters(self):
         for i in self.losses:
@@ -196,8 +191,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
                 # -------------------
                 Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
                 Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("T","M",self.number_of_monitors, self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("T","P",(len(self.peer_list)-self.number_of_monitors), self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
                 # -------------------
                 self.current_round += 1
                     

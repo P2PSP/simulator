@@ -22,12 +22,6 @@ class Monitor_SSS(Peer_SSS):
         self.sender_of_chunks = [""]*self.buffer_size
         #-------------------------------------
 
-    def say_hello(self, peer):
-        hello = (-1,"H")
-        #sim.UDP_SOCKETS[peer].put((self.id,hello))
-        self.sendto(hello, peer)
-        print("Hello sent to", peer)
-
     def connect_to_the_splitter(self):
         hello = (-1,"M")
         #self.splitter["socketTCP"].put((self.id,hello))

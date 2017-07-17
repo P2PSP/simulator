@@ -61,7 +61,7 @@ class Peer_Malicious_SSS(Peer_SSS):
     def send_chunk(self, peer):
         encrypted_chunk = (self.receive_and_feed_previous[0], "B", self.receive_and_feed_previous[2], self.receive_and_feed_previous[3])
         current_round = self.receive_and_feed_previous[2]
-        if ((current_round-1) in self.t):
+        if ((current_round-1) in self.t) and (self.first_round != (current_round-1)):
             if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
                 self.send_chunk_attack(peer)
             else:
@@ -69,7 +69,11 @@ class Peer_Malicious_SSS(Peer_SSS):
                 self.sendto(encrypted_chunk, peer)
                 self.sendto_counter += 1
         else:
-            #print(self.id, "is my first round")
+            if (current_round-1) == self.first_round:
+                print(self.id, "I cant get enough shares in my first round")
+            else:
+                print(self.id, "is my first round")
+                self.first_round = current_round
             self.send_chunk_attack(peer)
     
     def send_chunk_attack(self, peer):

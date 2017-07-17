@@ -2,6 +2,8 @@
 @package simulator
 monitor_dbs module
 """
+
+import time
 from queue import Queue
 from .common import Common
 from .peer_dbs import Peer_DBS
@@ -10,30 +12,34 @@ from .peer_dbs import Peer_DBS
 
 class Monitor_DBS(Peer_DBS):
     
-    def __init__(self,id):
+    def __init__(self, id):
         super().__init__(id)
 
     def receive_buffer_size(self):
         (self.buffer_size, sender) = self.recv()
-        print(self.id,": received buffer_size =", self.buffer_size, "from", sender)
+        print(self.id, ": received buffer_size =", self.buffer_size, "from", sender)
         self.buffer_size //= 2
 
-        #--- Only for simulation purposes ----
+        # --- Only for simulation purposes ----
         self.sender_of_chunks = [""]*self.buffer_size
-        #-------------------------------------
-        
-    def say_hello(self, peer):
-        hello = (-1,"H")
-        self.sendto(hello, peer)
-        print(self.id, ":", hello, "sent to", peer)
+        # -------------------------------------
 
     def connect_to_the_splitter(self):
-        hello = (-1,"M")
+        hello = (-1, "M")
         self.send(hello, self.splitter)
         print(self.id, ":", hello, "sent to", self.splitter)
 
     def complain(self, chunk_position):
-        lost = (chunk_position,"L")
+        lost = (chunk_position, "L")
         self.sendto(lost,  self.splitter)
         print(self.id, ": lost chunk =", lost, "sent to", self.splitter)
 
+    def play_chunk(self, chunk_number):
+        if self.chunks[chunk_number % self.buffer_size][1] == "C":
+            self.played += 1
+        else:
+            self.losses += 1
+            print(self.id, ": lost Chunk!", chunk_number)
+            self.complain(chunk_number)
+        self.number_of_chunks_consumed += 1
+        return self.player_alive
