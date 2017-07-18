@@ -23,6 +23,18 @@ class Peer_SSS(Peer_STRPEDS):
         # Not needed for simulation
         return NotImplementedError
 
+    # ----------- simulation purposes ----------
+    def polite_farewell(self):
+        print(self.id, ": (see you later)")
+      
+        for peer in self.peer_list:
+            self.say_goodbye(peer)
+
+        del sim.RECV_LIST[self.id]
+        self.ready_to_leave_the_team = True
+        print(self.id, ": ready to leave the team")
+    # -------------------------------------------
+
     def process_message(self, message, sender):
 
         if sender in self.bad_peers:
@@ -148,6 +160,11 @@ class Peer_SSS(Peer_STRPEDS):
                 else:
                     self.debt[sender] -= 1
 
+            # ----------- simulation purposes ---------
+            if self.id.find("MP") == -1:
+                sim.RECV_LIST[self.id] = chunk_number
+            # ----------------------------------------
+            
             return chunk_number
 
         else:

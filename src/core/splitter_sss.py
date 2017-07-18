@@ -40,10 +40,29 @@ class Splitter_SSS(Splitter_STRPEDS):
         #   self.generate_shares()
 
     def receive_chunk(self):
-        time.sleep(0.08)  # bit-rate control
-        #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
+        skip = False
+        try:
+            prev_destination = self.get_losser(self.chunk_number-1)
+        except:
+            prev_destination = ""
+
+        while not skip:
+            #print("DIC", self.RECV_LIST.items(), "CHUNK", self.chunk_number-1)
+            try:
+                #print("SENT TO", prev_destination, "of", self.peer_list)
+                if prev_destination.find("MP") == -1:
+                    skip = all(v == self.chunk_number-1 for p,v in sim.RECV_LIST.items())
+                else:
+                    time.sleep(0.5)
+                    skip = True
+            except:
+                pass
+            time.sleep(0.01)  # bit-rate control
+            #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
+
+        print("++++++++++++++ Receive chunk from SPLITTER +++++++++++++")
         return "C"
-        
+
     def run(self):
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()

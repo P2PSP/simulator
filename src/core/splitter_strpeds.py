@@ -87,8 +87,8 @@ class Splitter_STRPEDS(Splitter_DBS):
             self.punish_peer(bad_peer, "by majority decision")
 
     def add_complaint(self, bad_peer, sender):
-        self.complaints.setdefault(bad_peer,[]).append(sender)
-            
+        self.complaints.setdefault(bad_peer, []).append(sender)
+
     def punish_peer(self, peer, message):
         if peer in self.peer_list:
             self.remove_peer(peer)
@@ -150,7 +150,7 @@ class Splitter_STRPEDS(Splitter_DBS):
                         print("Complaint about bad peers from", sender)
                         self.trusted_peers_discovered.append(sender)
                         self.process_bad_peers_message(action, sender)
-                            
+
             else:
                 self.process_goodbye(sender)
 

@@ -14,7 +14,7 @@ from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
 from core.simulator_stuff import Socket_queue
-from multiprocessing import Process, Queue, Manager, Semaphore
+from multiprocessing import Process, Queue, Manager
 import time
 import fire
 import networkx as nx
@@ -389,6 +389,8 @@ class Simulator():
         sim.SHARED_LIST["regular"] = manager.list()
         sim.SHARED_LIST["attacked"] = manager.list()
 
+        # Automatic bitrate control only for CIS-SSS
+        sim.RECV_LIST = manager.dict()
         #sim.LOCK = Semaphore()
 
         # run splitter
