@@ -45,6 +45,8 @@ class Peer_DBS(sim, Socket_queue):
         self.RTTs = []
         self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE
         self.neighborhood = []
+        self.distance = {} 
+        self.distance[self.id] = 0
         
         print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
@@ -104,7 +106,7 @@ class Peer_DBS(sim, Socket_queue):
             if sorted_RTTs[p][0] not in self.neighborhood:
                 self.neighborhood.append(sorted_RTTs[p][0])
         print(self.id, ": neighborhood =", self.neighborhood)
-    
+        
     def receive_the_list_of_peers(self):
         (self.peer_list, sender) = self.recv()[:]
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
@@ -115,8 +117,9 @@ class Peer_DBS(sim, Socket_queue):
         self.send_hellos(len(self.peer_list))
         
         for peer in self.peer_list:
-            self.debt[peer] = 0            
-        
+            self.debt[peer] = 0        # Setting initial debts        
+            self.distance[peer] = 1000 # Setting initial distances
+
     def connect_to_the_splitter(self):
         hello = (-1, "P")
         self.send(hello, self.splitter)
@@ -241,7 +244,7 @@ class Peer_DBS(sim, Socket_queue):
             if __debug__:
                 print(self.id, ": control message received:", message)
 
-            if message[1] == "H":
+            if message[1] == 'H': # Hello
 
                 print(self.id, ": received", message, "from", sender)
                 
@@ -258,7 +261,9 @@ class Peer_DBS(sim, Socket_queue):
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
                     # ------------------------------------------------------------ #
-            else:
+                    
+            if message[1] == 'G': # Goodbye
+                
                 if sender in self.peer_list:
                     print(self.id, ": received goodbye from", sender)
                     try:
@@ -287,6 +292,20 @@ class Peer_DBS(sim, Socket_queue):
                     if (sender == self.splitter):
                         print(self.id, ": received goodbye from splitter")
                         self.waiting_for_goodbye = False
+
+            if message[1] == 'R': # Routing information
+                found_shorter_route = False
+                distances_vector = message[2]
+                for peer, distance in enumerate(distances_vector):
+                    if distance + self.distance[neighbour_node] < self.distance[peer]:
+                        self.distance[i] = distance + self.distance[sender]
+                        found_new_route = True
+                if found_new_route:
+                    for gw in self.neighbors:
+                        pass
+                        #queues[gw].put((self.distances, self.node))
+
+            
             return -1
 
     def process_next_message(self):
