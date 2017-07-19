@@ -189,6 +189,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
 
             if self.peer_number == 0:
                 # -------------------
+                print("Splitter: round",self.current_round)
                 Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
                 Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
                 Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))

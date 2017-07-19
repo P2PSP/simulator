@@ -47,7 +47,7 @@ class Splitter_SSS(Splitter_STRPEDS):
             prev_destination = ""
 
         while not skip:
-            #print("DIC", self.RECV_LIST.items(), "CHUNK", self.chunk_number-1)
+            print("DIC", self.RECV_LIST.items(), "CHUNK", self.chunk_number-1)
             try:
                 #print("SENT TO", prev_destination, "of", self.peer_list)
                 if prev_destination.find("MP") == -1:
