@@ -122,10 +122,12 @@ class Peer_DBS(sim, Socket_queue):
 
         for peer in self.peer_list:
             self.distances[peer] = 1000 # Setting initial distances
+
         # for peer in self.neigborhood:
         for peer in self.peer_list:
-            self.debt[peer] = 0         # Setting initial debts        
-            self.sendto((-1, 'R', self.distances), peer)
+            self.distances[peer] = 1    # Setting initial distances
+            #self.sendto((-1, 'R', self.distances), peer)
+            self.debt[peer] = 0         # Setting initial debts
             
     def connect_to_the_splitter(self):
         hello = (-1, "P")
@@ -264,6 +266,7 @@ class Peer_DBS(sim, Socket_queue):
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")
+                    self.distances[sender] = 1000
                     # --- simulator ---------------------------------------------- #
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
@@ -301,13 +304,14 @@ class Peer_DBS(sim, Socket_queue):
                         self.waiting_for_goodbye = False
 
             if message[1] == 'R': # Routing information
-                found_shorter_route = False
+                found_shorter_distance = False
                 received_distances = message[2]
-                for peer, distance in enumerate(received_distances):
-                    if distance + self.distances[sender] < self.distances[peer]:
-                        self.distances[peer] = distance + self.distances[sender]
-                        found_new_route = True
-                if found_new_route:
+                for peer in received_distances:
+                    print(self.id, peer, sender, self.distances)
+                    if received_distances[peer] + self.distances[sender] < self.distances[peer]:
+                        self.distances[peer] = received_distances[peer] + self.distances[sender]
+                        found_shorter_distance = True
+                if found_shorter_distance:
                     for peer in self.neighbors:
                         self.sendto((-1, 'R', self.distances), peer)
                     
