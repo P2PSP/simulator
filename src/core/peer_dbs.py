@@ -310,15 +310,15 @@ class Peer_DBS(sim, Socket_queue):
 
             if message[1] == 'X': # Routing information
                 found_shorter_distance = False
-                received_distances = message[2]
+                distances_to = message[2]
                 print(self.id, ": current distances", self.distances)
-                print(self.id, ": received distances", received_distances, "from", sender)
-                for to_peer in received_distances:
-                    print("distances:", received_distances[to_peer], self.distances[sender], self.distances[to_peer])
-                    if received_distances[to_peer] + self.distances[sender] < self.distances[to_peer]:
-                        self.distances[to_peer] = received_distances[to_peer] + self.distances[sender]
+                print(self.id, ": received distances", distances_to, "from", sender)
+                for peer in distances_to:
+                    print("distances:", distances_to[peer], self.distances[sender], self.distances[peer])
+                    if distances_to[peer] + self.distances[sender] < self.distances[peer]:
+                        self.distances[peer] = distances_to[peer] + self.distances[sender]
                         found_shorter_distance = True
-                        print("distances: found shorter distance for peer", to_peer)
+                        print("distances: found shorter distance for peer", peer)
                 print(self.id, ": computed distances", self.distances)
                 if found_shorter_distance:
                     for peer in self.neighborhood:
