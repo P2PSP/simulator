@@ -113,7 +113,7 @@ class Peer_DBS(sim, Socket_queue):
         #for peer in self.neighborhood:
         for peer in self.peer_list:
             self.distances[peer] = 1    # Setting initial distances
-            self.sendto((-1, 'R', self.distances), peer)
+            self.sendto((-1, 'X', self.distances), peer)
             self.debt[peer] = 0         # Setting initial debts
 
     def receive_the_list_of_peers(self):
@@ -217,12 +217,15 @@ class Peer_DBS(sim, Socket_queue):
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
                     # ------------------------------------------------------------ #
+                    self.distances[sender] = 1
                 else:
                     self.debt[sender] -= 1
 
                 if sender not in self.neighborhood:
                     self.neighborhood.append(sender)
                     print(self.id, ":", "neighborhood =", self.neighborhood)
+                    for peer in self.neighborhood:
+                        self.sendto((-1, 'X', self.distances), peer)
 
             if (self.receive_and_feed_counter < len(self.peer_list) and (self.receive_and_feed_previous)):
                 peer = self.peer_list[self.receive_and_feed_counter]
@@ -303,21 +306,21 @@ class Peer_DBS(sim, Socket_queue):
                         print(self.id, ": received goodbye from splitter")
                         self.waiting_for_goodbye = False
 
-            if message[1] == 'R': # Routing information
+            if message[1] == 'X': # Routing information
                 found_shorter_distance = False
                 received_distances = message[2]
                 print(self.id, ": current distances", self.distances)
                 print(self.id, ": received distances", received_distances, "from", sender)
-                for peer in received_distances:
-                    print("distances:", received_distances[peer], self.distances[sender], self.distances[peer])
-                    if received_distances[peer] + self.distances[sender] < self.distances[peer]:
-                        self.distances[peer] = received_distances[peer] + self.distances[sender]
+                for to_peer in received_distances:
+                    print("distances:", received_distances[to_peer], self.distances[sender], self.distances[to_peer])
+                    if received_distances[to_peer] + self.distances[sender] < self.distances[to_peer]:
+                        self.distances[to_peer] = received_distances[to_peer] + self.distances[sender]
                         found_shorter_distance = True
-                        print("distances: found shorter distance for peer", peer)
+                        print("distances: found shorter distance for peer", to_peer)
                 print(self.id, ": computed distances", self.distances)
                 if found_shorter_distance:
                     for peer in self.neighbors:
-                        self.sendto((-1, 'R', self.distances), peer)
+                        self.sendto((-1, 'X', self.distances), peer)
                     
             return -1
 
