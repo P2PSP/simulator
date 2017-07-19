@@ -45,8 +45,8 @@ class Peer_DBS(sim, Socket_queue):
         self.RTTs = []
         self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE
         self.neighborhood = []
-        self.distance = {} 
-        self.distance[self.id] = 0
+        self.distances = {} 
+        self.distances[self.id] = 0
         
         print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
@@ -87,8 +87,9 @@ class Peer_DBS(sim, Socket_queue):
     #    if len(self.neighborhood) < self.degree:
     #        self.neighborhood.append(peer)
 
-    def send_hellos(self, number_of_new_neighbors):
-        print(self.id, ": number_of_new_neighbors =", number_of_new_neighbors)
+    #def send_hellos(self, number_of_new_neighbors):
+    def send_hellos(self):
+        #print(self.id, ": number_of_new_neighbors =", number_of_new_neighbors)
         for peer in self.peer_list:
             if peer not in self.neighborhood: # You don't need to compute RTT with neighbors
                 self.say_hello(peer)
@@ -102,7 +103,9 @@ class Peer_DBS(sim, Socket_queue):
         # Determining neighborhood
         sorted_RTTs = sorted(self.RTTs, key=lambda x: x[1])
         print(self.id, ": RTTs =", sorted_RTTs)
-        for p in range(min(len(sorted_RTTs), number_of_new_neighbors)):
+        #for p in range(min(len(sorted_RTTs), self.neighborhood_degree)):
+        #for p in range(min(len(sorted_RTTs), number_of_new_neighbors)):
+        for p in range(min(len(sorted_RTTs), len(self.peer_list))):
             if sorted_RTTs[p][0] not in self.neighborhood:
                 self.neighborhood.append(sorted_RTTs[p][0])
         print(self.id, ": neighborhood =", self.neighborhood)
@@ -114,12 +117,16 @@ class Peer_DBS(sim, Socket_queue):
         # This line should be un commented (and the next one
         # commented) when DBS2 is fully active.
         #self.send_hellos(self.neighborhood_degree)
-        self.send_hellos(len(self.peer_list))
-        
-        for peer in self.peer_list:
-            self.debt[peer] = 0        # Setting initial debts        
-            self.distance[peer] = 1000 # Setting initial distances
+        #self.send_hellos(len(self.peer_list))
+        self.send_hellos()
 
+        for peer in self.peer_list:
+            self.distances[peer] = 1000 # Setting initial distances
+        # for peer in self.neigborhood:
+        for peer in self.peer_list:
+            self.debt[peer] = 0         # Setting initial debts        
+            self.sendto((-1, 'R', self.distances), peer)
+            
     def connect_to_the_splitter(self):
         hello = (-1, "P")
         self.send(hello, self.splitter)
@@ -249,7 +256,7 @@ class Peer_DBS(sim, Socket_queue):
                 print(self.id, ": received", message, "from", sender)
                 
                 # Compute RTT of hello received from peer "sender"
-                self.RTTs.append((sender, time.time()-message[2]))
+                self.RTTs.append((sender, time.time() - message[2]))
                 print(self.id, ": RTTs =", self.RTTs)
                 
                 if sender not in self.peer_list:
@@ -295,17 +302,15 @@ class Peer_DBS(sim, Socket_queue):
 
             if message[1] == 'R': # Routing information
                 found_shorter_route = False
-                distances_vector = message[2]
-                for peer, distance in enumerate(distances_vector):
-                    if distance + self.distance[neighbour_node] < self.distance[peer]:
-                        self.distance[i] = distance + self.distance[sender]
+                received_distances = message[2]
+                for peer, distance in enumerate(received_distances):
+                    if distance + self.distances[sender] < self.distances[peer]:
+                        self.distances[peer] = distance + self.distances[sender]
                         found_new_route = True
                 if found_new_route:
-                    for gw in self.neighbors:
-                        pass
-                        #queues[gw].put((self.distances, self.node))
-
-            
+                    for peer in self.neighbors:
+                        self.sendto((-1, 'R', self.distances), peer)
+                    
             return -1
 
     def process_next_message(self):
