@@ -3,18 +3,16 @@
 splitter_dbs module
 """
 
-#from .splitter_core import Splitter_core
 from .common import Common
-from queue import Queue
 from threading import Thread
 import time
-from .simulator_stuff import Simulator_stuff #as sim
+from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_queue
+
 
 class Splitter_DBS(Simulator_stuff, Socket_queue):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
-    #BUFFER_SIZE = 128
-    
+
     def __init__(self):
         self.id = "S"
         self.alive = True
