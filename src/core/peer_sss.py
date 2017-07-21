@@ -37,6 +37,11 @@ class Peer_SSS(Peer_STRPEDS):
 
     def process_message(self, message, sender):
 
+        # ----------- simulation purposes ---------
+        if self.id.find("MP") == -1 and message[0] > -1:
+            sim.RECV_LIST[self.id] = message[0]
+        # ----------------------------------------
+        
         if sender in self.bad_peers:
             if __debug__:
                 print(self.id, "Sender is in the bad peer list", sender)
@@ -161,8 +166,8 @@ class Peer_SSS(Peer_STRPEDS):
                     self.debt[sender] -= 1
 
             # ----------- simulation purposes ---------
-            if self.id.find("MP") == -1:
-                sim.RECV_LIST[self.id] = chunk_number
+            # if self.id.find("MP") == -1:
+            #  sim.RECV_LIST[self.id] = chunk_number
             # ----------------------------------------
             
             return chunk_number

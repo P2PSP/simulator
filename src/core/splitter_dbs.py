@@ -136,7 +136,16 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         goodbye = (-1,"G")
         self.sendto(goodbye, peer)
         print(self.id, ": sent", goodbye, "to", peer)
-    
+
+    def remove_outgoing_peers(self):
+        for p in self.outgoing_peer_list:
+            self.say_goodbye(p)
+            self.remove_peer(p)
+        del self.outgoing_peer_list[:]
+
+    def on_round_beginning(self):
+        self.remove_outgoing_peers()
+
     def moderate_the_team(self):
         while self.alive:
             message = self.recvfrom()
@@ -171,6 +180,15 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
 
         while self.alive:
             chunk = self.receive_chunk()
+            if self.peer_number == 0:
+                self.on_round_beginning()
+                # -------------------
+                print("Splitter: round", self.current_round)
+                Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
+                # -------------------
             try:
                 peer = self.peer_list[self.peer_number]
                 message = (self.chunk_number, chunk)
@@ -186,17 +204,4 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
                 print(self.id, ": peer_number =", self.peer_number)
 
             if self.peer_number == 0:
-                # -------------------
-                print("Splitter: round",self.current_round)
-                Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
-                # -------------------
                 self.current_round += 1
-                    
-                for p in self.outgoing_peer_list:
-                    self.say_goodbye(p)
-                    self.remove_peer(p)
-
-                del self.outgoing_peer_list[:]

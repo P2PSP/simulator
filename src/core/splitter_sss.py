@@ -2,13 +2,12 @@
 @package p2psp-simulator
 splitter_sss module
 """
-from queue import Queue
 from threading import Thread
 from .splitter_strpeds import Splitter_STRPEDS
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 import time
-import random
+
 
 class Splitter_SSS(Splitter_STRPEDS):
     
@@ -24,12 +23,6 @@ class Splitter_SSS(Splitter_STRPEDS):
     def generate_shares(self, secret_key, n):
         #Not needed for simulation
         return NotImplementedError
-
-    def remove_outgoing_peers(self):
-        for p in self.outgoing_peer_list:
-            self.say_goodbye(p)
-            self.remove_peer(p)
-        del self.outgoing_peer_list[:]
 
     def on_round_beginning(self):
         self.remove_outgoing_peers()
@@ -47,16 +40,9 @@ class Splitter_SSS(Splitter_STRPEDS):
             prev_destination = ""
 
         while not skip:
-            print("DIC", self.RECV_LIST.items(), "CHUNK", self.chunk_number-1)
-            try:
-                #print("SENT TO", prev_destination, "of", self.peer_list)
-                if prev_destination.find("MP") == -1:
-                    skip = all(v == self.chunk_number-1 for p,v in sim.RECV_LIST.items())
-                else:
-                    time.sleep(0.5)
-                    skip = True
-            except:
-                pass
+            #print("DIC", self.RECV_LIST.items(), "CHUNK", self.chunk_number-1)
+            #print("SENT TO", prev_destination, "of", self.peer_list)
+            skip = all(v == self.chunk_number-1 for p,v in sim.RECV_LIST.items())
             time.sleep(0.01)  # bit-rate control
             #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
 
@@ -70,6 +56,17 @@ class Splitter_SSS(Splitter_STRPEDS):
 
         while self.alive:
             chunk = self.receive_chunk()
+
+            if self.peer_number == 0:
+
+                self.on_round_beginning()
+                
+                sim.FEEDBACK["STATUS"].put(("R", self.current_round))
+                sim.FEEDBACK["DRAW"].put(("R", self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors - self.number_of_malicious), self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T", "MP", self.number_of_malicious, self.current_round))
+                
             try:
                 peer = self.peer_list[self.peer_number]
                 message = (self.chunk_number, chunk, self.current_round, self.t)
@@ -84,13 +81,4 @@ class Splitter_SSS(Splitter_STRPEDS):
                 print("The monitor peer has died!")
 
             if self.peer_number == 0:
-
-                self.on_round_beginning()
-                
-                sim.FEEDBACK["STATUS"].put(("R", self.current_round))
-                sim.FEEDBACK["DRAW"].put(("R", self.current_round))
-                sim.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
-                sim.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
-                sim.FEEDBACK["DRAW"].put(("T", "MP", self.number_of_malicious, self.current_round))
-
                 self.current_round += 1
