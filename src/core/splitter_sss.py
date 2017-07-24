@@ -34,16 +34,12 @@ class Splitter_SSS(Splitter_STRPEDS):
 
     def receive_chunk(self):
         skip = False
-        try:
-            prev_destination = self.get_losser(self.chunk_number-1)
-        except:
-            prev_destination = ""
 
         while not skip:
             #print("DIC", self.RECV_LIST.items(), "CHUNK", self.chunk_number-1)
             #print("SENT TO", prev_destination, "of", self.peer_list)
             skip = all(v == self.chunk_number-1 for p,v in sim.RECV_LIST.items())
-            time.sleep(0.01)  # bit-rate control
+            time.sleep(0.01)
             #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
 
         print("++++++++++++++ Receive chunk from SPLITTER +++++++++++++")
