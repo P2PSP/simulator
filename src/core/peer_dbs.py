@@ -8,6 +8,7 @@ from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Socket_queue
+import socket
 
 
 class Peer_DBS(sim, Socket_queue):
@@ -54,7 +55,8 @@ class Peer_DBS(sim, Socket_queue):
 
     def say_hello(self, peer):
         hello = (-1, "H", time.time())
-        self.sendto(hello, peer)
+        #self.sendto(hello, peer)
+        self.team_socket.sendto(hello, peer)
         print(self.id, ": sent", hello, "to", peer)
         #(m, s) = self.recvfrom()
         #end = time.time()
@@ -62,22 +64,26 @@ class Peer_DBS(sim, Socket_queue):
         
     def say_goodbye(self, peer):
         goodbye = (-1, "G")
-        self.sendto(goodbye, peer)
+        #self.sendto(goodbye, peer)
+        self.team_socket.sendto(goodbye, peer)
         print(self.id, ": sent", goodbye, "to", peer)
 
     def receive_buffer_size(self):
-        (self.buffer_size, sender) = self.recv()
-        print(self.id, ": received buffer_size =", self.buffer_size, "from", sender)
+        #(self.buffer_size, sender) = self.recv()
+        self.buffer_size = self.splitter_socket.recv()
+        print(self.id, ": received buffer_size =", self.buffer_size, "from", self.splitter)
 
         # --- Only for simulation purposes ---------- #
         self.sender_of_chunks = [""]*self.buffer_size #
         # ------------------------------------------- #
 
     def receive_the_number_of_peers(self):
-        (self.number_of_monitors, sender) = self.recv()
-        print(self.id, ": received number_of_monitors =", self.number_of_monitors, "from", sender)
-        (self.number_of_peers, sender) = self.recv()
-        print(self.id, ": received number_of_peers =", self.number_of_peers, "from", sender)
+        #(self.number_of_monitors, sender) = self.recv()
+        self.number_of_monitors = self.splitter_socket.recv()
+        print(self.id, ": received number_of_monitors =", self.number_of_monitors, "from", self.splitter)
+        #(self.number_of_peers, sender) = self.recv()
+        self.number_of_peers = self.splitter_socket.recv()
+        print(self.id, ": received number_of_peers =", self.number_of_peers, "from", self.splitter)
 
     # Thread(target=self.run).start()
 
@@ -106,8 +112,9 @@ class Peer_DBS(sim, Socket_queue):
         print(self.id, ": neighborhood =", self.neighborhood)
     
     def receive_the_list_of_peers(self):
-        (self.peer_list, sender) = self.recv()[:]
-        print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
+        #(self.peer_list, sender) = self.recv()[:]
+        self.peer_list = self.splitter_socket.recv()[:]
+        print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
 
         # This line should be un commented (and the next one
         # commented) when DBS2 is fully active.
@@ -118,17 +125,23 @@ class Peer_DBS(sim, Socket_queue):
             self.debt[peer] = 0            
         
     def connect_to_the_splitter(self):
-        hello = (-1, "P")
-        self.send(hello, self.splitter)
-        print(self.id, ": sent", hello, "to", self.splitter)
-
+        #hello = (-1, "P")
+        #self.send(hello, self.splitter)
+        #print(self.id, ": sent", hello, "to", self.splitter)
+        self.splitter_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.splitter_socket.bind("/tmp/"+self.id)
+        self.splitter_socket.connect("/tmp/"+self.splitter+"_tcp")
+        print("Connect to the splitter")
+        
     def send_ready_for_receiving_chunks(self):
         ready = (-1, "R")
-        self.send(ready, self.splitter)
+        #self.send(ready, self.splitter)
+        self.splitter_socket.send(ready)
         print(self.id, ": sent", ready, "to", self.splitter)
 
     def send_chunk(self, peer):
-        self.sendto(self.receive_and_feed_previous, peer)
+        #self.sendto(self.receive_and_feed_previous, peer)
+        self.team_socket.sendto(self.receive_and_feed_previous, peer)
         self.sendto_counter += 1
 
     def is_a_control_message(self, message):
@@ -290,16 +303,18 @@ class Peer_DBS(sim, Socket_queue):
             return -1
 
     def process_next_message(self):
-        content = self.recvfrom()
-        message = content[0]
-        sender = content[1]
+        #content = self.recvfrom()
+        #message = content[0]
+        #sender = content[1]
+        message, sender = self.team_socket.recvfrom()
         return self.process_message(message, sender)
 
     def polite_farewell(self):
         print(self.id, ": (see you later)")
         while (self.receive_and_feed_counter < len(self.peer_list)):
-            self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
-            self.recvfrom()
+            #self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
+            self.team_socket.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
+            self.team_socket.recvfrom()
             self.receive_and_feed_counter += 1
 
         for peer in self.peer_list:

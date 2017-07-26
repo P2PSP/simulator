@@ -8,6 +8,8 @@ from threading import Thread
 import time
 from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_queue
+import socket
+import pickle
 
 
 class Splitter_DBS(Simulator_stuff, Socket_queue):
@@ -29,8 +31,18 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
 
         print(self.id, ": DBS initialized")
 
+    def setup_peer_connection_socket(self):
+        self.peer_connection_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.peer_connection_socket.bind("/tmp/S_tcp")
+        self.peer_connection_socket.listen(1)
+
+    def setup_team_socket(self):
+        self.team_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket.bind("/tmp/S_udp")
+        
     def send_chunk(self, chunk, peer):
-        self.sendto(chunk, peer)
+        #self.sendto(chunk, peer)
+        self.team_socket.sendto(chunk, peer)
 
     def receive_chunk(self):
         #Simulator_stuff.LOCK.acquire(True,0.1)
@@ -40,42 +52,59 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
 
     def handle_arrivals(self):
         while(self.alive):
-            #Thread(target=self.handle_a_peer_arrival).start()
-            self.handle_a_peer_arrival()
+            peer_serve_socket, peer = self.peer_connection_socket.accept()
+            print("Connection from ", peer)
+            Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()
+            #self.handle_a_peer_arrival()
         
-    def handle_a_peer_arrival(self):
-        content = self.recv()
-        message = content[0]
-        incoming_peer = content[1]
+    def handle_a_peer_arrival(self, connection):
+
+        serve_socket = connection[0]
+        incoming_peer = connection[1]
+
+        #content = self.recv()
+        #message = content[0]
+        #incoming_peer = content[1]
+        
         print(self.id, ": acepted connection from peer", incoming_peer)
-        if (message[1] == "M"):
+        if (incoming_peer == "M"):
             self.number_of_monitors += 1
         print(self.id, ": number of monitors", self.number_of_monitors)
 
-        self.send_buffer_size(incoming_peer)
-        self.send_the_number_of_peers(incoming_peer)
-        self.send_the_list_of_peers(incoming_peer)
+        #self.send_buffer_size(incoming_peer)
+        #self.send_the_number_of_peers(incoming_peer)
+        #self.send_the_list_of_peers(incoming_peer)
+
+        self.send_buffer_size(serve_socket)
+        self.send_the_number_of_peers(serve_socket)
+        self.send_the_list_of_peers(serve_socket)
+        
         print(self.id, ": waiting for outgoing peer")
-        (message, sender) = self.recv()
+        #(message, sender) = self.recv()
+        message, sender = self.serve_socket.recv()
         print(self.id, ": received", message, "from", sender)
         self.insert_peer(incoming_peer)
         # ------------------
         Simulator_stuff.FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
         # ------------------
         
-    def send_buffer_size(self, peer):
-        print(self.id, ": sending buffer size =", self.buffer_size, "to", peer)
-        self.send(self.buffer_size, peer)
+    def send_buffer_size(self, peer_serve_socket):
+        print(self.id, ": sending buffer size =", self.buffer_size)#, "to", peer)
+        #self.send(self.buffer_size, peer)
+        peer_serve_socket.sendall(self.buffer_size)
         
-    def send_the_number_of_peers(self, peer):
-        print(self.id, ": sending number of monitors =", self.number_of_monitors, "to", peer)
-        self.send(self.number_of_monitors, peer)
-        print(self.id, ": sending list of peers of length =", self.peer_list, "to", peer)
-        self.send(len(self.peer_list), peer)
+    def send_the_number_of_peers(self, peer_serve_socket):
+        print(self.id, ": sending number of monitors =", self.number_of_monitors)#, "to", peer)
+        #self.send(self.number_of_monitors, peer)
+        self.peer_serve_socket.sendall(self.number_of_monitors)
+        print(self.id, ": sending list of peers of length =", self.peer_list)#, "to", peer)
+        #self.send(len(self.peer_list), peer)
+        self.peer_serve_socket.sendall(len(self.peer_list))
 
-    def send_the_list_of_peers(self, peer):
-        print(self.id, ": sending peer list =", self.peer_list, "to", peer)
-        self.send(self.peer_list, peer)
+    def send_the_list_of_peers(self, peer_serve_socket):
+        print(self.id, ": sending peer list =", self.peer_list)#, "to", peer)
+        #self.send(self.peer_list, peer)
+        self.peer_serve_socket.sendall(pickle.dumps(self.peer_list))
         
     def insert_peer(self, peer):
         if peer not in self.peer_list:
@@ -134,7 +163,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
 
     def say_goodbye(self, peer):
         goodbye = (-1,"G")
-        self.sendto(goodbye, peer)
+        #self.sendto(goodbye, peer)
+        self.team_socket.sendto(goodbye, peer)
         print(self.id, ": sent", goodbye, "to", peer)
 
     def remove_outgoing_peers(self):
@@ -174,6 +204,9 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         Thread(target=self.run).start()
         
     def run(self):
+        self.setup_peer_connection_socket()
+        self.setup_team_socket()
+        
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
         Thread(target=self.reset_counters_thread).start()
