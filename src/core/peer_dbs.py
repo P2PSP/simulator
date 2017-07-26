@@ -9,7 +9,7 @@ from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Socket_queue
 import socket
-
+import pickle
 
 class Peer_DBS(sim, Socket_queue):
     MAX_CHUNK_DEBT = 128
@@ -70,7 +70,8 @@ class Peer_DBS(sim, Socket_queue):
 
     def receive_buffer_size(self):
         #(self.buffer_size, sender) = self.recv()
-        self.buffer_size = self.splitter_socket.recv()
+        
+        self.buffer_size = pickle.loads(self.splitter_socket.recv(5))
         print(self.id, ": received buffer_size =", self.buffer_size, "from", self.splitter)
 
         # --- Only for simulation purposes ---------- #
@@ -79,10 +80,10 @@ class Peer_DBS(sim, Socket_queue):
 
     def receive_the_number_of_peers(self):
         #(self.number_of_monitors, sender) = self.recv()
-        self.number_of_monitors = self.splitter_socket.recv()
+        self.number_of_monitors = pickle.loads(self.splitter_socket.recv(5))
         print(self.id, ": received number_of_monitors =", self.number_of_monitors, "from", self.splitter)
         #(self.number_of_peers, sender) = self.recv()
-        self.number_of_peers = self.splitter_socket.recv()
+        self.number_of_peers = pickle.loads(self.splitter_socket.recv(5))
         print(self.id, ": received number_of_peers =", self.number_of_peers, "from", self.splitter)
 
     # Thread(target=self.run).start()
@@ -113,7 +114,8 @@ class Peer_DBS(sim, Socket_queue):
     
     def receive_the_list_of_peers(self):
         #(self.peer_list, sender) = self.recv()[:]
-        self.peer_list = self.splitter_socket.recv()[:]
+        #recv = pickle.loads(self.splitter_socket.recv(1024))
+        self.peer_list = pickle.loads(self.splitter_socket.recv(1024))
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
 
         # This line should be un commented (and the next one

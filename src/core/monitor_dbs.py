@@ -7,6 +7,7 @@ import time
 from queue import Queue
 from .common import Common
 from .peer_dbs import Peer_DBS
+import pickle
 #from .simulator_stuff import Simulator_stuff as sim
 #from .simulator_stuff import Socket_queue
 
@@ -16,9 +17,10 @@ class Monitor_DBS(Peer_DBS):
         super().__init__(id)
 
     def receive_buffer_size(self):
+        print("----->",len(pickle.dumps(self.buffer_size)))
         #(self.buffer_size, sender) = self.recv()
-        self.buffer_size = self.splitter_socket.recv()
-        print(self.id, ": received buffer_size =", self.buffer_size, "from", sender)
+        self.buffer_size = pickle.loads(self.splitter_socket.recv(5))
+        print(self.id, ": received buffer_size =", self.buffer_size, "from S")
         self.buffer_size //= 2
 
         # --- Only for simulation purposes ----
