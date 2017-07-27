@@ -8,7 +8,7 @@ from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Socket_queue
-import socket
+from .simulator_stuff import Socket_print as socket
 import pickle
 
 class Peer_DBS(sim, Socket_queue):
@@ -51,11 +51,12 @@ class Peer_DBS(sim, Socket_queue):
         print(self.id, ": DBS initialized")
 
     def listen_to_the_team(self):
-        self.team_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        self.team_socket.bind("/tmp/"+self.id+"_udp")
+        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket.set_id(self.id)
+        self.team_socket.bind(self.id+"_udp")
 
     def set_splitter(self, splitter):
-        self.splitter = "/tmp/"+splitter+"_tcp"
+        self.splitter = splitter
 
     def say_hello(self, peer):
         hello = (-1, "H", time.time())
@@ -134,8 +135,9 @@ class Peer_DBS(sim, Socket_queue):
         #hello = (-1, "P")
         #self.send(hello, self.splitter)
         #print(self.id, ": sent", hello, "to", self.splitter)
-        self.splitter_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.splitter_socket.bind("/tmp/"+self.id+"_tcp")
+        self.splitter_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.splitter_socket.set_id(self.id)
+        self.splitter_socket.bind(self.id+"_tcp")
         self.splitter_socket.connect(self.splitter)
         print("Connect to the splitter")
         
@@ -145,11 +147,10 @@ class Peer_DBS(sim, Socket_queue):
         print(len(pickle.dumps(ready)))
         self.splitter_socket.send(pickle.dumps(ready))
         print(self.id, ": sent", ready, "to", self.splitter)
-        self.splitter = self.splitter.replace("tcp", "udp")
 
     def send_chunk(self, peer):
         #self.sendto(self.receive_and_feed_previous, peer)
-        self.team_socket.sendto(self.receive_and_feed_previous, peer)
+        self.team_socket.sendto(pickle.dumps(self.receive_and_feed_previous), peer)
         self.sendto_counter += 1
 
     def is_a_control_message(self, message):

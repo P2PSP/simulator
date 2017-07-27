@@ -8,7 +8,7 @@ from threading import Thread
 import time
 from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_queue
-import socket
+from .simulator_stuff import Socket_print as socket
 import pickle
 
 
@@ -32,13 +32,15 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         print(self.id, ": DBS initialized")
 
     def setup_peer_connection_socket(self):
-        self.peer_connection_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.peer_connection_socket.bind("/tmp/S_tcp")
+        self.peer_connection_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.peer_connection_socket.set_id(self.id)
+        self.peer_connection_socket.bind("S_tcp")
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
-        self.team_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        self.team_socket.bind("/tmp/S_udp")
+        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket.set_id(self.id)
+        self.team_socket.bind("S_udp")
         
     def send_chunk(self, chunk, peer):
         #self.sendto(chunk, peer)
@@ -84,7 +86,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         message = serve_socket.recv(19)
         print(self.id, ": received", pickle.loads(message), "from", incoming_peer)
         
-        self.insert_peer(incoming_peer.replace("tcp", "udp"))
+        self.insert_peer(incoming_peer)
         # ------------------
         Simulator_stuff.FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
         # ------------------
