@@ -10,7 +10,7 @@ from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_queue
 import socket
 import pickle
-import struct
+
 
 class Splitter_DBS(Simulator_stuff, Socket_queue):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
@@ -81,9 +81,10 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         
         print(self.id, ": waiting for outgoing peer")
         #(message, sender) = self.recv()
-        message, sender = serve_socket.recv(10)
-        print(self.id, ": received", message, "from", sender)
-        self.insert_peer(incoming_peer)
+        message = serve_socket.recv(19)
+        print(self.id, ": received", pickle.loads(message), "from", incoming_peer)
+        
+        self.insert_peer(incoming_peer.replace("tcp", "udp"))
         # ------------------
         Simulator_stuff.FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
         # ------------------
@@ -98,7 +99,6 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         print(self.id, ": sending number of monitors =", self.number_of_monitors)#, "to", peer)
         #self.send(self.number_of_monitors, peer)
         message = pickle.dumps(self.number_of_monitors)
-        print(len(message))
         peer_serve_socket.sendall(message)
         print(self.id, ": sending list of peers of length =", self.peer_list)#, "to", peer)
         #self.send(len(self.peer_list), peer)
@@ -231,8 +231,8 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
                 peer = self.peer_list[self.peer_number]
                 
                 # pickle is used for serializing (similar to struct.pack)
-                message = pickle.dumps(self.chunk_number, chunk)
-                
+                message = pickle.dumps((self.chunk_number, chunk))
+
                 self.send_chunk(message, peer)
 
                 self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)

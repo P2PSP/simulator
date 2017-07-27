@@ -17,7 +17,6 @@ class Monitor_DBS(Peer_DBS):
         super().__init__(id)
 
     def receive_buffer_size(self):
-        print("----->",len(pickle.dumps(self.buffer_size)))
         #(self.buffer_size, sender) = self.recv()
         self.buffer_size = pickle.loads(self.splitter_socket.recv(5))
         print(self.id, ": received buffer_size =", self.buffer_size, "from S")

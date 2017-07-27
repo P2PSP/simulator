@@ -46,17 +46,21 @@ class Peer_DBS(sim, Socket_queue):
         self.RTTs = []
         self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE
         self.neighborhood = []
-        
+
         print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
 
+    def listen_to_the_team(self):
+        self.team_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket.bind("/tmp/"+self.id+"_udp")
+
     def set_splitter(self, splitter):
-        self.splitter = splitter
+        self.splitter = "/tmp/"+splitter+"_tcp"
 
     def say_hello(self, peer):
         hello = (-1, "H", time.time())
         #self.sendto(hello, peer)
-        self.team_socket.sendto(hello, peer)
+        self.team_socket.sendto(pickle.dumps(hello), peer)
         print(self.id, ": sent", hello, "to", peer)
         #(m, s) = self.recvfrom()
         #end = time.time()
@@ -114,8 +118,8 @@ class Peer_DBS(sim, Socket_queue):
     
     def receive_the_list_of_peers(self):
         #(self.peer_list, sender) = self.recv()[:]
-        #recv = pickle.loads(self.splitter_socket.recv(1024))
-        self.peer_list = pickle.loads(self.splitter_socket.recv(1024))
+        recv = pickle.loads(self.splitter_socket.recv(5))
+        self.peer_list = pickle.loads(self.splitter_socket.recv(recv))
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
 
         # This line should be un commented (and the next one
@@ -131,15 +135,17 @@ class Peer_DBS(sim, Socket_queue):
         #self.send(hello, self.splitter)
         #print(self.id, ": sent", hello, "to", self.splitter)
         self.splitter_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.splitter_socket.bind("/tmp/"+self.id)
-        self.splitter_socket.connect("/tmp/"+self.splitter+"_tcp")
+        self.splitter_socket.bind("/tmp/"+self.id+"_tcp")
+        self.splitter_socket.connect(self.splitter)
         print("Connect to the splitter")
         
     def send_ready_for_receiving_chunks(self):
         ready = (-1, "R")
         #self.send(ready, self.splitter)
-        self.splitter_socket.send(ready)
+        print(len(pickle.dumps(ready)))
+        self.splitter_socket.send(pickle.dumps(ready))
         print(self.id, ": sent", ready, "to", self.splitter)
+        self.splitter = self.splitter.replace("tcp", "udp")
 
     def send_chunk(self, peer):
         #self.sendto(self.receive_and_feed_previous, peer)
@@ -265,7 +271,8 @@ class Peer_DBS(sim, Socket_queue):
                 print(self.id, ": RTTs =", self.RTTs)
                 
                 if sender not in self.peer_list:
-                    self.sendto((-1, 'H', time.time()), sender)
+                    #self.sendto((-1, 'H', time.time()), sender)
+                    self.team_socket.sendto(pickle.dumps((-1, 'H', time.time())), sender)
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")
@@ -308,8 +315,8 @@ class Peer_DBS(sim, Socket_queue):
         #content = self.recvfrom()
         #message = content[0]
         #sender = content[1]
-        message, sender = self.team_socket.recvfrom()
-        return self.process_message(message, sender)
+        message, sender = self.team_socket.recvfrom(40)
+        return self.process_message(pickle.loads(message), sender)
 
     def polite_farewell(self):
         print(self.id, ": (see you later)")

@@ -101,6 +101,7 @@ class Simulator():
         peer.connect_to_the_splitter()
         peer.receive_buffer_size()
         peer.receive_the_number_of_peers()
+        peer.listen_to_the_team()
         peer.receive_the_list_of_peers()
         peer.send_ready_for_receiving_chunks()
         peer.buffer_data()
