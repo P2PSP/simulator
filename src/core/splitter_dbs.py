@@ -7,12 +7,10 @@ from .common import Common
 from threading import Thread
 import time
 from .simulator_stuff import Simulator_stuff
-from .simulator_stuff import Socket_queue
-from .simulator_stuff import Socket_print as socket
-import pickle
+from .simulator_stuff import Socket_print as socket_print
+import socket
 
-
-class Splitter_DBS(Simulator_stuff, Socket_queue):
+class Splitter_DBS(Simulator_stuff):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
 
     def __init__(self):
@@ -32,13 +30,15 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         print(self.id, ": DBS initialized")
 
     def setup_peer_connection_socket(self):
-        self.peer_connection_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.peer_connection_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.peer_connection_socket = socket_print(sock=self.peer_connection_socket)
         self.peer_connection_socket.set_id(self.id)
         self.peer_connection_socket.bind("S_tcp")
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
-        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket = socket_print(sock=self.team_socket)
         self.team_socket.set_id(self.id)
         self.team_socket.bind("S_udp")
         
@@ -55,6 +55,9 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
     def handle_arrivals(self):
         while(self.alive):
             peer_serve_socket, peer = self.peer_connection_socket.accept()
+
+            peer_serve_socket = socket_print(peer_serve_socket)
+            peer_serve_socket.set_id(peer)
             print("Connection from ", peer)
             Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()
             #self.handle_a_peer_arrival()
@@ -69,7 +72,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         #incoming_peer = content[1]
         
         print(self.id, ": acepted connection from peer", incoming_peer)
-        if (incoming_peer == "M"):
+        if (incoming_peer[0] == "M"):
             self.number_of_monitors += 1
         print(self.id, ": number of monitors", self.number_of_monitors)
 
@@ -84,7 +87,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         print(self.id, ": waiting for outgoing peer")
         #(message, sender) = self.recv()
         message = serve_socket.recv(19)
-        print(self.id, ": received", pickle.loads(message), "from", incoming_peer)
+        print(self.id, ": received", message, "from", incoming_peer)
         
         self.insert_peer(incoming_peer)
         # ------------------
@@ -94,23 +97,24 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
     def send_buffer_size(self, peer_serve_socket):
         print(self.id, ": sending buffer size =", self.buffer_size)#, "to", peer)
         #self.send(self.buffer_size, peer)
-        message = pickle.dumps(self.buffer_size)
+        message = self.buffer_size
+        print("TYPE", type(peer_serve_socket))
         peer_serve_socket.sendall(message)
         
     def send_the_number_of_peers(self, peer_serve_socket):
         print(self.id, ": sending number of monitors =", self.number_of_monitors)#, "to", peer)
         #self.send(self.number_of_monitors, peer)
-        message = pickle.dumps(self.number_of_monitors)
+        message = self.number_of_monitors
         peer_serve_socket.sendall(message)
         print(self.id, ": sending list of peers of length =", self.peer_list)#, "to", peer)
         #self.send(len(self.peer_list), peer)
-        peer_serve_socket.sendall(pickle.dumps(len(self.peer_list)))
+        peer_serve_socket.sendall(len(self.peer_list))
 
     def send_the_list_of_peers(self, peer_serve_socket):
         print(self.id, ": sending peer list =", self.peer_list)#, "to", peer)
         #self.send(self.peer_list, peer)
-        message = pickle.dumps(self.peer_list)
-        peer_serve_socket.sendall(pickle.dumps(len(message)))
+        message = self.peer_list
+        peer_serve_socket.sendall(len(message))
         peer_serve_socket.sendall(message)
         
     def insert_peer(self, peer):
@@ -185,12 +189,10 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
 
     def moderate_the_team(self):
         while self.alive:
-            message = self.recvfrom()
-            action = message[0]
-            sender = message[1]
-
-            if (action[1] == "L"):
-                lost_chunk_number = self.get_lost_chunk_number(action)
+            message, sender = self.team_socket.recvfrom(40)
+            
+            if (message[1] == "L"):
+                lost_chunk_number = self.get_lost_chunk_number(message[1])
                 self.process_lost_chunk(lost_chunk_number, sender)
             else:
                 self.process_goodbye(sender)
@@ -232,8 +234,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
             try:
                 peer = self.peer_list[self.peer_number]
                 
-                # pickle is used for serializing (similar to struct.pack)
-                message = pickle.dumps((self.chunk_number, chunk))
+                message = (self.chunk_number, chunk)
 
                 self.send_chunk(message, peer)
 

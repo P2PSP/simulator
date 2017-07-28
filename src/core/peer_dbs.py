@@ -7,11 +7,10 @@ import time
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
-from .simulator_stuff import Socket_queue
-from .simulator_stuff import Socket_print as socket
-import pickle
+from .simulator_stuff import Socket_print as socket_print
+import socket
 
-class Peer_DBS(sim, Socket_queue):
+class Peer_DBS(sim):
     MAX_CHUNK_DEBT = 128
     NEIGHBORHOOD_DEGREE = 5
     
@@ -51,7 +50,8 @@ class Peer_DBS(sim, Socket_queue):
         print(self.id, ": DBS initialized")
 
     def listen_to_the_team(self):
-        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket = socket_print(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket = socket_print(sock=self.team_socket)
         self.team_socket.set_id(self.id)
         self.team_socket.bind(self.id+"_udp")
 
@@ -61,7 +61,7 @@ class Peer_DBS(sim, Socket_queue):
     def say_hello(self, peer):
         hello = (-1, "H", time.time())
         #self.sendto(hello, peer)
-        self.team_socket.sendto(pickle.dumps(hello), peer)
+        self.team_socket.sendto(hello, peer)
         print(self.id, ": sent", hello, "to", peer)
         #(m, s) = self.recvfrom()
         #end = time.time()
@@ -76,7 +76,7 @@ class Peer_DBS(sim, Socket_queue):
     def receive_buffer_size(self):
         #(self.buffer_size, sender) = self.recv()
         
-        self.buffer_size = pickle.loads(self.splitter_socket.recv(5))
+        self.buffer_size = self.splitter_socket.recv(5)
         print(self.id, ": received buffer_size =", self.buffer_size, "from", self.splitter)
 
         # --- Only for simulation purposes ---------- #
@@ -85,10 +85,10 @@ class Peer_DBS(sim, Socket_queue):
 
     def receive_the_number_of_peers(self):
         #(self.number_of_monitors, sender) = self.recv()
-        self.number_of_monitors = pickle.loads(self.splitter_socket.recv(5))
+        self.number_of_monitors = self.splitter_socket.recv(5)
         print(self.id, ": received number_of_monitors =", self.number_of_monitors, "from", self.splitter)
         #(self.number_of_peers, sender) = self.recv()
-        self.number_of_peers = pickle.loads(self.splitter_socket.recv(5))
+        self.number_of_peers = self.splitter_socket.recv(5)
         print(self.id, ": received number_of_peers =", self.number_of_peers, "from", self.splitter)
 
     # Thread(target=self.run).start()
@@ -119,8 +119,8 @@ class Peer_DBS(sim, Socket_queue):
     
     def receive_the_list_of_peers(self):
         #(self.peer_list, sender) = self.recv()[:]
-        recv = pickle.loads(self.splitter_socket.recv(5))
-        self.peer_list = pickle.loads(self.splitter_socket.recv(recv))
+        recv = self.splitter_socket.recv(5)
+        self.peer_list = self.splitter_socket.recv(recv)
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
 
         # This line should be un commented (and the next one
@@ -144,13 +144,12 @@ class Peer_DBS(sim, Socket_queue):
     def send_ready_for_receiving_chunks(self):
         ready = (-1, "R")
         #self.send(ready, self.splitter)
-        print(len(pickle.dumps(ready)))
-        self.splitter_socket.send(pickle.dumps(ready))
+        self.splitter_socket.send(ready)
         print(self.id, ": sent", ready, "to", self.splitter)
 
     def send_chunk(self, peer):
         #self.sendto(self.receive_and_feed_previous, peer)
-        self.team_socket.sendto(pickle.dumps(self.receive_and_feed_previous), peer)
+        self.team_socket.sendto(self.receive_and_feed_previous, peer)
         self.sendto_counter += 1
 
     def is_a_control_message(self, message):
@@ -273,7 +272,7 @@ class Peer_DBS(sim, Socket_queue):
                 
                 if sender not in self.peer_list:
                     #self.sendto((-1, 'H', time.time()), sender)
-                    self.team_socket.sendto(pickle.dumps((-1, 'H', time.time())), sender)
+                    self.team_socket.sendto((-1, 'H', time.time()), sender)
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")
@@ -317,14 +316,14 @@ class Peer_DBS(sim, Socket_queue):
         #message = content[0]
         #sender = content[1]
         message, sender = self.team_socket.recvfrom(40)
-        return self.process_message(pickle.loads(message), sender)
+        return self.process_message(message, sender)
 
     def polite_farewell(self):
         print(self.id, ": (see you later)")
         while (self.receive_and_feed_counter < len(self.peer_list)):
             #self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
             self.team_socket.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
-            self.team_socket.recvfrom()
+            self.team_socket.recvfrom(40)
             self.receive_and_feed_counter += 1
 
         for peer in self.peer_list:
