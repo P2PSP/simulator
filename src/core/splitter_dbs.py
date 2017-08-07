@@ -7,8 +7,8 @@ from .common import Common
 from threading import Thread
 import time
 from .simulator_stuff import Simulator_stuff
-from .simulator_stuff import Socket_print as socket_print
-import socket
+from .simulator_stuff import Socket_print as socket
+
 
 class Splitter_DBS(Simulator_stuff):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
@@ -30,15 +30,13 @@ class Splitter_DBS(Simulator_stuff):
         print(self.id, ": DBS initialized")
 
     def setup_peer_connection_socket(self):
-        self.peer_connection_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.peer_connection_socket = socket_print(sock=self.peer_connection_socket)
+        self.peer_connection_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.peer_connection_socket.set_id(self.id)
         self.peer_connection_socket.bind("S_tcp")
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
-        self.team_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        self.team_socket = socket_print(sock=self.team_socket)
+        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.team_socket.set_id(self.id)
         self.team_socket.bind("S_udp")
         
@@ -56,7 +54,7 @@ class Splitter_DBS(Simulator_stuff):
         while(self.alive):
             peer_serve_socket, peer = self.peer_connection_socket.accept()
 
-            peer_serve_socket = socket_print(peer_serve_socket)
+            peer_serve_socket = socket(sock=peer_serve_socket)
             peer_serve_socket.set_id(peer)
             print("Connection from ", peer)
             Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()

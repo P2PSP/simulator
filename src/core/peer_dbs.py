@@ -7,8 +7,8 @@ import time
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
-from .simulator_stuff import Socket_print as socket_print
-import socket
+from .simulator_stuff import Socket_print as socket
+
 
 class Peer_DBS(sim):
     MAX_CHUNK_DEBT = 128
@@ -50,8 +50,7 @@ class Peer_DBS(sim):
         print(self.id, ": DBS initialized")
 
     def listen_to_the_team(self):
-        self.team_socket = socket_print(socket.AF_UNIX, socket.SOCK_DGRAM)
-        self.team_socket = socket_print(sock=self.team_socket)
+        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.team_socket.set_id(self.id)
         self.team_socket.bind(self.id+"_udp")
 
