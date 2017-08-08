@@ -41,13 +41,12 @@ class Socket_print:
 
     def sendall(self, message):
         if __debug__:
-            print("{:.6f} {} = [{}] => {}".format(time.time(), self.id, message, "Peer" ))
+            print("{:.6f} {} = [{}] => {}".format(time.time(), "S", message, self.id ))
         return self.sock.sendall(pickle.dumps(message))
         
     def sendto(self, message, dst):
         if __debug__:
             print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, message, dst))
-        print("DDD", dst)
         return self.sock.sendto(pickle.dumps(message), "/tmp/"+dst+"_udp")
 
     def recv(self, length):

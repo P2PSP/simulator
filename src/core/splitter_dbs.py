@@ -8,7 +8,7 @@ from threading import Thread
 import time
 from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_print as socket
-
+import pickle
 
 class Splitter_DBS(Simulator_stuff):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
@@ -96,7 +96,6 @@ class Splitter_DBS(Simulator_stuff):
         print(self.id, ": sending buffer size =", self.buffer_size)#, "to", peer)
         #self.send(self.buffer_size, peer)
         message = self.buffer_size
-        print("TYPE", type(peer_serve_socket))
         peer_serve_socket.sendall(message)
         
     def send_the_number_of_peers(self, peer_serve_socket):
@@ -112,7 +111,7 @@ class Splitter_DBS(Simulator_stuff):
         print(self.id, ": sending peer list =", self.peer_list)#, "to", peer)
         #self.send(self.peer_list, peer)
         message = self.peer_list
-        peer_serve_socket.sendall(len(message))
+        peer_serve_socket.sendall(len(pickle.dumps(message)))
         peer_serve_socket.sendall(message)
         
     def insert_peer(self, peer):
