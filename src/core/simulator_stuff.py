@@ -13,7 +13,8 @@ class Simulator_stuff:
     # Communication channel with the simulator.
     FEEDBACK = {}
 
-    LOCK = ""
+    RECV_LIST = None
+    #LOCK = ""
 
 class Socket_queue:
 

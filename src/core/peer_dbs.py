@@ -194,8 +194,8 @@ class Peer_DBS(sim, Socket_queue):
                         # --- simulator --------------------------------------------- #
                         sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, peer)) #
                         # ----------------------------------------------------------- #
-
-                    self.receive_and_feed_counter += 1
+                    else:
+                        self.receive_and_feed_counter += 1
 
                 # Modifying the first chunk to play (it increases the delay)
                 #if (not self.receive_and_feed_previous):

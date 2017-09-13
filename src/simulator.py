@@ -14,7 +14,7 @@ from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
 from core.simulator_stuff import Socket_queue
-from multiprocessing import Process, Queue, Manager, Semaphore
+from multiprocessing import Process, Queue, Manager
 import time
 import fire
 import networkx as nx
@@ -372,15 +372,15 @@ class Simulator():
         Socket_queue.TCP_SOCKETS['S'] = Queue(1)
 
         for i in range(self.number_of_monitors):
-            Socket_queue.UDP_SOCKETS["M"+str(i+1)] = Queue()
+            Socket_queue.UDP_SOCKETS["M"+str(i+1)] = Queue(16)
             Socket_queue.TCP_SOCKETS["M"+str(i+1)] = Queue(1)
 
         for i in range(self.number_of_peers):
-            Socket_queue.UDP_SOCKETS["P"+str(i+1)] = Queue()
+            Socket_queue.UDP_SOCKETS["P"+str(i+1)] = Queue(16)
             Socket_queue.TCP_SOCKETS["P"+str(i+1)] = Queue(1)
 
         for i in range(self.number_of_malicious):
-            Socket_queue.UDP_SOCKETS["MP"+str(i+1)] = Queue()
+            Socket_queue.UDP_SOCKETS["MP"+str(i+1)] = Queue(16)
             Socket_queue.TCP_SOCKETS["MP"+str(i+1)] = Queue(1)
 
         # create shared list for CIS set of rules (only when cis is choosen?)
@@ -389,6 +389,8 @@ class Simulator():
         sim.SHARED_LIST["regular"] = manager.list()
         sim.SHARED_LIST["attacked"] = manager.list()
 
+        # Automatic bitrate control only for CIS-SSS
+        sim.RECV_LIST = manager.dict()
         #sim.LOCK = Semaphore()
 
         # run splitter

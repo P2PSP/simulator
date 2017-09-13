@@ -23,8 +23,25 @@ class Peer_SSS(Peer_STRPEDS):
         # Not needed for simulation
         return NotImplementedError
 
+    # ----------- simulation purposes ----------
+    def polite_farewell(self):
+        print(self.id, ": (see you later)")
+      
+        for peer in self.peer_list:
+            self.say_goodbye(peer)
+
+        del sim.RECV_LIST[self.id]
+        self.ready_to_leave_the_team = True
+        print(self.id, ": ready to leave the team")
+    # -------------------------------------------
+
     def process_message(self, message, sender):
 
+        # ----------- simulation purposes ---------
+        if self.id.find("MP") == -1 and message[0] > -1:
+            sim.RECV_LIST[self.id] = message[0]
+        # ----------------------------------------
+        
         if sender in self.bad_peers:
             if __debug__:
                 print(self.id, "Sender is in the bad peer list", sender)
@@ -122,8 +139,8 @@ class Peer_SSS(Peer_STRPEDS):
                         del self.debt[peer]
                         self.peer_list.remove(peer)
                         sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, peer))
-
-                    self.receive_and_feed_counter += 1
+                    else:
+                        self.receive_and_feed_counter += 1
 
                 # Modifying the first chunk to play (it increases the delay)
                 #if (not self.receive_and_feed_previous):
@@ -148,6 +165,11 @@ class Peer_SSS(Peer_STRPEDS):
                 else:
                     self.debt[sender] -= 1
 
+            # ----------- simulation purposes ---------
+            # if self.id.find("MP") == -1:
+            #  sim.RECV_LIST[self.id] = chunk_number
+            # ----------------------------------------
+            
             return chunk_number
 
         else:
