@@ -9,22 +9,21 @@ import time
 from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_queue
 
-
 class Splitter_DBS(Simulator_stuff, Socket_queue):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
 
     def __init__(self):
         self.id = "S"
-        self.alive = True
-        self.chunk_number = 0
-        self.peer_list = []
-        self.losses = {}
-        self.destination_of_chunk = []
-        self.buffer_size = Common.BUFFER_SIZE
-        self.peer_number = 0
+        self.alive = True # While True, keeps the splitter alive
+        self.chunk_number = 0 # First chunk number to broadcast
+        self.peer_list = [] # Current peers in the team
+        self.losses = {} # Lost chunks per peer
+        self.destination_of_chunk = [] # Destination peer of the buffered chunks
+        self.buffer_size = Common.BUFFER_SIZE # Buffer (of chunks) size
+        self.peer_number = 0 # First peer to serve in the list of peers
         self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_LOST_CHUNKS
         self.number_of_monitors = 0
-        self.outgoing_peer_list = []
+        self.outgoing_peer_list = [] # Peers which requested to leave the team
         self.current_round = 0
 
         print(self.id, ": DBS initialized")
@@ -34,7 +33,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
 
     def receive_chunk(self):
         #Simulator_stuff.LOCK.acquire(True,0.1)
-        time.sleep(0.02) # bit-rate control
+        time.sleep(0.02) # Simulates bit-rate control
         #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
 
@@ -44,7 +43,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
             self.handle_a_peer_arrival()
         
     def handle_a_peer_arrival(self):
-        content = self.recv()
+        content = self.recv() # Wait for a connection
         message = content[0]
         incoming_peer = content[1]
         print(self.id, ": acepted connection from peer", incoming_peer)
@@ -55,7 +54,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         self.send_buffer_size(incoming_peer)
         self.send_the_number_of_peers(incoming_peer)
         self.send_the_list_of_peers(incoming_peer)
-        print(self.id, ": waiting for outgoing peer")
+        print(self.id, ": waiting for outgoing peer") # Outgoing ?????????????????????????????
         (message, sender) = self.recv()
         print(self.id, ": received", message, "from", sender)
         self.insert_peer(incoming_peer)
@@ -81,13 +80,13 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         if peer not in self.peer_list:
             self.peer_list.append(peer)
         self.losses[peer] = 0
-        print(self.id, ":", peer, "inserted in peer list")
+        print(self.id, ":", peer, "inserted in the team")
 
     def increment_unsupportivity_of_peer(self, peer):
         try:
             self.losses[peer] += 1
         except KeyError:
-            print(self.id, ":the unsupportive peer", peer, "does not exist!")
+            print(self.id, ": unexpeted error, the unsupportive peer", peer, "does not exist!")
         else:
             print(self.id, ":", peer, "has loss", self.losses[peer], "chunks")
             if self.losses[peer] > Common.MAX_CHUNK_LOSS:
@@ -110,19 +109,23 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
     def remove_peer(self, peer):
         try:
             self.peer_list.remove(peer)
+        except ValueError:
+            print(self.id, ": unexpected error, the removed peer", peer, "does not exist!")
+        else:
+            #self.peer_number -= 1
             # --------------------
             Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", peer))
             if peer[0] == "M" and peer[1] != "P":
                 self.number_of_monitors -= 1
             # --------------------
-        except ValueError:
+        finally:
             pass
-        #else:
-            #self.peer_number -= 1
 
         try:
             del self.losses[peer]
         except KeyError:
+            print(self.id, ": unexpected error, the removed peer", peer, "does not exist in losses")
+        finally:
             pass
 
     def process_goodbye(self, peer):
@@ -181,7 +184,7 @@ class Splitter_DBS(Simulator_stuff, Socket_queue):
         while self.alive:
             chunk = self.receive_chunk()
             if self.peer_number == 0:
-                self.on_round_beginning()
+                self.on_round_beginning() # Remove outgoing peers
                 # -------------------
                 print("Splitter: round", self.current_round)
                 Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))

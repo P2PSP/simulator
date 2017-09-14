@@ -9,18 +9,17 @@ from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Socket_queue
 
-
 class Peer_DBS(sim, Socket_queue):
     MAX_CHUNK_DEBT = 128
-    NEIGHBORHOOD_DEGREE = 5
+    #NEIGHBORHOOD_DEGREE = 5
     
     def __init__(self, id):
         self.id = id
-        self.played_chunk = 0
-        self.prev_received_chunk = 0
-        self.buffer_size = 64
-        self.player_alive = True
-        self.chunks = []
+        self.played_chunk = 0 # Chunk currently played
+        self.prev_received_chunk = 0 # ??
+        self.buffer_size = 64 # Number of chunks in the buffer * 2
+        self.chunks = [] # Buffer of chunks (circular queue)
+        self.player_alive = True # While True, keeps the peer alive
 
         # ---Only for simulation purposes--- #
         self.losses = 0                      #
@@ -29,24 +28,24 @@ class Peer_DBS(sim, Socket_queue):
         # ---------------------------------- #
 
         self.max_chunk_debt = self.MAX_CHUNK_DEBT
-        self.peer_list = []
-        self.debt = {}
-        self.received_counter = 0
-        self.number_of_monitors = 0
-        self.receive_and_feed_counter = 0
-        self.receive_and_feed_previous = ()
-        self.debt_memory = 0
-        self.waiting_for_goodbye = False
-        self.modified_list = False
-        self.number_of_peers = 0
-        self.sendto_counter = 0
-        self.ready_to_leave_the_team = False
+        self.peer_list = [] # Peers in the team (except you)
+        self.number_of_peers = 0 # Size of the team
+        self.debt = {} # ??
+        self.number_of_monitors = 0 # Number of monitor peers
+        self.receive_and_feed_counter = 0 # ??
+        self.receive_and_feed_previous = () # ??
+        self.debt_memory = 0 # ??
+        self.waiting_for_goodbye = False # ??
+        self.modified_list = False # ??
+        self.received_counter = 0 # Number of chunks received
+        self.sendto_counter = 0 # Number of chunks sent
+        self.ready_to_leave_the_team = False # The splitter has given its OK
 
-        self.RTTs = []
-        self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE
-        self.neighborhood = []
-        self.distances = {} 
-        self.distances[self.id] = 0
+        self.RTTs = [] # ??
+        self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE # ??
+        self.neighborhood = [] # Not "pruned" peers
+        self.distances = {} # ??
+        self.distances[self.id] = 0 # ??
         
         print(self.id, ": max_chunk_debt =", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
@@ -91,10 +90,10 @@ class Peer_DBS(sim, Socket_queue):
     def send_hellos(self):
         #print(self.id, ": number_of_new_neighbors =", number_of_new_neighbors)
         for peer in self.peer_list:
-            if peer not in self.neighborhood: # You don't need to compute RTT with neighbors
-                self.say_hello(peer)
-        print(self.id, ":", self.peer_list)
+            self.say_hello(peer)
+            print(self.id, ": hello sent to", peer)
 
+        '''
         # Ojo, esto no se puede llamar desde process_message porque tarda en regresar ...
         # Computing RTTs ("run" method must be running in a thread)
         #while len(self.RTTs) < len(self.peer_list) - len(self.neighborhood):
@@ -109,20 +108,20 @@ class Peer_DBS(sim, Socket_queue):
             if sorted_RTTs[p][0] not in self.neighborhood:
                 self.neighborhood.append(sorted_RTTs[p][0])
         print(self.id, ": neighborhood =", self.neighborhood)
-        
+        '''
         #for peer in self.neighborhood:
         for peer in self.peer_list:
-            self.distances[peer] = 1    # Setting initial distances
+            '''self.distances[peer] = 1    # Setting initial distances'''
             #self.sendto((-1, 'X', self.distances), peer)
             self.debt[peer] = 0         # Setting initial debts
 
     def receive_the_list_of_peers(self):
         (self.peer_list, sender) = self.recv()[:]
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
-
+        '''
         for peer in self.peer_list:
             self.distances[peer] = 1000 # Setting initial distances
-            
+        '''
         # This line should be un commented (and the next one
         # commented) when DBS2 is fully active.
         #self.send_hellos(self.neighborhood_degree)
