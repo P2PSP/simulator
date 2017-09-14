@@ -32,21 +32,33 @@ class Peer_DBS(sim, Socket_queue):
         self.number_of_peers = 0 # Size of the team
         self.debt = {} # ??
         self.number_of_monitors = 0 # Number of monitor peers
-        self.receive_and_feed_counter = 0 # ??
+        self.peer_index = 0 # Index of the feeded peer in the list of peers
         self.receive_and_feed_previous = () # ??
         self.debt_memory = 0 # ??
         self.waiting_for_goodbye = False # ??
         self.modified_list = False # ??
-        self.received_counter = 0 # Number of chunks received
+        self.received_chunks = 0 # Number of chunks received
         self.sendto_counter = 0 # Number of chunks sent
-        self.ready_to_leave_the_team = False # The splitter has given its OK
+        self.ready_to_leave_the_team = False # True when the splitter has given its OK to go
 
+        # A aictionary of lists of peers indexed by origin peers. For
+        # each origin, we need a flooding list which says to which
+        # peers must be forwarded each received chunk. In a
+        # full-connected topology, there is only one list in the
+        # dictionary (the rest can be considered as empty), with index
+        # the owner (origin) peer, and with content the rest of peers
+        # of the team. Notice that, to generate a full-connected team,
+        # in a round, all chunks (one for each peer in the team except
+        # the incoming peer) should be delivered directly to each
+        # incoming peer from the origin peer.
+        self.flooding_list = {}
+        '''
         self.RTTs = [] # ??
         self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE # ??
         self.neighborhood = [] # Not "pruned" peers
         self.distances = {} # ??
         self.distances[self.id] = 0 # ??
-        
+        '''
         print(self.id, ": max_chunk_debt =", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
 
@@ -148,6 +160,60 @@ class Peer_DBS(sim, Socket_queue):
         else:
             return False
 
+    def is_a_chunk(self, message):
+        if message[0] > -1:
+            return True
+        return False 
+        
+    def process_message_2(self, message, sender):
+        
+        if is_a_chunk(message[0]):
+
+            # A chunk has been received
+
+            self.received_chunks += 1
+            chunk_number = message[0]
+
+            if sender == self.splitter:
+
+                # I'm the origin peer
+                origin = self.id
+                chunk = message[1]
+
+                # Buffer the chunk
+                self.chunks[chunk_number % self.buffer_size] = (chunk_number, origin, chunk)
+
+            else:
+
+                # I'm a relaying peer
+                origin = message[1]
+                chunk = message[2]
+
+                if self.chunks[chunk_number % self.buffer_size][0] == chunk_number:
+                    # Duplicate chunk: ignore it and prune path
+                    self.send((-1, "X", origin), sender) # I don't want to receive more chunks from <origin>
+                else:
+                    # New chunk: buffer it
+                    self.chunks[chunk_number % self.buffer_size] = (chunk_number, origin, chunk)
+
+        else:
+
+            # A control message has been received
+            pass
+                    
+            # Configure flooding
+
+            # By default, peers flood chunks to the rest of peers of
+            # the team, excludind the origin peer. Peers must send
+            # [prune <origin peer>] messages to those senders that
+            # forwarded duplicate chunks, and send [not prune <origin
+            # peer>] when the route for that origin peer fails.
+            
+            
+            # For each origin peer, there is a list of peers that must
+            # receive the chunk.
+            
+            
     def process_message(self, message, sender):
 
         # ----- Check if new round for peer (simulation purposes) ------------- #
@@ -160,6 +226,9 @@ class Peer_DBS(sim, Socket_queue):
         # --------------------------------------------------------------------- #
 
         if (message[0] >= 0):
+
+            # A chunk has been received
+            
             chunk_number = message[0]
             chunk = message[1]
             
@@ -177,11 +246,11 @@ class Peer_DBS(sim, Socket_queue):
             sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))  #
             # ------------------------------------------------------------------------------- #
 
-            self.received_counter += 1
+            self.received_chunks += 1
             if (sender == self.splitter):
-                while((self.receive_and_feed_counter < len(self.peer_list)) and \
-                      (self.receive_and_feed_counter > 0 or self.modified_list)):
-                    peer = self.peer_list[self.receive_and_feed_counter]
+                while((self.peer_index < len(self.peer_list)) and \
+                      (self.peer_index > 0 or self.modified_list)):
+                    peer = self.peer_list[self.peer_index]
 
                     self.send_chunk(peer)
                     self.debt[peer] += 1
@@ -194,7 +263,7 @@ class Peer_DBS(sim, Socket_queue):
                         sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, peer)) #
                         # ----------------------------------------------------------- #
                     else:
-                        self.receive_and_feed_counter += 1
+                        self.peer_index += 1
 
                 # Modifying the first chunk to play (it increases the delay)
                 #if (not self.receive_and_feed_previous):
@@ -202,7 +271,7 @@ class Peer_DBS(sim, Socket_queue):
                     #print(self.id,"First chunk to play modified", str(self.played_chunk))
 
                 self.modified_list = False
-                self.receive_and_feed_counter = 0
+                self.peer_index = 0
                 self.receive_and_feed_previous = message
 
             else:
@@ -218,18 +287,18 @@ class Peer_DBS(sim, Socket_queue):
                     # ------------------------------------------------------------ #
                 else:
                     self.debt[sender] -= 1
-
+                '''
                 if self.distances[sender] > 1:
                     self.distances[sender] = 1
                     for peer in self.neighborhood:
                         self.sendto((-1, 'X', self.distances), peer)
-
+                
                 if sender not in self.neighborhood:
                     self.neighborhood.append(sender)
                     print(self.id, ":", "neighborhood =", self.neighborhood)
-
-            if (self.receive_and_feed_counter < len(self.peer_list) and (self.receive_and_feed_previous)):
-                peer = self.peer_list[self.receive_and_feed_counter]
+                '''
+            if (self.peer_index < len(self.peer_list) and (self.receive_and_feed_previous)):
+                peer = self.peer_list[self.peer_index]
 
                 self.send_chunk(peer)
                 self.debt[peer] += 1
@@ -248,7 +317,7 @@ class Peer_DBS(sim, Socket_queue):
                 #if __debug__:
                 #    print(self.id, "-", str(self.receive_and_feed_previous[0]), "->", peer)
 
-                self.receive_and_feed_counter += 1
+                self.peer_index += 1
 
             return chunk_number
 
@@ -260,17 +329,17 @@ class Peer_DBS(sim, Socket_queue):
             if message[1] == 'H': # Hello
 
                 print(self.id, ": received", message, "from", sender)
-                
+                '''
                 # Compute RTT of hello received from peer "sender"
                 self.RTTs.append((sender, time.time() - message[2]))
                 print(self.id, ": RTTs =", self.RTTs)
-                
+                '''
                 if sender not in self.peer_list:
                     self.sendto((-1, 'H', time.time()), sender)
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")
-                    self.distances[sender] = 1000
+                    #self.distances[sender] = 1000
                     # --- simulator ---------------------------------------------- #
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
@@ -288,11 +357,11 @@ class Peer_DBS(sim, Socket_queue):
                     print(self.id, ":", "peer_list =", self.peer_list)
                         
                     del self.debt[sender]
-                    
+                '''    
                 if sender in self.neighborhood:
-                    if (self.receive_and_feed_counter > 0):
+                    if (self.peer_index > 0):
                         self.modified_list = True
-                        self.receive_and_feed_counter -= 1
+                        self.peer_index -= 1
                     try:
                         self.neighborhood.remove(sender)
                     except:
@@ -301,12 +370,13 @@ class Peer_DBS(sim, Socket_queue):
                         print(self.id, ":", "neighborhood =", self.neighborhood)
 
 #                    self.send_hellos(number_of_new_neighbors = 1)
-
+                '''
                 else:
                     if (sender == self.splitter):
                         print(self.id, ": received goodbye from splitter")
                         self.waiting_for_goodbye = False
 
+            '''
             if message[1] == 'X': # Routing information
                 found_shorter_distance = False
                 distances_to = message[2]
@@ -322,7 +392,7 @@ class Peer_DBS(sim, Socket_queue):
                 if found_shorter_distance:
                     for peer in self.neighborhood:
                         self.sendto((-1, 'X', self.distances), peer)
-                    
+            '''     
             return -1
 
     def process_next_message(self):
@@ -333,10 +403,10 @@ class Peer_DBS(sim, Socket_queue):
 
     def polite_farewell(self):
         print(self.id, ": (see you later)")
-        while (self.receive_and_feed_counter < len(self.peer_list)):
-            self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
+        while (self.peer_index < len(self.peer_list)):
+            self.sendto(self.receive_and_feed_previous, self.peer_list[self.peer_index])
             self.recvfrom()
-            self.receive_and_feed_counter += 1
+            self.peer_index += 1
 
         for peer in self.peer_list:
             self.say_goodbye(peer)
@@ -345,7 +415,7 @@ class Peer_DBS(sim, Socket_queue):
         print(self.id, ": ready to leave the team")
 
     def buffer_data(self):
-        self.receive_and_feed_counter = 0
+        self.peer_index = 0
         self.receive_and_feed_previous = ()
         self.sendto_counter = 0
         self.debt_memory = 1 << self.MAX_CHUNK_DEBT
