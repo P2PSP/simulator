@@ -47,7 +47,11 @@ class Socket_print:
     def sendto(self, message, dst):
         if __debug__:
             print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, message, dst))
-        return self.sock.sendto(pickle.dumps(message), "/tmp/"+dst+"_udp")
+
+        try:
+            return self.sock.sendto(pickle.dumps(message), "/tmp/"+dst+"_udp")
+        except ConnectionRefusedError:
+            print("The message", message, "has not been delivered because the destination", dst, "left the team")
 
     def recv(self, length):
         message = pickle.loads(self.sock.recv(length))
