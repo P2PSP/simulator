@@ -41,7 +41,8 @@ class Peer_STRPEDS(Peer_DBS):
             return True
 
     def handle_bad_peers_request(self):
-        self.sendto((-1, "S", self.bad_peers), self.splitter)
+        # self.sendto((-1, "S", self.bad_peers), self.splitter)
+        self.team_socket.sendto((-1, "S", self.bad_peers), self.splitter)
         if __debug__:
             print(self.id, "Bad peers sent to the Splitter", self.bad_peers)
         return -1

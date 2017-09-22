@@ -22,14 +22,9 @@ class Monitor_SSS(Peer_SSS):
         self.sender_of_chunks = [""]*self.buffer_size
         #-------------------------------------
 
-    def connect_to_the_splitter(self):
-        hello = (-1,"M")
-        #self.splitter["socketTCP"].put((self.id,hello))
-        self.send(hello, self.splitter)
-
     def complain(self, chunk_position):
-        lost = (chunk_position,"L")
-        self.sendto(lost, self.splitter)
-        #self.splitter["socketUDP"].put((self.id,lost))
+        lost = (chunk_position, "L")
+        self.team_socket.sendto(lost, self.splitter)
+        print(self.id, ": lost chunk =", lost, "sent to", self.splitter)
 
     #def PlayNextChunk (with complaints)

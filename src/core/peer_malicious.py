@@ -18,10 +18,6 @@ class Peer_Malicious(Peer_STRPEDS):
         sim.SHARED_LIST["malicious"].append(self.id)
         print("Peer Malicious initialized")
 
-    def connect_to_the_splitter(self):
-        hello = (-1, "MP")
-        self.send(hello, self.splitter)
-
     def receive_the_list_of_peers(self):
         Peer_STRPEDS.receive_the_list_of_peers(self)
         self.first_main_target()

@@ -31,41 +31,43 @@ class Splitter_STRPEDS(Splitter_DBS):
         # Not needed for simulation
         return NotImplementedError
 
-    def gather_bad_peers(self):
-        for p in self.peer_list:
-            sim.UDP_SOCKETS[p].put(self.id,(-1,"S"))
+#    def gather_bad_peers(self):
+#        for p in self.peer_list:
+#            sim.UDP_SOCKETS[p].put(self.id,(-1,"S"))
 
     def init_key(self):
         #Not needed for simulation
         return NotImplementedError
 
-    def handle_a_peer_arrival(self):
-        content = self.recv()
-        message = content[0]
-        incoming_peer = content[1]
+    def handle_a_peer_arrival(self, connection):
+        
+        serve_socket = connection[0]
+        incoming_peer = connection[1]
+        
         print(self.id, "acepted connection from peer", incoming_peer)
-        print(self.id, "message", content)
-        if (message[1] == "M"):
+        if (incoming_peer[0] == "M"):
             self.number_of_monitors += 1
             self.trusted_peers.append(incoming_peer)
             
         # ---- Only for simulation purposes. Unknown in real implementation -----
-        if (message[1] == "MP"):
+        if (incoming_peer[0:1] == "MP"):
             self.number_of_malicious += 1
         # -----------------------------------------------------------------------
         
         print("NUMBER OF MONITORS", self.number_of_monitors)
 
-        self.send_buffer_size(incoming_peer)
-        self.send_the_number_of_peers(incoming_peer)
-        self.send_the_list_of_peers(incoming_peer)
+        self.send_buffer_size(serve_socket)
+        self.send_the_number_of_peers(serve_socket)
+        self.send_the_list_of_peers(serve_socket)
 
         print(self.id, ": waiting for outgoing peer")
-        (m, x) = self.recv()
-        print(self.id, ": received", m, "from", x)
+        message = serve_socket.recv(19)
+        print(self.id, ": received", message, "from", incoming_peer)
 
         self.insert_peer(incoming_peer)
+        # ------------------
         sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
+        # ------------------
     
     def process_bad_peers_message(self, message, sender):
         bad_list = message[2]
@@ -135,23 +137,20 @@ class Splitter_STRPEDS(Splitter_DBS):
 
     def moderate_the_team(self):
         while self.alive:
-            message = self.recvfrom()
-            action = message[0]
-            sender = message[1]
+            message, sender = self.team_socket.recvfrom(40)
 
-            if action[1] == "L":
-                lost_chunk_number = self.get_lost_chunk_number(action)
+            if (message[1] == "L"):
+                lost_chunk_number = self.get_lost_chunk_number(message[1])
                 self.process_lost_chunk(lost_chunk_number, sender)
 
-            elif action[1] == "S":
+            elif (message[1] == "S"):
                 if __debug__:
                     print("Bad complaint received")
                 if sender in self.trusted_peers:
                     if __debug__:
                         print("Complaint about bad peers from", sender)
                         self.trusted_peers_discovered.append(sender)
-                        self.process_bad_peers_message(action, sender)
-
+                        self.process_bad_peers_message(message[1], sender)
             else:
                 self.process_goodbye(sender)
 
