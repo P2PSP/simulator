@@ -41,7 +41,7 @@ class Peer_DBS(sim, Socket_queue):
         self.sendto_counter = 0 # Number of chunks sent
         self.ready_to_leave_the_team = False # True when the splitter has given its OK to go
 
-        # A aictionary of lists of peers indexed by origin peers. For
+        # A dictionary of lists of peers indexed by origin peers. For
         # each origin, we need a flooding list which says to which
         # peers must be forwarded each received chunk. In a
         # full-connected topology, there is only one list in the
@@ -191,7 +191,7 @@ class Peer_DBS(sim, Socket_queue):
 
                 if self.chunks[chunk_number % self.buffer_size][0] == chunk_number:
                     # Duplicate chunk: ignore it and prune path
-                    self.send((-1, "X", origin), sender) # I don't want to receive more chunks from <origin>
+                    self.send((-1, "X", origin), sender) # Hey <sender>, I don't want to receive more chunks from <origin>
                 else:
                     # New chunk: buffer it
                     self.chunks[chunk_number % self.buffer_size] = (chunk_number, origin, chunk)
