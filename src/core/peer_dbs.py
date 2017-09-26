@@ -52,6 +52,18 @@ class Peer_DBS(sim, Socket_queue):
         # the incoming peer) should be delivered directly to each
         # incoming peer from the origin peer.
         self.flooding_list = {}
+
+        # During their life in the team (for example, when a peer
+        # refuse to send data to it o simply to find better routes),
+        # peers will request alternative routes for the chunks. To do
+        # that, a [send once from <origin peer>] message will be sent
+        # to at least one peer of the team. A peer that receive such
+        # message will send (or not, depending on, for example, the
+        # debt of the requesting peer) only one chunk from the origin
+        # peer to the requesting peer. The requesting peer will send
+        # to the first peer to send the chunk a [send from <origin
+        # peer>] and both peers will be neighbors. To cancel this
+        # message, a [not send from <origin peer>] must be used.
         '''
         self.RTTs = [] # ??
         self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE # ??
@@ -138,6 +150,11 @@ class Peer_DBS(sim, Socket_queue):
         # commented) when DBS2 is fully active.
         #self.send_hellos(self.neighborhood_degree)
         #self.send_hellos(len(self.peer_list))
+
+        # Default configuration for a fully connected overlay: only
+        # one flooding list that says that the chunk received from the
+        # splitter must be forwarded to the rest of the team
+        self.flooding_list[self.id] = self.peer_list
         self.send_hellos()
 
     def connect_to_the_splitter(self):
@@ -167,7 +184,7 @@ class Peer_DBS(sim, Socket_queue):
         
     def process_message_2(self, message, sender):
         
-        if is_a_chunk(message[0]):
+        if is_a_chunk(message):
 
             # A chunk has been received
 
@@ -190,16 +207,64 @@ class Peer_DBS(sim, Socket_queue):
                 chunk = message[2]
 
                 if self.chunks[chunk_number % self.buffer_size][0] == chunk_number:
-                    # Duplicate chunk: ignore it and prune path
-                    self.send((-1, "X", origin), sender) # I don't want to receive more chunks from <origin>
+                    # A duplicate chunk has been received: ignore it and prune path
+                    self.send((-1, "not send more chunks", origin), sender) # I don't want to receive more chunks from <origin>
                 else:
-                    # New chunk: buffer it
+                    # A new chunk has been received: buffer it
                     self.chunks[chunk_number % self.buffer_size] = (chunk_number, origin, chunk)
+
+                if sender not in self.peer_list:
+                    self.peer_list.append(sender)
+                    self.debt[sender] = 0
+                    print(self.id, ":", sender, "added by chunk", chunk_number)
+                    print(self.id, ":", "peer_list =", self.peer_list)
+                    # -------- For simulation purposes only ---------------------- #
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
+                    # ------------------------------------------------------------ #
+                else:
+                    self.debt[sender] -= 1
+
+            # Flood the received chunk: 
 
         else:
 
             # A control message has been received
-            pass
+            if __debug__:
+                print(self.id, ": control message received:", message)
+
+            if message[1] == 'H': # Hello
+
+                print(self.id, ": received", message, "from", sender)
+
+                if sender not in self.peer_list:
+                    self.peer_list.append(sender)
+                    self.debt[sender] = 0
+                    print(self.id, ":", sender, "added by [hello]")
+                    print(self.id, ":", "peer_list =", self.peer_list)
+                    # --- simulator ---------------------------------------------- #
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
+                    # ------------------------------------------------------------ #
+                    
+            elif message[1] == 'G': # Goodbye
+                
+                if sender in self.peer_list:
+                    print(self.id, ": received goodbye from", sender)
+                    try:
+                        self.peer_list.remove(sender)
+                        print(self.id, ":", sender, "removed from peer_list")
+                    except:
+                        print(self.id, ": failed to remove peer", sender, "from peer_list", self.peer_list)
+                    print(self.id, ":", "peer_list =", self.peer_list)
+                        
+                    del self.debt[sender]
+                else:
+                    if (sender == self.splitter):
+                        print(self.id, ": received goodbye from splitter")
+                        self.waiting_for_goodbye = False
+
+            return -1
                     
             # Configure flooding
 
