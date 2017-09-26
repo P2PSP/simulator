@@ -67,8 +67,8 @@ class Peer_DBS(sim):
         # message, a [not send from <origin peer>] must be used.
 
         self.RTTs = []
-        self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE
-        self.neighborhood = []
+        # self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE
+        # self.neighborhood = []
 
         print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
@@ -389,8 +389,8 @@ class Peer_DBS(sim):
                     del self.debt[peer]
                     self.peer_list.remove(peer)
                     print(self.id, ":", "peer_list =", self.peer_list)
-                    self.neighborhood.remove(peer)
-                    print(self.id, ":", "neighborhood =", self.neighborhood)
+                    # self.neighborhood.remove(peer)
+                    # print(self.id, ":", "neighborhood =", self.neighborhood)
                     # --- simulator ----------------------------------------- #
                     sim.FEEDBACK["DRAW"].put(("O","Edge","OUT",self.id,peer)) #
                     # ------------------------------------------------------- #
@@ -439,20 +439,6 @@ class Peer_DBS(sim):
                     print(self.id, ":", "peer_list =", self.peer_list)
                         
                     del self.debt[sender]
-                '''    
-                if sender in self.neighborhood:
-                    if (self.peer_index > 0):
-                        self.modified_list = True
-                        self.peer_index -= 1
-                    try:
-                        self.neighborhood.remove(sender)
-                    except:
-                        print(self.id, ": failed to remove peer", sender, "from neighborhood", self.neighborhood)
-                    finally:
-                        print(self.id, ":", "neighborhood =", self.neighborhood)
-
-#                    self.send_hellos(number_of_new_neighbors = 1)
-                '''
                 else:
                     if (sender == self.splitter):
                         print(self.id, ": received goodbye from splitter")
