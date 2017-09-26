@@ -81,11 +81,13 @@ class Peer_SSS(Peer_STRPEDS):
         current_round = self.receive_and_feed_previous[2]
         if ((current_round-1) in self.t) and (self.first_round != (current_round-1)):
             if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
-                self.sendto(self.receive_and_feed_previous, peer)
+                # self.sendto(self.receive_and_feed_previous, peer)
+                self.team_socket.sendto(self.receive_and_feed_previous, peer)
                 self.sendto_counter += 1
             else:
                 print("###########=================>>>>", self.id, "Need more shares, I had", self.t[(current_round-1)], "from", self.splitter_t[(current_round-1)], "needed")
-                self.sendto(encrypted_chunk, peer)
+                #self.sendto(encrypted_chunk, peer)
+                self.team_socket.sendto(encrypted_chunk, peer)
                 self.sendto_counter += 1
         else:
             if (current_round-1) == self.first_round:
@@ -93,7 +95,8 @@ class Peer_SSS(Peer_STRPEDS):
             else:
                 print(self.id, "is my first round")
                 self.first_round = current_round
-            self.sendto(self.receive_and_feed_previous, peer)
+            # self.sendto(self.receive_and_feed_previous, peer)
+            self.team_socket.sendto(self.receive_and_feed_previous, peer)
             self.sendto_counter += 1
 
     def process_message_burst(self, message, sender):
@@ -179,7 +182,8 @@ class Peer_SSS(Peer_STRPEDS):
 
             if message[1] == "H":
                 if sender not in self.peer_list:
-                    self.sendto((-1, 'H'), sender)
+                    # self.sendto((-1, 'H'), sender)
+                    self.team_socket.sendto((-1, 'H'), sender)
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")

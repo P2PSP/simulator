@@ -18,6 +18,11 @@ sudo pacman -S python-pmw
 
 # Usage
 
+First, go to src dir:
+```
+$ cd src
+```
+
 ## Running a simulation
 ```
 $ python3 -u simulator.py run [options]
@@ -36,6 +41,13 @@ $ python3 -u simulator.py run [options]
 $ python3 simulator.py draw --drawing-log FILENAME
 ```
 Note: If you want to draw in simulation time, you can add `--gui` option as a flag in the run command.
+
+## Ploting team and buffer results
+Change to tools dir and use the plot script_
+```
+$ cd ../tools
+$ ./plot.sh ../src/DRAWING_LOG_FILENAME
+```
 
 # Drawing file format
 - First line -> experiment configuration:

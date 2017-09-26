@@ -7,9 +7,10 @@ import time
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
-from .simulator_stuff import Socket_queue
+from .simulator_stuff import Socket_print as socket
 
-class Peer_DBS(sim, Socket_queue):
+class Peer_DBS(sim):
+
     MAX_CHUNK_DEBT = 128
     #NEIGHBORHOOD_DEGREE = 5
     
@@ -28,18 +29,18 @@ class Peer_DBS(sim, Socket_queue):
         # ---------------------------------- #
 
         self.max_chunk_debt = self.MAX_CHUNK_DEBT
-        self.peer_list = [] # Peers in the team (except you)
-        self.number_of_peers = 0 # Size of the team
-        self.debt = {} # ??
-        self.number_of_monitors = 0 # Number of monitor peers
-        self.peer_index = 0 # Index of the feeded peer in the list of peers
-        self.receive_and_feed_previous = () # ??
-        self.debt_memory = 0 # ??
-        self.waiting_for_goodbye = False # ??
-        self.modified_list = False # ??
-        self.received_chunks = 0 # Number of chunks received
-        self.sendto_counter = 0 # Number of chunks sent
-        self.ready_to_leave_the_team = False # True when the splitter has given its OK to go
+        self.peer_list = []  # Peers in the team (except you)
+        self.debt = {}
+        self.received_counter = 0
+        self.number_of_monitors = 0
+        self.receive_and_feed_counter = 0
+        self.receive_and_feed_previous = ()
+        self.debt_memory = 0
+        self.waiting_for_goodbye = False
+        self.modified_list = False
+        self.number_of_peers = 0
+        self.sendto_counter = 0
+        self.ready_to_leave_the_team = False
 
         # A dictionary of lists of peers indexed by origin peers. For
         # each origin, we need a flooding list which says to which
@@ -64,22 +65,26 @@ class Peer_DBS(sim, Socket_queue):
         # to the first peer to send the chunk a [send from <origin
         # peer>] and both peers will be neighbors. To cancel this
         # message, a [not send from <origin peer>] must be used.
-        '''
-        self.RTTs = [] # ??
-        self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE # ??
-        self.neighborhood = [] # Not "pruned" peers
-        self.distances = {} # ??
-        self.distances[self.id] = 0 # ??
-        '''
-        print(self.id, ": max_chunk_debt =", self.MAX_CHUNK_DEBT)
+
+        self.RTTs = []
+        self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE
+        self.neighborhood = []
+
+        print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
+
+    def listen_to_the_team(self):
+        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket.set_id(self.id)
+        self.team_socket.bind(self.id+"_udp")
 
     def set_splitter(self, splitter):
         self.splitter = splitter
 
     def say_hello(self, peer):
         hello = (-1, "H", time.time())
-        self.sendto(hello, peer)
+        #self.sendto(hello, peer)
+        self.team_socket.sendto(hello, peer)
         print(self.id, ": sent", hello, "to", peer)
         #(m, s) = self.recvfrom()
         #end = time.time()
@@ -87,22 +92,27 @@ class Peer_DBS(sim, Socket_queue):
         
     def say_goodbye(self, peer):
         goodbye = (-1, "G")
-        self.sendto(goodbye, peer)
+        #self.sendto(goodbye, peer)
+        self.team_socket.sendto(goodbye, peer)
         print(self.id, ": sent", goodbye, "to", peer)
 
     def receive_buffer_size(self):
-        (self.buffer_size, sender) = self.recv()
-        print(self.id, ": received buffer_size =", self.buffer_size, "from", sender)
+        #(self.buffer_size, sender) = self.recv()
+        
+        self.buffer_size = self.splitter_socket.recv(6)
+        print(self.id, ": received buffer_size =", self.buffer_size, "from", self.splitter)
 
         # --- Only for simulation purposes ---------- #
         self.sender_of_chunks = [""]*self.buffer_size #
         # ------------------------------------------- #
 
     def receive_the_number_of_peers(self):
-        (self.number_of_monitors, sender) = self.recv()
-        print(self.id, ": received number_of_monitors =", self.number_of_monitors, "from", sender)
-        (self.number_of_peers, sender) = self.recv()
-        print(self.id, ": received number_of_peers =", self.number_of_peers, "from", sender)
+        #(self.number_of_monitors, sender) = self.recv()
+        self.number_of_monitors = self.splitter_socket.recv(5)
+        print(self.id, ": received number_of_monitors =", self.number_of_monitors, "from", self.splitter)
+        #(self.number_of_peers, sender) = self.recv()
+        self.number_of_peers = self.splitter_socket.recv(5)
+        print(self.id, ": received number_of_peers =", self.number_of_peers, "from", self.splitter)
 
     # Thread(target=self.run).start()
 
@@ -140,12 +150,11 @@ class Peer_DBS(sim, Socket_queue):
             self.debt[peer] = 0         # Setting initial debts
 
     def receive_the_list_of_peers(self):
-        (self.peer_list, sender) = self.recv()[:]
-        print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", sender)
-        '''
-        for peer in self.peer_list:
-            self.distances[peer] = 1000 # Setting initial distances
-        '''
+        #(self.peer_list, sender) = self.recv()[:]
+        recv = self.splitter_socket.recv(5)
+        self.peer_list = self.splitter_socket.recv(recv)
+        print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
+
         # This line should be un commented (and the next one
         # commented) when DBS2 is fully active.
         #self.send_hellos(self.neighborhood_degree)
@@ -158,17 +167,24 @@ class Peer_DBS(sim, Socket_queue):
         self.send_hellos()
 
     def connect_to_the_splitter(self):
-        hello = (-1, "P")
-        self.send(hello, self.splitter)
-        print(self.id, ": sent", hello, "to", self.splitter)
-
+        #hello = (-1, "P")
+        #self.send(hello, self.splitter)
+        #print(self.id, ": sent", hello, "to", self.splitter)
+        self.splitter_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.splitter_socket.set_id(self.id)
+        self.splitter_socket.bind(self.id+"_tcp")
+        self.splitter_socket.connect(self.splitter)
+        print("Connect to the splitter")
+        
     def send_ready_for_receiving_chunks(self):
         ready = (-1, "R")
-        self.send(ready, self.splitter)
+        #self.send(ready, self.splitter)
+        self.splitter_socket.send(ready)
         print(self.id, ": sent", ready, "to", self.splitter)
 
     def send_chunk(self, peer):
-        self.sendto(self.receive_and_feed_previous, peer)
+        #self.sendto(self.receive_and_feed_previous, peer)
+        self.team_socket.sendto(self.receive_and_feed_previous, peer)
         self.sendto_counter += 1
 
     def is_a_control_message(self, message):
@@ -400,7 +416,8 @@ class Peer_DBS(sim, Socket_queue):
                 print(self.id, ": RTTs =", self.RTTs)
                 '''
                 if sender not in self.peer_list:
-                    self.sendto((-1, 'H', time.time()), sender)
+                    #self.sendto((-1, 'H', time.time()), sender)
+                    self.team_socket.sendto((-1, 'H', time.time()), sender)
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")
@@ -461,17 +478,19 @@ class Peer_DBS(sim, Socket_queue):
             return -1
 
     def process_next_message(self):
-        content = self.recvfrom()
-        message = content[0]
-        sender = content[1]
+        #content = self.recvfrom()
+        #message = content[0]
+        #sender = content[1]
+        message, sender = self.team_socket.recvfrom(40)
         return self.process_message(message, sender)
 
     def polite_farewell(self):
         print(self.id, ": (see you later)")
-        while (self.peer_index < len(self.peer_list)):
-            self.sendto(self.receive_and_feed_previous, self.peer_list[self.peer_index])
-            self.recvfrom()
-            self.peer_index += 1
+        while (self.receive_and_feed_counter < len(self.peer_list)):
+            #self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
+            self.team_socket.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
+            self.team_socket.recvfrom(40)
+            self.receive_and_feed_counter += 1
 
         for peer in self.peer_list:
             self.say_goodbye(peer)

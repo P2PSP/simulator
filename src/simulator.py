@@ -13,7 +13,6 @@ from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
-from core.simulator_stuff import Socket_queue
 from multiprocessing import Process, Queue, Manager
 import time
 import fire
@@ -101,6 +100,7 @@ class Simulator():
         peer.connect_to_the_splitter()
         peer.receive_buffer_size()
         peer.receive_the_number_of_peers()
+        peer.listen_to_the_team()
         peer.receive_the_list_of_peers()
         peer.send_ready_for_receiving_chunks()
         peer.buffer_data()
@@ -170,7 +170,6 @@ class Simulator():
         self.team_figure.canvas.draw()
 
     def update_team(self, node, quantity, n_round):
-
         if node == "M":
             self.lineMonitors.set_xdata(n_round)
             self.lineMonitors.set_ydata(quantity)
@@ -366,22 +365,6 @@ class Simulator():
 
         # Listen to the team for simulation life
         sim.FEEDBACK["STATUS"] = Queue()
-
-        # create communication channels for the team and splitter
-        Socket_queue.UDP_SOCKETS['S'] = Queue(1)
-        Socket_queue.TCP_SOCKETS['S'] = Queue(1)
-
-        for i in range(self.number_of_monitors):
-            Socket_queue.UDP_SOCKETS["M"+str(i+1)] = Queue(16)
-            Socket_queue.TCP_SOCKETS["M"+str(i+1)] = Queue(1)
-
-        for i in range(self.number_of_peers):
-            Socket_queue.UDP_SOCKETS["P"+str(i+1)] = Queue(16)
-            Socket_queue.TCP_SOCKETS["P"+str(i+1)] = Queue(1)
-
-        for i in range(self.number_of_malicious):
-            Socket_queue.UDP_SOCKETS["MP"+str(i+1)] = Queue(16)
-            Socket_queue.TCP_SOCKETS["MP"+str(i+1)] = Queue(1)
 
         # create shared list for CIS set of rules (only when cis is choosen?)
         manager = Manager()
