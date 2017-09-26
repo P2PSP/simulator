@@ -17,10 +17,6 @@ class Peer_Malicious_SSS(Peer_SSS):
         self.attacked_count = 0
         sim.SHARED_LIST["malicious"].append(self.id)
         print("Peer Malicious SSS initialized")
-
-    def connect_to_the_splitter(self):
-        hello = (-1,"MP")
-        self.send(hello, self.splitter)
         
     def receive_the_list_of_peers(self):
         Peer_SSS.receive_the_list_of_peers(self)
@@ -66,7 +62,7 @@ class Peer_Malicious_SSS(Peer_SSS):
                 self.send_chunk_attack(peer)
             else:
                 print("###########=================>>>>", self.id, "Need more shares, I had", self.t[(current_round-1)], "from", self.splitter_t[(current_round-1)], "needed")
-                self.sendto(encrypted_chunk, peer)
+                self.team_socket.sendto(encrypted_chunk, peer)
                 self.sendto_counter += 1
         else:
             if (current_round-1) == self.first_round:
@@ -82,26 +78,26 @@ class Peer_Malicious_SSS(Peer_SSS):
         if self.persistent_attack:
             if peer == self.main_target:
                 if self.chunks_sent_to_main_target < self.MPTR:
-                    self.sendto(poisoned_chunk, peer)
+                    self.team_socket.sendto(poisoned_chunk, peer)
                     self.sendto_counter += 1
                     self.chunks_sent_to_main_target += 1
                     #if __debug__:
                         #print("Attacking Main target", self.main_target, "attack", self.chunks_sent_to_main_target)
                 else:
                     self.all_attack()
-                    self.sendto(poisoned_chunk, peer)
+                    self.team_socket.sendto(poisoned_chunk, peer)
                     self.sendto_counter += 1
                     self.main_target = self.choose_main_target()
                     #if __debug__:
                        # print("Attacking Main target", peer, ". Replaced by", self.main_target)
             else:
                 if peer in sim.SHARED_LIST["regular"]:
-                    self.sendto(poisoned_chunk, peer)
+                    self.team_socket.sendto(poisoned_chunk, peer)
                     self.sendto_counter += 1
                     #if __debug__:
                         #print("All Attack:", peer)
                 else:
-                    self.sendto(self.receive_and_feed_previous, peer)
+                    self.team_socket.sendto(self.receive_and_feed_previous, peer)
                     self.sendto_counter += 1
                     #if __debug__:
                         #print("No attack", peer)
@@ -111,5 +107,5 @@ class Peer_Malicious_SSS(Peer_SSS):
 
         #TO-DO: on-off and selective attacks
         else:
-            self.sendto(self.receive_and_feed_previous, peer)
+            self.team_socket.sendto(self.receive_and_feed_previous, peer)
             self.sendto_counter += 1

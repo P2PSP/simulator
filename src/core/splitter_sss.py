@@ -46,6 +46,9 @@ class Splitter_SSS(Splitter_STRPEDS):
         return "C"
 
     def run(self):
+        self.setup_peer_connection_socket()
+        self.setup_team_socket()
+
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
         Thread(target=self.reset_counters_thread).start()

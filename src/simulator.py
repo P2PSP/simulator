@@ -170,7 +170,6 @@ class Simulator():
         self.team_figure.canvas.draw()
 
     def update_team(self, node, quantity, n_round):
-
         if node == "M":
             self.lineMonitors.set_xdata(n_round)
             self.lineMonitors.set_ydata(quantity)

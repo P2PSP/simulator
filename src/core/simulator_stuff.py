@@ -62,6 +62,7 @@ class Socket_print:
     def recvfrom(self, length):
         message, sender = self.sock.recvfrom(length)
         sender = sender.replace("/tmp/", "").replace("_tcp", "").replace("_udp","")
+        # print("RECV_FROM", message, sender)
         message = pickle.loads(message)
         if __debug__:
             print("{:.6f} {} <- [{}] = {}".format(time.time(), self.id, message, sender))

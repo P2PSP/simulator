@@ -45,15 +45,15 @@ class Splitter_STRPEDS(Splitter_DBS):
         incoming_peer = connection[1]
         
         print(self.id, "acepted connection from peer", incoming_peer)
-        if (incoming_peer[0] == "M"):
-            self.number_of_monitors += 1
-            self.trusted_peers.append(incoming_peer)
-            
-        # ---- Only for simulation purposes. Unknown in real implementation -----
-        if (incoming_peer[0:1] == "MP"):
+
+         # ---- Only for simulation purposes. Unknown in real implementation -----
+        if (incoming_peer[0:2] == "MP"):
             self.number_of_malicious += 1
         # -----------------------------------------------------------------------
-        
+        elif (incoming_peer[0] == "M"):
+            self.number_of_monitors += 1
+            self.trusted_peers.append(incoming_peer)
+                    
         print("NUMBER OF MONITORS", self.number_of_monitors)
 
         self.send_buffer_size(serve_socket)
@@ -150,11 +150,14 @@ class Splitter_STRPEDS(Splitter_DBS):
                     if __debug__:
                         print("Complaint about bad peers from", sender)
                         self.trusted_peers_discovered.append(sender)
-                        self.process_bad_peers_message(message[1], sender)
+                        self.process_bad_peers_message(message, sender)
             else:
                 self.process_goodbye(sender)
 
     def run(self):
+        self.setup_peer_connection_socket()
+        self.setup_team_socket()
+
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
         Thread(target=self.reset_counters_thread).start()
@@ -176,7 +179,6 @@ class Splitter_STRPEDS(Splitter_DBS):
                 for p in self.outgoing_peer_list:
                     self.say_goodbye(p)
                     self.remove_peer(p)
-
             
             try:
                 peer = self.peer_list[self.peer_number]
