@@ -14,7 +14,7 @@ class Monitor_SSS(Peer_SSS):
         print("SSS initialized by monitor")
 
     def receive_buffer_size(self):
-        self.buffer_size = self.splitter_socket.recv(5)
+        self.buffer_size = self.splitter_socket.recv(6)
         print(self.id,": received buffer_size =", self.buffer_size, "from S")
         self.buffer_size //= 2
         

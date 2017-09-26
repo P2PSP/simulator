@@ -54,7 +54,9 @@ class Socket_print:
             print("The message", message, "has not been delivered because the destination", dst, "left the team")
 
     def recv(self, length):
-        message = pickle.loads(self.sock.recv(length))
+        msg = self.sock.recv(length)
+        print("MSG RECV", msg)
+        message = pickle.loads(msg)
         if __debug__:
             print("{:.6f} {} <= [{}]".format(time.time(), self.id, message))
         return message
