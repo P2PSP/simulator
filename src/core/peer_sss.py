@@ -180,7 +180,7 @@ class Peer_SSS(Peer_STRPEDS):
             if __debug__:
                 print(self.id, ": control message received:", message)
 
-            if message[1] == "H":
+            if message[1] == 'H':
                 if sender not in self.peer_list:
                     # self.sendto((-1, 'H'), sender)
                     self.team_socket.sendto((-1, 'H'), sender)
@@ -191,7 +191,8 @@ class Peer_SSS(Peer_STRPEDS):
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
                     # ------------------------------------------------------------ #
-            else:
+
+            if message[1] == 'G':
                 if sender in self.peer_list:
                     print(self.id, ": received goodbye from", sender)
                     try:
@@ -201,19 +202,6 @@ class Peer_SSS(Peer_STRPEDS):
                         print(self.id, ": failed to remove peer", sender, "from peer_list", self.peer_list)
                         
                     del self.debt[sender]
-                    
-                if sender in self.neighborhood:
-                    if (self.receive_and_feed_counter > 0):
-                        self.modified_list = True
-                        self.receive_and_feed_counter -= 1
-                    try:
-                        self.neighborhood.remove(sender)
-                    except:
-                        print(self.id, ": failed to remove peer", sender, "from neighborhood", self.neighborhood)
-
-                    print(self.id, ":", "peer_list =", self.peer_list)
-                    print(self.id, ":", "neighborhood =", self.neighborhood)
-
                 else:
                     if (sender == self.splitter):
                         print(self.id, ": received goodbye from splitter")

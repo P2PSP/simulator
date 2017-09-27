@@ -55,7 +55,7 @@ class Socket_print:
 
     def recv(self, length):
         msg = self.sock.recv(length)
-        print("MSG RECV", msg)
+        # print("MSG RECV", msg)
         message = pickle.loads(msg)
         if __debug__:
             print("{:.6f} {} <= [{}]".format(time.time(), self.id, message))
