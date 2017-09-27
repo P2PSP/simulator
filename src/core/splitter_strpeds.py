@@ -140,7 +140,7 @@ class Splitter_STRPEDS(Splitter_DBS):
             message, sender = self.team_socket.recvfrom(40)
 
             if (message[1] == "L"):
-                lost_chunk_number = self.get_lost_chunk_number(message[1])
+                lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)
 
             elif (message[1] == "S"):

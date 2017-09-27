@@ -141,7 +141,7 @@ class Splitter_DBS(Simulator_stuff):
     def get_lost_chunk_number(self, message):
         return message[0]
 
-    def get_losser(self,lost_chunk_number):
+    def get_losser(self, lost_chunk_number):
         return self.destination_of_chunk[lost_chunk_number % self.buffer_size]
 
     def remove_peer(self, peer):

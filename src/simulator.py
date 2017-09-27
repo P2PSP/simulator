@@ -187,8 +187,8 @@ class Simulator():
 
     def draw_buffer(self):
         self.buffer_figure, self.buffer_ax = plt.subplots()
-        self.lineIN, = self.buffer_ax.plot([1]*2, [1]*2, color='#000000', ls="None", label="IN", marker='o', markeredgecolor='#000000', animated=True)
-        self.lineOUT, = self.buffer_ax.plot([1]*2, [1]*2, color='#CCCCCC', ls="None", label="OUT", marker='o', markeredgecolor='#CCCCCC', animated=True)
+        self.lineIN, = self.buffer_ax.plot([1]*2, [1]*2, color='#000000', ls="None", label="IN", marker='o', animated=True)
+        self.lineOUT, = self.buffer_ax.plot([1]*2, [1]*2, color='#CCCCCC', ls="None", label="OUT", marker='o', animated=True)
         self.buffer_figure.suptitle("Buffer Status", size=16)
         plt.legend(loc=2, numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
