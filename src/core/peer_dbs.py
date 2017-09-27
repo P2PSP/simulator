@@ -5,6 +5,13 @@ peer_dbs module
 
 # DBS layer
 
+# Peers send [request <chunk>] (where <chunk> is a chunk index) to a
+# random peer (between the peers that have a small debt) when <chunk>
+# is missing while the playback. If a peer receive a [request
+# <chunk>], it will continue sending to the sender of this message
+# those chunks that come from the origin peer which sent the chunk
+# <chunk>, until the requesting peer sends a [prune <origin>].
+
 import time
 from threading import Thread
 from .common import Common
@@ -14,14 +21,13 @@ from .simulator_stuff import Socket_print as socket
 class Peer_DBS(sim):
 
     MAX_CHUNK_DEBT = 128
-    #NEIGHBORHOOD_DEGREE = 5
     
     def __init__(self, id):
         self.id = id
         self.played_chunk = 0 # Chunk currently played
         self.prev_received_chunk = 0 # ??
         self.buffer_size = 64 # Number of chunks in the buffer * 2
-        self.chunks = [] # Buffer of chunks (circular queue)
+        self.chunks = [] # Buffer of chunks (used as a circular queue)
         self.player_alive = True # While True, keeps the peer alive
 
         # ---Only for simulation purposes--- #
@@ -33,8 +39,7 @@ class Peer_DBS(sim):
         self.max_chunk_debt = self.MAX_CHUNK_DEBT
         self.peer_list = []  # Peers in the team (except you)
         self.debt = {}
-        self.received_counter = 0
-        self.received_chunks = 0 # Reemplaza self.received_counter
+        self.received_chunks = 0
         self.number_of_monitors = 0
         self.receive_and_feed_counter = 0
         self.receive_and_feed_previous = ()
@@ -44,18 +49,6 @@ class Peer_DBS(sim):
         self.number_of_peers = 0
         self.sendto_counter = 0
         self.ready_to_leave_the_team = False
-
-        # A dictionary of lists of peers indexed by origin peers. For
-        # each origin, we need a flooding list which says to which
-        # peers must be forwarded each received chunk. In a
-        # full-connected topology, there is only one list in the
-        # dictionary (the rest can be considered as empty), with index
-        # the owner (origin) peer, and with content the rest of peers
-        # of the team. Notice that, to generate a full-connected team,
-        # in a round, all chunks (one for each peer in the team except
-        # the incoming peer) should be delivered directly to each
-        # incoming peer from the origin peer.
-        self.flooding_list = {}
 
         # During their life in the team (for example, when a peer
         # refuse to send data to it o simply to find better routes),
@@ -200,104 +193,7 @@ class Peer_DBS(sim):
         if message[0] > -1:
             return True
         return False 
-        
-    def process_message_2(self, message, sender):
-        
-        if is_a_chunk(message):
-
-            # A chunk has been received
-
-            self.received_chunks += 1
-            chunk_number = message[0]
-
-            if sender == self.splitter:
-
-                # I'm the origin peer
-                origin = self.id
-                chunk = message[1]
-
-                # Buffer the chunk
-                self.chunks[chunk_number % self.buffer_size] = (chunk_number, origin, chunk)
-
-            else:
-
-                # I'm a relaying peer
-                origin = message[1]
-                chunk = message[2]
-
-                if self.chunks[chunk_number % self.buffer_size][0] == chunk_number:
-                    # Duplicate chunk: ignore it and prune path
-                    self.send((-1, "X", origin), sender) # Hey <sender>, I don't want to receive more chunks from <origin>
-                else:
-                    # A new chunk has been received: buffer it
-                    self.chunks[chunk_number % self.buffer_size] = (chunk_number, origin, chunk)
-
-                if sender not in self.peer_list:
-                    self.peer_list.append(sender)
-                    self.debt[sender] = 0
-                    print(self.id, ":", sender, "added by chunk", chunk_number)
-                    print(self.id, ":", "peer_list =", self.peer_list)
-                    # -------- For simulation purposes only ---------------------- #
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
-                    # ------------------------------------------------------------ #
-                else:
-                    self.debt[sender] -= 1
-
-            # Flood the received chunk: 
-
-        else:
-
-            # A control message has been received
-            if __debug__:
-                print(self.id, ": control message received:", message)
-
-            if message[1] == 'H': # Hello
-
-                print(self.id, ": received", message, "from", sender)
-
-                if sender not in self.peer_list:
-                    self.peer_list.append(sender)
-                    self.debt[sender] = 0
-                    print(self.id, ":", sender, "added by [hello]")
-                    print(self.id, ":", "peer_list =", self.peer_list)
-                    # --- simulator ---------------------------------------------- #
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
-                    # ------------------------------------------------------------ #
                     
-            elif message[1] == 'G': # Goodbye
-                
-                if sender in self.peer_list:
-                    print(self.id, ": received goodbye from", sender)
-                    try:
-                        self.peer_list.remove(sender)
-                        print(self.id, ":", sender, "removed from peer_list")
-                    except:
-                        print(self.id, ": failed to remove peer", sender, "from peer_list", self.peer_list)
-                    print(self.id, ":", "peer_list =", self.peer_list)
-                        
-                    del self.debt[sender]
-                else:
-                    if (sender == self.splitter):
-                        print(self.id, ": received goodbye from splitter")
-                        self.waiting_for_goodbye = False
-
-            return -1
-                    
-            # Configure flooding
-
-            # By default, peers flood chunks to the rest of peers of
-            # the team, excludind the origin peer. Peers must send
-            # [prune <origin peer>] messages to those senders that
-            # forwarded duplicate chunks, and send [not prune <origin
-            # peer>] when the route for that origin peer fails.
-            
-            
-            # For each origin peer, there is a list of peers that must
-            # receive the chunk.
-            
-            
     def process_message(self, message, sender):
 
         # ----- Check if new round for peer (simulation purposes) ------------- #
