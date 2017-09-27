@@ -32,6 +32,7 @@ class Peer_DBS(sim):
         self.peer_list = []  # Peers in the team (except you)
         self.debt = {}
         self.received_counter = 0
+        self.received_chunks = 0 # Reemplaza self.received_counter
         self.number_of_monitors = 0
         self.receive_and_feed_counter = 0
         self.receive_and_feed_previous = ()

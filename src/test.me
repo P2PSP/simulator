@@ -1,1 +1,3 @@
+rm /tmp/*tcp
+rm /tmp/*udp
 python3 -u -O ./simulator.py run --number-of-peers 5 --number-of-monitors 1 --number-of-rounds 100 --set-of-rules dbs --drawing-log /tmp/1 $1
