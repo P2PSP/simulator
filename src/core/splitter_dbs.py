@@ -191,7 +191,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def moderate_the_team(self):
         while self.alive:
-            message, sender = self.team_socket.recvfrom(40)
+            message, sender = self.team_socket.recvfrom(128)
             
             if (message[1] == "L"):
                 lost_chunk_number = self.get_lost_chunk_number(message[1])
