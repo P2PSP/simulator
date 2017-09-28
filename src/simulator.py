@@ -14,6 +14,7 @@ from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
 from multiprocessing import Process, Queue, Manager
+from glob import glob
 import time
 import fire
 import networkx as nx
@@ -356,6 +357,12 @@ class Simulator():
             plt.switch_backend("macosx")
         plt.style.use("seaborn-white")
 
+        # Removing temporal socket files
+        for pattern in ['/tmp/*_udp', '/tmp/*_tcp']:
+            for tmp_file in glob(pattern):
+                os.remove(tmp_file)
+
+        
         # Listen to the team for drawing
         sim.FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
@@ -409,6 +416,14 @@ class Simulator():
 
             m = queue.get()
 
+        if self.set_of_rules == "cis" or self.set_of_rules == "cis-sss":
+            print("List of Malicious")
+            print(sim.SHARED_LIST["malicious"])
+            print("List of Regular detected")
+            print(sim.SHARED_LIST["regular"])
+            print("List of peer Attacked")
+            print(sim.SHARED_LIST["attacked"])
+            
     def addPeer(self):
         probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]
         option = np.where(np.random.multinomial(1, probabilities))[0][0]
