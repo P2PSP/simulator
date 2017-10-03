@@ -137,13 +137,13 @@ class Peer_SSS(Peer_STRPEDS):
                     self.send_chunk(peer)
                     self.debt[peer] += 1
 
-                    if self.debt[peer] > self.MAX_CHUNK_DEBT:
-                        print(self.id, ":", peer, "removed by unsupportive (", str(self.debt[peer]), "lossess)")
-                        del self.debt[peer]
-                        self.peer_list.remove(peer)
-                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, peer))
-                    else:
-                        self.receive_and_feed_counter += 1
+                    # if self.debt[peer] > self.MAX_CHUNK_DEBT:
+                        # print(self.id, ":", peer, "removed by unsupportive (", str(self.debt[peer]), "lossess)")
+                        # del self.debt[peer]
+                        # self.peer_list.remove(peer)
+                        # sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, peer))
+                    #else:
+                    self.receive_and_feed_counter += 1
 
                 # Modifying the first chunk to play (it increases the delay)
                 #if (not self.receive_and_feed_previous):
