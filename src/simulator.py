@@ -272,7 +272,7 @@ class Simulator():
 
             # Sometimes the queue doesn't receive Bye message.
             try:
-                m = queue.get(True, 1)
+                m = queue.get()
             except:
                 break
 
@@ -399,23 +399,21 @@ class Simulator():
 
         queue = sim.FEEDBACK["STATUS"]
         m = queue.get()
-        while m[0] != "Bye":
+        while m[0] != "Bye" and self.current_round < self.number_of_rounds:
             if (m[0] == "R"):
                 self.current_round = m[1]
                 r = np.random.uniform(0, 1)
                 if r <= Simulator.P_IN:
-                    self.addPeer()
-
-                if self.current_round == self.number_of_rounds:
-                    sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
-                    sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-                    for name, pid in self.processes.items():
-                        print("Killing", name, "...")
-                        os.system("kill -9 "+str(pid))
-                        print(name, "killed")
-
+                    self.addPeer()                   
             m = queue.get()
 
+        sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
+        sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+        for name, pid in self.processes.items():
+            print("Killing", name, "...")
+            os.system("kill -9 "+str(pid))
+            print(name, "killed")
+            
         if self.set_of_rules == "cis" or self.set_of_rules == "cis-sss":
             print("List of Malicious")
             print(sim.SHARED_LIST["malicious"])
