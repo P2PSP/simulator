@@ -152,7 +152,7 @@ class Peer_DBS(sim):
 
     def receive_the_list_of_peers(self):
         #(self.peer_list, sender) = self.recv()[:]
-        recv = self.splitter_socket.recv(5)
+        recv = self.splitter_socket.recv(6)
         self.peer_list = self.splitter_socket.recv(recv)
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
 
