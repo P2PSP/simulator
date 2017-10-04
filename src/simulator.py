@@ -14,6 +14,7 @@ from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
 from multiprocessing import Process, Queue, Manager
+from glob import glob
 import time
 import fire
 import networkx as nx
@@ -271,7 +272,7 @@ class Simulator():
 
             # Sometimes the queue doesn't receive Bye message.
             try:
-                m = queue.get(True, 1)
+                m = queue.get()
             except:
                 break
 
@@ -356,6 +357,12 @@ class Simulator():
             plt.switch_backend("macosx")
         plt.style.use("seaborn-white")
 
+        # Removing temporal socket files
+        for pattern in ['/tmp/*_udp', '/tmp/*_tcp']:
+            for tmp_file in glob(pattern):
+                os.remove(tmp_file)
+
+        
         # Listen to the team for drawing
         sim.FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
@@ -392,23 +399,29 @@ class Simulator():
 
         queue = sim.FEEDBACK["STATUS"]
         m = queue.get()
-        while m[0] != "Bye":
+        while m[0] != "Bye" and self.current_round < self.number_of_rounds:
             if (m[0] == "R"):
                 self.current_round = m[1]
                 r = np.random.uniform(0, 1)
                 if r <= Simulator.P_IN:
-                    self.addPeer()
-
-                if self.current_round == self.number_of_rounds:
-                    sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
-                    sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-                    for name, pid in self.processes.items():
-                        print("Killing", name, "...")
-                        os.system("kill -9 "+str(pid))
-                        print(name, "killed")
-
+                    self.addPeer()                   
             m = queue.get()
 
+        sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
+        sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+        for name, pid in self.processes.items():
+            print("Killing", name, "...")
+            os.system("kill -9 "+str(pid))
+            print(name, "killed")
+            
+        if self.set_of_rules == "cis" or self.set_of_rules == "cis-sss":
+            print("List of Malicious")
+            print(sim.SHARED_LIST["malicious"])
+            print("List of Regular detected")
+            print(sim.SHARED_LIST["regular"])
+            print("List of peer Attacked")
+            print(sim.SHARED_LIST["attacked"])
+            
     def addPeer(self):
         probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]
         option = np.where(np.random.multinomial(1, probabilities))[0][0]
