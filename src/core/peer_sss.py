@@ -4,7 +4,7 @@ peer_sss module
 """
 from .peer_strpeds import Peer_STRPEDS
 from .simulator_stuff import Simulator_stuff as sim
-import Common
+from .common import Common
 
 
 class Peer_SSS(Peer_STRPEDS):
