@@ -4,6 +4,8 @@ peer_sss module
 """
 from .peer_strpeds import Peer_STRPEDS
 from .simulator_stuff import Simulator_stuff as sim
+import Common
+
 
 class Peer_SSS(Peer_STRPEDS):
 
@@ -39,7 +41,11 @@ class Peer_SSS(Peer_STRPEDS):
 
         # ----------- simulation purposes ---------
         if self.id.find("MP") == -1 and message[0] > -1:
-            sim.RECV_LIST[self.id] = message[0]
+            if self.id in sim.RECV_LIST:
+                if message[0] > sim.RECV_LIST[self.id] and sim.RECV_LIST[self.id] < Common.MAX_CHUNK_NUMBER:
+                    sim.RECV_LIST[self.id] = message[0]
+            else:
+                sim.RECV_LIST[self.id] = message[0] 
         # ----------------------------------------
         
         if sender in self.bad_peers:
