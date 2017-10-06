@@ -136,7 +136,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def process_lost_chunk(self, lost_chunk_number, sender):
         destination = self.get_losser(lost_chunk_number)
-        print(self.id, ":", sender, "complains about lost chunk", lost_chunk_number)
+        print(self.id, ":", sender, "complains about lost chunk", lost_chunk_number, "destination", destination)
         self.increment_unsupportivity_of_peer(destination)
 
     def get_lost_chunk_number(self, message):
