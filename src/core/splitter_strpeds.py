@@ -126,14 +126,14 @@ class Splitter_STRPEDS(Splitter_DBS):
                 self.losses[peer] += 1
         except KeyError:
             print("The unsupportive peer", peer, "does not exist!")
-        else:
-            print(peer, "has loss", self.losses[peer], "chunks")
-            if self.losses[peer] > Common.MAX_CHUNK_LOSS:
-                if peer not in self.bad_peers:
-                    print(peer, 'removed')
-                    self.bad_peers.append(peer)
-        finally:
-            pass
+       # else:
+       #     print(peer, "has loss", self.losses[peer], "chunks")
+       #     if self.losses[peer] > Common.MAX_CHUNK_LOSS:
+       #         if peer not in self.bad_peers:
+       #             print(peer, 'removed')
+       #             self.bad_peers.append(peer)
+       # finally:
+       #     pass
 
     def moderate_the_team(self):
         while self.alive:
@@ -145,12 +145,12 @@ class Splitter_STRPEDS(Splitter_DBS):
 
             elif (message[1] == "S"):
                 if __debug__:
-                    print("Bad complaint received")
+                    print("Bad complaint received from", sender)
                 if sender in self.trusted_peers:
                     if __debug__:
-                        print("Complaint about bad peers from", sender)
-                        self.trusted_peers_discovered.append(sender)
-                        self.process_bad_peers_message(message, sender)
+                        print("Complaint about bad peers from", sender, "bad list", message[2])
+                    self.trusted_peers_discovered.append(sender)
+                    self.process_bad_peers_message(message, sender)
             else:
                 self.process_goodbye(sender)
 
