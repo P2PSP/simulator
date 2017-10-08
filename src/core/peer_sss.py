@@ -134,7 +134,7 @@ class Peer_SSS(Peer_STRPEDS):
             sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))
             # --------------------------------------
 
-            self.received_counter += 1
+            self.received_chunks += 1
             if (sender == self.splitter):
                 while(self.receive_and_feed_counter < len(self.peer_list)):
                     peer = self.peer_list[self.receive_and_feed_counter]

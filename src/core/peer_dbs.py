@@ -50,6 +50,8 @@ class Peer_DBS(sim):
         self.sendto_counter = 0
         self.ready_to_leave_the_team = False
 
+        self.flooding_list = {}
+        
         # During their life in the team (for example, when a peer
         # refuse to send data to it o simply to find better routes),
         # peers will request alternative routes for the chunks. To do
