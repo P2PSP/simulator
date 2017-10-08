@@ -11,7 +11,7 @@ class Peer_Malicious(Peer_STRPEDS):
 
     def __init__(self, id):
         super().__init__(id)
-        self.MPTR = 8
+        self.MPTR = 5
         self.chunks_sent_to_main_target = 0
         self.persistent_attack = True
         self.attacked_count = 0
