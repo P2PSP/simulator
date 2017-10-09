@@ -105,7 +105,7 @@ class Splitter_DBS(Simulator_stuff):
         #self.send(self.number_of_monitors, peer)
         message = struct.pack("H",self.number_of_monitors)
         peer_serve_socket.sendall(message)
-        print(self.id, ": sending list of peers of length =", self.peer_list)#, "to", peer)
+        print(self.id, ": sending list of peers of length =", len(self.peer_list))#, "to", peer)
         #self.send(len(self.peer_list), peer)
         message = struct.pack("H", len(self.peer_list))
         peer_serve_socket.sendall(message)
