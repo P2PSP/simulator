@@ -337,7 +337,7 @@ class Peer_DBS(sim):
                     try:
                         self.peer_list.remove(sender)
                         print(self.id, ":", sender, "removed from peer_list")
-                    except:
+                    except ValueError:
                         print(self.id, ": failed to remove peer", sender, "from peer_list", self.peer_list)
                     print(self.id, ":", "peer_list =", self.peer_list)
                         

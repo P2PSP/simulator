@@ -110,6 +110,7 @@ class Simulator():
             if type != "malicious" and peer.number_of_chunks_consumed >= chunks_before_leave and peer.player_alive:
                 print("simulator:", id, "reached the number of chunks consumed before leave", peer.number_of_chunks_consumed)
                 peer.player_alive = False
+            time.sleep(1)
 
         print("simulator:", id, "left the team")
 
