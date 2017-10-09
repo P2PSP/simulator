@@ -7,6 +7,8 @@ import time
 from queue import Queue
 from .common import Common
 from .peer_dbs import Peer_DBS
+from .simulator_stuff import Socket_print as socket
+import struct
 
 #from .simulator_stuff import Simulator_stuff as sim
 #from .simulator_stuff import Socket_queue
@@ -18,7 +20,7 @@ class Monitor_DBS(Peer_DBS):
 
     def receive_buffer_size(self):
         #(self.buffer_size, sender) = self.recv()
-        self.buffer_size = self.splitter_socket.recv(6)
+        self.buffer_size = struct.unpack("H", self.splitter_socket.recv(2))[0]
         print(self.id, ": received buffer_size =", self.buffer_size, "from S")
         self.buffer_size //= 2
 
@@ -32,7 +34,7 @@ class Monitor_DBS(Peer_DBS):
     #    print(self.id, ":", hello, "sent to", self.splitter)
 
     def complain(self, chunk_position):
-        lost = (chunk_position, "L")
+        lost = struct.pack("i1s", chunk_position, "L".encode('utf-8'))
         #self.sendto(lost,  self.splitter)
         self.team_socket.sendto(lost, self.splitter)
         print(self.id, ": lost chunk =", lost, "sent to", self.splitter)

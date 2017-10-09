@@ -8,7 +8,8 @@ from threading import Thread
 import time
 from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_print as socket
-import pickle
+import struct
+
 
 class Splitter_DBS(Simulator_stuff):
 
@@ -85,7 +86,7 @@ class Splitter_DBS(Simulator_stuff):
         
         print(self.id, ": waiting for outgoing peer")
         #(message, sender) = self.recv()
-        message = serve_socket.recv(19)
+        message = serve_socket.recv(5)
         print(self.id, ": received", message, "from", incoming_peer)
         
         self.insert_peer(incoming_peer)
@@ -96,25 +97,26 @@ class Splitter_DBS(Simulator_stuff):
     def send_buffer_size(self, peer_serve_socket):
         print(self.id, ": sending buffer size =", self.buffer_size)#, "to", peer)
         #self.send(self.buffer_size, peer)
-        message = self.buffer_size
+        message = struct.pack("H", self.buffer_size)
         peer_serve_socket.sendall(message)
         
     def send_the_number_of_peers(self, peer_serve_socket):
         print(self.id, ": sending number of monitors =", self.number_of_monitors)#, "to", peer)
         #self.send(self.number_of_monitors, peer)
-        message = self.number_of_monitors
+        message = struct.pack("H",self.number_of_monitors)
         peer_serve_socket.sendall(message)
         print(self.id, ": sending list of peers of length =", self.peer_list)#, "to", peer)
         #self.send(len(self.peer_list), peer)
-        peer_serve_socket.sendall(len(self.peer_list))
+        message = struct.pack("H", len(self.peer_list))
+        peer_serve_socket.sendall(message)
 
     def send_the_list_of_peers(self, peer_serve_socket):
         print(self.id, ": sending peer list =", self.peer_list)#, "to", peer)
         #self.send(self.peer_list, peer)
-        message = self.peer_list
-        peer_serve_socket.sendall(len(pickle.dumps(message)))
-        peer_serve_socket.sendall(message)
-        
+        for p in self.peer_list:
+            message = struct.pack("6s", p.encode('utf-8'))
+            peer_serve_socket.sendall(message)
+
     def insert_peer(self, peer):
         if peer not in self.peer_list:
             self.peer_list.append(peer)
@@ -175,7 +177,7 @@ class Splitter_DBS(Simulator_stuff):
                 print(self.id, ": marked for deletion", peer)
 
     def say_goodbye(self, peer):
-        goodbye = (-1,"G")
+        goodbye = struct.pack("i1s", -1, "G".encode('utf-8'))
         #self.sendto(goodbye, peer)
         self.team_socket.sendto(goodbye, peer)
         print(self.id, ": sent", goodbye, "to", peer)
@@ -191,10 +193,11 @@ class Splitter_DBS(Simulator_stuff):
 
     def moderate_the_team(self):
         while self.alive:
-            message, sender = self.team_socket.recvfrom(128)
-            
+            msg, sender = self.team_socket.recvfrom(5)
+            msg = struct.unpack("i1s", msg)
+            message = (msg[0], msg[1].decode('utf-8'))
             if (message[1] == "L"):
-                lost_chunk_number = self.get_lost_chunk_number(message[1])
+                lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)
             else:
                 self.process_goodbye(sender)
@@ -236,7 +239,7 @@ class Splitter_DBS(Simulator_stuff):
             try:
                 peer = self.peer_list[self.peer_number]
                 
-                message = (self.chunk_number, chunk)
+                message = struct.pack("i1s",self.chunk_number, chunk.encode('utf-8'))
 
                 self.send_chunk(message, peer)
 

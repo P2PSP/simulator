@@ -5,7 +5,6 @@ simulator module
 
 import time
 import socket
-import pickle
 
 
 class Simulator_stuff:
@@ -38,32 +37,23 @@ class Socket_print:
     def send(self, message):
         if __debug__:
             print("{:.6f} {} = [{}] => {}".format(time.time(), self.id, message, "S" ))
-        return self.sock.send(pickle.dumps(message))
+        return self.sock.send(message)
 
     def sendall(self, message):
         if __debug__:
             print("{:.6f} {} = [{}] => {}".format(time.time(), "S", message, self.id ))
-        return self.sock.sendall(pickle.dumps(message))
+        return self.sock.sendall(message)
         
     def sendto(self, message, dst):
         if __debug__:
             print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, message, dst))
         try:
-            msg = pickle.dumps(message)
-            return self.sock.sendto(msg, "/tmp/"+dst+"_udp")
+            return self.sock.sendto(message, "/tmp/"+dst+"_udp")
         except ConnectionRefusedError:
             print("The message", message, "has not been delivered because the destination", dst, "left the team")
-        
 
     def recv(self, length):
-        msg = self.sock.recv(length)
-        # print("MSG RECV", msg)
-        #try:
-        message = pickle.loads(msg)
-        #except:
-        #    msg = msg + self.sock.recv(1)
-        #    message = pickle.loads(msg)
-            
+        message = self.sock.recv(length)
         if __debug__:
             print("{:.6f} {} <= [{}]".format(time.time(), self.id, message))
         return message
@@ -72,7 +62,6 @@ class Socket_print:
         message, sender = self.sock.recvfrom(length)
         sender = sender.replace("/tmp/", "").replace("_tcp", "").replace("_udp","")
         # print("RECV_FROM", message, sender)
-        message = pickle.loads(message)
         if __debug__:
             print("{:.6f} {} <- [{}] = {}".format(time.time(), self.id, message, sender))
         return (message, sender)
@@ -90,3 +79,9 @@ class Socket_print:
 
     def listen(self, n):
         return self.sock.listen(n)
+
+    def htonl(x):
+        return socket.htonl(x)
+
+    def ntohl(x):
+        return socket.ntohl(x)
