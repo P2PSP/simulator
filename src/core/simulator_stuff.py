@@ -79,9 +79,3 @@ class Socket_print:
 
     def listen(self, n):
         return self.sock.listen(n)
-
-    def htonl(x):
-        return socket.htonl(x)
-
-    def ntohl(x):
-        return socket.ntohl(x)
