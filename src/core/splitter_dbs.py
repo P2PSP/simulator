@@ -47,7 +47,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def receive_chunk(self):
         #Simulator_stuff.LOCK.acquire(True,0.1)
-        time.sleep(0.1) # Simulates bit-rate control
+        time.sleep(0.05) # Simulates bit-rate control
         #C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
 
@@ -213,7 +213,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def start(self):
         Thread(target=self.run).start()
-        
+
     def run(self):
         self.setup_peer_connection_socket()
         self.setup_team_socket()

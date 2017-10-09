@@ -24,7 +24,6 @@ import numpy as np
 import platform
 import os
 
-
 class Simulator():
 
     P_IN = 0.4
@@ -271,10 +270,10 @@ class Simulator():
             drawing_log_file.write(";".join(map(str, m))+'\n')
 
             # Sometimes the queue doesn't receive Bye message.
-            try:
-                m = queue.get()
-            except:
-                break
+            #try:
+            m = queue.get()
+            #except:
+            #    break
 
         drawing_log_file.write("Bye")
         print("CLOSING STORE")
@@ -320,12 +319,12 @@ class Simulator():
                         self.update_net(None, (m[3], m[4]), "OUT")
 
             if m[0] == "T":
-                try:
-                    self.update_team(m[1], m[2], m[3])
-                except:
+                #try:
+                self.update_team(m[1], m[2], m[3])
+                #except:
                     # For visualization in real time (line is not fully written)
-                    print("simulator: ", "IndexError:", m, line)
-                    pass
+                #    print("simulator: ", "IndexError:", m, line)
+                #    pass
 
             if m[0] == "B":
                 # try:
@@ -443,7 +442,6 @@ class Simulator():
                 p.start()
                 self.processes["MP"+str(self.attended_mps+1)] = p.pid
                 self.attended_mps += 1
-
 
 if __name__ == "__main__":
     fire.Fire(Simulator)

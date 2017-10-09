@@ -7,6 +7,7 @@ import time
 import socket
 import pickle
 
+
 class Simulator_stuff:
 
     # Shared lists between malicious peers.

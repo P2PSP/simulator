@@ -39,7 +39,7 @@ class Splitter_SSS(Splitter_STRPEDS):
             # print("DIC", self.RECV_LIST.items(), "CHUNK", self.chunk_number-1)
             # print("SENT TO", prev_destination, "of", self.peer_list)
             skip = all(v == self.chunk_number-1 for p,v in sim.RECV_LIST.items())
-            time.sleep(0.01)
+            # time.sleep(0.01)
             # C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
 
         print("++++++++++++++ Receive chunk from SPLITTER +++++++++++++")
