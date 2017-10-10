@@ -37,6 +37,10 @@ class Peer_SSS(Peer_STRPEDS):
         print(self.id, ": ready to leave the team")
     # -------------------------------------------
 
+    def process_next_message(self):
+        message, sender = self.team_socket.recvfrom("isii")
+        return self.process_message(message, sender)
+    
     def process_message(self, message, sender):
 
         # ----------- simulation purposes ---------
@@ -135,6 +139,11 @@ class Peer_SSS(Peer_STRPEDS):
             # --------------------------------------
 
             self.received_chunks += 1
+            ############ For simulation purposes ################
+            if (self.received_chunks >= self.chunks_before_leave):
+                self.player_alive = False
+            ####################################################
+            
             if (sender == self.splitter):
                 while(self.receive_and_feed_counter < len(self.peer_list)):
                     peer = self.peer_list[self.receive_and_feed_counter]

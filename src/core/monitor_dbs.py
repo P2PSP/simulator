@@ -35,7 +35,7 @@ class Monitor_DBS(Peer_DBS):
 
     def complain(self, chunk_position):
         lost = (chunk_position, "L")
-        self.team_socket.sendto("i1s", lost, self.splitter)
+        self.team_socket.sendto("is", lost, self.splitter)
         print(self.id, ": lost chunk =", lost, "sent to", self.splitter)
 
     def play_chunk(self, chunk_number):

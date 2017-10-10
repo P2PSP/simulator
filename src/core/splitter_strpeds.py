@@ -61,7 +61,7 @@ class Splitter_STRPEDS(Splitter_DBS):
         self.send_the_list_of_peers(serve_socket)
 
         print(self.id, ": waiting for outgoing peer")
-        message = serve_socket.recv(19)
+        message = serve_socket.recv("i1s")
         print(self.id, ": received", message, "from", incoming_peer)
 
         self.insert_peer(incoming_peer)
@@ -135,9 +135,12 @@ class Splitter_STRPEDS(Splitter_DBS):
        # finally:
        #     pass
 
+    def send_chunk(self, chunk, peer):
+        self.team_socket.sendto("isi", chunk, peer)
+       
     def moderate_the_team(self):
         while self.alive:
-            message, sender = self.team_socket.recvfrom(128)
+            message, sender = self.team_socket.recvfrom("i1s6s")
 
             if (message[1] == "L"):
                 lost_chunk_number = self.get_lost_chunk_number(message)

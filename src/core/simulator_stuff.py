@@ -37,7 +37,6 @@ class Socket_print:
 
     def send(self, fmt, msg):
         params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
-        print("params", params)
         message = struct.pack(fmt, *params)
         if __debug__:
             print("{:.6f} {} = [{}] => {}".format(time.time(), self.id, msg, "S"))

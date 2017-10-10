@@ -12,13 +12,10 @@ peer_dbs module
 # those chunks that come from the origin peer which sent the chunk
 # <chunk>, until the requesting peer sends a [prune <origin>].
 
-import time
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Socket_print as socket
-import struct
-
 
 class Peer_DBS(sim):
 
@@ -84,11 +81,11 @@ class Peer_DBS(sim):
 
     def say_hello(self, peer):
         hello = (-1, "H")
-        self.team_socket.sendto("i1s", hello, peer)
+        self.team_socket.sendto("is", hello, peer)
         
     def say_goodbye(self, peer):
         goodbye = (-1, "G")
-        self.team_socket.sendto("i1s", goodbye, peer)
+        self.team_socket.sendto("is", goodbye, peer)
 
     def receive_buffer_size(self):
         #(self.buffer_size, sender) = self.recv()
@@ -177,11 +174,11 @@ class Peer_DBS(sim):
     def send_ready_for_receiving_chunks(self):
         ready = (1, "R")
         #self.send(ready, self.splitter)
-        self.splitter_socket.send("i1s", ready)
+        self.splitter_socket.send("is", ready)
         print(self.id, ": sent", ready, "to", self.splitter)
 
     def send_chunk(self, peer):
-        self.team_socket.sendto("i1s", self.receive_and_feed_previous, peer)
+        self.team_socket.sendto("is", self.receive_and_feed_previous, peer)
         self.sendto_counter += 1
 
     def is_a_control_message(self, message):
@@ -372,7 +369,7 @@ class Peer_DBS(sim):
         #content = self.recvfrom()
         #message = content[0]
         #sender = content[1]
-        message, sender = self.team_socket.recvfrom("i1s")
+        message, sender = self.team_socket.recvfrom("is")
         return self.process_message(message, sender)
 
     def polite_farewell(self):
@@ -381,7 +378,7 @@ class Peer_DBS(sim):
             #self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
             #self.team_socket.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
             self.send_chunk(self.peer_list[self.receive_and_feed_counter])
-            self.team_socket.recvfrom("i1s")
+            self.team_socket.recvfrom("is")
             self.receive_and_feed_counter += 1
 
         for peer in self.peer_list:

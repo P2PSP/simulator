@@ -45,6 +45,10 @@ class Splitter_SSS(Splitter_STRPEDS):
         print("++++++++++++++ Receive chunk from SPLITTER +++++++++++++")
         return "C"
 
+
+    def send_chunk(self, chunk, peer):
+        self.team_socket.sendto("isii", chunk, peer)
+    
     def run(self):
         self.setup_peer_connection_socket()
         self.setup_team_socket()

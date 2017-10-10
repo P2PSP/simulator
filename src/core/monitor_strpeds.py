@@ -14,8 +14,7 @@ class Monitor_STRPEDS(Peer_STRPEDS):
         print("STRPEDS initialized by monitor")
 
     def receive_buffer_size(self):
-        # (self.buffer_size, sender) = self.recv()
-        self.buffer_size = self.splitter_socket.recv(6)
+        self.buffer_size = self.splitter_socket.recv("H")
         print(self.id,": received buffer_size =", self.buffer_size, "from S")
         self.buffer_size //= 2
 
@@ -24,8 +23,8 @@ class Monitor_STRPEDS(Peer_STRPEDS):
         #-------------------------------------
 
     def complain(self, chunk_position):
-        lost = (chunk_position, "L")
-        self.team_socket.sendto(lost, self.splitter)
+        lost = (chunk_position, "L", self.id)
+        self.team_socket.sendto("iss", lost, self.splitter)
         print(self.id, ": lost chunk =", lost, "sent to", self.splitter)
 
     def play_chunk(self, chunk_number):

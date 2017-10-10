@@ -44,11 +44,11 @@ class Splitter_DBS(Simulator_stuff):
         
     def send_chunk(self, chunk, peer):
         #self.sendto(chunk, peer)
-        self.team_socket.sendto("i1s", chunk, peer)
+        self.team_socket.sendto("is", chunk, peer)
 
     def receive_chunk(self):
         #Simulator_stuff.LOCK.acquire(True,0.1)
-        time.sleep(0.1) # Simulates bit-rate control
+        time.sleep(0.2) # Simulates bit-rate control
         #C->Chunk, L->Los, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
 
@@ -86,7 +86,7 @@ class Splitter_DBS(Simulator_stuff):
         
         print(self.id, ": waiting for outgoing peer")
         #(message, sender) = self.recv()
-        message = serve_socket.recv("i1s")
+        message = serve_socket.recv("is")
         print(self.id, ": received", message, "from", incoming_peer)
         
         self.insert_peer(incoming_peer)
@@ -172,7 +172,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def say_goodbye(self, peer):
         goodbye = (-1, "G")
-        self.team_socket.sendto("i1s", goodbye, peer)
+        self.team_socket.sendto("is", goodbye, peer)
         #print(self.id, ": sent", goodbye, "to", peer)
 
     def remove_outgoing_peers(self):
@@ -186,7 +186,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def moderate_the_team(self):
         while self.alive:
-            message, sender = self.team_socket.recvfrom("i1s")
+            message, sender = self.team_socket.recvfrom("is")
             if (message[1] == "L"):
                 lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)

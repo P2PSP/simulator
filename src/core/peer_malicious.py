@@ -50,7 +50,7 @@ class Peer_Malicious(Peer_STRPEDS):
         sim.SHARED_LIST["regular"].append(self.main_target)
 
     def get_poisoned_chunk(self, chunk):
-        return (chunk[0],"B")
+        return (chunk[0], "B", chunk[2])
 
     def send_chunk(self, peer):
         poisoned_chunk = self.get_poisoned_chunk(self.receive_and_feed_previous)
@@ -58,26 +58,26 @@ class Peer_Malicious(Peer_STRPEDS):
         if self.persistent_attack:
             if peer == self.main_target:
                 if self.chunks_sent_to_main_target < self.MPTR:
-                    self.team_socket.sendto(poisoned_chunk, peer)
+                    self.team_socket.sendto("isi", poisoned_chunk, peer)
                     self.sendto_counter += 1
                     self.chunks_sent_to_main_target += 1
                     if __debug__:
                         print(self.id, "Attacking Main target", self.main_target, "attack", self.chunks_sent_to_main_target)
                 else:
                     self.all_attack()
-                    self.team_socket.sendto(poisoned_chunk, peer)
+                    self.team_socket.sendto("isi", poisoned_chunk, peer)
                     self.sendto_counter += 1
                     self.main_target = self.choose_main_target()
                     if __debug__:
                         print(self.id, "Attacking Main target", peer, ". Replaced by", self.main_target)
             else:
                 if peer in sim.SHARED_LIST["regular"]:
-                    self.team_socket.sendto(poisoned_chunk, peer)
+                    self.team_socket.sendto("isi", poisoned_chunk, peer)
                     self.sendto_counter += 1
                     if __debug__:
                         print(self.id, "All Attack:", peer)
                 else:
-                    self.team_socket.sendto(self.receive_and_feed_previous, peer)
+                    self.team_socket.sendto("isi", self.receive_and_feed_previous, peer)
                     self.sendto_counter += 1
                     if __debug__:
                         print(self.id, "No attack", peer)
@@ -87,5 +87,5 @@ class Peer_Malicious(Peer_STRPEDS):
 
         # TO-DO: on-off
         else:
-            self.team_socket.sendto(self.receive_and_feed_previous, peer)
+            self.team_socket.sendto("isi", self.receive_and_feed_previous, peer)
             self.sendto_counter += 1

@@ -17,6 +17,14 @@ class Peer_STRPEDS(Peer_DBS):
         # Not needed for simulation
         return NotImplementedError
 
+    def say_hello(self, peer):
+        hello = (-1, "H", -1)
+        self.team_socket.sendto("isi", hello, peer)
+        
+    def say_goodbye(self, peer):
+        goodbye = (-1, "G", -1)
+        self.team_socket.sendto("isi", goodbye, peer)
+    
     def process_bad_message(self, message, sender):
         print(self.id, "adding", sender, "to bad list", message)
         self.bad_peers.append(sender)
@@ -27,7 +35,7 @@ class Peer_STRPEDS(Peer_DBS):
     def check_message(self, message, sender):
         if sender in self.bad_peers:
             if __debug__:
-                print(self.id, "Sender is in bad peer list:", sender) 
+                print(self.id, "Sender is in bad peer list:", sender)
             return False
 
         if not self.is_a_control_message(message):
@@ -41,11 +49,19 @@ class Peer_STRPEDS(Peer_DBS):
             return True
 
     def handle_bad_peers_request(self):
-        # self.sendto((-1, "S", self.bad_peers), self.splitter)
-        self.team_socket.sendto((-1, "S", self.bad_peers), self.splitter)
+        for b in self.bad_peers:
+            self.team_socket.sendto("is6s", (-1, "S", b), self.splitter)
         if __debug__:
             print(self.id, "Bad peers sent to the Splitter", self.bad_peers)
         return -1
+
+    def send_chunk(self, peer):
+        self.team_socket.sendto("isi", self.receive_and_feed_previous, peer)
+        self.sendto_counter += 1
+    
+    def process_next_message(self):
+        message, sender = self.team_socket.recvfrom("isi")
+        return self.process_message(message, sender)
 
     def process_message(self, message, sender):
         if sender in self.bad_peers:
