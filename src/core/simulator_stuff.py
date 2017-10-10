@@ -5,6 +5,7 @@ simulator module
 
 import time
 import socket
+import struct
 
 
 class Simulator_stuff:
@@ -34,9 +35,11 @@ class Socket_print:
     def set_id(self, id):
         self.id = id
 
-    def send(self, message):
+    def send(self, fmt, msg):
+        params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
+        message = struct.pack(fmt, params)
         if __debug__:
-            print("{:.6f} {} = [{}] => {}".format(time.time(), self.id, message, "S" ))
+            print("{:.6f} {} = [{}] => {}".format(time.time(), self.id, msg, "S"))
         return self.sock.send(message)
 
     def sendall(self, message):
@@ -45,8 +48,8 @@ class Socket_print:
         return self.sock.sendall(message)
         
     def sendto(self, message, dst):
-        if __debug__:
-            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, message, dst))
+        #if __debug__:
+            #print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, message, dst))
         try:
             return self.sock.sendto(message, "/tmp/"+dst+"_udp")
         except ConnectionRefusedError:
@@ -62,8 +65,8 @@ class Socket_print:
         message, sender = self.sock.recvfrom(length)
         sender = sender.replace("/tmp/", "").replace("_tcp", "").replace("_udp","")
         # print("RECV_FROM", message, sender)
-        if __debug__:
-            print("{:.6f} {} <- [{}] = {}".format(time.time(), self.id, message, sender))
+        #if __debug__:
+        #    print("{:.6f} {} <- [{}] = {}".format(time.time(), self.id, message, sender))
         return (message, sender)
 
     def connect(self, path):

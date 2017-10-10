@@ -45,6 +45,10 @@ class Splitter_DBS(Simulator_stuff):
     def send_chunk(self, chunk, peer):
         #self.sendto(chunk, peer)
         self.team_socket.sendto(chunk, peer)
+        if __debug__:
+            msg = struct.unpack("i1s", chunk)
+            message = (msg[0], msg[1].decode('utf-8'))
+            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, message, peer))
 
     def receive_chunk(self):
         #Simulator_stuff.LOCK.acquire(True,0.1)
@@ -180,7 +184,9 @@ class Splitter_DBS(Simulator_stuff):
         goodbye = struct.pack("i1s", -1, "G".encode('utf-8'))
         #self.sendto(goodbye, peer)
         self.team_socket.sendto(goodbye, peer)
-        print(self.id, ": sent", goodbye, "to", peer)
+        if __debug__:
+            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, (-1, "G"), peer))
+        #print(self.id, ": sent", goodbye, "to", peer)
 
     def remove_outgoing_peers(self):
         for p in self.outgoing_peer_list:
@@ -196,6 +202,7 @@ class Splitter_DBS(Simulator_stuff):
             msg, sender = self.team_socket.recvfrom(5)
             msg = struct.unpack("i1s", msg)
             message = (msg[0], msg[1].decode('utf-8'))
+            print("{:.6f} {} <- [{}] = {}".format(time.time(), self.id, message, sender))
             if (message[1] == "L"):
                 lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)

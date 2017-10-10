@@ -36,6 +36,7 @@ class Peer_DBS(sim):
         self.losses = 0                      #
         self.played = 0                      #
         self.number_of_chunks_consumed = 0   #
+        self.chunks_before_leave = 0              #
         # ---------------------------------- #
 
         self.max_chunk_debt = self.MAX_CHUNK_DEBT
@@ -86,7 +87,9 @@ class Peer_DBS(sim):
         #hello = (-1, "H", time.time())
         #self.sendto(hello, peer)
         self.team_socket.sendto(hello, peer)
-        print(self.id, ": sent", hello, "to", peer)
+        #print(self.id, ": sent", hello, "to", peer)
+        if __debug__:
+            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, (-1, "H"), peer))
         #(m, s) = self.recvfrom()
         #end = time.time()
         #self.RTTs.append((s, end-start))
@@ -95,7 +98,9 @@ class Peer_DBS(sim):
         goodbye = struct.pack("i1s", -1, "G".encode('utf-8'))
         #self.sendto(goodbye, peer)
         self.team_socket.sendto(goodbye, peer)
-        print(self.id, ": sent", goodbye, "to", peer)
+        if __debug__:
+            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, (-1, "G"), peer))
+        #print(self.id, ": sent", goodbye, "to", peer)
 
     def receive_buffer_size(self):
         #(self.buffer_size, sender) = self.recv()
@@ -175,9 +180,6 @@ class Peer_DBS(sim):
         self.send_hellos()
 
     def connect_to_the_splitter(self):
-        #hello = (-1, "P")
-        #self.send(hello, self.splitter)
-        #print(self.id, ": sent", hello, "to", self.splitter)
         self.splitter_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.splitter_socket.set_id(self.id)
         self.splitter_socket.bind(self.id+"_tcp")
@@ -185,14 +187,16 @@ class Peer_DBS(sim):
         print("Connect to the splitter")
         
     def send_ready_for_receiving_chunks(self):
-        ready = struct.pack("i1s", -1, "R".encode('utf-8'))
+        ready = (1, "R")
         #self.send(ready, self.splitter)
-        self.splitter_socket.send(ready)
+        self.splitter_socket.send("i1s", ready)
         print(self.id, ": sent", ready, "to", self.splitter)
 
     def send_chunk(self, peer):
         #self.sendto(self.receive_and_feed_previous, peer)
         self.team_socket.sendto(struct.pack("i1s", self.receive_and_feed_previous[0], self.receive_and_feed_previous[1].encode('utf-8')), peer)
+        if __debug__:
+            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, (self.receive_and_feed_previous[0], self.receive_and_feed_previous[1]), peer))
         self.sendto_counter += 1
 
     def is_a_control_message(self, message):
@@ -239,6 +243,12 @@ class Peer_DBS(sim):
             # ------------------------------------------------------------------------------- #
 
             self.received_chunks += 1
+            
+            ############ For simulation purposes ################
+            if (self.received_chunks >= self.chunks_before_leave):
+                self.player_alive = False
+            ####################################################
+                
             if (sender == self.splitter):
                 while((self.peer_index < len(self.peer_list)) and \
                       (self.peer_index > 0 or self.modified_list)):
@@ -319,7 +329,6 @@ class Peer_DBS(sim):
                 print(self.id, ": control message received:", message)
 
             if message[1] == 'H': # Hello
-
                 print(self.id, ": received", message, "from", sender)
                 '''
                 # Compute RTT of hello received from peer "sender"
@@ -381,13 +390,15 @@ class Peer_DBS(sim):
         msg, sender = self.team_socket.recvfrom(5)
         msg = struct.unpack("i1s", msg)
         message = (msg[0], msg[1].decode('utf-8'))
+        print("{:.6f} {} <- [{}] = {}".format(time.time(), self.id, message, sender))
         return self.process_message(message, sender)
 
     def polite_farewell(self):
         print(self.id, ": (see you later)")
         while (self.receive_and_feed_counter < len(self.peer_list)):
             #self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
-            self.team_socket.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
+            #self.team_socket.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
+            self.send_chunk(self.peer_list[self.receive_and_feed_counter])
             self.team_socket.recvfrom(5)
             self.receive_and_feed_counter += 1
 

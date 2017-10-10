@@ -96,6 +96,7 @@ class Simulator():
                 peer = Peer_SSS(id)
         print("simulator:", id, ": alive till consuming", chunks_before_leave, "chunks")
 
+        peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
         peer.connect_to_the_splitter()
         peer.receive_buffer_size()
@@ -104,14 +105,16 @@ class Simulator():
         peer.receive_the_list_of_peers()
         peer.send_ready_for_receiving_chunks()
         peer.buffer_data()
-        peer.start()
+        #peer.start()
+        peer.run()
 
+        '''
         while not peer.ready_to_leave_the_team:
             if type != "malicious" and peer.number_of_chunks_consumed >= chunks_before_leave and peer.player_alive:
                 print("simulator:", id, "reached the number of chunks consumed before leave", peer.number_of_chunks_consumed)
                 peer.player_alive = False
             time.sleep(1)
-
+        '''
         print("simulator:", id, "left the team")
 
     def draw_net(self):
