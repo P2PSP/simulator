@@ -37,13 +37,14 @@ class Socket_print:
 
     def send(self, fmt, msg):
         params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
-        message = struct.pack(fmt, params)
+        print("params", params)
+        message = struct.pack(fmt, *params)
         if __debug__:
             print("{:.6f} {} = [{}] => {}".format(time.time(), self.id, msg, "S"))
         return self.sock.send(message)
 
     def sendall(self, fmt, msg):
-        param = [msg.encode('utf-8') if type(msg) is str else msg]
+        param = [msg.encode('utf-8') if type(msg) is str else msg][0]
         message = struct.pack(fmt, param)
         if __debug__:
             print("{:.6f} {} = [{}] => {}".format(time.time(), "S", msg, self.id ))
@@ -51,18 +52,18 @@ class Socket_print:
         
     def sendto(self, fmt, msg, dst):
         params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
-        message = struct.pack(fmt, params)
+        message = struct.pack(fmt, *params)
         if __debug__:
             print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, msg, dst))
         try:
             return self.sock.sendto(message, "/tmp/"+dst+"_udp")
         except ConnectionRefusedError:
-            print("The message", message, "has not been delivered because the destination", dst, "left the team")
+            print("The message", msg, "has not been delivered because the destination", dst, "left the team")
 
     def recv(self, fmt):
         msg = self.sock.recv(struct.calcsize(fmt))
         msg_coded = struct.unpack(fmt, msg)[0]
-        message = [msg_coded.decode('utf-8').rstrip('\x00') if type(msg_coded) is bytes else msg_coded]
+        message = [msg_coded.decode('utf-8').rstrip('\x00') if type(msg_coded) is bytes else msg_coded][0]
         if __debug__:
             print("{:.6f} {} <= [{}]".format(time.time(), self.id, message))
         return message
@@ -70,9 +71,8 @@ class Socket_print:
     def recvfrom(self, fmt):
         msg, sender = self.sock.recvfrom(struct.calcsize(fmt))
         msg_coded = struct.unpack(fmt, msg)
-        message = tuple([x.decode('utf-8') if type(x) is bytes else x for x in msg])
+        message = tuple([x.decode('utf-8') if type(x) is bytes else x for x in msg_coded])
         sender = sender.replace("/tmp/", "").replace("_tcp", "").replace("_udp","")
-        # print("RECV_FROM", message, sender)
         if __debug__:
             print("{:.6f} {} <- [{}] = {}".format(time.time(), self.id, message, sender))
         return (message, sender)
