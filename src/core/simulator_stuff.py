@@ -55,11 +55,13 @@ class Socket_print:
         if __debug__:
             print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, msg, dst))
         try:
-            sendto_value = self.sock.sendto(message, "/tmp/"+dst+"_udp")
+            sendto_value = self.sock.sendto(message, socket.MSG_DONTWAIT, "/tmp/"+dst+"_udp")
             print("SENDTO_VALUE", sendto_value)
             return sendto_value
         except ConnectionRefusedError:
             print("The message", msg, "has not been delivered because the destination", dst, "left the team")
+        except KeyboardInterrupt:
+            print("SENDTO_EXCEPT", fmt, msg, dst, message, params)
 
     def recv(self, fmt):
         msg = self.sock.recv(struct.calcsize(fmt))
@@ -91,3 +93,6 @@ class Socket_print:
 
     def listen(self, n):
         return self.sock.listen(n)
+
+    def close(self):
+        return self.sock.close()

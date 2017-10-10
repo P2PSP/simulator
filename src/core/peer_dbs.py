@@ -180,6 +180,7 @@ class Peer_DBS(sim):
         #self.send(ready, self.splitter)
         self.splitter_socket.send("s", ready)
         print(self.id, ": sent", ready, "to", self.splitter)
+        #self.splitter_socket.close()
 
     def send_chunk(self, peer):
         self.team_socket.sendto("is", self.receive_and_feed_previous, peer)

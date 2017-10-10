@@ -93,7 +93,8 @@ class Splitter_DBS(Simulator_stuff):
         # ------------------
         Simulator_stuff.FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
         # ------------------
-        
+        serve_socket.close()
+
     def send_buffer_size(self, peer_serve_socket):
         print(self.id, ": sending buffer size =", self.buffer_size)#, "to", peer)
         #self.send(self.buffer_size, peer)
@@ -110,7 +111,7 @@ class Splitter_DBS(Simulator_stuff):
         #self.send(self.peer_list, peer)
         for p in self.peer_list:
             peer_serve_socket.sendall("6s", p)
-            time.sleep(0.05)
+            #time.sleep(0.05)
 
     def insert_peer(self, peer):
         if peer not in self.peer_list:
