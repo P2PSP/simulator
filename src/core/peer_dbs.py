@@ -83,29 +83,17 @@ class Peer_DBS(sim):
         self.splitter = splitter
 
     def say_hello(self, peer):
-        hello = struct.pack("i1s", -1, "H".encode('utf-8'))
-        #hello = (-1, "H", time.time())
-        #self.sendto(hello, peer)
-        self.team_socket.sendto(hello, peer)
-        #print(self.id, ": sent", hello, "to", peer)
-        if __debug__:
-            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, (-1, "H"), peer))
-        #(m, s) = self.recvfrom()
-        #end = time.time()
-        #self.RTTs.append((s, end-start))
+        hello = (-1, "H")
+        self.team_socket.sendto("i1s", hello, peer)
         
     def say_goodbye(self, peer):
-        goodbye = struct.pack("i1s", -1, "G".encode('utf-8'))
-        #self.sendto(goodbye, peer)
-        self.team_socket.sendto(goodbye, peer)
-        if __debug__:
-            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, (-1, "G"), peer))
-        #print(self.id, ": sent", goodbye, "to", peer)
+        goodbye = (-1, "G")
+        self.team_socket.sendto("i1s", goodbye, peer)
 
     def receive_buffer_size(self):
         #(self.buffer_size, sender) = self.recv()
         
-        self.buffer_size = struct.unpack("H", self.splitter_socket.recv(2))[0]
+        self.buffer_size = self.splitter_socket.recv("H")
         print(self.id, ": received buffer_size =", self.buffer_size, "from", self.splitter)
 
         # --- Only for simulation purposes ---------- #
@@ -114,10 +102,10 @@ class Peer_DBS(sim):
 
     def receive_the_number_of_peers(self):
         #(self.number_of_monitors, sender) = self.recv()
-        self.number_of_monitors = struct.unpack("H", self.splitter_socket.recv(2))[0]
+        self.number_of_monitors = self.splitter_socket.recv("H")
         print(self.id, ": received number_of_monitors =", self.number_of_monitors, "from", self.splitter)
         #(self.number_of_peers, sender) = self.recv()
-        self.number_of_peers = struct.unpack("H", self.splitter_socket.recv(2))[0]
+        self.number_of_peers = self.splitter_socket.recv("H")
         print(self.id, ": received number_of_peers =", self.number_of_peers, "from", self.splitter)
 
     # Thread(target=self.run).start()
@@ -160,7 +148,7 @@ class Peer_DBS(sim):
 
         peers_pending_of_reception = self.number_of_peers
         while peers_pending_of_reception > 0:
-            peer = struct.unpack("6s", self.splitter_socket.recv(6))[0].decode('utf-8').rstrip('\x00')
+            peer = self.splitter_socket.recv("6s")
             self.peer_list.append(peer)
             peers_pending_of_reception -= 1
             
@@ -193,10 +181,7 @@ class Peer_DBS(sim):
         print(self.id, ": sent", ready, "to", self.splitter)
 
     def send_chunk(self, peer):
-        #self.sendto(self.receive_and_feed_previous, peer)
-        self.team_socket.sendto(struct.pack("i1s", self.receive_and_feed_previous[0], self.receive_and_feed_previous[1].encode('utf-8')), peer)
-        if __debug__:
-            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, (self.receive_and_feed_previous[0], self.receive_and_feed_previous[1]), peer))
+        self.team_socket.sendto("i1s", self.receive_and_feed_previous, peer)
         self.sendto_counter += 1
 
     def is_a_control_message(self, message):
@@ -387,10 +372,7 @@ class Peer_DBS(sim):
         #content = self.recvfrom()
         #message = content[0]
         #sender = content[1]
-        msg, sender = self.team_socket.recvfrom(5)
-        msg = struct.unpack("i1s", msg)
-        message = (msg[0], msg[1].decode('utf-8'))
-        print("{:.6f} {} <- [{}] = {}".format(time.time(), self.id, message, sender))
+        message, sender = self.team_socket.recvfrom("i1s")
         return self.process_message(message, sender)
 
     def polite_farewell(self):
@@ -399,7 +381,7 @@ class Peer_DBS(sim):
             #self.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
             #self.team_socket.sendto(self.receive_and_feed_previous, self.peer_list[self.receive_and_feed_counter])
             self.send_chunk(self.peer_list[self.receive_and_feed_counter])
-            self.team_socket.recvfrom(5)
+            self.team_socket.recvfrom("i1s")
             self.receive_and_feed_counter += 1
 
         for peer in self.peer_list:
