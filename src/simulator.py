@@ -62,9 +62,10 @@ class Simulator():
         elif self.set_of_rules == "cis-sss":
             splitter = Splitter_SSS()
 
-        splitter.start()
-        while splitter.alive:
-            time.sleep(1)
+        #splitter.start()
+        splitter.run()
+        #while splitter.alive:
+        #    time.sleep(1)
 
     def run_a_peer(self, splitter_id, type, id, first_monitor=False):
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious

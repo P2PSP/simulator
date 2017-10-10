@@ -61,7 +61,7 @@ class Splitter_STRPEDS(Splitter_DBS):
         self.send_the_list_of_peers(serve_socket)
 
         print(self.id, ": waiting for outgoing peer")
-        message = serve_socket.recv("i1s")
+        message = serve_socket.recv("s")
         print(self.id, ": received", message, "from", incoming_peer)
 
         self.insert_peer(incoming_peer)

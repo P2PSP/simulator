@@ -48,7 +48,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def receive_chunk(self):
         #Simulator_stuff.LOCK.acquire(True,0.1)
-        time.sleep(0.2) # Simulates bit-rate control
+        time.sleep(0.05) # Simulates bit-rate control
         #C->Chunk, L->Los, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
 
@@ -86,7 +86,7 @@ class Splitter_DBS(Simulator_stuff):
         
         print(self.id, ": waiting for outgoing peer")
         #(message, sender) = self.recv()
-        message = serve_socket.recv("is")
+        message = serve_socket.recv("s")
         print(self.id, ": received", message, "from", incoming_peer)
         
         self.insert_peer(incoming_peer)
@@ -110,6 +110,7 @@ class Splitter_DBS(Simulator_stuff):
         #self.send(self.peer_list, peer)
         for p in self.peer_list:
             peer_serve_socket.sendall("6s", p)
+            time.sleep(0.05)
 
     def insert_peer(self, peer):
         if peer not in self.peer_list:

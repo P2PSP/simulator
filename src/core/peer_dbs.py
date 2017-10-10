@@ -147,7 +147,11 @@ class Peer_DBS(sim):
         while peers_pending_of_reception > 0:
             peer = self.splitter_socket.recv("6s")
             self.peer_list.append(peer)
+            self.debt[peer] = 0
             peers_pending_of_reception -= 1
+            
+            self.say_hello(peer)
+            print(self.id, ": hello sent to", peer)
             
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
 
@@ -162,7 +166,7 @@ class Peer_DBS(sim):
         # one flooding list that says that the chunk received from the
         # splitter must be forwarded to the rest of the team
         self.flooding_list[self.id] = self.peer_list
-        self.send_hellos()
+        #self.send_hellos()
 
     def connect_to_the_splitter(self):
         self.splitter_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -172,9 +176,9 @@ class Peer_DBS(sim):
         print("Connect to the splitter")
         
     def send_ready_for_receiving_chunks(self):
-        ready = (1, "R")
+        ready = ("R")
         #self.send(ready, self.splitter)
-        self.splitter_socket.send("is", ready)
+        self.splitter_socket.send("s", ready)
         print(self.id, ": sent", ready, "to", self.splitter)
 
     def send_chunk(self, peer):
@@ -447,6 +451,7 @@ class Peer_DBS(sim):
             if not self.player_alive:
                 self.say_goodbye(self.splitter)
         self.polite_farewell()
+        self.team_socket.close()
 
     def am_i_a_monitor(self):
         return self.number_of_peers < self.number_of_monitors
