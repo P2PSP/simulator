@@ -16,6 +16,7 @@ from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Socket_print as socket
+import sys
 
 class Peer_DBS(sim):
 
@@ -172,7 +173,13 @@ class Peer_DBS(sim):
         self.splitter_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.splitter_socket.set_id(self.id)
         self.splitter_socket.bind(self.id+"_tcp")
-        self.splitter_socket.connect(self.splitter)
+        try:
+            self.splitter_socket.connect(self.splitter)
+        except ConnectionRefusedError as e:
+            sys.stderr.write("Error en Peer {}".format(self.id))
+            sys.stderr.write("{}".format(e))
+            raise
+            
         print("Connect to the splitter")
         
     def send_ready_for_receiving_chunks(self):

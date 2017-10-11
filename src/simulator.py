@@ -408,7 +408,7 @@ class Simulator():
                 self.current_round = m[1]
                 r = np.random.uniform(0, 1)
                 if r <= Simulator.P_IN:
-                    self.addPeer()                   
+                    self.addPeer()
             m = queue.get()
 
         sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))

@@ -9,6 +9,7 @@ import time
 from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_print as socket
 import struct
+import sys
 
 
 class Splitter_DBS(Simulator_stuff):
@@ -44,7 +45,14 @@ class Splitter_DBS(Simulator_stuff):
         
     def send_chunk(self, chunk, peer):
         #self.sendto(chunk, peer)
-        self.team_socket.sendto("is", chunk, peer)
+        try:
+            self.team_socket.sendto("is", chunk, peer)
+        except BlockingIOError:
+            sys.stderr.write("sendto: full queue\n")
+        else:
+            self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
+
+
 
     def receive_chunk(self):
         #Simulator_stuff.LOCK.acquire(True,0.1)
@@ -234,10 +242,10 @@ class Splitter_DBS(Simulator_stuff):
                 
                 message = (self.chunk_number, chunk)
 
+                self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
+
                 self.send_chunk(message, peer)
 
-                self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
-                self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER                
                 self.compute_next_peer_number(peer)
             except IndexError:
                 print(self.id, ": the monitor peer has died!")

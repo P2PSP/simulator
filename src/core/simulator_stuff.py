@@ -6,7 +6,7 @@ simulator module
 import time
 import socket
 import struct
-
+import sys
 
 class Simulator_stuff:
 
@@ -62,10 +62,16 @@ class Socket_print:
             print("The message", msg, "has not been delivered because the destination", dst, "left the team")
         except KeyboardInterrupt:
             print("SENDTO_EXCEPT", fmt, msg, dst, message, params)
+        except BlockingIOError:
+            raise
 
     def recv(self, fmt):
         msg = self.sock.recv(struct.calcsize(fmt))
-        msg_coded = struct.unpack(fmt, msg)[0]
+        try:
+            msg_coded = struct.unpack(fmt, msg)[0]
+        except struct.error:
+            sys.stderr.write("ERROR: {} len {} expected {}".format(msg, len(msg), struct.calcsize(fmt)))
+
         message = [msg_coded.decode('utf-8').rstrip('\x00') if type(msg_coded) is bytes else msg_coded][0]
         if __debug__:
             print("{:.6f} {} <= [{}]".format(time.time(), self.id, message))
