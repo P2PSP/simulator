@@ -7,6 +7,7 @@ from .splitter_strpeds import Splitter_STRPEDS
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 import time
+import sys
 
 
 class Splitter_SSS(Splitter_STRPEDS):
@@ -47,7 +48,12 @@ class Splitter_SSS(Splitter_STRPEDS):
 
 
     def send_chunk(self, chunk, peer):
-        self.team_socket.sendto("isii", chunk, peer)
+        try:
+            self.team_socket.sendto("isii", chunk, peer)
+        except BlockingIOError:
+            sys.stderr.write("sendto: full queue\n")
+        else:
+            self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
     
     def run(self):
         self.setup_peer_connection_socket()
@@ -73,11 +79,10 @@ class Splitter_SSS(Splitter_STRPEDS):
             try:
                 peer = self.peer_list[self.peer_number]
                 message = (self.chunk_number, chunk, self.current_round, self.t)
-                
-                self.send_chunk(message, peer)
-
                 self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
-                self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER                
+
+                self.send_chunk(message, peer)
+            
                 self.compute_next_peer_number(peer)
                 print("------> Next Peer Number ----->", self.peer_number)
             except IndexError:

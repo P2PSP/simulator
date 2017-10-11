@@ -395,7 +395,7 @@ class Peer_DBS(sim):
 
         for peer in self.peer_list:
             self.say_goodbye(peer)
-
+            
         self.ready_to_leave_the_team = True
         print(self.id, ": ready to leave the team")
 

@@ -7,6 +7,7 @@ from .splitter_dbs import Splitter_DBS
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 import random
+import sys
 
 
 class Splitter_STRPEDS(Splitter_DBS):
@@ -39,6 +40,10 @@ class Splitter_STRPEDS(Splitter_DBS):
         #Not needed for simulation
         return NotImplementedError
 
+    def say_goodbye(self, peer):
+        goodbye = (-1, "G", -1)
+        self.team_socket.sendto("isi", goodbye, peer)
+    
     def handle_a_peer_arrival(self, connection):
         
         serve_socket = connection[0]
@@ -70,12 +75,11 @@ class Splitter_STRPEDS(Splitter_DBS):
         # ------------------
     
     def process_bad_peers_message(self, message, sender):
-        bad_list = message[2]
-        for bad_peer in bad_list:
-            if sender in self.trusted_peers:
-                self.handle_bad_peer_from_trusted(bad_peer, sender)
-            else:
-                self.handle_bad_peer_from_regular(bad_peer, sender)
+        bad_peer = message[2]
+        if sender in self.trusted_peers:
+            self.handle_bad_peer_from_trusted(bad_peer, sender)
+        else:
+            self.handle_bad_peer_from_regular(bad_peer, sender)
 
     def handle_bad_peer_from_trusted(self, bad_peer, sender):
         self.add_complaint(bad_peer, sender)
@@ -136,11 +140,16 @@ class Splitter_STRPEDS(Splitter_DBS):
        #     pass
 
     def send_chunk(self, chunk, peer):
-        self.team_socket.sendto("isi", chunk, peer)
-       
+        try:
+            self.team_socket.sendto("isi", chunk, peer)
+        except BlockingIOError:
+            sys.stderr.write("sendto: full queue\n")
+        else:
+            self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
+
     def moderate_the_team(self):
         while self.alive:
-            message, sender = self.team_socket.recvfrom("i1s6s")
+            message, sender = self.team_socket.recvfrom("is6s")
 
             if (message[1] == "L"):
                 lost_chunk_number = self.get_lost_chunk_number(message)
@@ -186,11 +195,10 @@ class Splitter_STRPEDS(Splitter_DBS):
             try:
                 peer = self.peer_list[self.peer_number]
                 message = (self.chunk_number, chunk, self.current_round)
-                
+                self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
+
                 self.send_chunk(message, peer)
 
-                self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
-                self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER                
                 self.compute_next_peer_number(peer)
             except IndexError:
                 print("The monitor peer has died!")

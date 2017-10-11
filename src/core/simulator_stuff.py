@@ -8,6 +8,7 @@ import socket
 import struct
 import sys
 
+
 class Simulator_stuff:
 
     # Shared lists between malicious peers.
@@ -79,8 +80,16 @@ class Socket_print:
 
     def recvfrom(self, fmt):
         msg, sender = self.sock.recvfrom(struct.calcsize(fmt))
-        msg_coded = struct.unpack(fmt, msg)
-        message = tuple([x.decode('utf-8').rstrip('\x00') if type(x) is bytes else x for x in msg_coded])
+        try:
+            msg_coded = struct.unpack(fmt, msg)
+        except struct.error:
+            sys.stderr.write("ERROR: {} len {} expected {}".format(msg, len(msg), struct.calcsize(fmt)))
+
+        try:
+            message = tuple([x.decode('utf-8').rstrip('\x00') if type(x) is bytes else x for x in msg_coded])
+        except UnicodeDecodeError as e:
+            sys.stderr.write("UNICODEERROR msg {} msg_coded{}\n".format(msg, msg_coded))
+            sys.stderr.write("{}".format(e))
         sender = sender.replace("/tmp/", "").replace("_tcp", "").replace("_udp","")
         if __debug__:
             print("{:.6f} {} <- [{}] = {}".format(time.time(), self.id, message, sender))

@@ -22,8 +22,12 @@ class Peer_STRPEDS(Peer_DBS):
         self.team_socket.sendto("isi", hello, peer)
         
     def say_goodbye(self, peer):
-        goodbye = (-1, "G", -1)
-        self.team_socket.sendto("isi", goodbye, peer)
+        if peer == self.splitter:
+            goodbye = (-1, "G", self.id)
+            self.team_socket.sendto("is6s", goodbye, peer)
+        else:
+            goodbye = (-1, "G", -1)
+            self.team_socket.sendto("isi", goodbye, peer)
     
     def process_bad_message(self, message, sender):
         print(self.id, "adding", sender, "to bad list", message)
