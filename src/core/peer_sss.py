@@ -37,6 +37,18 @@ class Peer_SSS(Peer_STRPEDS):
         print(self.id, ": ready to leave the team")
     # -------------------------------------------
 
+    def say_hello(self, peer):
+        hello = (-1, "H", -1, -1)
+        self.team_socket.sendto("isii", hello, peer)
+        
+    def say_goodbye(self, peer):
+        if peer == self.splitter:
+            goodbye = (-1, "G", self.id)
+            self.team_socket.sendto("is6s", goodbye, peer)
+        else:
+            goodbye = (-1, "G", -1, -1)
+            self.team_socket.sendto("isii", goodbye, peer)
+    
     def process_next_message(self):
         message, sender = self.team_socket.recvfrom("isii")
         return self.process_message(message, sender)
@@ -92,12 +104,12 @@ class Peer_SSS(Peer_STRPEDS):
         if ((current_round-1) in self.t) and (self.first_round != (current_round-1)):
             if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
                 # self.sendto(self.receive_and_feed_previous, peer)
-                self.team_socket.sendto(self.receive_and_feed_previous, peer)
+                self.team_socket.sendto("isii", self.receive_and_feed_previous, peer)
                 self.sendto_counter += 1
             else:
                 print("###########=================>>>>", self.id, "Need more shares, I had", self.t[(current_round-1)], "from", self.splitter_t[(current_round-1)], "needed")
                 #self.sendto(encrypted_chunk, peer)
-                self.team_socket.sendto(encrypted_chunk, peer)
+                self.team_socket.sendto("isii", encrypted_chunk, peer)
                 self.sendto_counter += 1
         else:
             if (current_round-1) == self.first_round:
@@ -106,7 +118,7 @@ class Peer_SSS(Peer_STRPEDS):
                 print(self.id, "is my first round")
                 self.first_round = current_round
             # self.sendto(self.receive_and_feed_previous, peer)
-            self.team_socket.sendto(self.receive_and_feed_previous, peer)
+            self.team_socket.sendto("isii", self.receive_and_feed_previous, peer)
             self.sendto_counter += 1
 
     def process_message_burst(self, message, sender):
@@ -145,8 +157,8 @@ class Peer_SSS(Peer_STRPEDS):
             ####################################################
             
             if (sender == self.splitter):
-                while(self.receive_and_feed_counter < len(self.peer_list)):
-                    peer = self.peer_list[self.receive_and_feed_counter]
+                while(self.peer_index < len(self.peer_list)):
+                    peer = self.peer_list[self.peer_index]
                     self.receive_and_feed_previous = message
 
                     self.send_chunk(peer)
@@ -158,7 +170,7 @@ class Peer_SSS(Peer_STRPEDS):
                         # self.peer_list.remove(peer)
                         # sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, peer))
                     #else:
-                    self.receive_and_feed_counter += 1
+                    self.peer_index += 1
 
                 # Modifying the first chunk to play (it increases the delay)
                 #if (not self.receive_and_feed_previous):
@@ -166,7 +178,7 @@ class Peer_SSS(Peer_STRPEDS):
                     #print(self.id,"First chunk to play modified", str(self.played_chunk))
 
                 self.modified_list = False
-                self.receive_and_feed_counter = 0
+                self.peer_index = 0
 
             else:
 
@@ -197,8 +209,6 @@ class Peer_SSS(Peer_STRPEDS):
 
             if message[1] == 'H':
                 if sender not in self.peer_list:
-                    # self.sendto((-1, 'H'), sender)
-                    self.team_socket.sendto((-1, 'H'), sender)
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")

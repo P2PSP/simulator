@@ -33,6 +33,10 @@ class Splitter_SSS(Splitter_STRPEDS):
         #   self.generate_secret_key()
         #   self.generate_shares()
 
+    def say_goodbye(self, peer):
+        goodbye = (-1, "G", -1, -1)
+        self.team_socket.sendto("isii", goodbye, peer)
+        
     def receive_chunk(self):
         skip = False
 
@@ -45,7 +49,6 @@ class Splitter_SSS(Splitter_STRPEDS):
 
         print("++++++++++++++ Receive chunk from SPLITTER +++++++++++++")
         return "C"
-
 
     def send_chunk(self, chunk, peer):
         try:

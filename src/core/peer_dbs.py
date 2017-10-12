@@ -151,9 +151,6 @@ class Peer_DBS(sim):
             self.debt[peer] = 0
             peers_pending_of_reception -= 1
             
-            self.say_hello(peer)
-            print(self.id, ": hello sent to", peer)
-            
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
 
         # TODO: To send hellos at the same time that peer_list is received!!
@@ -167,7 +164,7 @@ class Peer_DBS(sim):
         # one flooding list that says that the chunk received from the
         # splitter must be forwarded to the rest of the team
         self.flooding_list[self.id] = self.peer_list
-        #self.send_hellos()
+        self.send_hellos()
 
     def connect_to_the_splitter(self):
         self.splitter_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)

@@ -24,7 +24,7 @@ class Monitor_SSS(Peer_SSS):
 
     def complain(self, chunk_position):
         lost = (chunk_position, "L", self.id)
-        self.team_socket.sendto("iss", lost, self.splitter)
+        self.team_socket.sendto("is6s", lost, self.splitter)
         print(self.id, ": lost chunk =", lost, "sent to", self.splitter)
 
     #def PlayNextChunk (with complaints)
