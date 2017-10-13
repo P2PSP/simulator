@@ -80,9 +80,6 @@ class Splitter_DBS(Simulator_stuff):
         #incoming_peer = content[1]
         
         print(self.id, ": acepted connection from peer", incoming_peer)
-        if (incoming_peer[0] == "M"):
-            self.number_of_monitors += 1
-        print(self.id, ": number of monitors", self.number_of_monitors)
 
         #self.send_buffer_size(incoming_peer)
         #self.send_the_number_of_peers(incoming_peer)
@@ -101,6 +98,11 @@ class Splitter_DBS(Simulator_stuff):
         # ------------------
         Simulator_stuff.FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
         # ------------------
+
+        if (incoming_peer[0] == "M"):
+            self.number_of_monitors += 1
+        print(self.id, ": number of monitors", self.number_of_monitors)
+        
         serve_socket.close()
 
     def send_buffer_size(self, peer_serve_socket):

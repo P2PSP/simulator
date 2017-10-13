@@ -51,16 +51,6 @@ class Splitter_STRPEDS(Splitter_DBS):
         
         print(self.id, "acepted connection from peer", incoming_peer)
 
-         # ---- Only for simulation purposes. Unknown in real implementation -----
-        if (incoming_peer[0:2] == "MP"):
-            self.number_of_malicious += 1
-        # -----------------------------------------------------------------------
-        elif (incoming_peer[0] == "M"):
-            self.number_of_monitors += 1
-            self.trusted_peers.append(incoming_peer)
-                    
-        print("NUMBER OF MONITORS", self.number_of_monitors)
-
         self.send_buffer_size(serve_socket)
         self.send_the_number_of_peers(serve_socket)
         self.send_the_list_of_peers(serve_socket)
@@ -73,7 +63,17 @@ class Splitter_STRPEDS(Splitter_DBS):
         # ------------------
         sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
         # ------------------
-    
+        # ---- Only for simulation purposes. Unknown in real implementation -----
+        if (incoming_peer[0:2] == "MP"):
+            self.number_of_malicious += 1
+        # -----------------------------------------------------------------------
+        elif (incoming_peer[0] == "M"):
+            self.number_of_monitors += 1
+            self.trusted_peers.append(incoming_peer)
+                    
+        print("NUMBER OF MONITORS", self.number_of_monitors)
+        serve_socket.close()
+
     def process_bad_peers_message(self, message, sender):
         bad_peer = message[2]
         if sender in self.trusted_peers:
