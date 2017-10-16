@@ -39,14 +39,17 @@ class Splitter_SSS(Splitter_STRPEDS):
         
     def receive_chunk(self):
         skip = False
-
+        if self.chunk_number == 0:
+            last_chunk_sent = Common.MAX_CHUNK_NUMBER
+        else:
+            last_chunk_sent = self.chunk_number - 1 
         step = 0
         while not skip:
             if step > 100:
-                print("DIC", self.RECV_LIST.items(), "CHUNK", self.chunk_number-1)
+                print("DIC", self.RECV_LIST.items(), "CHUNK", last_chunk_sent)
                 skip = True
             # print("SENT TO", prev_destination, "of", self.peer_list)
-            skip = all(v == self.chunk_number-1 for p,v in sim.RECV_LIST.items())
+            skip = all(v == last_chunk_sent for p,v in sim.RECV_LIST.items())
             time.sleep(0.01)
             step += 1
             # C->Chunk, L->Lost, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
