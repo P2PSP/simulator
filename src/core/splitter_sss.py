@@ -40,7 +40,7 @@ class Splitter_SSS(Splitter_STRPEDS):
     def receive_chunk(self):
         skip = False
         if self.chunk_number == 0:
-            last_chunk_sent = Common.MAX_CHUNK_NUMBER
+            last_chunk_sent = Common.MAX_CHUNK_NUMBER - 1
         else:
             last_chunk_sent = self.chunk_number - 1 
         step = 0
