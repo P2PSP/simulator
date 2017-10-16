@@ -25,6 +25,18 @@ class Peer_Malicious_SSS(Peer_SSS):
     def first_main_target(self):
         self.main_target = self.choose_main_target()
 
+    # ----------- simulation purposes ----------
+    def polite_farewell(self):
+        print(self.id, ": (see you later)")
+      
+        for peer in self.peer_list:
+            self.say_goodbye(peer)
+
+        # del sim.RECV_LIST[self.id]
+        self.ready_to_leave_the_team = True
+        print(self.id, ": ready to leave the team")
+    # -------------------------------------------
+
     def choose_main_target(self):
         target = None
         malicious_list = sim.SHARED_LIST["malicious"]
