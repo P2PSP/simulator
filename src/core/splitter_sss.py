@@ -42,8 +42,9 @@ class Splitter_SSS(Splitter_STRPEDS):
 
         step = 0
         while not skip:
-            if step > 10:
+            if step > 100:
                 print("DIC", self.RECV_LIST.items(), "CHUNK", self.chunk_number-1)
+                skip = True
             # print("SENT TO", prev_destination, "of", self.peer_list)
             skip = all(v == self.chunk_number-1 for p,v in sim.RECV_LIST.items())
             time.sleep(0.01)
