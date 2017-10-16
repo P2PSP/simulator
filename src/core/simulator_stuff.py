@@ -111,3 +111,6 @@ class Socket_print:
 
     def close(self):
         return self.sock.close()
+
+    def settimeout(self, value):
+        return self.sock.settimeout(value)
