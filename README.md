@@ -7,6 +7,7 @@ A complete stand-alone simulator of the P2PSP protocol using Processes and messa
 # Pre-requisites
 ## Linux
 ```
+sudo apt install python3-tk
 $ pip3 install fire
 $ pip3 install matplotlib
 $ pip3 install networkx
