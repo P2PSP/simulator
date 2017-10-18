@@ -28,7 +28,7 @@ class Peer_Malicious_SSS(Peer_SSS):
     # ----------- simulation purposes ----------
     def polite_farewell(self):
         print(self.id, ": (see you later)")
-      
+
         for peer in self.peer_list:
             self.say_goodbye(peer)
 

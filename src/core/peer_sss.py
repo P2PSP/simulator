@@ -56,12 +56,12 @@ class Peer_SSS(Peer_STRPEDS):
     def process_message(self, message, sender):
 
         # ----------- simulation purposes ---------
-        if self.id.find("MP") == -1 and message[0] > -1:
+        if "MP" not in self.id and message[0] > -1:
             if self.id in sim.RECV_LIST:
                 if message[0] > sim.RECV_LIST[self.id] and sim.RECV_LIST[self.id] < Common.MAX_CHUNK_NUMBER:
                     sim.RECV_LIST[self.id] = message[0]
             else:
-                sim.RECV_LIST[self.id] = message[0] 
+                sim.RECV_LIST[self.id] = message[0]
         # ----------------------------------------
         
         if sender in self.bad_peers:
@@ -103,12 +103,10 @@ class Peer_SSS(Peer_STRPEDS):
         current_round = self.receive_and_feed_previous[2]
         if ((current_round-1) in self.t) and (self.first_round != (current_round-1)):
             if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
-                # self.sendto(self.receive_and_feed_previous, peer)
                 self.team_socket.sendto("isii", self.receive_and_feed_previous, peer)
                 self.sendto_counter += 1
             else:
                 print("###########=================>>>>", self.id, "Need more shares, I had", self.t[(current_round-1)], "from", self.splitter_t[(current_round-1)], "needed")
-                #self.sendto(encrypted_chunk, peer)
                 self.team_socket.sendto("isii", encrypted_chunk, peer)
                 self.sendto_counter += 1
         else:
@@ -117,7 +115,6 @@ class Peer_SSS(Peer_STRPEDS):
             else:
                 print(self.id, "is my first round")
                 self.first_round = current_round
-            # self.sendto(self.receive_and_feed_previous, peer)
             self.team_socket.sendto("isii", self.receive_and_feed_previous, peer)
             self.sendto_counter += 1
 
@@ -155,7 +152,7 @@ class Peer_SSS(Peer_STRPEDS):
             if (self.received_chunks >= self.chunks_before_leave):
                 self.player_alive = False
             ####################################################
-            
+
             if (sender == self.splitter):
                 while(self.peer_index < len(self.peer_list)):
                     peer = self.peer_list[self.peer_index]
@@ -164,18 +161,7 @@ class Peer_SSS(Peer_STRPEDS):
                     self.send_chunk(peer)
                     self.debt[peer] += 1
 
-                    # if self.debt[peer] > self.MAX_CHUNK_DEBT:
-                        # print(self.id, ":", peer, "removed by unsupportive (", str(self.debt[peer]), "lossess)")
-                        # del self.debt[peer]
-                        # self.peer_list.remove(peer)
-                        # sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, peer))
-                    #else:
                     self.peer_index += 1
-
-                # Modifying the first chunk to play (it increases the delay)
-                #if (not self.receive_and_feed_previous):
-                    #self.played_chunk = message[0]
-                    #print(self.id,"First chunk to play modified", str(self.played_chunk))
 
                 self.modified_list = False
                 self.peer_index = 0
@@ -195,11 +181,6 @@ class Peer_SSS(Peer_STRPEDS):
                 else:
                     self.debt[sender] -= 1
 
-            # ----------- simulation purposes ---------
-            # if self.id.find("MP") == -1:
-            #  sim.RECV_LIST[self.id] = chunk_number
-            # ----------------------------------------
-            
             return chunk_number
 
         else:

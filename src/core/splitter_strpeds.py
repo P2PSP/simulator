@@ -11,7 +11,7 @@ import sys
 
 
 class Splitter_STRPEDS(Splitter_DBS):
-    
+
     def __init__(self):
         super().__init__()
         self.trusted_peers = []
@@ -20,32 +20,26 @@ class Splitter_STRPEDS(Splitter_DBS):
         self.complaints = {}
         self.p_mpl = 1
         self.p_tpl = 1
-        
+
         # --- Only for simulation purposes ---
         self.number_of_malicious = 0
         # ------------------------------------
 
         print("Splitter STRPEDS initialized")
-        
 
     def send_dsa_key(self):
         # Not needed for simulation
         return NotImplementedError
 
-#    def gather_bad_peers(self):
-#        for p in self.peer_list:
-#            sim.UDP_SOCKETS[p].put(self.id,(-1,"S"))
-
     def init_key(self):
-        #Not needed for simulation
+        # Not needed for simulation
         return NotImplementedError
 
     def say_goodbye(self, peer):
         goodbye = (-1, "G", -1)
         self.team_socket.sendto("isi", goodbye, peer)
-    
+
     def handle_a_peer_arrival(self, connection):
-        
         serve_socket = connection[0]
         incoming_peer = connection[1]
         
@@ -130,14 +124,6 @@ class Splitter_STRPEDS(Splitter_DBS):
                 self.losses[peer] += 1
         except KeyError:
             print("The unsupportive peer", peer, "does not exist!")
-       # else:
-       #     print(peer, "has loss", self.losses[peer], "chunks")
-       #     if self.losses[peer] > Common.MAX_CHUNK_LOSS:
-       #         if peer not in self.bad_peers:
-       #             print(peer, 'removed')
-       #             self.bad_peers.append(peer)
-       # finally:
-       #     pass
 
     def send_chunk(self, chunk, peer):
         try:

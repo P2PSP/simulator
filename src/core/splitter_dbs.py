@@ -8,7 +8,6 @@ from threading import Thread
 import time
 from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_print as socket
-import struct
 import sys
 
 
@@ -18,16 +17,16 @@ class Splitter_DBS(Simulator_stuff):
 
     def __init__(self):
         self.id = "S"
-        self.alive = True # While True, keeps the splitter alive
-        self.chunk_number = 0 # First chunk number to broadcast
-        self.peer_list = [] # Current peers in the team
-        self.losses = {} # Lost chunks per peer
-        self.destination_of_chunk = [] # Destination peer of the buffered chunks
-        self.buffer_size = Common.BUFFER_SIZE # Buffer (of chunks) size
-        self.peer_number = 0 # First peer to serve in the list of peers
+        self.alive = True  # While True, keeps the splitter alive
+        self.chunk_number = 0  # First chunk number to broadcast
+        self.peer_list = []  # Current peers in the team
+        self.losses = {}  # Lost chunks per peer
+        self.destination_of_chunk = []  # Destination peer of the buffered chunks
+        self.buffer_size = Common.BUFFER_SIZE  # Buffer (of chunks) size
+        self.peer_number = 0  # First peer to serve in the list of peers
         self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_LOST_CHUNKS
         self.number_of_monitors = 0
-        self.outgoing_peer_list = [] # Peers which requested to leave the team
+        self.outgoing_peer_list = []  # Peers which requested to leave the team
         self.current_round = 0
 
         print(self.id, ": DBS initialized")
@@ -55,73 +54,60 @@ class Splitter_DBS(Simulator_stuff):
 
 
     def receive_chunk(self):
-        #Simulator_stuff.LOCK.acquire(True,0.1)
-        time.sleep(0.05) # Simulates bit-rate control
-        #C->Chunk, L->Los, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
+        # Simulator_stuff.LOCK.acquire(True,0.1)
+        time.sleep(0.05)  # Simulates bit-rate control
+        # C->Chunk, L->Los, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
         return "C"
 
     def handle_arrivals(self):
         while(self.alive):
             peer_serve_socket, peer = self.peer_connection_socket.accept()
-
             peer_serve_socket = socket(sock=peer_serve_socket)
             peer_serve_socket.set_id(peer)
             print("Connection from ", peer)
             Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()
-            #self.handle_a_peer_arrival()
-        
+
     def handle_a_peer_arrival(self, connection):
 
         serve_socket = connection[0]
         incoming_peer = connection[1]
 
-        #content = self.recv()
-        #message = content[0]
-        #incoming_peer = content[1]
-        
         print(self.id, ": acepted connection from peer", incoming_peer)
-
-        #self.send_buffer_size(incoming_peer)
-        #self.send_the_number_of_peers(incoming_peer)
-        #self.send_the_list_of_peers(incoming_peer)
 
         self.send_buffer_size(serve_socket)
         self.send_the_number_of_peers(serve_socket)
         self.send_the_list_of_peers(serve_socket)
-        
+
         print(self.id, ": waiting for outgoing peer")
-        #(message, sender) = self.recv()
         message = serve_socket.recv("s")
         print(self.id, ": received", message, "from", incoming_peer)
-        
+
         self.insert_peer(incoming_peer)
+
         # ------------------
-        Simulator_stuff.FEEDBACK["DRAW"].put(("O","Node","IN",incoming_peer))
+        Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
         # ------------------
 
         if (incoming_peer[0] == "M"):
             self.number_of_monitors += 1
         print(self.id, ": number of monitors", self.number_of_monitors)
-        
+
         serve_socket.close()
 
     def send_buffer_size(self, peer_serve_socket):
-        print(self.id, ": sending buffer size =", self.buffer_size)#, "to", peer)
-        #self.send(self.buffer_size, peer)
+        print(self.id, ": sending buffer size =", self.buffer_size)
         peer_serve_socket.sendall("H", self.buffer_size)
-        
+
     def send_the_number_of_peers(self, peer_serve_socket):
-        print(self.id, ": sending number of monitors =", self.number_of_monitors)#, "to", peer)
+        print(self.id, ": sending number of monitors =", self.number_of_monitors)
         peer_serve_socket.sendall("H", self.number_of_monitors)
-        print(self.id, ": sending list of peers of length =", len(self.peer_list))#, "to", peer)
+        print(self.id, ": sending list of peers of length =", len(self.peer_list))
         peer_serve_socket.sendall("H", len(self.peer_list))
 
     def send_the_list_of_peers(self, peer_serve_socket):
-        print(self.id, ": sending peer list =", self.peer_list)#, "to", peer)
-        #self.send(self.peer_list, peer)
+        print(self.id, ": sending peer list =", self.peer_list)
         for p in self.peer_list:
             peer_serve_socket.sendall("6s", p)
-            #time.sleep(0.05)
 
     def insert_peer(self, peer):
         if peer not in self.peer_list:
@@ -185,13 +171,12 @@ class Splitter_DBS(Simulator_stuff):
     def say_goodbye(self, peer):
         goodbye = (-1, "G")
         self.team_socket.sendto("is", goodbye, peer)
-        #print(self.id, ": sent", goodbye, "to", peer)
 
     def remove_outgoing_peers(self):
         for p in self.outgoing_peer_list:
             self.say_goodbye(p)
             self.remove_peer(p)
-        del self.outgoing_peer_list[:]
+        self.outgoing_peer_list.clear()
 
     def on_round_beginning(self):
         self.remove_outgoing_peers()
@@ -223,7 +208,7 @@ class Splitter_DBS(Simulator_stuff):
     def run(self):
         self.setup_peer_connection_socket()
         self.setup_team_socket()
-        
+
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
         Thread(target=self.reset_counters_thread).start()
@@ -241,13 +226,9 @@ class Splitter_DBS(Simulator_stuff):
                 # -------------------
             try:
                 peer = self.peer_list[self.peer_number]
-                
                 message = (self.chunk_number, chunk)
-
                 self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
-
                 self.send_chunk(message, peer)
-
                 self.compute_next_peer_number(peer)
             except IndexError:
                 print(self.id, ": the monitor peer has died!")

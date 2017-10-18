@@ -2,6 +2,7 @@
 @package simulator
 peer_malicious module
 """
+
 from .simulator_stuff import Simulator_stuff as sim
 from .peer_strpeds import Peer_STRPEDS
 import random
@@ -46,7 +47,6 @@ class Peer_Malicious(Peer_STRPEDS):
     def all_attack(self):
         if __debug__:
             print("All attack mode")
-
         sim.SHARED_LIST["regular"].append(self.main_target)
 
     def get_poisoned_chunk(self, chunk):
@@ -85,7 +85,6 @@ class Peer_Malicious(Peer_STRPEDS):
             if self.main_target is None:
                 self.main_target = self.choose_main_target()
 
-        # TO-DO: on-off
         else:
             self.team_socket.sendto("isi", self.receive_and_feed_previous, peer)
             self.sendto_counter += 1

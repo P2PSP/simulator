@@ -11,7 +11,7 @@ import sys
 
 
 class Splitter_SSS(Splitter_STRPEDS):
-    
+
     def __init__(self):
         super().__init__()
         self.t = (len(self.peer_list) // 2) + 1
@@ -65,7 +65,7 @@ class Splitter_SSS(Splitter_STRPEDS):
             sys.stderr.write("sendto: full queue\n")
         else:
             self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
-    
+
     def run(self):
         self.setup_peer_connection_socket()
         self.setup_team_socket()

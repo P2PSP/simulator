@@ -7,7 +7,7 @@ from .peer_dbs import Peer_DBS
 
 
 class Peer_STRPEDS(Peer_DBS):
-    
+
     def __init__(self, id):
         super().__init__(id)
         self.bad_peers = []
@@ -20,7 +20,7 @@ class Peer_STRPEDS(Peer_DBS):
     def say_hello(self, peer):
         hello = (-1, "H", -1)
         self.team_socket.sendto("isi", hello, peer)
-        
+
     def say_goodbye(self, peer):
         if peer == self.splitter:
             goodbye = (-1, "G", self.id)
@@ -45,7 +45,7 @@ class Peer_STRPEDS(Peer_DBS):
         if not self.is_a_control_message(message):
             if message[1] == "C":
                 return True
-            else: #(L)ost or (B)roken
+            else:  # (L)ost or (B)roken
                 return False
         else:
             if __debug__:
@@ -62,7 +62,7 @@ class Peer_STRPEDS(Peer_DBS):
     def send_chunk(self, peer):
         self.team_socket.sendto("isi", self.receive_and_feed_previous, peer)
         self.sendto_counter += 1
-    
+
     def process_next_message(self):
         message, sender = self.team_socket.recvfrom("isi")
         return self.process_message(message, sender)
