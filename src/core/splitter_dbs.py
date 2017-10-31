@@ -10,48 +10,45 @@ from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_print as socket
 import sys
 
-
 class Splitter_DBS(Simulator_stuff):
 
     MAX_NUMBER_OF_LOST_CHUNKS = 32
 
     def __init__(self):
         self.id = "S"
-        self.alive = True  # While True, keeps the splitter alive
-        self.chunk_number = 0  # First chunk number to broadcast
-        self.peer_list = []  # Current peers in the team
-        self.losses = {}  # Lost chunks per peer
-        self.destination_of_chunk = []  # Destination peer of the buffered chunks
-        self.buffer_size = Common.BUFFER_SIZE  # Buffer (of chunks) size
-        self.peer_number = 0  # First peer to serve in the list of peers
-        self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_LOST_CHUNKS
-        self.number_of_monitors = 0
-        self.outgoing_peer_list = []  # Peers which requested to leave the team
-        self.current_round = 0
+        self.alive = True                                              # While True, keeps the splitter alive
+        self.chunk_number = 0                                          # First chunk (number) to send
+        self.peer_list = []                                            # Current peers in the team
+        self.losses = {}                                               # (Detected) lost chunks per peer
+        self.destination_of_chunk = []                                 # Destination peer of the buffered chunks
+        self.buffer_size = Common.BUFFER_SIZE                          # Buffer (of chunks) size
+        self.peer_number = 0                                           # First peer to serve in the list of peers
+        self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_LOST_CHUNKS # More lost, team removing
+        self.number_of_monitors = 0                                    # Monitors report lost chunks
+        self.outgoing_peer_list = []                                   # Peers which requested to leave the team
+        self.current_round = 0                                         # Number of round (maybe not here).
 
         print(self.id, ": DBS initialized")
 
     def setup_peer_connection_socket(self):
-        self.peer_connection_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.peer_connection_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM) # Implementation dependent
         self.peer_connection_socket.set_id(self.id)
         self.peer_connection_socket.bind("S_tcp")
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
-        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM) # Implementation dependent
         self.team_socket.set_id(self.id)
         self.team_socket.bind("S_udp")
         
     def send_chunk(self, chunk, peer):
         #self.sendto(chunk, peer)
         try:
-            self.team_socket.sendto("is", chunk, peer)
-        except BlockingIOError:
+            self.team_socket.sendto("is", chunk, peer) # Implementation dependent by "is"
+        except BlockingIOError: # Imp. dep.
             sys.stderr.write("sendto: full queue\n")
         else:
             self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
-
-
 
     def receive_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
