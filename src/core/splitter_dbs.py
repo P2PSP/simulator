@@ -47,7 +47,6 @@ class Splitter_DBS(Simulator_stuff):
             self.team_socket.sendto("is", chunk, peer) # Implementation dependent by "is"
         except BlockingIOError: # Imp. dep.
             sys.stderr.write("sendto: full queue\n")
-        #else:
 
     def receive_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
@@ -147,8 +146,8 @@ class Splitter_DBS(Simulator_stuff):
             if peer[0] == "M" and peer[1] != "P":
                 self.number_of_monitors -= 1
             # --------------------
-        finally:
-            pass
+        #finally:
+        #    pass
 
         try:
             del self.losses[peer]

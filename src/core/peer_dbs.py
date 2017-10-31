@@ -12,12 +12,22 @@ peer_dbs module
 # those chunks that come from the origin peer which sent the chunk
 # <chunk>, until the requesting peer sends a [prune <origin>].
 
+# During their life in the team (for example, when a peer refuse to
+# send data to it o simply to find better routes), peers will request
+# alternative routes for the chunks. To do that, a [send once from
+# <origin peer>] message will be sent to at least one peer of the
+# team. A peer that receive such message will send (or not, depending
+# on, for example, the debt of the requesting peer) only one chunk
+# from the origin peer to the requesting peer. The requesting peer
+# will send to the first peer to send the chunk a [send from <origin
+# peer>] and both peers will be neighbors. To cancel this message, a
+# [prune <origin>] must be used.
+
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Socket_print as socket
 import sys
-
 
 class Peer_DBS(sim):
 
@@ -53,24 +63,12 @@ class Peer_DBS(sim):
         self.ready_to_leave_the_team = False
 
         self.flooding_list = {}
-        
-        # During their life in the team (for example, when a peer
-        # refuse to send data to it o simply to find better routes),
-        # peers will request alternative routes for the chunks. To do
-        # that, a [send once from <origin peer>] message will be sent
-        # to at least one peer of the team. A peer that receive such
-        # message will send (or not, depending on, for example, the
-        # debt of the requesting peer) only one chunk from the origin
-        # peer to the requesting peer. The requesting peer will send
-        # to the first peer to send the chunk a [send from <origin
-        # peer>] and both peers will be neighbors. To cancel this
-        # message, a [not send from <origin peer>] must be used.
 
         self.RTTs = []
         # self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE
         # self.neighborhood = []
 
-        print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
+        #print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
         print(self.id, ": DBS initialized")
 
     def listen_to_the_team(self):
@@ -104,8 +102,9 @@ class Peer_DBS(sim):
 
     def send_hellos(self):
         for peer in self.peer_list:
-            self.say_hello(peer)
-            print(self.id, ": hello sent to", peer)
+            #self.say_hello(peer)
+            #print(self.id, ": hello sent to", peer)
+            pass
 
         '''
         # Ojo, esto no se puede llamar desde process_message porque tarda en regresar ...
@@ -127,7 +126,8 @@ class Peer_DBS(sim):
         for peer in self.peer_list:
             '''self.distances[peer] = 1    # Setting initial distances'''
             #self.sendto((-1, 'X', self.distances), peer)
-            self.debt[peer] = 0         # Setting initial debts
+            #self.debt[peer] = 0         # Setting initial debts
+            pass
 
     def receive_the_list_of_peers(self):
         peers_pending_of_reception = self.number_of_peers
@@ -135,6 +135,9 @@ class Peer_DBS(sim):
             peer = self.splitter_socket.recv("6s")
             self.peer_list.append(peer)
             self.debt[peer] = 0
+            self.say_hello(peer)
+            print(self.id, ": hello sent to", peer)
+
             peers_pending_of_reception -= 1
             
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
@@ -150,7 +153,7 @@ class Peer_DBS(sim):
         # one flooding list that says that the chunk received from the
         # splitter must be forwarded to the rest of the team
         self.flooding_list[self.id] = self.peer_list
-        self.send_hellos()
+        #self.send_hellos()
 
     def connect_to_the_splitter(self):
         self.splitter_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -301,7 +304,7 @@ class Peer_DBS(sim):
                 print(self.id, ": control message received:", message)
 
             if message[1] == 'H': # Hello
-                print(self.id, ": received", message, "from", sender)
+                print(self.id, ": received", message, "[hello] from", sender)
                 '''
                 # Compute RTT of hello received from peer "sender"
                 self.RTTs.append((sender, time.time() - message[2]))
