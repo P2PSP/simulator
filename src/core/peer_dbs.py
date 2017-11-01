@@ -91,16 +91,16 @@ class Peer_DBS(sim):
 
     def receive_buffer_size(self):     
         self.buffer_size = self.splitter_socket.recv("H")
-        print(self.id, ": received buffer_size =", self.buffer_size, "from", self.splitter)
+        lg.info("{}: received buffer_size = {} from {}".format(self.id, self.buffer_size, self.splitter))
         # --- Only for simulation purposes ---------- #
         self.sender_of_chunks = [""]*self.buffer_size #
         # ------------------------------------------- #
 
     def receive_the_number_of_peers(self):
         self.number_of_monitors = self.splitter_socket.recv("H")
-        print(self.id, ": received number_of_monitors =", self.number_of_monitors, "from", self.splitter)
+        lg.info("{}: received number_of_monitors = {} from {}".format(self.id, self.number_of_monitors, self.splitter))
         self.number_of_peers = self.splitter_socket.recv("H")
-        print(self.id, ": received number_of_peers =", self.number_of_peers, "from", self.splitter)
+        lg.info("{}: received number_of_peers = {} from {}".format(self.id, self.number_of_peers, self.splitter))
 
     def send_hellos(self):
         for peer in self.peer_list:
