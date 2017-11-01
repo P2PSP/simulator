@@ -31,6 +31,7 @@ import sys
 
 class Peer_DBS(sim):
 
+    # This not makes sense in DBS2?
     MAX_CHUNK_DEBT = 128
     
     def __init__(self, id):
@@ -142,18 +143,10 @@ class Peer_DBS(sim):
             
         print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
 
-        # TODO: To send hellos at the same time that peer_list is received!!
-        
-        # This line should be un commented (and the next one
-        # commented) when DBS2 is fully active.
-        #self.send_hellos(self.neighborhood_degree)
-        #self.send_hellos(len(self.peer_list))
-
         # Default configuration for a fully connected overlay: only
         # one flooding list that says that the chunk received from the
-        # splitter must be forwarded to the rest of the team
+        # splitter must be forwarded to the rest of the team.
         self.flooding_list[self.id] = self.peer_list
-        #self.send_hellos()
 
     def connect_to_the_splitter(self):
         self.splitter_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -175,7 +168,7 @@ class Peer_DBS(sim):
 
     def send_chunk(self, peer):
         self.team_socket.sendto("is", self.receive_and_feed_previous, peer)
-        self.sendto_counter += 1
+        self.sendto_counter += 1 # For informative issues
 
     def is_a_control_message(self, message):
         if message[0] == -1:
@@ -187,7 +180,44 @@ class Peer_DBS(sim):
         if message[0] > -1:
             return True
         return False 
-                    
+
+    def process_message2(self, message, sender):
+
+        # ----- Check if new round for peer (simulation purposes) ------------- #
+        if not self.is_a_control_message(message) and sender == self.splitter:  #
+            if self.played > 0 and self.played >= len(self.peer_list):          #
+                clr = self.losses/self.played                                   #
+                sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))                 #
+                self.losses = 0                                                 #
+                self.played = 0                                                 #
+        # --------------------------------------------------------------------- #
+
+        if (message[0] >= 0):
+
+            # A chunk has been received
+            
+            chunk_number = message[0]
+            chunk = message[1]
+            self.received_chunks += 1
+            
+            self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
+
+            # --- for simulation purposes only ---------------------------------------------- #
+            self.sender_of_chunks[chunk_number % self.buffer_size] = sender                   #
+                                                                                              #
+            chunks = ""                                                                       #
+            for n, c in self.chunks:                                                          #
+                chunks += c                                                                   #
+                if c == "L":                                                                  #
+                    self.sender_of_chunks[n % self.buffer_size] = ""                          #
+                                                                                              #
+            sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))  #
+            # ------------------------------------------------------------------------------- #
+
+        if (sender == self.splitter):
+            for i in self.flooding_list[self.id]
+
+        
     def process_message(self, message, sender):
 
         # ----- Check if new round for peer (simulation purposes) ------------- #
@@ -205,6 +235,7 @@ class Peer_DBS(sim):
             
             chunk_number = message[0]
             chunk = message[1]
+            self.received_chunks += 1
             
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
 
@@ -220,12 +251,10 @@ class Peer_DBS(sim):
             sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))  #
             # ------------------------------------------------------------------------------- #
 
-            self.received_chunks += 1
-
-            #  For simulation purposes
-            if (self.received_chunks >= self.chunks_before_leave):
-                self.player_alive = False
-            #  -----
+            #  For simulation purposes ----------------------------- #
+            if (self.received_chunks >= self.chunks_before_leave):   #
+                self.player_alive = False                            #
+            #  ----------------------------------------------------- #
 
             if (sender == self.splitter):
                 while((self.peer_index < len(self.peer_list)) and \
