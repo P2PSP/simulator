@@ -138,11 +138,11 @@ class Peer_DBS(sim):
             self.peer_list.append(peer)
             self.debt[peer] = 0
             self.say_hello(peer)
-            print(self.id, ": hello sent to", peer)
+            lg.info("{}: hello sent to {}".format(self.id, peer))
 
             peers_pending_of_reception -= 1
-            
-        print(self.id, ": received len(peer_list) =", len(self.peer_list), "from", self.splitter)
+
+        lg.info("{} : received len(peer_list) = {} from {}".format(self.id, len(self.peer_list), self.splitter))
 
         # Default configuration for a fully connected overlay: only
         # one flooding list that says that the chunk received from the
@@ -160,12 +160,12 @@ class Peer_DBS(sim):
             sys.stderr.write("{}".format(e))
             raise
 
-        print("Connect to the splitter")
+        lg.info("{}: connected to the splitter".format(self.id))
 
     def send_ready_for_receiving_chunks(self):
         ready = ("R")
         self.splitter_socket.send("s", ready)
-        print(self.id, ": sent", ready, "to", self.splitter)
+        lg.info("{}: sent {} to {}".format(self.id, ready, self.splitter))
 
     def send_chunk(self, peer):
         self.team_socket.sendto("is", self.receive_and_feed_previous, peer)
@@ -198,8 +198,7 @@ class Peer_DBS(sim):
 
         else: # message[0] >= 0
 
-            if __debug__:
-                print(self.id, ": control message {} received".format(message))
+            lg.debug("{}: control message {} received".format(self.id, message))
 
             if message[1] == 'H': # [hello]
 
@@ -208,8 +207,7 @@ class Peer_DBS(sim):
                     # Insert sender to the list of peers
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
-                    if __debug__:
-                        print(self.id, ": inserted {} by [hello]".format(sender))
+                    lg.debug("{}: inserted {} by [hello]".format(self.id, sender))  
 
                     # --- simulator ---------------------------------------------- #
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
@@ -252,8 +250,8 @@ class Peer_DBS(sim):
 
                 # Insert sender to the list of peers & establish its debt to 0
                 self.peer_list.append(sender)
-                print(self.id, ":", sender, "added by chunk", chunk_number)
-                print(self.id, ":", "peer_list =", self.peer_list)
+                lg.info("{}: {} added by chunk".formar(sender, chunk_number))
+                lg.info("{}: peer_list =".format(self.id, self.peer_list))
                 self.debt[sender] = 0
 
                 # -------- For simulation purposes only ---------------------- #
@@ -314,7 +312,7 @@ class Peer_DBS(sim):
                     self.debt[peer] += 1
 
                     if self.debt[peer] > self.MAX_CHUNK_DEBT:
-                        print(self.id, ":", peer, "removed by unsupportive (", str(self.debt[peer]), "lossess)")
+                        lg.info("{}: {} removed by unsupportive ({} losses)".format(self.id, peer, str(self.debt[peer])))
                         del self.debt[peer]
                         self.peer_list.remove(peer)
                         # --- simulator --------------------------------------------- #
@@ -337,8 +335,8 @@ class Peer_DBS(sim):
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
-                    print(self.id, ":", sender, "added by chunk", chunk_number)
-                    print(self.id, ":", "peer_list =", self.peer_list)
+                    lg.info("{}: {} added by chunk {}".format(self.id, sender, chunk_number))   
+                    lg.info("{}: peer_list = {}".format(self.id, self.peer_list))
                     # -------- For simulation purposes only ---------------------- #
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
@@ -362,10 +360,11 @@ class Peer_DBS(sim):
                 self.debt[peer] += 1
 
                 if (self.debt[peer] > self.MAX_CHUNK_DEBT):
-                    print(self.id,":",peer, "removed by unsupportive (" + str(self.debt[peer]) + " lossess)")
+                    lg.info("{}: {} removed by unsupportive ({} losses".format(self.id, peer, self.debt[peer]))
                     del self.debt[peer]
                     self.peer_list.remove(peer)
-                    print(self.id, ":", "peer_list =", self.peer_list)
+                    lg.info("{}: peer_list = {}".format(self.id, self.peer_list))
+
                     # self.neighborhood.remove(peer)
                     # print(self.id, ":", "neighborhood =", self.neighborhood)
                     # --- simulator ----------------------------------------- #
@@ -378,8 +377,7 @@ class Peer_DBS(sim):
 
         else:
             # A control chunk has been received
-            if __debug__:
-                print(self.id, ": control message {} received".format(message))
+            lg.info("{}: control message {} received".format(self.id, message))
 
             if message[1] == 'H': # [hello]
                 '''
@@ -392,7 +390,7 @@ class Peer_DBS(sim):
                     #self.team_socket.sendto((-1, 'H', time.time()), sender)
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
-                    print(self.id, ": inserted {} by [hello]".format(sender))
+                    lg.info("{}: inserted {} by [hello]".format(self.id, sender))
 
                     #self.distances[sender] = 1000
                     # --- simulator ---------------------------------------------- #
@@ -403,18 +401,18 @@ class Peer_DBS(sim):
             elif message[1] == 'G': # Goodbye
                 
                 if sender in self.peer_list:
-                    print(self.id, ": received goodbye from", sender)
+                    lg.info("{}: received [goodbye] from".format(self.id, sender))
                     try:
                         self.peer_list.remove(sender)
-                        print(self.id, ":", sender, "removed from peer_list")
+                        lg.error("{}: {} removed from peer_list".format(self.id, sender))
                     except ValueError:
-                        print(self.id, ": failed to remove peer", sender, "from peer_list", self.peer_list)
-                    print(self.id, ":", "peer_list =", self.peer_list)
-                        
+                        lg.error("{}: : failed to remove peer {} from peer_list {}".format(sef.id, sender, self.peer_list))
+                    lg.info("{}: peer_list = {}".format(self.id, self.peer_list))    
+
                     del self.debt[sender]
                 else:
                     if (sender == self.splitter):
-                        print(self.id, ": received goodbye from splitter")
+                        lg.info("{}: received [goodbye] from splitter".format(self.id))
                         self.waiting_for_goodbye = False
 
             '''
@@ -441,7 +439,7 @@ class Peer_DBS(sim):
         return self.process_message(message, sender)
 
     def polite_farewell(self):
-        print(self.id, ": (see you later)")
+        lg.info("{}: (see you later)".format(self.id))
         while (self.receive_and_feed_counter < len(self.peer_list)):
             self.send_chunk(self.peer_list[self.receive_and_feed_counter])
             self.team_socket.recvfrom("is")
@@ -451,7 +449,7 @@ class Peer_DBS(sim):
             self.say_goodbye(peer)
 
         self.ready_to_leave_the_team = True
-        print(self.id, ": ready to leave the team")
+        lg.info("{}: ready to leave the team".format(self.id))
 
     def buffer_data(self):
         self.peer_index = 0
@@ -469,8 +467,8 @@ class Peer_DBS(sim):
 
         self.played_chunk = chunk_number
 
-        print(self.id, ": position in the buffer of the first chunk to play", str(self.played_chunk))
-
+        lg.info("{}: position in the buffer of the first chunk to play".format(self.id, self.played_chunk))
+        
         while (chunk_number < self.played_chunk or ((chunk_number - self.played_chunk) % self.buffer_size) < (self.buffer_size // 2)):
             chunk_number = self.process_next_message()
             while (chunk_number < self.played_chunk):
@@ -490,7 +488,7 @@ class Peer_DBS(sim):
             self.played += 1
         else:
             self.losses += 1
-            print(self.id, ": lost Chunk!", chunk_number)
+            lg.info("{}: lost chunk! {}".format(self.id, chunk_number))
         self.number_of_chunks_consumed += 1
         return self.player_alive
 
