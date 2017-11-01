@@ -192,14 +192,36 @@ class Peer_DBS(sim):
                 self.played = 0                                                 #
         # --------------------------------------------------------------------- #
 
-        if (message[0] >= 0):
+        if (message[0] < 0):
+            pass
 
-            # A chunk has been received
-            
+        else: # message[0] >= 0
+
+            if __debug__:
+                print(self.id, ": control message {} received".format(message))
+
+            if message[1] == 'H': # [hello]
+
+                if sender not in serlf.peer_list:
+
+                    # Insert sender to the list of peers
+                    self.peer_list.append(sender)
+                    self.debt[sender] = 0
+                    if __debug__:
+                        print(self.id, ": inserted {} by [hello]".format(sender))
+
+                    # --- simulator ---------------------------------------------- #
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
+                    # ------------------------------------------------------------ #
+
+            elif message[1] == 'G': # [goodbye]
+                pass
+                    
+            # Put chunk in buffer
             chunk_number = message[0]
             chunk = message[1]
             self.received_chunks += 1
-            
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
 
             # --- for simulation purposes only ---------------------------------------------- #
@@ -215,9 +237,35 @@ class Peer_DBS(sim):
             # ------------------------------------------------------------------------------- #
 
         if (sender == self.splitter):
-            for i in self.flooding_list[self.id]
 
-        
+            # Enter burst mode if pending chunk relays are found
+
+            # Load the new pending relays
+            self.relay = []
+            for i in self.peer_list:
+                self.relay[i].append(i)
+
+        else: # sender != self.splitter
+
+            if sender not in self.peer_list:
+
+                # Insert sender to the list of peers & establish its debt to 0
+                self.peer_list.append(sender)
+                print(self.id, ":", sender, "added by chunk", chunk_number)
+                print(self.id, ":", "peer_list =", self.peer_list)
+                self.debt[sender] = 0
+
+                # -------- For simulation purposes only ---------------------- #
+                sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
+                sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
+                # ------------------------------------------------------------ #
+
+            else: # sender is in list of peers
+
+                # Load relayed 
+                pass
+                #flooding_list
+
     def process_message(self, message, sender):
 
         # ----- Check if new round for peer (simulation purposes) ------------- #
@@ -283,7 +331,7 @@ class Peer_DBS(sim):
                 self.peer_index = 0
                 self.receive_and_feed_previous = message
 
-            else:
+            else: # sender != self.splitter
 
                 if sender not in self.peer_list:
                     self.peer_list.append(sender)
@@ -330,10 +378,9 @@ class Peer_DBS(sim):
         else:
             # A control chunk has been received
             if __debug__:
-                print(self.id, ": control message received:", message)
+                print(self.id, ": control message {} received".format(message))
 
-            if message[1] == 'H': # Hello
-                print(self.id, ": received", message, "[hello] from", sender)
+            if message[1] == 'H': # [hello]
                 '''
                 # Compute RTT of hello received from peer "sender"
                 self.RTTs.append((sender, time.time() - message[2]))
@@ -344,14 +391,15 @@ class Peer_DBS(sim):
                     #self.team_socket.sendto((-1, 'H', time.time()), sender)
                     self.peer_list.append(sender)
                     self.debt[sender] = 0
-                    print(self.id, ":", sender, "added by [hello]")
+                    print(self.id, ": inserted {} by [hello]".format(sender))
+
                     #self.distances[sender] = 1000
                     # --- simulator ---------------------------------------------- #
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
                     # ------------------------------------------------------------ #
                     
-            if message[1] == 'G': # Goodbye
+            elif message[1] == 'G': # Goodbye
                 
                 if sender in self.peer_list:
                     print(self.id, ": received goodbye from", sender)

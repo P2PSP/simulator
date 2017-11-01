@@ -13,6 +13,7 @@ from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
+from core.simulator_stuff import lg
 from multiprocessing import Process, Queue, Manager
 from glob import glob
 import time
@@ -23,6 +24,14 @@ import matplotlib.cm as cm
 import numpy as np
 import platform
 import os
+
+#import logging as lg
+#lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+#lg.critical('Critical messages enabled.')
+#lg.error('Error messages enabled.')
+#lg.warning('Warning message enabled.')
+#lg.info('Informative message enabled.')
+#lg.debug('Low-level debug message enabled.')
 
 class Simulator():
 
@@ -76,10 +85,10 @@ class Simulator():
             if self.set_of_rules == "dbs":
                 peer = Monitor_DBS(id)
             elif self.set_of_rules == "cis":
-                print("simulator: Monitors are TPs in CIS")
+                lg.info("simulator: Monitors are TPs in CIS")
                 peer = Monitor_STRPEDS(id)
             elif self.set_of_rules == "cis-sss":
-                print("simulator: Monitors are TPs in CIS")
+                lg.info("simulator: Monitors are TPs in CIS")
                 peer = Monitor_SSS(id)
         elif type == "malicious":
             if self.set_of_rules == "cis":
@@ -87,7 +96,7 @@ class Simulator():
             elif self.set_of_rules == "cis-sss":
                 peer = Peer_Malicious_SSS(id)
             else:
-                print("simulator: Malicious peers are only compatible with CIS")
+                lg.info("simulator: Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "dbs":
                 peer = Peer_DBS(id)
@@ -95,7 +104,7 @@ class Simulator():
                 peer = Peer_STRPEDS(id)
             elif self.set_of_rules == "cis-sss":
                 peer = Peer_SSS(id)
-        print("simulator:", id, ": alive till consuming", chunks_before_leave, "chunks")
+        lg.info("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
         peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
@@ -116,7 +125,7 @@ class Simulator():
                 peer.player_alive = False
             time.sleep(1)
         '''
-        print("simulator:", id, "left the team")
+        lg.info("simulator: {}: left the team".format(id))
 
     def draw_net(self):
         self.G = nx.Graph()
@@ -133,7 +142,7 @@ class Simulator():
                 if direction == "IN":
                     self.G.add_node(node, behaviour='malicious')
                 else:
-                    print("simulator: ", node, "removed from graph (MP)")
+                    lg.info("simulator: {} removed from graph (MP)".format(node))
                     self.G.remove_node(node)
                     del self.net_labels[node]
             elif node[0] == "M":
@@ -281,7 +290,7 @@ class Simulator():
             #    break
 
         drawing_log_file.write("Bye")
-        print("CLOSING STORE")
+        lg.info("CLOSING STORE")
         drawing_log_file.close()
 
     def draw(self):
@@ -298,7 +307,7 @@ class Simulator():
                 self.number_of_rounds = int(m[4])
                 self.set_of_rules = m[5]
             else:
-                print("Invalid forma file", self.drawing_log)
+                lg.error("Invalid forma file {}".format(self.drawing_log))
                 exit()
 
         plt.ion()
@@ -354,7 +363,7 @@ class Simulator():
         #plt.show()
 
     def run(self):
-        print("simulator:", "platform.system() = ", platform.system())
+        lg.info("simulator: platform.system() = {}".format(platform.system()))
         if platform.system() == 'Linux':
             plt.switch_backend("TkAgg")
         elif platform.system() == 'Darwin':
@@ -365,7 +374,6 @@ class Simulator():
         for pattern in ['/tmp/*_udp', '/tmp/*_tcp']:
             for tmp_file in glob(pattern):
                 os.remove(tmp_file)
-
         
         # Listen to the team for drawing
         sim.FEEDBACK["DRAW"] = Queue()
@@ -414,17 +422,17 @@ class Simulator():
         sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
         sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
         for name, pid in self.processes.items():
-            print("Killing", name, "...")
+            lg.info("Killing {}, ...".format(name))
             os.system("kill -9 "+str(pid))
-            print(name, "killed")
+            lg.info("{} killed".format(name))
             
         if self.set_of_rules == "cis" or self.set_of_rules == "cis-sss":
-            print("List of Malicious")
-            print(sim.SHARED_LIST["malicious"])
-            print("List of Regular detected")
-            print(sim.SHARED_LIST["regular"])
-            print("List of peer Attacked")
-            print(sim.SHARED_LIST["attacked"])
+            lg.info("List of Malicious")
+            lg.info(sim.SHARED_LIST["malicious"])
+            lg.info("List of Regular detected")
+            lg.info(sim.SHARED_LIST["regular"])
+            lg.info("List of peer Attacked")
+            lg.info(sim.SHARED_LIST["attacked"])
             
     def addPeer(self):
         probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]

@@ -3,11 +3,18 @@
 simulator module
 """
 
-import time
+#import time
 import socket
 import struct
 import sys
 
+import logging as lg
+lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+lg.critical('Critical messages enabled.')
+lg.error('Error messages enabled.')
+lg.warning('Warning message enabled.')
+lg.info('Informative message enabled.')
+lg.debug('Low-level debug message enabled.')
 
 class Simulator_stuff:
 
@@ -38,30 +45,27 @@ class Socket_print:
     def send(self, fmt, msg):
         params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
         message = struct.pack(fmt, *params)
-        if __debug__:
-            print("{:.6f} {} = [{}] => {}".format(time.time(), self.id, msg, "S"))
+        lg.debug("{} = [{}] => {}".format(self.id, msg, "S"))
         return self.sock.send(message)
 
     def sendall(self, fmt, msg):
         param = [msg.encode('utf-8') if type(msg) is str else msg][0]
         message = struct.pack(fmt, param)
-        if __debug__:
-            print("{:.6f} {} = [{}] => {}".format(time.time(), "S", msg, self.id ))
+        lg.debug("{} = [{}] => {}".format("S", msg, self.id ))
         return self.sock.sendall(message)
         
     def sendto(self, fmt, msg, dst):
         params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
         message = struct.pack(fmt, *params)
-        if __debug__:
-            print("{:.6f} {} - [{}] -> {}".format(time.time(), self.id, msg, dst))
+        lg.debug("{} - [{}] -> {}".format(self.id, msg, dst))
         try:
             sendto_value = self.sock.sendto(message, socket.MSG_DONTWAIT, "/tmp/"+dst+"_udp")
             #print("SENDTO_VALUE", sendto_value)
             return sendto_value
         except ConnectionRefusedError:
-            print("The message", msg, "has not been delivered because the destination", dst, "left the team")
+            lg.error("The message {} has not been delivered because the destination {} left the team".format(msg, dst))
         except KeyboardInterrupt:
-            print("SENDTO_EXCEPT", fmt, msg, dst, message, params)
+            lg.warning("SENDTO_EXCEPT {}".format(fmt, msg, dst, message, params))
         except BlockingIOError:
             raise
 
@@ -70,11 +74,10 @@ class Socket_print:
         try:
             msg_coded = struct.unpack(fmt, msg)[0]
         except struct.error:
-            sys.stderr.write("ERROR: {} len {} expected {}".format(msg, len(msg), struct.calcsize(fmt)))
+            lg.error("ERROR: {} len {} expected {}".format(msg, len(msg), struct.calcsize(fmt)))
 
         message = [msg_coded.decode('utf-8').rstrip('\x00') if type(msg_coded) is bytes else msg_coded][0]
-        if __debug__:
-            print("{:.6f} {} <= [{}]".format(time.time(), self.id, message))
+        lg.debug("{} <= [{}]".format(self.id, message))
         return message
 
     def recvfrom(self, fmt):
@@ -82,20 +85,19 @@ class Socket_print:
         try:
             msg_coded = struct.unpack(fmt, msg)
         except struct.error:
-            sys.stderr.write("ERROR: {} len {} expected {}".format(msg, len(msg), struct.calcsize(fmt)))
+            lg.error("ERROR: {} len {} expected {}".format(msg, len(msg), struct.calcsize(fmt)))
 
         try:
             message = tuple([x.decode('utf-8').rstrip('\x00') if type(x) is bytes else x for x in msg_coded])
         except UnicodeDecodeError as e:
-            sys.stderr.write("UNICODEERROR msg {} msg_coded{}\n".format(msg, msg_coded))
-            sys.stderr.write("{}".format(e))
+            lg.error("UNICODEERROR msg {} msg_coded{}\n".format(msg, msg_coded))
+            lg.error("{}".format(e))
         sender = sender.replace("/tmp/", "").replace("_tcp", "").replace("_udp","")
-        if __debug__:
-            print("{:.6f} {} <- [{}] = {}".format(time.time(), self.id, message, sender))
+        lg.debug("{} <- [{}] = {}".format(self.id, message, sender))
         return (message, sender)
 
     def connect(self, path):
-        print("path", path)
+        lg.info("path {}".format(path))
         return self.sock.connect("/tmp/"+path+"_tcp")
 
     def accept(self):
