@@ -27,6 +27,7 @@ from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Socket_print as socket
+from .simulator_stuff import lg
 import sys
 
 class Peer_DBS(sim):
@@ -70,7 +71,7 @@ class Peer_DBS(sim):
         # self.neighborhood = []
 
         #print(self.id, ": max_chunk_debt = ", self.MAX_CHUNK_DEBT)
-        print(self.id, ": DBS initialized")
+        lg.info("{}: DBS initialized".format(self.id))
 
     def listen_to_the_team(self):
         self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
