@@ -194,13 +194,10 @@ class Peer_DBS(sim):
         # --------------------------------------------------------------------- #
 
         if (message[0] < 0):
-            pass
-
-        else: # message[0] >= 0
-
-            lg.debug("{}: control message {} received".format(self.id, message))
 
             if message[1] == 'H': # [hello]
+
+                lg.info("{}: received [hello] from".format(self.id, sender))
 
                 if sender not in serlf.peer_list:
 
@@ -215,7 +212,26 @@ class Peer_DBS(sim):
                     # ------------------------------------------------------------ #
 
             elif message[1] == 'G': # [goodbye]
-                pass
+
+                lg.info("{}: received [goodbye] from".format(self.id, sender))
+                
+                if sender in self.peer_list:
+                    
+                    try:
+                        self.peer_list.remove(sender)
+                        lg.error("{}: {} removed from peer_list".format(self.id, sender))
+                    except ValueError:
+                        lg.error("{}: : failed to remove peer {} from peer_list {}".format(sef.id, sender, self.peer_list))
+                    lg.info("{}: peer_list = {}".format(self.id, self.peer_list))    
+                    del self.debt[sender]
+                    
+                else: # sender is not in peer_list
+                    
+                    if (sender == self.splitter):
+                        lg.info("{}: received [goodbye] from splitter".format(self.id))
+                        self.waiting_for_goodbye = False
+
+        else: # message[0] >= 0
                     
             # Put chunk in buffer
             chunk_number = message[0]
@@ -377,9 +393,11 @@ class Peer_DBS(sim):
 
         else:
             # A control chunk has been received
-            lg.info("{}: control message {} received".format(self.id, message))
 
             if message[1] == 'H': # [hello]
+
+                lg.info("{}: received [hello] from".format(self.id, sender))
+
                 '''
                 # Compute RTT of hello received from peer "sender"
                 self.RTTs.append((sender, time.time() - message[2]))
@@ -400,8 +418,9 @@ class Peer_DBS(sim):
                     
             elif message[1] == 'G': # Goodbye
                 
+                lg.info("{}: received [goodbye] from".format(self.id, sender))
+                
                 if sender in self.peer_list:
-                    lg.info("{}: received [goodbye] from".format(self.id, sender))
                     try:
                         self.peer_list.remove(sender)
                         lg.error("{}: {} removed from peer_list".format(self.id, sender))
