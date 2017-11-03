@@ -245,7 +245,7 @@ class Peer_DBS(sim):
 
         else: # message[0] >= 0
                     
-            # Put chunk in buffer
+            # chunk -> buffer[chunk_number]
             chunk_number = message[0]
             chunk = message[1]
             self.received_chunks += 1
@@ -263,36 +263,36 @@ class Peer_DBS(sim):
             sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))  #
             # ------------------------------------------------------------------------------- #
 
-        if (sender == self.splitter):
+            if (sender == self.splitter):
 
-            # Enter burst mode if pending chunk relays are found
+                # Enter burst mode if pending chunk relays are found
 
-            # Can we avoid burst mode, even if the splitter selects the peers at random?
+                # Can we avoid burst mode, even if the splitter selects the peers at random?
             
-            # Load the new pending relays
-            self.relay = []
-            for i in self.peer_list:
-                self.relay[i].append(i)
+                # Load the new pending relays
+                self.relay = []
+                for i in self.peer_list:
+                    self.relay[i].append(i)
 
-        else: # sender != self.splitter
+            else: # sender != self.splitter
 
-            if sender not in self.peer_list:
+                if sender not in self.peer_list:
 
-                # Insert sender to the list of peers & establish its debt to 0
-                self.peer_list.append(sender)
-                lg.info("{}: {} added by chunk".formar(sender, chunk_number))
-                lg.info("{}: peer_list =".format(self.id, self.peer_list))
-                self.debt[sender] = 0
+                    # Insert sender to the list of peers & establish its debt to 0
+                    self.peer_list.append(sender)
+                    lg.info("{}: {} added by chunk".formar(sender, chunk_number))
+                    lg.info("{}: peer_list =".format(self.id, self.peer_list))
+                    self.debt[sender] = 0
 
-                # -------- For simulation purposes only ---------------------- #
-                sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
-                sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
-                # ------------------------------------------------------------ #
+                    # -------- For simulation purposes only ---------------------- #
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
+                    # ------------------------------------------------------------ #
 
-            else: # sender is in list of peers
+                else: # sender is in list of peers
 
-                # Load relayed 
-                pass
+                    # Load relayed 
+                    pass
                 #flooding_list
 
     def process_message(self, message, sender):
