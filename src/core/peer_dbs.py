@@ -64,9 +64,13 @@ class Peer_DBS(sim):
         self.sendto_counter = 0
         self.ready_to_leave_the_team = False
 
+        # A dictionary indexed by origins and that contains list of
+        # peers. By default, all peers will have one entry for those
+        # chunks received from the splitter (for which it is the
+        # origin) and that must forward to the rest of the team.
         self.flooding_list = {}
 
-        self.RTTs = []
+        #self.RTTs = []
         # self.neighborhood_degree = self.NEIGHBORHOOD_DEGREE
         # self.neighborhood = []
 
@@ -144,9 +148,9 @@ class Peer_DBS(sim):
 
         lg.info("{} : received len(peer_list) = {} from {}".format(self.id, len(self.peer_list), self.splitter))
 
-        # Default configuration for a fully connected overlay: only
-        # one flooding list that says that the chunk received from the
-        # splitter must be forwarded to the rest of the team.
+        # Default configuration for fully connected overlays: the rest
+        # of the team will receive only those chunks received from the
+        # splitter.
         self.flooding_list[self.id] = self.peer_list
 
     def connect_to_the_splitter(self):
@@ -197,7 +201,7 @@ class Peer_DBS(sim):
 
             if message[1] == 'H': # [hello]
 
-                lg.info("{}: received [hello] from".format(self.id, sender))
+                lg.info("{}: received [hello] from {}".format(self.id, sender))
 
                 if sender not in serlf.peer_list:
 
@@ -213,7 +217,7 @@ class Peer_DBS(sim):
 
             elif message[1] == 'G': # [goodbye]
 
-                lg.info("{}: received [goodbye] from".format(self.id, sender))
+                lg.info("{}: received [goodbye] from {}".format(self.id, sender))
                 
                 if sender in self.peer_list:
                     
@@ -230,6 +234,14 @@ class Peer_DBS(sim):
                     if (sender == self.splitter):
                         lg.info("{}: received [goodbye] from splitter".format(self.id))
                         self.waiting_for_goodbye = False
+
+            elif message[1] == 'R': # [request]
+
+                lg.info("{}: received [request chunks from origin {}] from {}".format(self.id, message[2], sender))
+
+            elif message[1] == 'P': # [prune]
+
+                lg.info("{}: received [prune chunks from origin {}] from {}".format(self.id, message[2], sender))
 
         else: # message[0] >= 0
                     
@@ -255,6 +267,8 @@ class Peer_DBS(sim):
 
             # Enter burst mode if pending chunk relays are found
 
+            # Can we avoid burst mode, even if the splitter selects the peers at random?
+            
             # Load the new pending relays
             self.relay = []
             for i in self.peer_list:
