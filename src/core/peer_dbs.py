@@ -139,10 +139,10 @@ class Peer_DBS(sim):
         peers_pending_of_reception = self.number_of_peers
         while peers_pending_of_reception > 0:
             peer = self.splitter_socket.recv("6s")
-            self.peer_list.append(peer)
-            self.debt[peer] = 0
+            #self.peer_list.append(peer)
+            #self.debt[peer] = 0
             self.say_hello(peer)
-            lg.info("{}: hello sent to {}".format(self.id, peer))
+            lg.info("{}: sent [forward chunk originated at {}]  sent to {}".format(self.id, peer))
 
             peers_pending_of_reception -= 1
 
@@ -151,6 +151,7 @@ class Peer_DBS(sim):
         # Default configuration for fully connected overlays: the rest
         # of the team will receive only those chunks received from the
         # splitter.
+
         self.flooding_list[self.id] = self.peer_list
 
     def connect_to_the_splitter(self):
@@ -203,7 +204,7 @@ class Peer_DBS(sim):
 
                 lg.info("{}: received [hello] from {}".format(self.id, sender))
 
-                if sender not in serlf.peer_list:
+                if sender not in self.peer_list:
 
                     # Insert sender to the list of peers
                     self.peer_list.append(sender)
@@ -237,8 +238,32 @@ class Peer_DBS(sim):
 
             elif message[1] == 'F': # [forward]
 
-                lg.info("{}: received [forward chunks from origin {}] from {}".format(self.id, message[2], sender))
+                origin = message[2]
+                lg.info("{}: received [Forward chunks from origin {}] from {}".format(self.id, origin, sender))
 
+                # When arriving, all peers request to the rest of
+                # peers of the team those chunks whose source is the
+                # peer which receives the request. So in the
+                # forwarding list of each peer will be an entry
+                # indexed by <self.id> (the origin peer referenced by
+                # the incoming peer) what will point to the list of
+                # peers of the team whose request has arrived. Other
+                # nodes in the forwarding list will be generated for
+                # other peers that request the forwarding of the
+                # corresponding source.
+        
+                if sender not in self.forward[origin]:
+
+                    # Insert sender to the list of peers
+                    self.debt[sender] = 0
+                    self.forward[origin].append(sender)
+                    lg.info("{}: inserted {} by [Forward chunks from origin {}]".format(self.id, sender, origin))
+                    
+                    # --- simulator ---------------------------------------------- #
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
+                    # ------------------------------------------------------------ #
+                    
             elif message[1] == 'P': # [prune]
 
                 lg.info("{}: received [prune chunks from origin {}] from {}".format(self.id, message[2], sender))
@@ -262,16 +287,6 @@ class Peer_DBS(sim):
                                                                                               #
             sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))  #
             # ------------------------------------------------------------------------------- #
-
-            # When arriving, all peers request to the rest of peers of
-            # the team those chunks whose source is the peer which
-            # receives the request. So in the forwarding list of each
-            # peer will be an entry indexed by <self.id> (the origin
-            # peer referenced by the incoming peer) what will point to
-            # the list of peers of the team whose request has
-            # arrived. Other nodes in the forwarding list will be
-            # generated for other peers that request the forwarding of
-            # the corresponding source.
 
             # For example, if in the team there are 3 peers A, B and
             # C, and a new incoming peer D wants to join, D will sent
@@ -304,17 +319,6 @@ class Peer_DBS(sim):
             
             # -----------------------
 
-            # When a peer X receives a chunk C, X forwards C to all
-            # peers in pending[C].
-
-            # Example: lets suppose the most simple case in which all
-            # peers are directly connected. In this case for peer X,
-            # forward[X] == T\{X}, where T is the list of peers of
-            # T. When X receives chunk C with source Y, X creates
-
-            # When a peer X received a chunk C, chunk C is sent to all
-            # peers of pending[C].
-            
             # The source of the received chunks from the splitter is
             # the receiver of the chunk. The source of a received
             # chunk from a peer will be that peer or a different one.
