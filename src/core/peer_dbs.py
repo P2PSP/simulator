@@ -235,9 +235,9 @@ class Peer_DBS(sim):
                         lg.info("{}: received [goodbye] from splitter".format(self.id))
                         self.waiting_for_goodbye = False
 
-            elif message[1] == 'R': # [request]
+            elif message[1] == 'F': # [forward]
 
-                lg.info("{}: received [request chunks from origin {}] from {}".format(self.id, message[2], sender))
+                lg.info("{}: received [forward chunks from origin {}] from {}".format(self.id, message[2], sender))
 
             elif message[1] == 'P': # [prune]
 
@@ -263,25 +263,119 @@ class Peer_DBS(sim):
             sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))  #
             # ------------------------------------------------------------------------------- #
 
+            # When arriving, all peers request to the rest of peers of
+            # the team those chunks whose source is the peer which
+            # receives the request. So in the forwarding list of each
+            # peer will be an entry indexed by <self.id> (the origin
+            # peer referenced by the incoming peer) what will point to
+            # the list of peers of the team whose request has
+            # arrived. Other nodes in the forwarding list will be
+            # generated for other peers that request the forwarding of
+            # the corresponding source.
+
+            # For example, if in the team there are 3 peers A, B and
+            # C, and a new incoming peer D wants to join, D will sent
+            # to A a [Forward A], to B a [Forward B] and to C a
+            # [Forward C]. In the forwarding list of A, D will be
+            # appended to the entry forward[A], in B, forward[B] will
+            # add D, and in C, forward[C] will add D.
+
+            # In overlays where all peers are directly connected with
+            # the rest (the degree of all peers is N-1 where N is the
+            # number of peers in the team) and no
+            # alternative/redundant path are defined, the forwarding
+            # list of a peer X will have only the entry forward[X]
+            # that will point to the rest of peers of the team. When a
+            # peer X requests to peer Y to forward chunks from source
+            # Z, Y will append X to forward[Z]. So, Y will have at
+            # least two entries in its forwarding list: forward[Y]
+            # (with the rest of peers of the team) and forward[Z]
+            # (with at least X).
+
+            # When a peer X receives a chunk (number) C with source Y,
+            # for each node E of forward[Y], X performs
+            # pending[E].append(C).
+
+            # When peer X receives a chunk, X selects the next entry E
+            # of pending, sends the chunk C indicated by pending[E] to
+            # E, and removes C from pending[E]. If in pending[E] there
+            # are more than one chunk, all chunks are sent in a
+            # burst. In the first iteration, E is selected at random.
+            
+            # -----------------------
+
+            # When a peer X receives a chunk C, X forwards C to all
+            # peers in pending[C].
+
+            # Example: lets suppose the most simple case in which all
+            # peers are directly connected. In this case for peer X,
+            # forward[X] == T\{X}, where T is the list of peers of
+            # T. When X receives chunk C with source Y, X creates
+
+            # When a peer X received a chunk C, chunk C is sent to all
+            # peers of pending[C].
+            
+            # The source of the received chunks from the splitter is
+            # the receiver of the chunk. The source of a received
+            # chunk from a peer will be that peer or a different one.
+
+            # When a chunk is received by peer X from source Y
+            # (remember that Y==X if the sender is S), it will be sent
+            # to the next entry of <forward[Y]>.
+            
+            # Received chunks can came from the splitter S or from a
+            # peer X. If the sender is X, the receiver peer Y (me)
+            # will forward one or more chunks to different peers,
+            # those referenced by <forward[X]>. These chunks are sent
+            # in burst mode. Notice that the received chunk is sent
+            # first to a peer that requested the forwarding when
+            # arrived to the team and next are sent to peers which
+            # requested it later.
+
+
+            The chunks sent to Z
+            # are all those received by Y from S, that has not been
+            # sent to Z previously, and the received chunks from other
+            # peers and that been previously requested by Z.
+            
+            # Received chunks can came from the splitter and from
+            # another peer. If the sender is the splitter, the
+            # received chunk will be sent to a (different) peer of the
+            # list of peers. If the sender is a peer, the received
+            # chunk could be sent also to a different peer, if it
+            # requested it.
+
+            # For each received chunk, a list of destinations is
+            # defined. If the chunk has been received from the
+            # splitter, the destinations are all the peers of the list
+            # of peers. If the chunk has been received from a peer,
+            # because I (peer) requested it, I have to check if I have
+            # to forward the chunk to other peer, because it requested
+            # it.
+
+            # For each received chunk, we will go through the next entry of the forwarding list which is indexed by peers identificators. Each entry of such list will have at least one destination (
+            
             if (sender == self.splitter):
 
-                # Enter burst mode if pending chunk relays are found
-
-                # Can we avoid burst mode, even if the splitter selects the peers at random?
-            
-                # Load the new pending relays
-                self.relay = []
-                for i in self.peer_list:
-                    self.relay[i].append(i)
-
+                # Add the received chunk to the list of pending forwardings
+                for peer in self.peer_list:
+                    self.pending[peer].append(chunk_number) # The chunk itself is already in the buffer
+                    # After we will forward the received chunk to th
+                    
+                origin = self.id
+                    
             else: # sender != self.splitter
 
+                if origin is in self.relay:
+
+                    # We have received a chunk (from a peer) which (the chunk) must be forwarded
+                
                 if sender not in self.peer_list:
 
                     # Insert sender to the list of peers & establish its debt to 0
                     self.peer_list.append(sender)
-                    lg.info("{}: {} added by chunk".formar(sender, chunk_number))
-                    lg.info("{}: peer_list =".format(self.id, self.peer_list))
+                    lg.info("{}: {} added by chunk".format(sender, chunk_number))
+                    lg.debug("{}: peer_list =".format(self.id, self.peer_list))
                     self.debt[sender] = 0
 
                     # -------- For simulation purposes only ---------------------- #
@@ -291,9 +385,8 @@ class Peer_DBS(sim):
 
                 else: # sender is in list of peers
 
-                    # Load relayed 
-                    pass
-                #flooding_list
+                    # Decrement sender's debt
+                    self.debt[sender] -= 1
 
     def process_message(self, message, sender):
 
