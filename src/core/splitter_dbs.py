@@ -3,6 +3,15 @@
 splitter_dbs module
 """
 
+# DBS (Data Broadcasting Set) layer
+
+# DBS is the most basic layer to provide communication among splitter
+# (source of the stream) and peers (destination of the stream), using
+# unicast transmissions. The splitter sends a different chunk of
+# stream to each peer, using a random round-robin scheduler (in each
+# round peers are selected at random, but all peers are sent a chunk,
+# in a round).
+
 from .common import Common
 from threading import Thread
 import time
