@@ -142,6 +142,12 @@ class Peer_DBS(sim):
         # peers).
         self.forward = []
 
+        # List of pending chunks (indexes) to be sent to a peer (also
+        # indexed). Por example, if pending[0] = {1,2,3}, the chunks
+        # stored in entries 1, 2, and 3 of the buffer will be sent to
+        # the peer (of index) 0.
+        self.pending = []
+        
         # Peers start feeding the first neighbor peer.
         self.neighbor = 0 # peer_index
         
@@ -183,9 +189,6 @@ class Peer_DBS(sim):
         self.number_of_peers = self.splitter_socket.recv("H")
         lg.info("{}: received number_of_peers = {} from {}".format(self.id, self.number_of_peers, self.splitter))
 
-    # A "hello" (in form or [request] messages) are sent by a incoming
-    # peer I to a peer X of the team is a [request <origin=X>]
-    # message. Voy por aquí!
     def say_hello(self, peer):
         hello = (-1, "H")
         self.team_socket.sendto("is", hello, self.endpoint[peer])
