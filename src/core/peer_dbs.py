@@ -156,8 +156,8 @@ class Peer_DBS(sim):
         self.pending = []
         
         # Peers start feeding the first neighbor peer self.forward[0].
-        self.neighbor = 0 # peer_index
-        
+        self.neighbor_index = 0
+  
         # Sent and received chunks.
         self.sendto_counter = 0
         self.received_chunks = 0
@@ -249,7 +249,7 @@ class Peer_DBS(sim):
 
     def send_chunk(self, chunk_number, peer_index):
         self.team_socket.sendto("is", self.chunks[chunk_number], self.endpoint[peer_index])
-        self.sendto_counter += 1 # For informative issues
+        self.sendto_counter += 1
 
     def is_a_control_message(self, message):
         if message[0] < 0:
@@ -257,15 +257,11 @@ class Peer_DBS(sim):
         else:
             return False
 
-    def is_a_chunk(self, message):
-        if message[0] >= 0:
-            return True
-        return False 
-
-    def process_message(self, message, sender):
+    def process_message(self, message, sender_index):
 
         # ----- Check if new round for peer (simulation purposes) ------------- #
-        if not self.is_a_control_message(message) and sender == self.splitter:  #
+        if not self.is_a_control_message(message) and \                         #
+        self.endpoint[sender_index] == self.splitter:                           #
             if self.played > 0 and self.played >= len(self.peer_list):          #
                 clr = self.losses/self.played                                   #
                 sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))                 #
@@ -283,7 +279,8 @@ class Peer_DBS(sim):
             self.received_chunks += 1
 
             # --- for simulation purposes only ---------------------------------------------- #
-            self.sender_of_chunks[chunk_number % self.buffer_size] = sender                   #
+            self.sender_of_chunks[chunk_number % self.buffer_size] = \                        #
+            self.endpoing(sender_index)                                                       #
                                                                                               #
             chunks = ""                                                                       #
             for n, c in self.chunks:                                                          #
@@ -298,10 +295,10 @@ class Peer_DBS(sim):
             origin = message[2]
             
             # When a peer X receives a chunk (number) C with origin Y,
-            # for each node E of forward[Y], X performs
+            # for each peer E of forward[Y], X performs
             # pending[E].append(C).
-            for i in self.forward[origin]:
-                pending[i].append(chunk_number)
+            for peer in self.forward[origin]:
+                pending[peer].append(chunk_number)
             
             # When peer X receives a chunk, X selects the next entry E
             # of pending, sends the chunk C indicated by pending[E] to
@@ -310,35 +307,35 @@ class Peer_DBS(sim):
             # a burst. E should be selected to sent first to those
             # peers that we want to forward us chunks not originated
             # in them.
-            for chunk in self.pending[self.neighbor]:
+            for chunk_number in self.pending[self.neighbor_index]:
 
                 # Send the chunk to the neighbor
-                self.send_chunk(chunk, self.neighbor)
+                self.send_chunk(chunk_number, self.neighbor_index)
 
                 # Increment the debt of the neighbor
-                self.debt[self.neighbor] += 1
+                self.debt[self.neighbor_index] += 1
                 
-                if self.debt[self.neighbor] > self.MAX_CHUNK_DEBT:
+                if self.debt[self.neighbor_index] > self.MAX_CHUNK_DEBT:
 
-                    # Selfish neighbor: forget it
-                    lg.info("{}: {} removed by unsupportive ({} debts)".format(self.id, self.neighbor, self.debt[self.neighbor]))
-                    del self.debt[self.neighbor]
-                    for table in self.forward:
-                        if self.neighbor in table:
-                            self.forward[table].remove(self.neighbor)
+                    # Selfish neighbor detected: stop communicating with it
+                    lg.info("{}: removing {} by unsupportive ({} debts)".format(self.id, self.neighbor, self.debt[self.neighbor]))
+                    del self.debt[self.neighbor_index]
+                    for peer_list in self.forward:
+                        if self.neighbor_index in peer_list:
+                            peer_list.remove(self.neighbor)
 
                     # --- simulator ------------------------------------------------------ #
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, self.neighbor)) #
                     # -------------------------------------------------------------------- #
                     
             # Select a different neighbor for the next chunk reception
-            self.neighbor = (self.neighbor +1) % len(self.endpoint)
+            self.neighbor_index = (self.neighbor_index +1) % len(self.endpoint)
 
-        else: # message[0] >= 0
+        else: # message[0] < 0
                     
-            if message[1] == 'F': # [forward]
+            if message[1] == self.REQUEST:
 
-                lg.info("{}: received [Forward chunks from origin {}] from {}".format(self.id, origin, sender))
+                lg.info("{}: received [request {}] from {}".format(self.id, origin, sender))
 
                 # If a peer X receives [forward Y] from peer Z, X will
                 # append Z to forward[Y].
