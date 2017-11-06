@@ -99,10 +99,19 @@ class Peer_DBS(sim):
         self.debt = []
 
         # Number of monitors in the team (information sent by the
-        # splitter).
+        # splitter but unsed at this level).
         self.number_of_monitors = 0
-        self.waiting_for_goodbye = False
+
+        # To ensure an outgoing peer will not receive a chunk from the
+        # splitter, the outgoing peer must wait for the goodbye from
+        # the splitter before leaving the team.
+        self.waiting_for_goodbye = True
+
+        # Number of peers in the team (except for knowing if I'm a
+        # monitor, unused).
         self.number_of_peers = 0
+
+        # A flag that when True, fires the leaving process.
         self.ready_to_leave_the_team = False
 
             # In overlays where all peers are directly connected with
@@ -127,9 +136,10 @@ class Peer_DBS(sim):
         # peer is the origin), and that must forward to the rest of the
         # team.
 
-        # Table of forwarding rules. If a peer X has an entry
-        # forward[Y]={..., Z, ...}, every chunk received from Y will
-        # be forwarded towards Z (and the other peers).
+        # Forwarding rules of chunks, indexed by origins. If a peer
+        # has an entry forward[Y]={..., Z, ...}, every chunk received
+        # from origin Y will be forwarded towards Z (and maybe another
+        # peers).
         self.forward = []
 
         # Peers start feeding the first neighbor peer.
@@ -138,9 +148,6 @@ class Peer_DBS(sim):
         # Sent and received chunks.
         self.sendto_counter = 0
         self.received_chunks = 0
-
-        # ... from splitter.
-        self.waiting_for_goodbye = True
 
         lg.info("{}: DBS initialized".format(self.id))
 
@@ -178,11 +185,11 @@ class Peer_DBS(sim):
 
     # A "hello" (in form or [request] messages) are sent by a incoming
     # peer I to a peer X of the team is a [request <origin=X>]
-    # message.
+    # message. Voy por aquí!
     def say_hello(self, peer):
-        hello = (-1, "R", peer)
-        self.team_socket.sendto("is", hello, peer)
-        lg.info("{}: sent [forward chunk originated at {}]  sent to {}".format(self.id, peer))
+        hello = (-1, "H", peer)
+        self.team_socket.sendto("is", hello, self.endpoint[peer])
+        lg.info("{}: [hello {}] sent to {}".format(self.id, peer, self.endpoint[peer]))
 
     def receive_the_list_of_peers(self):
         peers_pending_of_reception = self.number_of_peers
