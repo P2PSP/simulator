@@ -7,8 +7,8 @@ peer_dbs module
 
 # DBS peers receive chunks from the splitter and other peers, and
 # resend them, depending on the forwarding requests performed by the
-# peers. Thus, if a peer X wants to receive from peer Y chunks from
-# orign Z, X must request it to Y, explicitally.
+# peers. In a nutshell, if a peer X wants to receive from peer Y
+# chunks from orign Z, X must request it to Y, explicitally.
 
 # -------
 
@@ -55,29 +55,37 @@ import sys
 
 class Peer_DBS(sim):
 
-    # This not makes sense in DBS2?
+    # Peers interchange chunks. If a peer A sends MAX_CHUNK_DEBT more
+    # chunks to a peer B than viceversa, A stops sending to B.
     MAX_CHUNK_DEBT = 128
     
     def __init__(self, id):
+
+        # Peer identification.
         self.id = id
-        self.played_chunk = 0 #  Chunk currently played
-        self.buffer_size = 64 #  Number of chunks in the buffer * 2
-        self.chunks = [] #  Buffer of chunks (a circular queue)
-        self.player_alive = True #  While True, keeps the peer alive
 
-        # ---Only for simulation purposes--- #
-        self.losses = 0                      #
-        self.played = 0                      #
-        self.number_of_chunks_consumed = 0   #
-        self.chunks_before_leave = 0         #
-        # ---------------------------------- #
+        # Chunk currently played.
+        self.played_chunk = 0
 
-        self.max_chunk_debt = self.MAX_CHUNK_DEBT
+        # Number of spaces for chunks in the buffer.
+        self.buffer_size = 32*2
 
-        # Peers in the team (except you). For the sake of the
-        # efficiency, in most of the situations, peer are referenced
-        # by a positive integer peer_index. Thus, self.endpoiint[0] =
-        # end-point of the first peer in the list neighbor peers.
+        # Buffer of chunks (used as a circular queue).
+        self.chunks = []
+
+        # While True, keeps the peer alive
+        self.player_alive = True
+
+        # End-points (or a way to send data) of the peers of the team
+        # that can communicate with you. Notice that, for the sake of
+        # the efficiency, in most parts of the code, peer are
+        # referenced by a positive integer (not by an
+        # end-point). Thus, for example, self.endpoint[0] is the
+        # end-point of the first peer in the list of known
+        # peers. Depending on if peers were able to establish more or
+        # less communications with the rest of peers, the list of
+        # peers contains a number of peers equal or inferior to the
+        # number of peers in the team.
         self.endpoint = []
 
         # This table (indexex by a peer_index) store counters of
@@ -89,7 +97,9 @@ class Peer_DBS(sim):
         # <origin>] to those peers that have sent the duplicate
         # chunk. It is responsability.
         self.debt = []
-        
+
+        # Number of monitors in the team (information sent by the
+        # splitter).
         self.number_of_monitors = 0
         self.waiting_for_goodbye = False
         self.number_of_peers = 0
@@ -133,6 +143,13 @@ class Peer_DBS(sim):
         self.waiting_for_goodbye = True
 
         lg.info("{}: DBS initialized".format(self.id))
+
+        # ---Only for simulation purposes--- #
+        self.losses = 0                      #
+        self.played = 0                      #
+        self.number_of_chunks_consumed = 0   #
+        self.chunks_before_leave = 0         #
+        # ---------------------------------- #
 
     def listen_to_the_team(self):
         self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
