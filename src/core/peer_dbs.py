@@ -143,7 +143,7 @@ class Peer_DBS(sim):
         self.forward = []
 
         # Peers start feeding the first neighbor peer.
-        self.neighbor = 0
+        self.neighbor = 0 # peer_index
         
         # Sent and received chunks.
         self.sendto_counter = 0
@@ -187,7 +187,7 @@ class Peer_DBS(sim):
     # peer I to a peer X of the team is a [request <origin=X>]
     # message. Voy por aquí!
     def say_hello(self, peer):
-        hello = (-1, "H", peer)
+        hello = (-1, "H")
         self.team_socket.sendto("is", hello, self.endpoint[peer])
         lg.info("{}: [hello {}] sent to {}".format(self.id, peer, self.endpoint[peer]))
 
@@ -238,8 +238,8 @@ class Peer_DBS(sim):
         self.splitter_socket.send("s", ready)
         lg.info("{}: sent {} to {}".format(self.id, ready, self.splitter))
 
-    def send_chunk(self, chunk, peer):
-        self.team_socket.sendto("is", self.buffer[chunk], self.endpoint[peer])
+    def send_chunk(self, chunk_number, peer):
+        self.team_socket.sendto("is", self.chunks[chunk_number], self.endpoint[peer])
         self.sendto_counter += 1 # For informative issues
 
     def is_a_control_message(self, message):
@@ -322,10 +322,8 @@ class Peer_DBS(sim):
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, self.neighbor)) #
                     # -------------------------------------------------------------------- #
                     
-                else:
-
-                    # Select a different neighbor for the next chunk reception
-                    self.neighbor = (self.neighbor +1) % len(self.endpoint)
+            # Select a different neighbor for the next chunk reception
+            self.neighbor = (self.neighbor +1) % len(self.endpoint)
 
         else: # message[0] >= 0
                     
