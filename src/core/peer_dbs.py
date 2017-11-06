@@ -70,7 +70,7 @@ class Peer_DBS(sim):
     # In chunks.
     BUFFER_SIZE = 32
 
-    # Control messages.
+    # Control messages transmitted between peers.
     HELLO   = -1 # Sent to me your chunks (received from the splitter)
     GOODBYE = -1 # See you later.
     REQUEST = -2 # Send to me the chunks originated at ...
@@ -193,11 +193,11 @@ class Peer_DBS(sim):
         lg.info("{}: received number_of_peers = {} from {}".format(self.id, self.number_of_peers, self.splitter))
 
     def say_hello(self, peer):
-        self.team_socket.sendto("i", self.HELLO, peer) # ojo with "i" (indú mirándote)
+        self.team_socket.sendto("i", (self.HELLO), peer) # ojo with "i" (indú mirándote)
         lg.info("{}: [hello] sent to {}".format(self.id, peer))
 
     def say_goodbye(self, index):
-        self.team_socket.sendto("i", self.GOODBYE, peer)
+        self.team_socket.sendto("i", (self.GOODBYE), peer)
         lg.info("{}: [goodbye] sent to {}".format(self.id, peer))
 
     def receive_the_list_of_peers(self):
@@ -207,7 +207,7 @@ class Peer_DBS(sim):
             self.say_hello(peer)
             peers_pending_of_reception -= 1
 
-        lg.info("{} : received {} peers from {}".format(self.id, self.number_of_peers, self.splitter))
+        lg.info("{}: sent [hello] to {} peers".format(self.id, self.number_of_peers))
 
         # Incoming peers populate their forwarding tables when
         # chunks of data from other peers are received.
