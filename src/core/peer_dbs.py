@@ -12,6 +12,14 @@ peer_dbs module
 
 # -------
 
+
+
+        # Peers that want to
+        # receive routed chunks will have to make the feeders up for
+        # they with wanted chunks. If a peer receive a duplicate
+        # chunk, it could send a [Prune <origin>] to those peers that
+        # have sent the duplicate chunk. It is responsability.
+
 # If the sender of the chunk is a peer, it will be forwarded if there
 # is an entry in the forward table for the origin of the received
 # peer.
@@ -58,6 +66,15 @@ class Peer_DBS(sim):
     # Peers interchange chunks. If a peer A sends MAX_CHUNK_DEBT more
     # chunks to a peer B than viceversa, A stops sending to B.
     MAX_CHUNK_DEBT = 128
+
+    # In chunks.
+    BUFFER_SIZE = 32
+
+    # Control messages.
+    HELLO   = -1 # Sent to me your chunks (received from the splitter)
+    GOODBYE = -1 # See you later.
+    REQUEST = -2 # Send to me the chunks originated at ...
+    PRUNE   = -3 # Don't send to me chunks originated at ...
     
     def __init__(self, id):
 
@@ -67,35 +84,26 @@ class Peer_DBS(sim):
         # Chunk currently played.
         self.played_chunk = 0
 
-        # Number of spaces for chunks in the buffer.
-        self.buffer_size = 32*2
-
         # Buffer of chunks (used as a circular queue).
         self.chunks = []
 
         # While True, keeps the peer alive
         self.player_alive = True
 
-        # End-points (or a way to send data) of the peers of the team
-        # that can communicate with you. Notice that, for the sake of
-        # the efficiency, in most parts of the code, peer are
-        # referenced by a positive integer (not by an
-        # end-point). Thus, for example, self.endpoint[0] is the
-        # end-point of the first peer in the list of known
-        # peers. Depending on if peers were able to establish more or
-        # less communications with the rest of peers, the list of
-        # peers contains a number of peers equal or inferior to the
-        # number of peers in the team.
+        # End-points of the peers of the team, you communcate
+        # with. For the sake of the efficiency, in most parts of the
+        # code, peers are referenced by a positive integer (not by an
+        # end-point), being X.endpoint[0] the end-point of
+        # X. Depending on if peers were able to establish more or less
+        # communications with the rest of peers, the list of peers
+        # contains a number of peers equal or inferior to the number
+        # of peers in the team.
         self.endpoint = []
 
-        # This table (indexex by a peer_index) store counters of
-        # sent/recived chunks. Every time a peer X sends a chunk to
-        # peer Y, X increments debt[Y] and Y decrements debt[X] (and
-        # viceversa). Peers that want to receive routed chunks will
-        # have to make the feeders up for they with wanted chunks. If
-        # a peer receive a duplicate chunk, it could send a [Prune
-        # <origin>] to those peers that have sent the duplicate
-        # chunk. It is responsability.
+        # Counters of sent-recived chunks, by peer. Every time a peer
+        # X sends a chunk to peer Y, X increments debt[Y] and Y
+        # decrements debt[X] (and viceversa). If a X.debt[Y] >
+        # MAX_CHUNK_DEBT, X will stop sending more chunks to Y.
         self.debt = []
 
         # Number of monitors in the team (information sent by the
@@ -138,17 +146,16 @@ class Peer_DBS(sim):
 
         # Forwarding rules of chunks, indexed by origins. If a peer
         # has an entry forward[Y]={..., Z, ...}, every chunk received
-        # from origin Y will be forwarded towards Z (and maybe another
-        # peers).
+        # from origin Y will be forwarded towards Z.
         self.forward = []
 
-        # List of pending chunks (indexes) to be sent to a peer (also
-        # indexed). Por example, if pending[0] = {1,2,3}, the chunks
-        # stored in entries 1, 2, and 3 of the buffer will be sent to
-        # the peer (of index) 0.
+        # List of pending chunks (numbers) to be sent to peers. Por
+        # example, if pending[5] = {1,2,3}, the chunks stored in
+        # entries 1, 2, and 3 of the buffer will be sent to the peer
+        # (with index) 5.
         self.pending = []
         
-        # Peers start feeding the first neighbor peer.
+        # Peers start feeding the first neighbor peer self.forward[0].
         self.neighbor = 0 # peer_index
         
         # Sent and received chunks.
@@ -172,10 +179,6 @@ class Peer_DBS(sim):
     def set_splitter(self, splitter):
         self.splitter = splitter
 
-    def say_goodbye(self, peer):
-        goodbye = (-1, "G")
-        self.team_socket.sendto("is", goodbye, peer)
-
     def receive_buffer_size(self):     
         self.buffer_size = self.splitter_socket.recv("H")
         lg.info("{}: received buffer_size = {} from {}".format(self.id, self.buffer_size, self.splitter))
@@ -190,9 +193,12 @@ class Peer_DBS(sim):
         lg.info("{}: received number_of_peers = {} from {}".format(self.id, self.number_of_peers, self.splitter))
 
     def say_hello(self, peer):
-        hello = (-1, "H")
-        self.team_socket.sendto("is", hello, self.endpoint[peer])
-        lg.info("{}: [hello {}] sent to {}".format(self.id, peer, self.endpoint[peer]))
+        self.team_socket.sendto("i", self.HELLO, peer) # ojo with "i" (indú mirándote)
+        lg.info("{}: [hello] sent to {}".format(self.id, peer))
+
+    def say_goodbye(self, index):
+        self.team_socket.sendto("i", self.GOODBYE, peer)
+        lg.info("{}: [goodbye] sent to {}".format(self.id, peer))
 
     def receive_the_list_of_peers(self):
         peers_pending_of_reception = self.number_of_peers
@@ -201,7 +207,7 @@ class Peer_DBS(sim):
             self.say_hello(peer)
             peers_pending_of_reception -= 1
 
-        lg.debug("{} : received len(peer_list) = {} from {}".format(self.id, len(self.peer_list), self.splitter))
+        lg.info("{} : received {} peers from {}".format(self.id, self.number_of_peers, self.splitter))
 
         # Incoming peers populate their forwarding tables when
         # chunks of data from other peers are received.
@@ -241,8 +247,8 @@ class Peer_DBS(sim):
         self.splitter_socket.send("s", ready)
         lg.info("{}: sent {} to {}".format(self.id, ready, self.splitter))
 
-    def send_chunk(self, chunk_number, peer):
-        self.team_socket.sendto("is", self.chunks[chunk_number], self.endpoint[peer])
+    def send_chunk(self, chunk_number, peer_index):
+        self.team_socket.sendto("is", self.chunks[chunk_number], self.endpoint[peer_index])
         self.sendto_counter += 1 # For informative issues
 
     def is_a_control_message(self, message):
