@@ -10,49 +10,6 @@ peer_dbs module
 # peers. In a nutshell, if a peer X wants to receive from peer Y
 # chunks from origin Z, X must request it to Y, explicitally.
 
-# -------
-
-
-
-        # Peers that want to
-        # receive routed chunks will have to make the feeders up for
-        # they with wanted chunks. If a peer receive a duplicate
-        # chunk, it could send a [Prune <origin>] to those peers that
-        # have sent the duplicate chunk. It is responsability.
-
-# If the sender of the chunk is a peer, it will be forwarded if there
-# is an entry in the forward table for the origin of the received
-# peer.
-
-# Some definitions:
-
-# 1. Routed chunk: a chunk that has performed more than two hops (the
-# splitter hop and the origin hop).
-
-# 2. Duplicate chunk: a received chunk that arrives after a copy of
-# it.
-
-# 2. Wanted chunk: a chunk that is needed by the peer. By definition,
-# duplicate chunks are not wanted chunks.
-
-
-# Peers send [request <chunk>] (where <chunk> is a chunk index) to a
-# random peer (between the peers that have a small debt) when <chunk>
-# is missing while the playback. If a peer receive a [request
-# <chunk>], it will continue sending to the sender of this message
-# those chunks that come from the origin peer which sent the chunk
-# <chunk>, until the requesting peer sends a [prune <origin>].
-
-# During their life in the team (for example, when a peer refuse to
-# send data to it o simply to find better routes), peers will request
-# alternative routes for the chunks. To do that, a [send once from
-# <origin peer>] message will be sent to at least one peer of the
-# team. A peer that receive such message will send (or not, depending
-# on, for example, the debt of the requesting peer) only one chunk
-# from the origin peer to the requesting peer. The requesting peer
-# will send to the first peer to send the chunk a [send from <origin
-# peer>] and both peers will be neighbors. To cancel this message, a
-# [prune <origin>] must be used.
 
 from threading import Thread
 from .common import Common
@@ -164,12 +121,12 @@ class Peer_DBS(sim):
 
         lg.info("{}: DBS initialized".format(self.id))
 
-        # ---Only for simulation purposes--- #
-        self.losses = 0                      #
-        self.played = 0                      #
-        self.number_of_chunks_consumed = 0   #
-        self.chunks_before_leave = 0         #
-        # ---------------------------------- #
+        # ---Only for simulation purposes ---
+        self.losses = 0
+        self.played = 0
+        self.number_of_chunks_consumed = 0
+        self.chunks_before_leave = 0
+        # -----------------------------------
 
     def listen_to_the_team(self):
         self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -182,9 +139,9 @@ class Peer_DBS(sim):
     def receive_buffer_size(self):     
         self.buffer_size = self.splitter_socket.recv("H")
         lg.info("{}: received buffer_size = {} from {}".format(self.id, self.buffer_size, self.splitter))
-        # --- Only for simulation purposes ---------- #
-        self.sender_of_chunks = [""]*self.buffer_size #
-        # ------------------------------------------- #
+        # --- Only for simulation purposes ----------
+        self.sender_of_chunks = [""]*self.buffer_size
+        # -------------------------------------------
 
     def receive_the_number_of_peers(self):
         self.number_of_monitors = self.splitter_socket.recv("H")
@@ -263,24 +220,23 @@ class Peer_DBS(sim):
 
     def process_message(self, message, sender_index):
 
-        # ----- Check if new round for peer (simulation purposes) ------------- #
-        if not self.is_a_control_message(message) and \                         #
-        self.endpoint[sender_index] == self.splitter:                           #
-            if self.played > 0 and self.played >= len(self.peer_list):          #
-                clr = self.losses/self.played                                   #
-                sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))                 #
-                self.losses = 0                                                 #
-                self.played = 0                                                 #
-        # --------------------------------------------------------------------- #
+        # ----- Check if new round for peer (simulation purposes) -------------
+        if not self.is_a_control_message(message) and self.endpoint[sender_index] == self.splitter:
+            if self.played > 0 and self.played >= len(self.peer_list):
+                clr = self.losses/self.played
+                sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))
+                self.losses = 0
+                self.played = 0
+        # ---------------------------------------------------------------------
 
-        if (message[0] >= 0):
+        if message[0] >= 0:
 
             # chunk -> buffer[chunk_number]
             chunk_number = message[0]
             chunk = message[1]
-            if((self.chunks[chunk_number % self.buffer_size][1]) == chunk_number):
+            if (self.chunks[chunk_number % self.buffer_size][1]) == chunk_number:
                 
-                # Duplicate chunk
+                # Duplicate chunk. The sender is warned.
                 self.prune(chunk_number, sender_index)
                 
             else:
@@ -289,18 +245,15 @@ class Peer_DBS(sim):
                 self.chunks[chunk_number % self.buffer_size] = (chunk, chunk_number)
                 self.received_chunks += 1
 
-                # --- for simulation purposes only ---------------------------------------------- #
-                self.sender_of_chunks[chunk_number % self.buffer_size] = \                        #
-                self.endpoint(sender_index)                                                       #
-                                                                                                  #
-                chunks = ""                                                                       #
-                for n, c in self.chunks:                                                          #
-                    chunks += c                                                                   #
-                    if c == "L":                                                                  #
-                        self.sender_of_chunks[n % self.buffer_size] = ""                          #
-                                                                                                  #
-                sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))  #
-                # ------------------------------------------------------------------------------- #
+                # --- for simulation purposes only -------------------------------------------------
+                self.sender_of_chunks[chunk_number % self.buffer_size] = self.endpoint(sender_index)
+                chunks = ""
+                for n, c in self.chunks:
+                    chunks += c
+                    if c == "L":
+                        self.sender_of_chunks[n % self.buffer_size] = ""
+                sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))
+                # ----------------------------------------------------------------------------------
 
                 # Origins are defined by the splitter
                 origin = message[2]
@@ -634,6 +587,10 @@ class Peer_DBS(sim):
             # duplicate chunks, [prune <chunk_index>] should be sent
             # to those peers which sent a duplicate.
             self.request_chunk(chunk_index, self.neighbor)
+            # Here, self.neighbor has been selected by
+            # simplicity. However, other alternatives such as
+            # requesting the lost chunk to the neighbor with smaller
+            # debt could also be explored.
             
         self.number_of_chunks_consumed += 1
         return self.player_alive
@@ -658,3 +615,16 @@ class Peer_DBS(sim):
 
     def am_i_a_monitor(self):
         return self.number_of_peers < self.number_of_monitors
+
+# Old stuff:
+
+# During their life in the team (for example, when a peer refuse to
+# send data to it o simply to find better routes), peers will request
+# alternative routes for the chunks. To do that, a [send once from
+# <origin peer>] message will be sent to at least one peer of the
+# team. A peer that receive such message will send (or not, depending
+# on, for example, the debt of the requesting peer) only one chunk
+# from the origin peer to the requesting peer. The requesting peer
+# will send to the first peer to send the chunk a [send from <origin
+# peer>] and both peers will be neighbors. To cancel this message, a
+# [prune <origin>] must be used.
