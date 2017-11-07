@@ -282,20 +282,21 @@ class Peer_DBS(sim):
                     if __debug__:
                         sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
                         sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
-                    
+
             elif message[0] == self.PRUNE:
                 
                 chunk_index = message[1]
                 lg.info("{}: received [prune {}] from {}".format(self.id, chunk_index, self.sender))
 
                 origin = self.chunks[chunk_index % self.BUFFER_SIZE][2]
+                
                 if sender is in self.forward[origin]:
                     try:
                         self.forward[origin].remove(sender)
                     except ValueError:
-                        lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin)
+                        lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
                     
-            elif message[1] == self.HELLO:
+            elif message[0] == self.HELLO:
 
                 # Incoming peers request to the rest of peers of the
                 # team those chunks whose source is the peer which
@@ -326,7 +327,7 @@ class Peer_DBS(sim):
                         sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
                         sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
 
-            elif message[1] == self.GOODBYE:
+            elif message[0] == self.GOODBYE:
 
                 lg.info("{}: received [goodbye] from {}".format(self.id, sender))
 
@@ -350,21 +351,8 @@ class Peer_DBS(sim):
         return (message[0], sender)
         
     def process_next_message(self):
-        message, sender = self.team_socket.recvfrom("is")
+        message, sender = self.team_socket.recvfrom(self.max_packet_size)
         return self.process_message(message, sender)
-
-    def polite_farewell(self):
-        lg.info("{}: (see you later)".format(self.id))
-        while (self.receive_and_feed_counter < len(self.peer_list)):
-            self.send_chunk(self.peer_list[self.receive_and_feed_counter])
-            self.team_socket.recvfrom("is")
-            self.receive_and_feed_counter += 1
-
-        for peer in self.peer_list:
-            self.say_goodbye(peer)
-
-        self.ready_to_leave_the_team = True
-        lg.info("{}: ready to leave the team".format(self.id))
 
     def buffer_data(self):
         for i in range(self.buffer_size):
@@ -422,21 +410,31 @@ class Peer_DBS(sim):
         return self.player_alive
 
     def keep_the_buffer_full(self):
-        last_received_chunk = self.process_next_message()
+        (last_received_chunk, ) = self.process_next_message()
         while (last_received_chunk < 0):
-            last_received_chunk = self.process_next_message()
+            (last_received_chunk, ) = self.process_next_message()
 
         self.play_next_chunks(last_received_chunk)
 
     def start(self):
         Thread(target=self.run).start()
 
+    def say_goodbye_to_the_team(self):
+        for peer in self.peer_list:
+            self.say_goodbye(peer)
+
+        while (all(len(d) > 0 for d in self.pending)):
+            self.process_next_message()
+
+        self.ready_to_leave_the_team = True
+        lg.info("{}: see you later!".format(self.id))
+
     def run(self):
         while (self.player_alive or self.waiting_for_goodbye):
             self.keep_the_buffer_full()
             if not self.player_alive:
                 self.say_goodbye(self.splitter)
-        self.polite_farewell()
+        self.say_goodbye_to_the_team()
         self.team_socket.close()
 
     def am_i_a_monitor(self):
