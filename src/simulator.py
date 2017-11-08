@@ -19,8 +19,9 @@ from glob import glob
 import time
 import fire
 import networkx as nx
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
+if __debug__:
+    import matplotlib.pyplot as plt
+    import matplotlib.cm as cm
 import numpy as np
 import platform
 import os
@@ -114,7 +115,7 @@ class Simulator():
         peer.listen_to_the_team()
         peer.receive_the_list_of_peers()
         peer.send_ready_for_receiving_chunks()
-        peer.buffer_data()
+        #peer.buffer_data()
         #peer.start()
         peer.run()
 
@@ -364,11 +365,12 @@ class Simulator():
 
     def run(self):
         lg.info("simulator: platform.system() = {}".format(platform.system()))
-        if platform.system() == 'Linux':
-            plt.switch_backend("TkAgg")
-        elif platform.system() == 'Darwin':
-            plt.switch_backend("macosx")
-        plt.style.use("seaborn-white")
+        if __debug__:
+            if platform.system() == 'Linux':
+                plt.switch_backend("TkAgg")
+            elif platform.system() == 'Darwin':
+                plt.switch_backend("macosx")
+                plt.style.use("seaborn-white")
 
         # Removing temporal socket files
         for pattern in ['/tmp/*_udp', '/tmp/*_tcp']:
@@ -379,8 +381,9 @@ class Simulator():
         sim.FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
 
-        if self.gui is True:
-            Process(target=self.draw).start()
+        if __debug__:
+            if self.gui is True:
+                Process(target=self.draw).start()
 
         # Listen to the team for simulation life
         sim.FEEDBACK["STATUS"] = Queue()
