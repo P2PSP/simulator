@@ -42,8 +42,12 @@ class Socket_print:
     def set_id(self, id):
         self.id = id
 
-    def set_max_packet_size(self, fmt):
-        self.max_packet_size = struct.calcsize(fmt)
+    def set_max_packet_size(self, fmts):
+        max = 0
+        for fmt in fmts:
+            if max < struct.calcsize(fmt):
+                max = struct.calcsize(fmt):
+        self.max_packet_size = max
 
     def send(self, message):
         lg.debug("{} = [{}] => {}".format(self.id, mesage, "S"))

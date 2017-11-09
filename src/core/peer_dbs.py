@@ -109,7 +109,8 @@ class Peer_DBS(sim):
     def listen_to_the_team(self):
         self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.team_socket.set_id(self.id) # ojo, simulation dependent
-        self.team_socket.set_max_packet_size("is4s")
+        self.team_socket.set_max_packet_size(["isi", "i", "ii"])
+        # "chunk_index, chunk, origin", "[hello]/[goodbye]",  "[request <chunk>]/[prune <chunk>]"
         self.team_socket.bind(self.id + "_udp") # ojo, simulation dependent
 
     def set_splitter(self, splitter):
@@ -131,7 +132,8 @@ class Peer_DBS(sim):
         lg.info("{}: number of peers = {}".format(self.id, self.number_of_peers))
 
     def say_hello(self, peer):
-        self.team_socket.send_packet("i", (self.HELLO), peer)
+        self.team_socket.send_packet("i",
+                                         (self.HELLO), peer)
         lg.info("{}: [hello] sent to {}".format(self.id, peer))
 
     def say_goodbye(self, index):
