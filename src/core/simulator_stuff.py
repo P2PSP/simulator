@@ -42,70 +42,50 @@ class Socket_print:
     def set_id(self, id):
         self.id = id
 
-    def send(self, fmt, msg):
-        params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
-        message = struct.pack(fmt, *params)
-        lg.debug("{} = [{}] => {}".format(self.id, msg, "S"))
+    def set_max_packet_size(self, fmt):
+        self.max_packet_size = struct.calcsize(fmt)
+
+    def send(self, message):
+        lg.debug("{} = [{}] => {}".format(self.id, mesage, "S"))
         return self.sock.send(message)
 
-    def sendall(self, fmt, msg):
-        param = [msg.encode('utf-8') if type(msg) is str else msg][0]
-        message = struct.pack(fmt, param)
-        lg.debug("{} = [{}] => {}".format("S", msg, self.id ))
-        return self.sock.sendall(message)
-        
-    def sendto(self, fmt, msg, dst):
-        params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
-        message = struct.pack(fmt, *params)
-        lg.debug("{} - [{}] -> {}".format(self.id, msg, dst))
-        try:
-            sendto_value = self.sock.sendto(message, socket.MSG_DONTWAIT, "/tmp/"+dst+"_udp")
-            #print("SENDTO_VALUE", sendto_value)
-            return sendto_value
-        except ConnectionRefusedError:
-            lg.error("The message {} has not been delivered because the destination {} left the team".format(msg, dst))
-        except KeyboardInterrupt:
-            lg.warning("SENDTO_EXCEPT {}".format(fmt, msg, dst, message, params))
-        except BlockingIOError:
-            raise
-
-    def recv(self, fmt):
-        msg = self.sock.recv(struct.calcsize(fmt))
-        try:
-            msg_coded = struct.unpack(fmt, msg)[0]
-        except struct.error:
-            lg.error("ERROR: {} len {} expected {}".format(msg, len(msg), struct.calcsize(fmt)))
-
-        message = [msg_coded.decode('utf-8').rstrip('\x00') if type(msg_coded) is bytes else msg_coded][0]
+    def receive(self, message_length):
+        message = self.sock.recv(message_length)
+        while len(message) < message_length:
+            message += self.sock.recv(message_length - len(message))
         lg.debug("{} <= [{}]".format(self.id, message))
         return message
 
-    def recvfrom(self, fmt):
-        msg, sender = self.sock.recvfrom(struct.calcsize(fmt))
+    def sendall(self, message):
+        lg.debug("{} = [{}] => {}".format('S', message, self.id )) # 'S' ?
+        return self.sock.sendall(message)
+        
+    def send_packet(self, message, destination):
+        lg.debug("{} - [{}] -> {}".format(self.id, message, destination))
         try:
-            msg_coded = struct.unpack(fmt, msg)
-        except struct.error:
-            lg.error("ERROR: {} len {} expected {}".format(msg, len(msg), struct.calcsize(fmt)))
+            return self.sock.sendto(message, socket.MSG_DONTWAIT, "/tmp/" + dst + "_udp")
+        except ConnectionRefusedError:
+            lg.error("The message {} has not been delivered because the destination {} left the team".format(msg, dst))
+        except KeyboardInterrupt:
+            lg.warning("simulator_stuff:send_packet {}".format(message, destination))
+        except BlockingIOError:
+            raise
 
-        try:
-            message = tuple([x.decode('utf-8').rstrip('\x00') if type(x) is bytes else x for x in msg_coded])
-        except UnicodeDecodeError as e:
-            lg.error("UNICODEERROR msg {} msg_coded{}\n".format(msg, msg_coded))
-            lg.error("{}".format(e))
-        sender = sender.replace("/tmp/", "").replace("_tcp", "").replace("_udp","")
+    def receive_packet(self):
+        mesage, sender = self.sock.recvfrom(self.max_packet_size))
         lg.debug("{} <- [{}] = {}".format(self.id, message, sender))
         return (message, sender)
 
     def connect(self, path):
-        lg.info("path {}".format(path))
-        return self.sock.connect("/tmp/"+path+"_tcp")
+        lg.debug("path {}".format(path))
+        return self.sock.connect("/tmp/" + path + "_tcp")
 
     def accept(self):
         peer_serve_socket, peer = self.sock.accept()
-        return (peer_serve_socket, peer.replace("/tmp/", "").replace("_tcp", "").replace("udp",""))
+        return (peer_serve_socket, peer.replace("/tmp/", "").replace("_tcp", "").replace("udp", ""))
 
     def bind(self, path):
-        return self.sock.bind("/tmp/"+path)
+        return self.sock.bind("/tmp/" + path)
 
     def listen(self, n):
         return self.sock.listen(n)

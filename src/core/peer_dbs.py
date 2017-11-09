@@ -16,6 +16,7 @@ from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Socket_print as socket
 from .simulator_stuff import lg
 import sys
+import struct
 
 class Peer_DBS(sim):
 
@@ -97,10 +98,6 @@ class Peer_DBS(sim):
         self.sendto_counter = 0
         self.received_chunks = 0
 
-        # Defines the size of the memory buffer dedicated to receive
-        # an UDP message from any P2PSP entity.
-        self.longest_packet_structure = "is4s" # ojo, implementation dependant
-        
         lg.info("{}: DBS initialized".format(self.id))
 
         if __debug__:
@@ -112,25 +109,29 @@ class Peer_DBS(sim):
     def listen_to_the_team(self):
         self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.team_socket.set_id(self.id) # ojo, simulation dependent
+        self.team_socket.set_max_packet_size("is4s")
         self.team_socket.bind(self.id + "_udp") # ojo, simulation dependent
 
     def set_splitter(self, splitter):
         self.splitter = splitter
 
-    def receive_buffer_size(self):     
-        self.buffer_size = self.splitter_socket.recv("H")
+    def receive_buffer_size(self):
+        msg = self.splitter_socket.receive(struct.calcsize("H"))
+        (self.buffer_size, ) = struct.unpack("H", msg)
         lg.info("{}: buffer size = {}".format(self.id, self.buffer_size))
         if __debug__:
             self.sender_of_chunks = [""]*self.buffer_size
 
     def receive_the_number_of_peers(self):
-        self.number_of_monitors = self.splitter_socket.recv("H")
+        msg = self.splitter_socket.receive(struct.calcsize("H"))
+        (self.number_of_monitors, ) = struct.unpack("H", msg)
         lg.info("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
-        self.number_of_peers = self.splitter_socket.recv("H")
+        msg = self.splitter_socket.receive(struct.calcsize("H"))
+        (self.number_of_peers, ) = struct.unpack("H", msg)
         lg.info("{}: number of peers = {}".format(self.id, self.number_of_peers))
 
     def say_hello(self, peer):
-        self.team_socket.sendto("i", (self.HELLO), peer)
+        self.team_socket.send_packet("i", (self.HELLO), peer)
         lg.info("{}: [hello] sent to {}".format(self.id, peer))
 
     def say_goodbye(self, index):
