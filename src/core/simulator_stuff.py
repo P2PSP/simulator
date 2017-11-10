@@ -54,7 +54,7 @@ class Socket_print:
         msg = struct.pack(fmt, msg)
         return self.sock.send(msg)
 
-    def receive(self, fmt):
+    def recv(self, fmt):
         msg_length = struct.calcsize(fmt)
         msg = self.sock.recv(msg_length)
         while len(msg) < msg_length:
@@ -71,7 +71,7 @@ class Socket_print:
         message = struct.pack(fmt, msg)
         return self.sock.sendall(message)
         
-    def send_packet(self, msg, fmt, dst):
+    def sendto(self, msg, fmt, dst):
         lg.debug("{} - [{}] -> {}".format(self.id, msg, dst))
         message = struct.pack(fmt, msg)
         try:
@@ -83,7 +83,7 @@ class Socket_print:
         except BlockingIOError:
             raise
 
-    def receive_packet(self):
+    def recvfrom(self):
         msg, sender = self.sock.recvfrom(self.max_packet_size))
         lg.debug("{} <- [{}] = {}".format(self.id, msg, sender))
         return (msg, sender)

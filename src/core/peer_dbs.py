@@ -117,30 +117,29 @@ class Peer_DBS(sim):
         self.splitter = splitter
 
     def receive_buffer_size(self):
-        msg = self.splitter_socket.receive(struct.calcsize("H"))
-        (self.buffer_size, ) = struct.unpack("H", msg)
+        self.buffer_size = self.splitter_socket.recv("H")
         lg.info("{}: buffer size = {}".format(self.id, self.buffer_size))
         if __debug__:
             self.sender_of_chunks = [""]*self.buffer_size
 
     def receive_the_number_of_peers(self):
-        self.number_of_monitors = self.splitter_socket.receive("H")
+        self.number_of_monitors = self.splitter_socket.recv("H")
         lg.info("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
-        self.number_of_peers = self.splitter_socket.receive("H")
+        self.number_of_peers = self.splitter_socket.recv("H")
         lg.info("{}: number of peers = {}".format(self.id, self.number_of_peers))
 
     def say_hello(self, peer):
-        self.team_socket.send_packet(self.HELLO, "i", peer)
+        self.team_socket.sendto(self.HELLO, "i", peer)
         lg.info("{}: [hello] sent to {}".format(self.id, peer))
 
     def say_goodbye(self, index):
-        self.team_socket.send_packet(self.GOODBYE, "i", peer)
+        self.team_socket.sendto(self.GOODBYE, "i", peer)
         lg.info("{}: [goodbye] sent to {}".format(self.id, peer))
 
     def receive_the_list_of_peers(self):
         peers_pending_of_reception = self.number_of_peers
         while peers_pending_of_reception > 0:
-            peer = self.splitter_socket.receive("6s")
+            peer = self.splitter_socket.recv("6s")
             self.say_hello(peer)
             peers_pending_of_reception -= 1
 
@@ -170,7 +169,7 @@ class Peer_DBS(sim):
         lg.info("{}: sent {} to {}".format(self.id, ready, self.splitter))
 
     def send_chunk(self, chunk_number, peer):
-        self.team_socket.send_packet(self.chunks[chunk_number], "isi", peer)
+        self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
         self.sendto_counter += 1
 
     def is_a_control_message(self, message):
@@ -180,7 +179,7 @@ class Peer_DBS(sim):
             return False
 
     def prune_origin(self, chunk_number, peer):
-        self.team_socket.send_packet((self.PRUNE, chunk_number), "ii", peer)
+        self.team_socket.sendto((self.PRUNE, chunk_number), "ii", peer)
         lg.info("{}: [prune {}] sent to {}".format(self.id, chunk_number, peer))
 
     def process_message(self, message, sender):
@@ -375,7 +374,7 @@ class Peer_DBS(sim):
         self.prev_received_chunk = chunk_number
 
     def request_chunks(self, chunk_number, peer):
-        self.team_socket.sendto("ii", (self.REQUEST, chunk_number), peer)
+        self.team_socket.sendto((self.REQUEST, chunk_number), "ii", peer)
         lg.info("{}: [request {}] sent to {}".format(self.id, chunk_number, peer))
 
     def play_chunk(self, chunk_number):
