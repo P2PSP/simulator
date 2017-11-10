@@ -49,16 +49,22 @@ class Socket_print:
                 max = struct.calcsize(fmt):
         self.max_packet_size = max
 
-    def send(self, message):
+    def send(self, message, fmt):
         lg.debug("{} = [{}] => {}".format(self.id, mesage, "S"))
+        msg = struct.pack(fmt, message)
         return self.sock.send(message)
 
-    def receive(self, message_length):
-        message = self.sock.recv(message_length)
-        while len(message) < message_length:
-            message += self.sock.recv(message_length - len(message))
-        lg.debug("{} <= [{}]".format(self.id, message))
-        return message
+    def receive(self, fmt):
+        msg_length = struct.calcsize(fmt)
+        msg = self.sock.recv(msg_length)
+        while len(msg) < msg_length:
+            msg += self.sock.recv(msg_length - len(msg))
+        try:
+            decoded_msg = struct.unpack(fmt, msg)[0]
+        except struct.error:
+            lg.error("ERROR: {} len {} expected {}".format(msg, len(msg), struct.calcsize(fmt)))
+        lg.debug("{} <= [{}]".format(self.id, decoded_msg))
+        return decoded_msg
 
     def sendall(self, message):
         lg.debug("{} = [{}] => {}".format('S', message, self.id )) # 'S' ?

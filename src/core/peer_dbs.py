@@ -132,12 +132,13 @@ class Peer_DBS(sim):
         lg.info("{}: number of peers = {}".format(self.id, self.number_of_peers))
 
     def say_hello(self, peer):
-        self.team_socket.send_packet("i",
-                                         (self.HELLO), peer)
+        msg = struct.pack("i", self.HELLO)
+        self.team_socket.send_packet(msg, peer)
         lg.info("{}: [hello] sent to {}".format(self.id, peer))
 
     def say_goodbye(self, index):
-        self.team_socket.sendto("i", (self.GOODBYE), peer)
+        msg = struct.pack("i", self.GOODBYE)
+        self.team_socket.send_packet(msg, peer)
         lg.info("{}: [goodbye] sent to {}".format(self.id, peer))
 
     def receive_the_list_of_peers(self):
