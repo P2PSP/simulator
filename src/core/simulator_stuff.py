@@ -46,7 +46,7 @@ class Socket_print:
         max = 0
         for fmt in fmts:
             if max < struct.calcsize(fmt):
-                max = struct.calcsize(fmt):
+                max = struct.calcsize(fmt)
         self.max_packet_size = max
 
     def send(self, msg, fmt):
@@ -66,7 +66,7 @@ class Socket_print:
         lg.debug("{} <= [{}]".format(self.id, decoded_msg))
         return decoded_msg
 
-    def sendall(self, msg, msg):
+    def sendall(self, msg, fmt):
         lg.debug("{} = [{}] => {}".format('S', msg, self.id )) # 'S' ?
         message = struct.pack(fmt, msg)
         return self.sock.sendall(message)
@@ -84,7 +84,7 @@ class Socket_print:
             raise
 
     def recvfrom(self):
-        msg, sender = self.sock.recvfrom(self.max_packet_size))
+        msg, sender = self.sock.recvfrom(self.max_packet_size)
         lg.debug("{} <- [{}] = {}".format(self.id, msg, sender))
         return (msg, sender)
 
