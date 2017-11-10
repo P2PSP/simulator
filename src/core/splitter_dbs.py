@@ -37,7 +37,7 @@ class Splitter_DBS(Simulator_stuff):
         self.number_of_monitors = 0                                    # Monitors report lost chunks
         self.outgoing_peer_list = []                                   # Peers which requested to leave the team
         self.current_round = 0                                         # Number of round (maybe not here).
-
+        
         lg.info("{}: DBS initialized".format(self.id))
 
     def setup_peer_connection_socket(self):
@@ -50,18 +50,19 @@ class Splitter_DBS(Simulator_stuff):
         self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM) # Implementation dependent
         self.team_socket.set_id(self.id)
         self.team_socket.bind("S_udp")
+        self.team_socket.set_max_packet_size("is")
         
     def send_chunk(self, chunk, peer):
         #self.sendto(chunk, peer)
         try:
-            self.team_socket.sendto("is", chunk, peer) # Implementation dependent by "is"
+            self.team_socket.sendto(chunk, "is", peer) # Implementation dependent by "is"
         except BlockingIOError: # Imp. dep.
             sys.stderr.write("sendto: full queue\n")
 
     def receive_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
         time.sleep(0.05)  # Simulates bit-rate control
-        # C->Chunk, L->Los, G->Goodbye, B->Broken, P->Peer, M->Monitor, R-> Ready
+        # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
         return "C"
 
     def handle_arrivals(self):
@@ -101,18 +102,18 @@ class Splitter_DBS(Simulator_stuff):
 
     def send_buffer_size(self, peer_serve_socket):
         lg.info("{}: sending buffer size = {}".format(self.id, self.buffer_size))
-        peer_serve_socket.sendall("H", self.buffer_size)
+        peer_serve_socket.sendall(self.buffer_size, "H")
 
     def send_the_number_of_peers(self, peer_serve_socket):
         lg.info("{}: sending number of monitors = {}".format(self.id, self.number_of_monitors))
-        peer_serve_socket.sendall("H", self.number_of_monitors)
+        peer_serve_socket.sendall(self.number_of_monitors, "H")
         lg.info("{}: sending list of peers of length = {}".format(self.id, self.peer_list))
-        peer_serve_socket.sendall("H", len(self.peer_list))
+        peer_serve_socket.sendall(len(self.peer_list), "H")
 
     def send_the_list_of_peers(self, peer_serve_socket):
         lg.info("{}: sending peer list = {}".format(self.id, self.peer_list))
         for p in self.peer_list:
-            peer_serve_socket.sendall("6s", p)
+            peer_serve_socket.sendall(p, "6s")
 
     def insert_peer(self, peer):
         if peer not in self.peer_list:
@@ -175,7 +176,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def say_goodbye(self, peer):
         goodbye = (-1, "G")
-        self.team_socket.sendto("is", goodbye, peer)
+        self.team_socket.sendto(goodbye, "is", peer)
 
     def remove_outgoing_peers(self):
         for p in self.outgoing_peer_list:
@@ -188,7 +189,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def moderate_the_team(self):
         while self.alive:
-            message, sender = self.team_socket.recvfrom("is")
+            message, sender = self.team_socket.recvfrom()
             if (message[1] == "L"):
                 lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)

@@ -350,7 +350,7 @@ class Peer_DBS(sim):
         return (message[CHUNK_NUMBER], sender)
         
     def process_next_message(self):
-        message, sender = self.team_socket.receive_packet()
+        message, sender = self.team_socket.recvfrom()
         return self.process_message(message, sender)
 
     def buffer_data(self):
