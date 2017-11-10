@@ -49,10 +49,10 @@ class Socket_print:
                 max = struct.calcsize(fmt):
         self.max_packet_size = max
 
-    def send(self, message, fmt):
-        lg.debug("{} = [{}] => {}".format(self.id, mesage, "S"))
-        msg = struct.pack(fmt, message)
-        return self.sock.send(message)
+    def send(self, msg, fmt):
+        lg.debug("{} = [{}] => {}".format(self.id, msg, "S"))
+        msg = struct.pack(fmt, msg)
+        return self.sock.send(msg)
 
     def receive(self, fmt):
         msg_length = struct.calcsize(fmt)
@@ -62,29 +62,31 @@ class Socket_print:
         try:
             decoded_msg = struct.unpack(fmt, msg)[0]
         except struct.error:
-            lg.error("ERROR: {} len {} expected {}".format(msg, len(msg), struct.calcsize(fmt)))
+            lg.error("ERROR: {} len {} expected {}".format(msg, len(msg), msg_length))
         lg.debug("{} <= [{}]".format(self.id, decoded_msg))
         return decoded_msg
 
-    def sendall(self, message):
-        lg.debug("{} = [{}] => {}".format('S', message, self.id )) # 'S' ?
+    def sendall(self, msg, msg):
+        lg.debug("{} = [{}] => {}".format('S', msg, self.id )) # 'S' ?
+        message = struct.pack(fmt, msg)
         return self.sock.sendall(message)
         
-    def send_packet(self, message, destination):
-        lg.debug("{} - [{}] -> {}".format(self.id, message, destination))
+    def send_packet(self, msg, fmt, dst):
+        lg.debug("{} - [{}] -> {}".format(self.id, msg, dst))
+        message = struct.pack(fmt, msg)
         try:
-            return self.sock.sendto(message, socket.MSG_DONTWAIT, "/tmp/" + dst + "_udp")
+            return self.sock.sendto(msg, socket.MSG_DONTWAIT, "/tmp/" + dst + "_udp")
         except ConnectionRefusedError:
             lg.error("The message {} has not been delivered because the destination {} left the team".format(msg, dst))
         except KeyboardInterrupt:
-            lg.warning("simulator_stuff:send_packet {}".format(message, destination))
+            lg.warning("simulator_stuff:send_packet {}".format(msg, dst))
         except BlockingIOError:
             raise
 
     def receive_packet(self):
-        mesage, sender = self.sock.recvfrom(self.max_packet_size))
-        lg.debug("{} <- [{}] = {}".format(self.id, message, sender))
-        return (message, sender)
+        msg, sender = self.sock.recvfrom(self.max_packet_size))
+        lg.debug("{} <- [{}] = {}".format(self.id, msg, sender))
+        return (msg, sender)
 
     def connect(self, path):
         lg.debug("path {}".format(path))
