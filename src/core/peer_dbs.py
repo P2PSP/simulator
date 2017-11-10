@@ -28,13 +28,6 @@ class Peer_DBS(sim):
     # playback.
     BUFFER_SIZE = 32
 
-    # Control messages transmitted between peers (the messages
-    # interchanged with the slitter are excluded in this list):
-    HELLO   = -1 # Sent to me your chunks (received from the splitter)
-    GOODBYE = -1 # See you later.
-    REQUEST = -2 # Send to me the chunks originated at ...
-    PRUNE   = -3 # Don't send to me chunks originated at ...
-
     # Positions of each field (chunk, chunk_number, origin) in a
     # buffer's cell.
     CHUNK_NUMBER = 0
@@ -129,11 +122,11 @@ class Peer_DBS(sim):
         lg.info("{}: number of peers = {}".format(self.id, self.number_of_peers))
 
     def say_hello(self, peer):
-        self.team_socket.sendto(self.HELLO, "i", peer)
+        self.team_socket.sendto(Common.HELLO, "i", peer)
         lg.info("{}: [hello] sent to {}".format(self.id, peer))
 
     def say_goodbye(self, index):
-        self.team_socket.sendto(self.GOODBYE, "i", peer)
+        self.team_socket.sendto(Common.GOODBYE, "i", peer)
         lg.info("{}: [goodbye] sent to {}".format(self.id, peer))
 
     def receive_the_list_of_peers(self):
@@ -179,7 +172,7 @@ class Peer_DBS(sim):
             return False
 
     def prune_origin(self, chunk_number, peer):
-        self.team_socket.sendto((self.PRUNE, chunk_number), "ii", peer)
+        self.team_socket.sendto((Common.PRUNE, chunk_number), "ii", peer)
         lg.info("{}: [prune {}] sent to {}".format(self.id, chunk_number, peer))
 
     def process_message(self, message, sender):
@@ -259,7 +252,7 @@ class Peer_DBS(sim):
 
         else: # message[CHUNK_NUMBER] < 0
                     
-            if message[CHUNK_NUMBER] == self.REQUEST:
+            if message[CHUNK_NUMBER] == Common.REQUEST:
 
                 chunk_number = message[1]
                 lg.info("{}: received [request {}] from {}".format(self.id, chunk_number, sender))
@@ -282,7 +275,7 @@ class Peer_DBS(sim):
                         sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
                         sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
 
-            elif message[CHUNK_NUMBER] == self.PRUNE:
+            elif message[CHUNK_NUMBER] == Common.PRUNE:
                 
                 chunk_number = message[1]
                 lg.info("{}: received [prune {}] from {}".format(self.id, chunk_number, self.sender))
@@ -295,7 +288,7 @@ class Peer_DBS(sim):
                     except ValueError:
                         lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
                     
-            elif message[CHUNK_NUMBER] == self.HELLO:
+            elif message[CHUNK_NUMBER] == Common.HELLO:
 
                 # Incoming peers request to the rest of peers of the
                 # team those chunks whose source is the peer which
@@ -330,22 +323,23 @@ class Peer_DBS(sim):
 
                 lg.info("{}: received [goodbye] from {}".format(self.id, sender))
 
-                for peers_list in self.forward:
+                if sender == self.splitter:
+                    
+                    lg.info("{}: received [goodbye] from splitter".format(self.id))
+                    self.waiting_for_goodbye = False
 
-                    if sender in peers_list:
+                else:
 
-                        try:
-                            lg.info("{}: {} removing from {}".format(self.id, sender, peers_list))
-                            peers_list.remove(sender)
-                        except ValueError:
-                            lg.error("{}: : failed to remove peer {} from {}".format(sef.id, sender, peers_list))
-                        del self.debt[sender]
+                    for peers_list in self.forward:
 
-                    else: # sender is not in peer_list
+                        if sender in peers_list:
 
-                        if (sender == self.splitter):
-                            lg.info("{}: received [goodbye] from splitter".format(self.id))
-                            self.waiting_for_goodbye = False
+                            try:
+                                lg.info("{}: {} removing from {}".format(self.id, sender, peers_list))
+                                peers_list.remove(sender)
+                            except ValueError:
+                                lg.error("{}: : failed to remove peer {} from {}".format(sef.id, sender, peers_list))
+                                del self.debt[sender]
 
         return (message[CHUNK_NUMBER], sender)
         

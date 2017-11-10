@@ -10,3 +10,10 @@ class Common():
     COUNTERS_TIMING = 1      # In seconds.
     BUFFER_SIZE = 128        # In chunks.
     MAX_CHUNK_LOSS = 16      # In chunks.
+
+    # Control messages transmitted between peers (the messages
+    # interchanged with the slitter are excluded in this list):
+    HELLO   = -1 # Sent to me your chunks (received from the splitter)
+    GOODBYE = -2 # See you later.
+    REQUEST = -3 # Send to me the chunks originated at ...
+    PRUNE   = -4 # Don't send to me chunks originated at ...
