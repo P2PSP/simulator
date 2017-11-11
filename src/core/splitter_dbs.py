@@ -8,9 +8,10 @@ splitter_dbs module
 # DBS is the most basic layer to provide communication among splitter
 # (source of the stream) and peers (destination of the stream), using
 # unicast transmissions. The splitter sends a different chunk of
-# stream to each peer, using a random round-robin scheduler (in each
-# round peers are selected at random, but all peers are sent a chunk,
-# in a round).
+# stream to each peer, using a random round-robin scheduler.
+
+# TODO: In each round peers are selected at random, but all peers are
+# sent a chunk, in a round).
 
 from .common import Common
 from threading import Thread
@@ -53,9 +54,8 @@ class Splitter_DBS(Simulator_stuff):
         self.team_socket.set_max_packet_size("is")
         
     def send_chunk(self, chunk, peer):
-        #self.sendto(chunk, peer)
         try:
-            self.team_socket.sendto(chunk, "is", peer) # Implementation dependent by "is"
+            self.team_socket.sendto(chunk, "isi", peer)
         except BlockingIOError: # Imp. dep.
             sys.stderr.write("sendto: full queue\n")
 
@@ -90,10 +90,9 @@ class Splitter_DBS(Simulator_stuff):
 
         self.insert_peer(incoming_peer)
 
-        # ------------------
-        Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
-        # ------------------
-
+        if __debug__:
+            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
+ 
         if (incoming_peer[0] == "M"):
             self.number_of_monitors += 1
         lg.info("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
@@ -140,7 +139,7 @@ class Splitter_DBS(Simulator_stuff):
         self.increment_unsupportivity_of_peer(destination)
 
     def get_lost_chunk_number(self, message):
-        return message[0]
+        return message[1]
 
     def get_losser(self, lost_chunk_number):
         return self.destination_of_chunk[lost_chunk_number % self.buffer_size]
@@ -152,13 +151,10 @@ class Splitter_DBS(Simulator_stuff):
             lg.error("{}: unexpected error, the removed peer {} does not exist!".format(self.id, peer))
         else:
             #self.peer_number -= 1
-            # --------------------
-            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", peer))
+            if __debug__:
+                Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", peer))
             if peer[0] == "M" and peer[1] != "P":
                 self.number_of_monitors -= 1
-            # --------------------
-        #finally:
-        #    pass
 
         try:
             del self.losses[peer]
@@ -175,8 +171,7 @@ class Splitter_DBS(Simulator_stuff):
                 lg.info("{}: marked for deletion".format(self.id, peer))
 
     def say_goodbye(self, peer):
-        goodbye = (-1, "G")
-        self.team_socket.sendto(goodbye, "is", peer)
+        self.team_socket.sendto(Common.GOODBYE, "i" , peer)
 
     def remove_outgoing_peers(self):
         for p in self.outgoing_peer_list:
@@ -190,7 +185,7 @@ class Splitter_DBS(Simulator_stuff):
     def moderate_the_team(self):
         while self.alive:
             message, sender = self.team_socket.recvfrom()
-            if (message[1] == "L"):
+            if (message[0] == Common.REQUEST):
                 lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)
             else:
@@ -224,16 +219,16 @@ class Splitter_DBS(Simulator_stuff):
             if self.peer_number == 0:
                 self.on_round_beginning() # Remove outgoing peers
 
-                # -------------------
-                lg.info("{}: current round {}".format(self.id, self.current_round))
-                Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
-                # -------------------
+                if __debug__:
+                    lg.info("{}: current round {}".format(self.id, self.current_round))
+                    Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
+                    Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
+                    Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
+                    Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
+
             try:
                 peer = self.peer_list[self.peer_number]
-                message = (self.chunk_number, chunk)
+                message = (self.chunk_number, chunk, peer)
                 self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
                 self.send_chunk(message, peer)
                 self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER

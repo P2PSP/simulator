@@ -51,6 +51,7 @@ class Socket_print:
 
     def send(self, msg, fmt):
         lg.debug("{} = [{}] => {}".format(self.id, msg, "S"))
+        #params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
         msg = struct.pack(fmt, msg)
         return self.sock.send(msg)
 
@@ -73,6 +74,7 @@ class Socket_print:
         
     def sendto(self, msg, fmt, dst):
         lg.debug("{} - [{}] -> {}".format(self.id, msg, dst))
+        #params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
         message = struct.pack(fmt, msg)
         try:
             return self.sock.sendto(msg, socket.MSG_DONTWAIT, "/tmp/" + dst + "_udp")

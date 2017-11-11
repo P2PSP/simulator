@@ -158,8 +158,8 @@ class Peer_DBS(sim):
         lg.info("{}: connected to the splitter".format(self.id))
 
     def send_ready_for_receiving_chunks(self):
-        self.splitter_socket.send("R", "s") # R = Ready
-        lg.info("{}: sent {} to {}".format(self.id, ready, self.splitter))
+        self.splitter_socket.send(b"R", "s") # R = Ready
+        lg.info("{}: sent {} to {}".format(self.id, "Ready", self.splitter))
 
     def send_chunk(self, chunk_number, peer):
         self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
