@@ -185,25 +185,28 @@ class Peer_DBS(sim):
                     self.losses = 0
                     self.played = 0
 
-        if message[0] >= 0:
+        chunk_number = message[self.CHUNK_NUMBER]
+
+        if chunk_number >= 0:
 
             # We have received a chunk.
-
-            if (self.chunks[chunk_number % self.buffer_size][CHUNK_NUMBER]) == message[CHUNK_NUMBER]:
+            if (self.chunks[chunk_number % self.buffer_size][self.CHUNK_NUMBER]) == chunk_number:
                 
                 # Duplicate chunk. Ignore it and warn the sender to
                 # stop sending chunks of the origin of the received
                 # chunk "chunk_number".
-                self.prune_origin(message[CHUNK_NUMBER], sender)
+                self.prune_origin(chunk_number, sender)
                 
             else:
                 
                 # New chunk. chunk -> buffer[chunk_number]
-                self.chunks[message[CHUNK_NUMBER] % self.buffer_size] = (message[CHUNK], message[CHUNK_NUMBER], message[ORIGIN])
+                chunk = message[self.CHUNK]
+                origin = message[self.ORIGIN]
+                self.chunks[chunk_number % self.buffer_size] = (chunk, chunk_number, origin)
                 self.received_chunks += 1
 
                 if __debug__:
-                    self.sender_of_chunks[message[CHUNK_NUMBER] % self.buffer_size] = sender
+                    self.sender_of_chunks[chunk_number % self.buffer_size] = sender
                     chunks = ""
                     for n, c in self.chunks:
                         chunks += c
@@ -214,8 +217,8 @@ class Peer_DBS(sim):
                 # When a peer X receives a chunk (number) C with origin Y,
                 # for each peer P in forward[Y], X performs
                 # pending[P].append(C).
-                for P in self.forward[message[ORIGIN]]:
-                    pending[P].append(message[CHUNK_NUMBER])
+                for P in self.forward[origin]:
+                    pending[P].append(chunk_number)
 
                 # When peer X receives a chunk, X selects the next
                 # entry E of pending (one or more chunk numbers),
@@ -251,10 +254,9 @@ class Peer_DBS(sim):
                 self.pending[(self.pending.index(self.neighbor) + 1) % len(self.pending)]
 
         else: # message[CHUNK_NUMBER] < 0
-                    
-            if message[CHUNK_NUMBER] == Common.REQUEST:
 
-                chunk_number = message[1]
+            if chunk_number == Common.REQUEST:
+
                 lg.info("{}: received [request {}] from {}".format(self.id, chunk_number, sender))
 
                 # If a peer X receives [request Y] from peer Z, X will
@@ -275,12 +277,12 @@ class Peer_DBS(sim):
                         sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
                         sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
 
-            elif message[CHUNK_NUMBER] == Common.PRUNE:
+            elif chunk_number == Common.PRUNE:
                 
                 chunk_number = message[1]
                 lg.info("{}: received [prune {}] from {}".format(self.id, chunk_number, self.sender))
 
-                origin = self.chunks[chunk_index % self.BUFFER_SIZE][ORIGIN]
+                origin = self.chunks[chunk_index % self.BUFFER_SIZE][self.ORIGIN]
                 
                 if sender in self.forward[origin]:
                     try:
@@ -288,7 +290,7 @@ class Peer_DBS(sim):
                     except ValueError:
                         lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
                     
-            elif message[CHUNK_NUMBER] == Common.HELLO:
+            elif chunk_number == Common.HELLO:
 
                 # Incoming peers request to the rest of peers of the
                 # team those chunks whose source is the peer which
@@ -319,7 +321,7 @@ class Peer_DBS(sim):
                         sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
                         sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
 
-            elif message[CHUNK_NUMBER] == self.GOODBYE:
+            elif chunk_number == self.GOODBYE:
 
                 lg.info("{}: received [goodbye] from {}".format(self.id, sender))
 
@@ -341,7 +343,7 @@ class Peer_DBS(sim):
                                 lg.error("{}: : failed to remove peer {} from {}".format(sef.id, sender, peers_list))
                                 del self.debt[sender]
 
-        return (message[CHUNK_NUMBER], sender)
+        return (chunk_number, sender)
         
     def process_next_message(self):
         message, sender = self.team_socket.recvfrom()

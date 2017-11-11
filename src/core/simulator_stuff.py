@@ -42,12 +42,8 @@ class Socket_print:
     def set_id(self, id):
         self.id = id
 
-    def set_max_packet_size(self, fmts):
-        max = 0
-        for fmt in fmts:
-            if max < struct.calcsize(fmt):
-                max = struct.calcsize(fmt)
-        self.max_packet_size = max
+    def set_max_packet_size(self, size):
+        self.max_packet_size = size
 
     def send(self, msg, fmt):
         lg.debug("{} = [{}] => {}".format(self.id, msg, "S"))
@@ -73,20 +69,22 @@ class Socket_print:
         return self.sock.sendall(message)
         
     def sendto(self, msg, fmt, dst):
-        lg.debug("{} - [{}] -> {}".format(self.id, msg, dst))
-        #params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
-        message = struct.pack(fmt, msg)
+        lg.debug("{} - [{}] -> {} {}".format(self.id, msg, dst, fmt))
+        params = [x.encode('utf-8') if type(x) is str else x for x in list(msg)]
+        message = struct.pack(fmt, *params)
         try:
-            return self.sock.sendto(msg, socket.MSG_DONTWAIT, "/tmp/" + dst + "_udp")
+            return self.sock.sendto(message, socket.MSG_DONTWAIT, "/tmp/" + dst + "_udp")
         except ConnectionRefusedError:
-            lg.error("The message {} has not been delivered because the destination {} left the team".format(msg, dst))
+            lg.error("simulator_stuff: the message {} has not been delivered because the destination {} left the team".format(msg, dst))
         except KeyboardInterrupt:
-            lg.warning("simulator_stuff:send_packet {}".format(msg, dst))
+            lg.warning("simulator_stuff: send_packet {}".format(msg, dst))
+        except FileNotFoundError:
+            lg.error("simulator_stuff: {}".format("/tmp" + dst + "_udp"))
         except BlockingIOError:
             raise
 
     def recvfrom(self):
-        msg, sender = self.sock.recvfrom(self.max_packet_size)
+        msg, sender = self.sock.recvfrom(100)#self.max_packet_size)
         lg.debug("{} <- [{}] = {}".format(self.id, msg, sender))
         return (msg, sender)
 

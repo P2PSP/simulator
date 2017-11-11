@@ -20,6 +20,7 @@ from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Socket_print as socket
 from .simulator_stuff import lg
 import sys
+import struct
 
 class Splitter_DBS(Simulator_stuff):
 
@@ -51,11 +52,11 @@ class Splitter_DBS(Simulator_stuff):
         self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM) # Implementation dependent
         self.team_socket.set_id(self.id)
         self.team_socket.bind("S_udp")
-        self.team_socket.set_max_packet_size("is")
+        self.team_socket.set_max_packet_size(struct.calcsize("is3s")) # Chunck index, chunk, origin 
         
     def send_chunk(self, chunk, peer):
         try:
-            self.team_socket.sendto(chunk, "isi", peer)
+            self.team_socket.sendto(chunk, "is3s", peer)
         except BlockingIOError: # Imp. dep.
             sys.stderr.write("sendto: full queue\n")
 
