@@ -56,7 +56,7 @@ class Splitter_DBS(Simulator_stuff):
         
     def send_chunk(self, chunk_msg, peer):
         lg.debug("{} - [{}] -> {}".format(self.id, chunk_msg, peer))
-        msg = struct.pack("is3s", *chunk_msg)
+        msg = struct.pack("is6s", *chunk_msg)
         #msg = struct.pack("is3s", chunk_msg[0], bytes(chunk_msg[1]), chunk_msg[2])
         self.team_socket.sendto(msg, peer)
 

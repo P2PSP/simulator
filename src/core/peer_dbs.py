@@ -76,7 +76,7 @@ class Peer_DBS(sim):
         # has an entry forward[Y]={..., Z, ...}, every chunk received
         # from origin (endpoint) Y will be forwarded towards
         # (index) Z.
-        self.forward = []
+        self.forward = {}
 
         # List of pending chunks (numbers) to be sent to peers. Por
         # example, if pending[5] = {1,2,3}, the chunks stored in
@@ -92,7 +92,7 @@ class Peer_DBS(sim):
         self.received_chunks = 0
 
         # The longest message it is expected to receive.
-        self.max_msg_length = struct.calcsize("isi")
+        self.max_msg_length = struct.calcsize("is6s")
         
         lg.info("{}: DBS initialized".format(self.id))
 
@@ -234,7 +234,7 @@ class Peer_DBS(sim):
                 
                 # New chunk. chunk -> buffer[chunk_number]
                 chunk = message[self.CHUNK]
-                origin = message[self.ORIGIN]
+                origin = str(message[self.ORIGIN])
                 self.chunks[chunk_number % self.buffer_size] = (chunk, chunk_number, origin)
                 self.received_chunks += 1
 
@@ -382,7 +382,7 @@ class Peer_DBS(sim):
         msg, sender = self.team_socket.recvfrom(self.max_msg_length)
         lg.debug("Peer_DBS.process_next_message: received {} from {} with length {}".format(msg, sender, len(msg)))
         if len(msg) == self.max_msg_length:
-            message = struct.unpack("isi", msg) # Chunk message [number, chunk, origin]
+            message = struct.unpack("is6s", msg) # Chunk message [number, chunk, origin]
         elif len(msg) == struct.calcsize("ii"):
             message = struct.unpack("ii", msg) # Control message [control, parameter]
         else:
