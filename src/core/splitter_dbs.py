@@ -17,7 +17,7 @@ from .common import Common
 from threading import Thread
 import time
 from .simulator_stuff import Simulator_stuff
-#from .simulator_stuff import Socket_print as socket
+from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import lg
 import sys
 import struct
@@ -43,30 +43,21 @@ class Splitter_DBS(Simulator_stuff):
         lg.info("{}: DBS initialized".format(self.id))
 
     def setup_peer_connection_socket(self):
-        self.peer_connection_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM) # Implementation dependent
+        self.peer_connection_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
         #self.peer_connection_socket.set_id(self.id)
-        self.peer_connection_socket.bind("S_tcp")
+        self.peer_connection_socket.bind(self.id)
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
-        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM) # Implementation dependent
-        self.team_socket.set_id(self.id)
-        self.team_socket.bind("/tmp/S_udp")
+        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        #self.team_socket.set_id(self.id)
+        self.team_socket.bind(self.id)
         #self.team_socket.set_max_packet_size(struct.calcsize("is3s")) # Chunck index, chunk, origin 
         
     def send_chunk(self, chunk_msg, peer):
         lg.debug("{} - [{}] -> {}".format(self.id, chunk_msg, peer))
         msg = struct.pack("is3s", chunk_msg)
-        try:
-            self.team_socket.sendto(msg, socket.MSG_DONTWAIT, "/tmp" + peer + "_udp")
-        except ConnectionRefusedError:
-            lg.error("{}: the chunk {} has not been delivered because the destination {} probably because it left the team".format(self.id, chunk_msg, peer))
-        except KeyboardInterrupt:
-            lg.warning("{}: send_chunk {} to {}".format(self.id, chunk_msg, peer))
-        except FileNotFoundError:
-            lg.error("{}: file not found {}".format("/tmp" + dst + "_udp"))
-        except BlockingIOError:
-            sys.stderr.write("{}: full queue {}\n".format(self.id, "/tmp" + dst + "_udp")
+        self.team_socket.sendto(msg, peer)
 
     def receive_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
@@ -86,7 +77,7 @@ class Splitter_DBS(Simulator_stuff):
     def handle_a_peer_arrival(self, connection):
 
         serve_socket = connection[0]
-        incoming_peer = connection[1].replace("/tmp/", "").replace("_tcp", "").replace("udp", "")
+        incoming_peer = connection[1]
 
         lg.info("{}: acepted connection from peer".format(self.id, incoming_peer))
 
@@ -95,15 +86,11 @@ class Splitter_DBS(Simulator_stuff):
         self.send_the_list_of_peers(serve_socket)
 
         lg.info("{}: waiting for incoming peer".format(self.id))
+        
         msg_length = struct.calcsize("s")
         msg = serve_socket.recv(msg_length)
-        while len(msg) < msg_length:
-            msg += self.serve_socket.recv(msg_length - len(msg))
-        try:
-            unpacked_msg = struct.unpack("s", msg)[0]
-        except struct.error:
-            lg.error("ERROR: {} len {} expected {}".format(msg, len(msg), msg_length))    
-        lg.info("{}: received {} from {}".format(self.id, msg, incoming_peer))
+        message = struct.unpack("s", msg)[0]
+        lg.info("{}: received {} from {}".format(self.id, message, incoming_peer))
 
         self.insert_peer(incoming_peer)
 
@@ -119,32 +106,31 @@ class Splitter_DBS(Simulator_stuff):
     def send_buffer_size(self, peer_serve_socket):
         lg.info("{}: sending buffer size = {}".format(self.id, self.buffer_size))
         #peer_serve_socket.sendall(self.buffer_size, "H")
-        packed_msg = struct.pack("H", self.buffer_size)
-        peer_serve_socket.sendall(packed_msg)
+        msg = struct.pack("H", self.buffer_size)
+        peer_serve_socket.sendall(msg)
 
     def send_the_number_of_peers(self, peer_serve_socket):
         lg.info("{}: sending number of monitors = {}".format(self.id, self.number_of_monitors))
         #peer_serve_socket.sendall(self.number_of_monitors, "H")
-        packed_msg = struct.pack("H", self.number_of_monitors)
-        peer_serve_socket.sendall(packed_msg)
+        msg = struct.pack("H", self.number_of_monitors)
+        peer_serve_socket.sendall(msg)
         lg.info("{}: sending list of peers of length = {}".format(self.id, len(self.peer_list)))
         #peer_serve_socket.sendall(len(self.peer_list), "H")
-        packed_msg = struct.pack("H", len(self.peer_list))
-        peer_serve_socket.sendall(packed_msg)
-
+        msg = struct.pack("H", len(self.peer_list))
+        peer_serve_socket.sendall(msg)
 
     def send_the_list_of_peers(self, peer_serve_socket):
         lg.info("{}: sending peer list = {}".format(self.id, self.peer_list))
         for p in self.peer_list:
             #peer_serve_socket.sendall(p, "6s")
-            packed_msg = struct.pack("6s", p)
-            self.peer_serve_socket.senall(packed_msg)
+            msg = struct.pack("6s", p)
+            self.peer_serve_socket.sendall(msg)
 
     def insert_peer(self, peer):
         if peer not in self.peer_list:
             self.peer_list.append(peer)
         self.losses[peer] = 0
-        lg.info("{}: {} inserved in the team".format(self.id, peer))
+        lg.info("{}: {} inserted in the team".format(self.id, peer))
 
     def increment_unsupportivity_of_peer(self, peer):
         try:
@@ -198,17 +184,8 @@ class Splitter_DBS(Simulator_stuff):
 
     def say_goodbye(self, peer):
         #self.team_socket.sendto(Common.GOODBYE, "i" , peer)
-        packed_msg = struct.pack("i", Common.GOODBYE)
-        try:
-            return self.team_socket.sendto(packed_msg, socket.MSG_DONTWAIT, "/tmp/" + peer + "_udp")
-        except ConnectionRefusedError:
-            lg.error("{}: the message {} has not been delivered because the destination {} left the team".format(self.id, "[goodbye]", peer))
-        except KeyboardInterrupt:
-            lg.warning("{}: say_goodbye {}".format(self.id, peer))
-        except FileNotFoundError:
-            lg.error("{}: {}".format(self.id, "/tmp" + dst + "_udp"))
-        except BlockingIOError:
-            raise
+        msg = struct.pack("i", Common.GOODBYE)
+        self.team_socket.sendto(msg, peer)
 
     def remove_outgoing_peers(self):
         for p in self.outgoing_peer_list:
@@ -222,14 +199,12 @@ class Splitter_DBS(Simulator_stuff):
     def moderate_the_team(self):
         while self.alive:
             #message, sender = self.team_socket.recvfrom()
-            packed_msg, sender = self.team_socket.recvfrom(199)
-            if len(packed_msg) == 2:
+            msg, sender = self.team_socket.recvfrom(100)
+            if len(msg) == 2:
                 #msg = struct.unpack("i", packed_msg)
                 self.process_goodbye(sender)
             else:
-                msg = struct.unpack("ii", packed_msg)
-                lost_chunk_number = msg[1]
-                #if (msg[0] == Common.REQUEST):
+                lost_chunk_number = struct.unpack("ii", msg)[1]
                 #lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)
             else:

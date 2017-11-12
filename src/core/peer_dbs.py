@@ -91,6 +91,9 @@ class Peer_DBS(sim):
         self.sendto_counter = 0
         self.received_chunks = 0
 
+        # The longest message it is expected to receive.
+        self.max_msg_length = struct.calcsize("isi")
+        
         lg.info("{}: DBS initialized".format(self.id))
 
         if __debug__:
@@ -104,7 +107,7 @@ class Peer_DBS(sim):
         #self.team_socket.set_id(self.id) # ojo, simulation dependent
         #self.team_socket.set_max_packet_size(["isi", "i", "ii"])
         # "chunk_index, chunk, origin", "[hello]/[goodbye]",  "[request <chunk>]/[prune <chunk>]"
-        self.team_socket.bind("/tmp" + self.id + "_udp")
+        self.team_socket.bind(self.id)
 
     #def set_splitter(self, splitter):
     #    self.splitter = splitter
@@ -124,29 +127,33 @@ class Peer_DBS(sim):
             self.sender_of_chunks = [""]*self.buffer_size
 
     def receive_the_number_of_peers(self):
-        #self.number_of_monitors = self.splitter_socket.recv("H")
-        self.number_of_monitors = self.recv("H")
+        msg_length = struct.calcsize("H")
+        msg = self.splitter_socket.recv(msg_length)
+        self.number_of_monitors = struct.unpack("H")[0]
         lg.info("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
-        #self.number_of_peers = self.splitter_socket.recv("H")
-        self.number_of_peers = self.recv("H")
+        
+        msg_length = struct.calcsize("H")
+        msg = self.splitter_socket.recv(msg_length)
+        self.number_of_peers = struct.unpack("H")[0]
         lg.info("{}: number of peers = {}".format(self.id, self.number_of_peers))
         
     def say_hello(self, peer):
         #self.team_socket.sendto(Common.HELLO, "i", peer)
-        packed_msg = struct.pack("i", Common.HELLO)
-        self.team_socket.sendto(packed_msg, socket.MSG_DONTWAIT, "/tmp/" + dst + "_udp")
+        msg = struct.pack("i", Common.HELLO)
+        self.team_socket.sendto(msg, peer)
         lg.info("{}: [hello] sent to {}".format(self.id, peer))
 
     def say_goodbye(self, index):
         #self.team_socket.sendto(Common.GOODBYE, "i", peer)
-        packed_msg = struct.pack("i", Common.GOODBYE)
-        self.team_socket.sendto(packed_msg, socket.MSG_DONTWAIT, "/tmp/" + dst + "_udp")
+        msg = struct.pack("i", Common.GOODBYE)
+        self.team_socket.sendto(msg, peer)
         lg.info("{}: [goodbye] sent to {}".format(self.id, peer))
 
     def receive_the_list_of_peers(self):
         peers_pending_of_reception = self.number_of_peers
+        msg_length = struct.calcsize("6s")
         while peers_pending_of_reception > 0:
-            peer = self.receive("6s")#self.splitter_socket.recv("6s")
+            peer = self.splitter_socket.recv(msg_length)
             self.say_hello(peer)
             peers_pending_of_reception -= 1
 
@@ -161,9 +168,9 @@ class Peer_DBS(sim):
     def connect_to_the_splitter(self):
         self.splitter_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
         #self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
-        self.splitter_socket.bind("/tmp/" + self.id + "_tcp")
+        self.splitter_socket.bind(self.id)
         try:
-            self.splitter_socket.connect("/tmp/" + self.splitter + "_tcp")
+            self.splitter_socket.connect(self.splitter)
         except ConnectionRefusedError as e:
             lg.error("{}: {}".format(self.id, e))
             raise
@@ -172,27 +179,26 @@ class Peer_DBS(sim):
 
     def send_ready_for_receiving_chunks(self):
         #self.splitter_socket.send(b"R", "s") # R = Ready
-        packed_msg = struct.pack("s", b"R")
-        self.splitter_socket.sendto(packed_msg)
-        lg.info("{}: sent {} to {}".format(self.id, "Ready", self.splitter))
+        msg = struct.pack("s", b"R")
+        self.splitter_socket.sendto(msg)
+        lg.info("{}: sent {} to {}".format(self.id, "[ready]", self.splitter))
 
-    def send_chunk(self, chunk_number, peer):
+    def send_chunk(self, chunk_index, peer):
         #self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
-        packed_msg = struct.pack("isi", chunks[chunk_number])
-        self.team_socket.sendto(packed_msg, socket.MSG_DONTWAIT, "/tmp/" + peer + "_udp")
+        msg = struct.pack("isi", chunks[chunk_number])
+        self.team_socket.sendto(msg, peer)
         self.sendto_counter += 1
 
-    if __debub__:
-        def is_a_control_message(self, message):
-            if message[0] < 0:
-                return True
-            else:
-                return False
+    def is_a_control_message(self, message):
+        if message[0] < 0:
+            return True
+        else:
+            return False
 
     def prune_origin(self, chunk_number, peer):
         #self.team_socket.sendto((Common.PRUNE, chunk_number), "ii", peer)
-        packed_msg = struct.pack("ii", (Common.PRUNE, chunk_number))
-        self.team_socket.sendto(packed_msg, socket.MSG_DONTWAIT, "/tmp/" + peer + "_udp")
+        msg = struct.pack("ii", (Common.PRUNE, chunk_number))
+        self.team_socket.sendto(packed_msg, peer)
         lg.info("{}: [prune {}] sent to {}".format(self.id, chunk_number, peer))
 
     def process_message(self, message, sender):
@@ -366,7 +372,7 @@ class Peer_DBS(sim):
         return (chunk_number, sender)
         
     def process_next_message(self):
-        message, sender = self.team_socket.recvfrom()
+        message, sender = self.team_socket.recvfrom(self.max_msg_length)
         return self.process_message(message, sender)
 
     def buffer_data(self):
