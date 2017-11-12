@@ -207,7 +207,6 @@ class Splitter_DBS(Simulator_stuff):
                 lost_chunk_number = struct.unpack("ii", msg)[1]
                 #lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)
-            else:
 
     def reset_counters(self):
         for i in self.losses:

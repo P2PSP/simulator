@@ -13,7 +13,7 @@ peer_dbs module
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
-from .simulator_stuff import Socket_print as socket
+from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import lg
 import sys
 import struct
@@ -109,8 +109,8 @@ class Peer_DBS(sim):
         # "chunk_index, chunk, origin", "[hello]/[goodbye]",  "[request <chunk>]/[prune <chunk>]"
         self.team_socket.bind(self.id)
 
-    #def set_splitter(self, splitter):
-    #    self.splitter = splitter
+    def set_splitter(self, splitter):
+        self.splitter = splitter
 
     def recv(self, fmt):
         msg_length = struct.calcsize(fmt)
@@ -372,7 +372,13 @@ class Peer_DBS(sim):
         return (chunk_number, sender)
         
     def process_next_message(self):
-        message, sender = self.team_socket.recvfrom(self.max_msg_length)
+        msg, sender = self.team_socket.recvfrom(self.max_msg_length)
+        if len(msg) == self.max_msg_length:
+            message = struct.unpack("isi") # Chunk message [number, chunk, origin]
+        elif len(msg) == struct.calcsize("ii"):
+            message = struct.unpack("ii") # Control message [control, parameter]
+        else:
+            message = struct.unpack("i") # Control message [control]
         return self.process_message(message, sender)
 
     def buffer_data(self):
@@ -396,7 +402,8 @@ class Peer_DBS(sim):
         self.prev_received_chunk = chunk_number
 
     def request_chunks(self, chunk_number, peer):
-        self.team_socket.sendto((self.REQUEST, chunk_number), "ii", peer)
+        msg = struct.pack("ii", self.REQUEST, chunk_number)
+        self.team_socket.sendto(msg, peer)
         lg.info("{}: [request {}] sent to {}".format(self.id, chunk_number, peer))
 
     def play_chunk(self, chunk_number):

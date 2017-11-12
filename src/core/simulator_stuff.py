@@ -8,6 +8,7 @@ import socket
 import struct
 import sys
 from datetime import datetime
+import os
 
 import logging as lg
 lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -41,7 +42,8 @@ class Simulator_socket:
         else:
             self.sock = sock
             self.family = sock.family
-        self.now = datetime.now() + "/"
+        self.now = str(datetime.now()) + "/"
+        os.mkdir(self.now)
     
     #def set_id(self, id):
     #    self.id = id
@@ -77,24 +79,24 @@ class Simulator_socket:
         except BlockingIOError:
             raise
 
-    def recvfrom(self, max_mag_length):
+    def recvfrom(self, max_msg_length):
         msg, sender = self.sock.recvfrom(max_msg_length)
         lg.debug("{} <- {} ({})".format(msg, sender, self.id))
         return (msg, sender)
 
     def connect(self, address):
         lg.debug("path {}".format(address))
-        return self.sock.connect(now + address + "_tcp")
+        return self.sock.connect(self.now + address + "_tcp")
 
     def accept(self):
         peer_serve_socket, peer = self.sock.accept()
         return (peer_serve_socket, peer.replace(now, "").replace("_tcp", "").replace("udp", ""))
 
     def bind(self, address):
-        if self.family == sock.SOCK_STREAM:
-            return self.sock.bind(now + address + "_tcp")
+        if self.family == self.SOCK_STREAM:
+            return self.sock.bind(self.now + address + "_tcp")
         else:
-            return self.sock.bind(now + address + "_udp")
+            return self.sock.bind(self.now + address + "_udp")
 
     def listen(self, n):
         return self.sock.listen(n)
