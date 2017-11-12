@@ -182,10 +182,10 @@ class Peer_DBS(sim):
         lg.info("{}: connected to the splitter".format(self.id))
 
     def send_ready_for_receiving_chunks(self):
+        lg.info("{}: sent {} to {}".format(self.id, "[ready]", self.splitter))
         #self.splitter_socket.send(b"R", "s") # R = Ready
         msg = struct.pack("s", b"R")
         self.splitter_socket.send(msg)
-        lg.info("{}: sent {} to {}".format(self.id, "[ready]", self.splitter))
 
     def send_chunk(self, chunk_index, peer):
         #self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
@@ -200,12 +200,14 @@ class Peer_DBS(sim):
             return False
 
     def prune_origin(self, chunk_number, peer):
+        lg.info("{}: [prune {}] sent to {}".format(self.id, chunk_number, peer))
         #self.team_socket.sendto((Common.PRUNE, chunk_number), "ii", peer)
         msg = struct.pack("ii", Common.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
-        lg.info("{}: [prune {}] sent to {}".format(self.id, chunk_number, peer))
 
     def process_message(self, message, sender):
+
+        lg.debug("Peer_DBS.process_message: received chunk {} from {}".format(message, sender))
 
         if __debug__:
             if not self.is_a_control_message(message) and self.endpoint[sender] == self.splitter:
@@ -221,10 +223,11 @@ class Peer_DBS(sim):
 
             # We have received a chunk.
             if (self.chunks[chunk_number % self.buffer_size][self.CHUNK_NUMBER]) == chunk_number:
-                
+
                 # Duplicate chunk. Ignore it and warn the sender to
                 # stop sending chunks of the origin of the received
                 # chunk "chunk_number".
+                lg.debug("Peer_DBS.process_message: duplicate chunk {} from {}".format(chunk_number, sender))
                 self.prune_origin(chunk_number, sender)
                 
             else:
@@ -377,6 +380,7 @@ class Peer_DBS(sim):
         
     def process_next_message(self):
         msg, sender = self.team_socket.recvfrom(self.max_msg_length)
+        lg.debug("Peer_DBS.process_next_message: received {} from {} with length {}".format(msg, sender, len(msg)))
         if len(msg) == self.max_msg_length:
             message = struct.unpack("isi", msg) # Chunk message [number, chunk, origin]
         elif len(msg) == struct.calcsize("ii"):
@@ -387,7 +391,7 @@ class Peer_DBS(sim):
 
     def buffer_data(self):
         for i in range(self.buffer_size):
-            self.chunks.append((i, "L")) # L == Lost ??
+            self.chunks.append((-1, b"L", None)) # L == Lost ??
 
         # Receive a chunk.
         (chunk_number, self.neighbor) = self.process_next_message()

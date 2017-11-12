@@ -72,15 +72,19 @@ class Simulator_socket:
             return self.sock.sendto(msg, socket.MSG_DONTWAIT, address + "_udp")
         except ConnectionRefusedError:
             lg.error("simulator_stuff.sendto: the message {} has not been delivered because the destination {} left the team".format(msg, address))
+            raise
         except KeyboardInterrupt:
             lg.warning("simulator_stuff.sendto: send_packet {} to {}".format(msg, address))
+            raise
         except FileNotFoundError:
             lg.error("simulator_stuff.sendto: {}".format(address + "_udp"))
+            raise
         except BlockingIOError:
             raise
 
     def recvfrom(self, max_msg_length):
         msg, sender = self.sock.recvfrom(max_msg_length)
+        sender = sender.replace("_tcp", "").replace("_udp", "")
         lg.debug("{} <- {}".format(msg, sender))
         return (msg, sender)
 
@@ -93,6 +97,7 @@ class Simulator_socket:
         return (peer_serve_socket, peer.replace("_tcp", "").replace("udp", ""))
 
     def bind(self, address):
+        lg.debug("simulator_stuff.bind: address = {} type = {}".format(address, self.type))
         if self.type == self.SOCK_STREAM:
             try:
                 return self.sock.bind(address + "_tcp")
