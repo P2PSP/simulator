@@ -56,14 +56,15 @@ class Splitter_DBS(Simulator_stuff):
         
     def send_chunk(self, chunk_msg, peer):
         lg.debug("{} - [{}] -> {}".format(self.id, chunk_msg, peer))
-        msg = struct.pack("is3s", chunk_msg)
+        msg = struct.pack("is3s", *chunk_msg)
+        #msg = struct.pack("is3s", chunk_msg[0], bytes(chunk_msg[1]), chunk_msg[2])
         self.team_socket.sendto(msg, peer)
 
     def receive_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
         time.sleep(0.05)  # Simulates bit-rate control
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
-        return "C"
+        return b"C"
 
 
     def handle_arrivals(self):
@@ -245,7 +246,7 @@ class Splitter_DBS(Simulator_stuff):
 
             try:
                 peer = self.peer_list[self.peer_number]
-                message = (self.chunk_number, chunk, peer)
+                message = (self.chunk_number, chunk, bytes(peer, 'utf-8'))
                 self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
                 self.send_chunk(message, peer)
                 self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER

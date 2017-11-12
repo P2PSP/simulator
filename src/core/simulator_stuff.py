@@ -38,12 +38,12 @@ class Simulator_socket:
     def __init__(self, family=None, typ=None, sock=None):
         if sock is None:
             self.sock = socket.socket(family, typ)
-            self.family = family
+            self.type = typ
         else:
             self.sock = sock
-            self.family = sock.family
-        self.now = str(datetime.now()) + "/"
-        os.mkdir(self.now)
+            self.type = typ
+        #self.now = str(datetime.now()) + "/"
+        #os.mkdir(self.now)
     
     #def set_id(self, id):
     #    self.id = id
@@ -69,35 +69,43 @@ class Simulator_socket:
     def sendto(self, msg, address):
         lg.debug("{} -> {} ({})".format(msg, address, self.sock))
         try:
-            return self.sock.sendto(msg, socket.MSG_DONTWAIT, now + address + "_udp")
+            return self.sock.sendto(msg, socket.MSG_DONTWAIT, address + "_udp")
         except ConnectionRefusedError:
             lg.error("simulator_stuff.sendto: the message {} has not been delivered because the destination {} left the team".format(msg, address))
         except KeyboardInterrupt:
             lg.warning("simulator_stuff.sendto: send_packet {} to {}".format(msg, address))
         except FileNotFoundError:
-            lg.error("simulator_stuff.sendto: {}".format(now + address + "_udp"))
+            lg.error("simulator_stuff.sendto: {}".format(address + "_udp"))
         except BlockingIOError:
             raise
 
     def recvfrom(self, max_msg_length):
         msg, sender = self.sock.recvfrom(max_msg_length)
-        lg.debug("{} <- {} ({})".format(msg, sender, self.id))
+        lg.debug("{} <- {}".format(msg, sender))
         return (msg, sender)
 
     def connect(self, address):
         lg.debug("path {}".format(address))
-        return self.sock.connect(self.now + address + "_tcp")
+        return self.sock.connect(address + "_tcp")
 
     def accept(self):
         peer_serve_socket, peer = self.sock.accept()
-        return (peer_serve_socket, peer.replace(now, "").replace("_tcp", "").replace("udp", ""))
+        return (peer_serve_socket, peer.replace("_tcp", "").replace("udp", ""))
 
     def bind(self, address):
-        if self.family == self.SOCK_STREAM:
-            return self.sock.bind(self.now + address + "_tcp")
+        if self.type == self.SOCK_STREAM:
+            try:
+                return self.sock.bind(address + "_tcp")
+            except:
+                lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address + "_tcp"))
+                raise
         else:
-            return self.sock.bind(self.now + address + "_udp")
-
+            try:
+                return self.sock.bind(address + "_udp")
+            except:
+                lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address + "_udp"))
+                raise
+       
     def listen(self, n):
         return self.sock.listen(n)
 

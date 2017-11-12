@@ -11,7 +11,7 @@ class Monitor_DBS(Peer_DBS):
         super().__init__(id)
 
     def receive_buffer_size(self):
-        Peer_DBS.receive_buffer_size()
+        Peer_DBS.receive_buffer_size(self)
         #self.buffer_size = self.splitter_socket.recv("H")
         #print(self.id, ": received buffer_size =", self.buffer_size, "from S")
         self.buffer_size //= 2
