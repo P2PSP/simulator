@@ -49,12 +49,6 @@ class Peer_DBS(sim):
         # While True, keeps the peer alive.
         self.player_alive = True
 
-        # Counters of sent - recived chunks, by peer. Every time a peer
-        # X sends a chunk to peer Y, X increments debt[Y] and Y
-        # decrements debt[X] (and viceversa). If a X.debt[Y] >
-        # MAX_CHUNK_DEBT, X will stop sending more chunks to Y.
-        self.debt = []
-
         # Number of monitors in the team (information sent by the
         # splitter but unsed at this level, maybe it could be placed
         # in a different file ...).
@@ -72,6 +66,12 @@ class Peer_DBS(sim):
         # A flag that when True, fires the leaving process.
         self.ready_to_leave_the_team = False
 
+        # Counters of sent - recived chunks, by peer. Every time a peer
+        # X sends a chunk to peer Y, X increments debt[Y] and Y
+        # decrements debt[X] (and viceversa). If a X.debt[Y] >
+        # MAX_CHUNK_DEBT, X will stop sending more chunks to Y.
+        self.debt = {}
+
         # Forwarding rules of chunks, indexed by origins. If a peer
         # has an entry forward[Y]={..., Z, ...}, every chunk received
         # from origin (endpoint) Y will be forwarded towards
@@ -79,10 +79,10 @@ class Peer_DBS(sim):
         self.forward = {}
 
         # List of pending chunks (numbers) to be sent to peers. Por
-        # example, if pending[5] = {1,2,3}, the chunks stored in
+        # example, if pending[X] = {1,2,3}, the chunks stored in
         # entries 1, 2, and 3 of the buffer will be sent to the peer
-        # (with index) 5.
-        self.pending = []
+        # X.
+        self.pending = {}
         
         # Peers start feeding the first neighbor peer self.forward[0].
         self.neighbor = None
@@ -382,9 +382,10 @@ class Peer_DBS(sim):
         msg, sender = self.team_socket.recvfrom(self.max_msg_length)
         lg.debug("Peer_DBS.process_next_message: received {} from {} with length {}".format(msg, sender, len(msg)))
         if len(msg) == self.max_msg_length:
-            message = struct.unpack("is6s", msg) # Chunk message [number, chunk, origin]
+            message = struct.unpack("is6s", msg) # Chunk [number, data, origin]
+            message = message[self.CHUNK_NUMBER], message[self.CHUNK], message[self.ORIGIN].decode("utf-8").replace("\x00", "")
         elif len(msg) == struct.calcsize("ii"):
-            message = struct.unpack("ii", msg) # Control message [control, parameter]
+            message  = struct.unpack("ii", msg) # Control message [control, parameter]
         else:
             message = struct.unpack("i", msg) # Control message [control]
         return self.process_message(message, sender)
