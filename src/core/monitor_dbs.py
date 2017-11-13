@@ -3,11 +3,15 @@
 monitor_dbs module
 """
 
+import struct
+from .common import Common
 from .peer_dbs import Peer_DBS
+from .simulator_stuff import lg
 
 class Monitor_DBS(Peer_DBS):
 
     def __init__(self, id):
+        self.losses = 0
         super().__init__(id)
 
     def receive_buffer_size(self):
