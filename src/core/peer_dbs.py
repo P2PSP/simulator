@@ -66,32 +66,35 @@ class Peer_DBS(sim):
         # A flag that when True, fires the leaving process.
         self.ready_to_leave_the_team = False
 
-        # Counters of sent - recived chunks, by peer. Every time a peer
-        # X sends a chunk to peer Y, X increments debt[Y] and Y
-        # decrements debt[X] (and viceversa). If a X.debt[Y] >
-        # MAX_CHUNK_DEBT, X will stop sending more chunks to Y.
-        self.debt = {}
-
         # Forwarding rules of chunks, indexed by origins. If a peer
         # has an entry forward[Y]={..., Z, ...}, every chunk received
         # from origin (endpoint) Y will be forwarded towards
         # (index) Z.
         self.forward = {}
+        self.forward[self.id] = [self.id]
 
         # List of pending chunks (numbers) to be sent to peers. Por
-        # example, if pending[X] = {1,2,3}, the chunks stored in
-        # entries 1, 2, and 3 of the buffer will be sent to the peer
+        # example, if pending[X] = {1,5,7}, the chunks stored in
+        # entries 1, 5, and 7 of the buffer will be sent to the peer
         # X.
         self.pending = {}
+        self.pending[self.id] = []
         
+        # Counters of sent - recived chunks, by peer. Every time a peer
+        # X sends a chunk to peer Y, X increments debt[Y] and Y
+        # decrements debt[X] (and viceversa). If a X.debt[Y] >
+        # MAX_CHUNK_DEBT, X will stop sending more chunks to Y.
+        self.debt = {}
+        self.debt[self.id] = 0
+
         # Peers start feeding the first neighbor peer self.forward[0].
-        self.neighbor = None
+        self.neighbor = self.id
   
         # Sent and received chunks.
         self.sendto_counter = 0
         self.received_chunks = 0
 
-        # The longest message it is expected to receive.
+        # The longest message expected to be received.
         self.max_msg_length = struct.calcsize("is6s")
         
         lg.info("{}: DBS initialized".format(self.id))
@@ -157,7 +160,8 @@ class Peer_DBS(sim):
         peers_pending_of_reception = self.number_of_peers
         msg_length = struct.calcsize("6s")
         while peers_pending_of_reception > 0:
-            peer = self.splitter_socket.recv(msg_length)
+            msg = self.splitter_socket.recv(msg_length)
+            peer = struct.unpack("6s", msg)[0]
             self.say_hello(peer)
             peers_pending_of_reception -= 1
 
@@ -187,9 +191,11 @@ class Peer_DBS(sim):
         msg = struct.pack("s", b"R")
         self.splitter_socket.send(msg)
 
-    def send_chunk(self, chunk_index, peer):
+    def send_chunk(self, chunk_number, peer):
+        lg.debug("peer_dbs.send_chunk({}, {})".format(chunk_number, peer))
         #self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
-        msg = struct.pack("isi", chunks[chunk_number])
+        #print("/////////////////// {}".format(self.chunks))
+        msg = struct.pack("is6s", self.chunks[chunk_number][self.CHUNK_NUMBER], self.chunks[chunk_number][self.CHUNK], bytes(self.chunks[chunk_number][self.ORIGIN], 'utf-8'))
         self.team_socket.sendto(msg, peer)
         self.sendto_counter += 1
 
@@ -218,6 +224,7 @@ class Peer_DBS(sim):
                     self.played = 0
 
         chunk_number = message[self.CHUNK_NUMBER]
+        print("=============== {}".format(chunk_number))
 
         if chunk_number >= 0:
 
@@ -250,8 +257,10 @@ class Peer_DBS(sim):
                 # When a peer X receives a chunk (number) C with origin Y,
                 # for each peer P in forward[Y], X performs
                 # pending[P].append(C).
+                print("¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡ {} {}".format(self.forward[origin], origin))
                 for P in self.forward[origin]:
-                    pending[P].append(chunk_number)
+                    print("OOOOOOOOOOOOOOOOOOOOOOOOO P={} chunk_number={} self.pending[P]={}".format(P, chunk_number, self.pending[P]))
+                    self.pending[P].append(chunk_number)
 
                 # When peer X receives a chunk, X selects the next
                 # entry E of pending (one or more chunk numbers),
@@ -261,6 +270,7 @@ class Peer_DBS(sim):
                 # (number), all chunks are sent in a burst. E should
                 # be selected to sent first to those peers that we
                 # want to forward us chunks not originated in them.
+                print("-------------- {} {}".format(self.neighbor, self.pending))
                 for C in self.pending[self.neighbor]:
 
                     # Send the chunk C to the neighbor.
@@ -284,7 +294,7 @@ class Peer_DBS(sim):
 
                 # Select a different neighbor for the next chunk
                 # reception.
-                self.pending[(self.pending.index(self.neighbor) + 1) % len(self.pending)]
+                self.neighbor = self.pending[(self.pending.index(self.neighbor) + 1) % len(self.pending)]
 
         else: # message[CHUNK_NUMBER] < 0
 
@@ -312,7 +322,7 @@ class Peer_DBS(sim):
 
             elif chunk_number == Common.PRUNE:
                 
-                chunk_number = message[1]
+                chunk_number = message[Common.CHUNK_NUMBER]
                 lg.info("{}: received [prune {}] from {}".format(self.id, chunk_number, self.sender))
 
                 origin = self.chunks[chunk_index % self.BUFFER_SIZE][self.ORIGIN]
@@ -369,8 +379,8 @@ class Peer_DBS(sim):
 
                         if sender in peers_list:
 
+                            lg.info("{}: {} removing from {}".format(self.id, sender, peers_list))
                             try:
-                                lg.info("{}: {} removing from {}".format(self.id, sender, peers_list))
                                 peers_list.remove(sender)
                             except ValueError:
                                 lg.error("{}: : failed to remove peer {} from {}".format(sef.id, sender, peers_list))
@@ -383,7 +393,7 @@ class Peer_DBS(sim):
         lg.debug("Peer_DBS.process_next_message: received {} from {} with length {}".format(msg, sender, len(msg)))
         if len(msg) == self.max_msg_length:
             message = struct.unpack("is6s", msg) # Chunk [number, data, origin]
-            message = message[self.CHUNK_NUMBER], message[self.CHUNK], message[self.ORIGIN].decode("utf-8").replace("\x00", "")
+            message = message[self.CHUNK_NUMBER], message[self.CHUNK], str(message[self.ORIGIN].decode("utf-8").replace("\x00", ""))
         elif len(msg) == struct.calcsize("ii"):
             message  = struct.unpack("ii", msg) # Control message [control, parameter]
         else:
@@ -392,7 +402,7 @@ class Peer_DBS(sim):
 
     def buffer_data(self):
         for i in range(self.buffer_size):
-            self.chunks.append((-1, b"L", None)) # L == Lost ??
+            self.chunks.append((-1, b"L", self.id)) # L == Lost ??
 
         # Receive a chunk.
         (chunk_number, self.neighbor) = self.process_next_message()

@@ -18,8 +18,8 @@ from multiprocessing import Process, Queue, Manager
 from glob import glob
 import time
 import fire
-import networkx as nx
 if __debug__:
+    import networkx as nx
     import matplotlib.pyplot as plt
     import matplotlib.cm as cm
 import numpy as np

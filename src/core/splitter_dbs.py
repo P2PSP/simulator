@@ -235,7 +235,6 @@ class Splitter_DBS(Simulator_stuff):
         Thread(target=self.moderate_the_team).start()
         Thread(target=self.reset_counters_thread).start()
 
-        print("---------------- {}".format(self.peer_list))
         while self.alive:
             chunk = self.receive_chunk()
             if self.peer_number == 0:
@@ -249,7 +248,6 @@ class Splitter_DBS(Simulator_stuff):
                     Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
 
 
-            print("------------------ {} {}".format(self.peer_list, self.peer_number))
             peer = self.peer_list[self.peer_number]    
             message = (self.chunk_number, chunk, bytes(peer, 'utf-8'))
             self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
