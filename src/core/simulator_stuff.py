@@ -73,9 +73,9 @@ class Simulator_socket:
         return self.sock.sendall(msg)
         
     def sendto(self, msg, address):
-        lg.debug("simulator_stuff.sendto: {} - [{}] -> {}".format(address, \
-                                                                msg, \
-                                                                self.sock.getpeername()))
+        lg.debug("simulator_stuff.sendto: {} - [{}] -> {}".format(self.sock.getsockname(), \
+                                                                  msg, \
+                                                                  address))
         try:
             return self.sock.sendto(msg, socket.MSG_DONTWAIT, address + "_udp")
         except ConnectionRefusedError:

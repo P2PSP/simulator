@@ -55,7 +55,7 @@ class Splitter_DBS(Simulator_stuff):
         #self.team_socket.set_max_packet_size(struct.calcsize("is3s")) # Chunck index, chunk, origin 
         
     def send_chunk(self, chunk_msg, peer):
-        lg.debug("splitter_dbs.send_chunk({}, {}) [{}] -> {}".format(chunk_msg, peer))
+        lg.debug("splitter_dbs.send_chunk({}, {})".format(chunk_msg, peer))
         msg = struct.pack("is6s", *chunk_msg)
         #msg = struct.pack("is3s", chunk_msg[0], bytes(chunk_msg[1]), chunk_msg[2])
         self.team_socket.sendto(msg, peer)
@@ -235,6 +235,7 @@ class Splitter_DBS(Simulator_stuff):
         Thread(target=self.moderate_the_team).start()
         Thread(target=self.reset_counters_thread).start()
 
+        print("---------------- {}".format(self.peer_list))
         while self.alive:
             chunk = self.receive_chunk()
             if self.peer_number == 0:
@@ -247,17 +248,20 @@ class Splitter_DBS(Simulator_stuff):
                     Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
                     Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
 
-            try:
-                peer = self.peer_list[self.peer_number]
-                message = (self.chunk_number, chunk, bytes(peer, 'utf-8'))
-                self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
-                self.send_chunk(message, peer)
-                self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
-                self.compute_next_peer_number(peer)
-            except IndexError:
-                lg.error("{}: the monitor peer has died!".format(self.id))
-                lg.error("{}: peer_list = {}".format(self.id, self.peer_list))
-                lg.error("{}: peer_number = {}".format(self.id, self.peer_number))
+
+            print("------------------ {} {}".format(self.peer_list, self.peer_number))
+            peer = self.peer_list[self.peer_number]    
+            message = (self.chunk_number, chunk, bytes(peer, 'utf-8'))
+            self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
+            #            try:
+            self.send_chunk(message, peer)
+            self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
+            self.compute_next_peer_number(peer)
+                
+#            except IndexError:
+#                lg.error("{}: the monitor peer has died!".format(self.id))
+#                lg.error("{}: peer_list = {}".format(self.id, self.peer_list))
+#                lg.error("{}: peer_number = {}".format(self.id, self.peer_number))
 
             if self.peer_number == 0:
                 self.current_round += 1
