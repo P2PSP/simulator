@@ -232,10 +232,10 @@ class Peer_DBS(sim):
                 
             else:
                 
-                # New chunk. chunk -> buffer[chunk_number]
+                # New chunk. (chunk_number, chunk, origin) -> buffer[chunk_number]
                 chunk = message[self.CHUNK]
                 origin = str(message[self.ORIGIN])
-                self.chunks[chunk_number % self.buffer_size] = (chunk, chunk_number, origin)
+                self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk, origin)
                 self.received_chunks += 1
 
                 if __debug__:
