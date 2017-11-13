@@ -96,12 +96,13 @@ class Peer_DBS(sim):
         # The longest message expected to be received.
         self.max_msg_length = struct.calcsize("is6s")
         
+        self.number_of_chunks_consumed = 0
+
         lg.info("{}: DBS initialized".format(self.id))
 
         if __debug__:
             self.losses = 0
             self.played = 0
-            self.number_of_chunks_consumed = 0
             self.chunks_before_leave = 0
 
     def listen_to_the_team(self):
