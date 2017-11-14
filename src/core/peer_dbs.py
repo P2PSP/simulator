@@ -285,7 +285,7 @@ class Peer_DBS(sim):
                 # be selected to sent first to those peers that we
                 # want to forward us chunks not originated in them.
                 print("-------------- neighbor={} pending={}".format(self.neighbor, self.pending))
-                if self.neighbor != None:
+                try:#if self.neighbor != None:
                     for C in self.pending[self.neighbor]:
 
                         # Send the chunk C to the neighbor.
@@ -304,26 +304,32 @@ class Peer_DBS(sim):
                                 if self.neighbor in peer_list:
                                     peer_list.remove(self.neighbor)
 
+                            # Select a different neighbor for the next chunk
+                            # reception.
+                            neighbor_index = list(self.pending.keys()).index(self.neighbor)
+                            print("******************* neighbor_index={} neighbor={}".format(neighbor_index, self.neighbor))
+                            self.neighbor = list(self.pending.keys())[(neighbor_index +1) % len(self.pending)]
+                            print("******************* neighbor_index={} neighbor={}".format(neighbor_index, self.neighbor))
+
                             # S I M U L A T I O N
                             sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, self.neighbor))
 
-                    # Select a different neighbor for the next chunk
-                    # reception.
-                    neighbor_index = list(self.pending.keys()).index(self.neighbor)
-                    print("******************* neighbor_index={} neighbor={}".format(neighbor_index, self.neighbor))
-                    self.neighbor = list(self.pending.keys())[(neighbor_index +1) % len(self.pending)]
-                    print("******************* neighbor_index={} neighbor={}".format(neighbor_index, self.neighbor))
+                except:
+                    lg.error("{}: neighbor={} pending={}".format(self.id, self.neighbor, self.pending))
+                    #raise
+
 
         else: # message[CHUNK_NUMBER] < 0
 
             if chunk_number == Common.REQUEST:
 
-                lg.info("{}: received [request {}] from {}".format(self.id, chunk_number, sender))
+                requested_chunk = message[self.CHUNK]
+                lg.info("{}: received [request {}] from {}".format(self.id, requested_chunk, sender))
 
                 # If a peer X receives [request Y] from peer Z, X will
                 # append Z to forward[Y.origin].
 
-                origin = self.chunks[requested_chunk % self.buffer_size][ORIGIN]
+                origin = self.chunks[requested_chunk % self.buffer_size][self.ORIGIN]
                 
                 if sender not in self.forward[origin]:
 
@@ -373,7 +379,7 @@ class Peer_DBS(sim):
 
                     # Insert sender in the forward table.
                     self.forward[self.id].append(sender)
-                    lg.info("{}: inserted {} in forward[{}] by [hello] from {}".format(self.id, sender, self.id, sender))
+                    lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.id, sender, self.id, sender, self.forward))
 
                     # Debt counter of sender.
                     self.debt[sender] = 0
@@ -431,24 +437,42 @@ class Peer_DBS(sim):
         # the team (splitter or peer). Let's suppose for now that this
         # message contains a chunk.
         '''
-        while self.neighbor == None:
+        print("{}: ggggggggggggggg {}".format(self.id, len(self.forward[self.id])))
+        while len(self.forward[self.id]) == 0:
+            print("{}: ggggggggggggggg {}".format(self.id, len(self.forward[self.id])))
+            lg.info("{}: forward={}".format(self.id, self.forward))
             msg, sender = self.team_socket.recvfrom(self.max_msg_length)
-            message = struct.unpack("is6s", msg) # Chunk [number, data, origin]
-            message = message[self.CHUNK_NUMBER], \
-                      message[self.CHUNK], \
-                      str(message[self.ORIGIN].decode("utf-8").replace("\x00", ""))
+            if len(msg) == self.max_msg_length:
+                message = struct.unpack("is6s", msg) # Chunk [number, data, origin]
+                message = message[self.CHUNK_NUMBER], \
+                          message[self.CHUNK], \
+                          str(message[self.ORIGIN].decode("utf-8").replace("\x00", ""))
+            elif len(msg) == struct.calcsize("ii"):
+                message  = struct.unpack("ii", msg) # Control message [control, parameter]
+            else:
+                message = struct.unpack("i", msg) # Control message [control]
             chunk_number = message[self.CHUNK_NUMBER]
             chunk = message[self.CHUNK]
-            origin = str(message[self.ORIGIN])
+            origin = str(message[self.ORIGIN].decode("utf-8").replace("\x00", ""))
+            #message = message[self.CHUNK_NUMBER], \
+            #          message[self.CHUNK], \
+            #          str(message[self.ORIGIN].decode("utf-8").replace("\x00", ""))
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk, origin)
-            self.received_chunks = 1
+            self.received_chunks += 1
             if sender != self.splitter:
                 self.forward[self.id].append(sender)
+        self.neighbor = sender
+        print("{}: ggggggggggggggg {}".format(self.id, len(self.forward[self.id])))
+        lg.info("{}: forward={}".format(self.id, self.forward))
+            
+        lg.info("{}: neighbor={}".format(self.id, self.neighbor))
         '''
+        
         # Receive a chunk.
-        (chunk_number, _) = self.process_next_message()
+        (chunk_number, sender) = self.process_next_message()
         while(chunk_number < 0):
-            (chunk_number, _) = self.process_next_message()
+            (chunk_number, sender) = self.process_next_message()
+        #self.neighbor = sender
 
         # The first chunk to play is the firstly received chunk.
         self.played_chunk = chunk_number
