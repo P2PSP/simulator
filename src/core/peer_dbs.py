@@ -100,10 +100,9 @@ class Peer_DBS(sim):
 
         lg.info("{}: DBS initialized".format(self.id))
 
-        if __debug__:
-            self.losses = 0
-            self.played = 0
-            self.chunks_before_leave = 0
+        self.losses = 0
+        self.played = 0
+        self.chunks_before_leave = 0
 
     def listen_to_the_team(self):
         self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -459,11 +458,12 @@ class Peer_DBS(sim):
         lg.info("{}: [request {}] sent to {}".format(self.id, chunk_number, peer))
 
     def play_chunk(self, chunk_number):
-        if self.chunks[chunk_number % self.buffer_size][CHUNK_NUMBER] == "C":
+        print(">>>>>>>>>>>>>>>>> {} {}".format(self.chunks[chunk_number % self.buffer_size][CHUNK]))
+        if self.chunks[chunk_number % self.buffer_size][CHUNK] == b"C":
             self.played += 1
         else:
             self.losses += 1
-            lg.info("{}: lost chunk! {}".format(self.id, chunk_number))
+            lg.info("{}: lost chunk x! {}".format(self.id, chunk_number))
 
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change in
@@ -484,7 +484,7 @@ class Peer_DBS(sim):
     def play_next_chunks(self, last_received_chunk):
         for i in range(last_received_chunk - self.prev_received_chunk):
             self.player_alive = self.play_chunk(self.played_chunk)
-            self.chunks[self.played_chunk % self.buffer_size] = (self.played_chunk, "L")
+            self.chunks[self.played_chunk % self.buffer_size] = (self.played_chunk, b"L")
             self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
