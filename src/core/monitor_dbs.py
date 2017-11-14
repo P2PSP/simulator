@@ -20,8 +20,8 @@ class Monitor_DBS(Peer_DBS):
         #print(self.id, ": received buffer_size =", self.buffer_size, "from S")
         self.buffer_size //= 2
 
-        if __debug__:
-            self.sender_of_chunks = [""]*self.buffer_size
+        # S I M U L A T I O N
+        self.sender_of_chunks = [""]*self.buffer_size
 
     def complain(self, chunk_number):
         msg = struct.pack("ii", Common.REQUEST, chunk_number)

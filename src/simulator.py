@@ -413,7 +413,9 @@ class Simulator():
         self.attended_monitors += 1
 
         queue = sim.FEEDBACK["STATUS"]
+        print(">>>>>>>>>>>> {} {}".format(self.current_round, self.number_of_rounds))
         m = queue.get()
+        print(">>>>>>>>>>>> {} {}".format(self.current_round, self.number_of_rounds))
         while m[0] != "Bye" and self.current_round < self.number_of_rounds:
             if (m[0] == "R"):
                 self.current_round = m[1]

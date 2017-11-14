@@ -95,8 +95,8 @@ class Splitter_DBS(Simulator_stuff):
 
         self.insert_peer(incoming_peer)
 
-        if __debug__:
-            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
+        # S I M U L A T I O N
+        Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
  
         if (incoming_peer[0] == "M"):
             self.number_of_monitors += 1
@@ -124,8 +124,8 @@ class Splitter_DBS(Simulator_stuff):
         lg.info("{}: sending peer list = {}".format(self.id, self.peer_list))
         for p in self.peer_list:
             #peer_serve_socket.sendall(p, "6s")
-            msg = struct.pack("6s", p)
-            self.peer_serve_socket.sendall(msg)
+            msg = struct.pack("6s", bytes(p, "utf-8"))
+            peer_serve_socket.sendall(msg)
 
     def insert_peer(self, peer):
         if peer not in self.peer_list:
@@ -164,8 +164,8 @@ class Splitter_DBS(Simulator_stuff):
             lg.error("{}: unexpected error, the removed peer {} does not exist!".format(self.id, peer))
         else:
             #self.peer_number -= 1
-            if __debug__:
-                Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", peer))
+            # S I M U L A T I O N
+            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", peer))
             if peer[0] == "M" and peer[1] != "P":
                 self.number_of_monitors -= 1
 
@@ -237,13 +237,12 @@ class Splitter_DBS(Simulator_stuff):
             if self.peer_number == 0:
                 self.on_round_beginning() # Remove outgoing peers
 
-                if __debug__:
-                    lg.info("{}: current round {}".format(self.id, self.current_round))
-                    Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
-                    Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
-                    Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
-                    Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
-
+                # SIMULATION
+                lg.info("{}: current round {}".format(self.id, self.current_round))
+                Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
 
             peer = self.peer_list[self.peer_number]    
             message = (self.chunk_number, chunk, bytes(peer, 'utf-8'))
