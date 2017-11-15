@@ -307,10 +307,11 @@ class Peer_DBS(sim):
 
                             # Select a different neighbor for the next chunk
                             # reception.
-                            neighbor_index = list(self.pending.keys()).index(self.neighbor)
-                            print("******************* neighbor_index={} neighbor={}".format(neighbor_index, self.neighbor))
-                            self.neighbor = list(self.pending.keys())[(neighbor_index +1) % len(self.pending)]
-                            print("******************* neighbor_index={} neighbor={}".format(neighbor_index, self.neighbor))
+                            while self.neighbor == None:
+                                neighbor_index = list(self.pending.keys()).index(self.neighbor)
+                                print("******************* neighbor_index={} neighbor={}".format(neighbor_index, self.neighbor))
+                                self.neighbor = list(self.pending.keys())[(neighbor_index + 1) % len(self.pending)]
+                                print("******************* neighbor_index={} neighbor={}".format(neighbor_index, self.neighbor))
 
                             # S I M U L A T I O N
                             sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, self.neighbor))
