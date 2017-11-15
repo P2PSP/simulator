@@ -213,13 +213,10 @@ class Peer_DBS(sim):
         self.team_socket.sendto(msg, peer)
 
     def process_message(self, message, sender):
-
-        print("sender={} self.splitter={}".format(sender, self.splitter))
         
         lg.info("Peer_DBS.process_message: received chunk {} from {}".format(message, sender))
 
         chunk_number = message[self.CHUNK_NUMBER]
-        print("=============== chunk_number={}".format(chunk_number))
 
         if chunk_number >= 0:
 
@@ -269,13 +266,11 @@ class Peer_DBS(sim):
                 # When a peer X receives a chunk (number) C with origin O,
                 # for each peer P in forward[O], X performs
                 # pending[P].append(C).
-                print("¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡ forward={} origin={} self.id={}".format(self.forward, origin, self.id))
                 if origin in self.forward: #True: #len(self.forward[origin]) > 0: #True: #origin != self.id:
                     for P in self.forward[origin]:
                         if P not in self.pending:
                             self.pending[P] = []
                         self.pending[P].append(chunk_number)
-                        print("OOOOOOOOOOOOOOOOOOOOOOOOO P={} chunk_number={} self.pending[P]={}".format(P, chunk_number, self.pending[P]))
 
                 # When peer X receives a chunk, X selects the next
                 # entry E of pending (one or more chunk numbers),
@@ -309,9 +304,7 @@ class Peer_DBS(sim):
                             # reception.
                             while self.neighbor == None:
                                 neighbor_index = list(self.pending.keys()).index(self.neighbor)
-                                print("******************* neighbor_index={} neighbor={}".format(neighbor_index, self.neighbor))
                                 self.neighbor = list(self.pending.keys())[(neighbor_index + 1) % len(self.pending)]
-                                print("******************* neighbor_index={} neighbor={}".format(neighbor_index, self.neighbor))
 
                             # S I M U L A T I O N
                             sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, self.neighbor))
@@ -495,7 +488,6 @@ class Peer_DBS(sim):
         lg.info("{}: [request {}] sent to {}".format(self.id, chunk_number, peer))
 
     def play_chunk(self, chunk_number):
-        print(">>>>>>>>>>>>>>>>> {} {}".format(chunk_number, self.chunks[chunk_number % self.buffer_size][self.CHUNK]))
         if self.chunks[chunk_number % self.buffer_size][self.CHUNK] == b"C":
             self.played += 1
         else:
