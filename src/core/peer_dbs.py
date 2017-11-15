@@ -80,7 +80,6 @@ class Peer_DBS(sim):
         # entries 1, 5, and 7 of the buffer will be sent to the peer
         # X.
         self.pending = {}
-        #self.pending[self.id] = []
         
         # Counters of sent - recived chunks, by peer. Every time a peer
         # X sends a chunk to peer Y, X increments debt[Y] and Y
@@ -267,14 +266,16 @@ class Peer_DBS(sim):
                     if sender not in self.forward[self.id]:
                         self.forward[self.id].append(sender)
                             
-                # When a peer X receives a chunk (number) C with origin Y,
-                # for each peer P in forward[Y], X performs
+                # When a peer X receives a chunk (number) C with origin O,
+                # for each peer P in forward[O], X performs
                 # pending[P].append(C).
                 print("¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡ forward={} origin={} self.id={}".format(self.forward, origin, self.id))
-                if origin != self.id:
+                if origin in self.forward: #True: #len(self.forward[origin]) > 0: #True: #origin != self.id:
                     for P in self.forward[origin]:
-                        print("OOOOOOOOOOOOOOOOOOOOOOOOO P={} chunk_number={} self.pending[P]={}".format(P, chunk_number, self.pending[P]))
+                        if P not in self.pending:
+                            self.pending[P] = []
                         self.pending[P].append(chunk_number)
+                        print("OOOOOOOOOOOOOOOOOOOOOOOOO P={} chunk_number={} self.pending[P]={}".format(P, chunk_number, self.pending[P]))
 
                 # When peer X receives a chunk, X selects the next
                 # entry E of pending (one or more chunk numbers),
@@ -284,7 +285,7 @@ class Peer_DBS(sim):
                 # (number), all chunks are sent in a burst. E should
                 # be selected to sent first to those peers that we
                 # want to forward us chunks not originated in them.
-                print("-------------- neighbor={} pending={}".format(self.neighbor, self.pending))
+                print("{}: -------------- neighbor={} pending={}".format(self.id, self.neighbor, self.pending))
                 try:#if self.neighbor != None:
                     for C in self.pending[self.neighbor]:
 
@@ -330,32 +331,34 @@ class Peer_DBS(sim):
                 # append Z to forward[Y.origin].
 
                 origin = self.chunks[requested_chunk % self.buffer_size][self.ORIGIN]
-                
-                if sender not in self.forward[origin]:
 
-                    # Insert sender in the forwarding table.
-                    self.forward[origin].append(sender)
-                    lg.info("{}: chunks from {} will be sent to {}".format(self.id, origin, sender))
+                if origin in self.forward:
+                    if sender not in self.forward[origin]:
 
-                    # Debt counter of sender.
-                    self.debt[sender] = 0
+                        # Insert sender in the forwarding table.
+                        self.forward[origin].append(sender)
+                        lg.info("{}: chunks from {} will be sent to {}".format(self.id, origin, sender))
 
-                    # S I M U L A T I O N
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
+                        # Debt counter of sender.
+                        self.debt[sender] = 0
+
+                        # S I M U L A T I O N
+                        sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
+                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
 
             elif chunk_number == Common.PRUNE:
                 
-                chunk_number = message[self.CHUNK_NUMBER]
+                chunk_number = message[self.CHUNK]
                 lg.info("{}: received [prune {}] from {}".format(self.id, chunk_number, sender))
 
                 origin = self.chunks[chunk_number % self.BUFFER_SIZE][self.ORIGIN]
-                
-                if sender in self.forward[origin]:
-                    try:
-                        self.forward[origin].remove(sender)
-                    except ValueError:
-                        lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
+
+                if origin in self.forward:
+                    if sender in self.forward[origin]:
+                        try:
+                            self.forward[origin].remove(sender)
+                        except ValueError:
+                            lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
                     
             elif chunk_number == Common.HELLO:
 
