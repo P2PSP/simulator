@@ -125,7 +125,6 @@ class Peer_DBS(sim):
         #self.buffer_size = self.recv("H")
         msg_length = struct.calcsize("H")
         msg = self.splitter_socket.recv(msg_length)
-        lg.info("{}: receive_buffer_size: msg = {}".format(self.id, msg))
         self.buffer_size = struct.unpack("H", msg)[0]
         lg.info("{}: buffer size = {}".format(self.id, self.buffer_size))
         # S I M U L A T I O N
@@ -264,17 +263,20 @@ class Peer_DBS(sim):
                         self.neighbor = sender
                     if sender not in self.forward[self.id]:
                         self.forward[self.id].append(sender)
-                            
+                        
                 # When a peer X receives a chunk (number) C with origin O,
                 # for each peer P in forward[O], X performs
                 # pending[P].append(C).
                 if origin in self.forward: #True: #len(self.forward[origin]) > 0: #True: #origin != self.id:
                     for P in self.forward[origin]:
-                        if P in self.pending:
-                            #self.pending[P] = []
-                            #else:
+                        if len(self.pending) == 0:
+                            self.pending[P] = []
+                        elif P in self.pending:
+                            lg.info("{}: oooooooo {}".format(self.id, P))
                             self.pending[P].append(chunk_number)
 
+                lg.info("{}: origin={} forward={} pending={}".format(self.id, origin, self.forward, self.pending))
+                            
                 # When peer X receives a chunk, X selects the next
                 # entry pending[E] (one or more chunk numbers),
                 # sends the chunk with chunk_number C indicated by
@@ -284,10 +286,10 @@ class Peer_DBS(sim):
                 # be selected to sent first to those peers that we
                 # want to forward us chunks not originated in them.
                 if self.neighbor in self.pending:
-                    for C in self.pending[self.neighbor]:
+                    for chunk_number in self.pending[self.neighbor]:
 
                         # Send the chunk C to the neighbor.
-                        self.send_chunk(C, self.neighbor)
+                        self.send_chunk(chunk_number, self.neighbor)
 
                         # Increment the debt of the neighbor.
                         if self.neighbor in self.debt:
