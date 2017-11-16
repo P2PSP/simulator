@@ -193,6 +193,9 @@ class Peer_DBS(sim):
         lg.info("{}: chunk {} sent to {}".format(self.id, chunk_number, peer))
         #self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
         #print("/////////////////// {}".format(self.chunks))
+        chunk_number = chunk_number % self.buffer_size
+        #print(".............. {}".format(type(self.chunks[chunk_number][self.ORIGIN])))
+        print(".................{}".format(peer))
         msg = struct.pack("is6s", \
                           self.chunks[chunk_number][self.CHUNK_NUMBER], \
                           self.chunks[chunk_number][self.CHUNK], \
@@ -214,7 +217,7 @@ class Peer_DBS(sim):
 
     def process_message(self, message, sender):
         
-        lg.info("Peer_DBS.process_message: received chunk {} from {}".format(message, sender))
+        lg.info("{}: received message {} from {}".format(self.id, message, sender))
 
         chunk_number = message[self.CHUNK_NUMBER]
 
@@ -256,7 +259,6 @@ class Peer_DBS(sim):
                         self.sender_of_chunks[n % self.buffer_size] = ""
                         sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))
 
-                print("sender={} splitter={}".format(sender, self.splitter))
                 if sender != self.splitter:
                     if self.neighbor == None: # Quizás se pueda quitar!!!!
                         self.neighbor = sender
@@ -268,51 +270,52 @@ class Peer_DBS(sim):
                 # pending[P].append(C).
                 if origin in self.forward: #True: #len(self.forward[origin]) > 0: #True: #origin != self.id:
                     for P in self.forward[origin]:
-                        if P not in self.pending:
-                            self.pending[P] = []
-                        self.pending[P].append(chunk_number)
+                        if P in self.pending:
+                            #self.pending[P] = []
+                            #else:
+                            self.pending[P].append(chunk_number)
 
                 # When peer X receives a chunk, X selects the next
-                # entry E of pending (one or more chunk numbers),
+                # entry pending[E] (one or more chunk numbers),
                 # sends the chunk with chunk_number C indicated by
                 # pending[E] to E, and removes C from pending[E]. If
                 # in pending[E] there are more than one chunk
                 # (number), all chunks are sent in a burst. E should
                 # be selected to sent first to those peers that we
                 # want to forward us chunks not originated in them.
-                print("{}: -------------- neighbor={} pending={}".format(self.id, self.neighbor, self.pending))
-                try:#if self.neighbor != None:
+                if self.neighbor in self.pending:
                     for C in self.pending[self.neighbor]:
 
                         # Send the chunk C to the neighbor.
                         self.send_chunk(C, self.neighbor)
 
                         # Increment the debt of the neighbor.
-                        self.debt[self.neighbor] += 1
+                        if self.neighbor in self.debt:
+                            self.debt[self.neighbor] += 1
 
-                        if self.debt[self.neighbor] > self.MAX_CHUNK_DEBT:
+                            if self.debt[self.neighbor] > self.MAX_CHUNK_DEBT:
 
-                            # Selfish neighbor detected: stop
-                            # communicating with it.
-                            lg.info("{}: removing {} by unsupportive ({} debts)".format(self.id, self.neighbor, self.debt[self.neighbor]))
-                            del self.debt[self.neighbor]
-                            for peer_list in self.forward:
-                                if self.neighbor in peer_list:
-                                    peer_list.remove(self.neighbor)
+                                # Selfish neighbor detected: stop
+                                # communicating with it.
+                                lg.info("{}: removing {} by unsupportive ({} debts)".format(self.id, self.neighbor, self.debt[self.neighbor]))
+                                del self.debt[self.neighbor]
+                                for peer_list in self.forward:
+                                    if self.neighbor in peer_list:
+                                        peer_list.remove(self.neighbor)
+                        else:
+                            
+                            self.debt[self.neighbor] = 0
 
-                            # Select a different neighbor for the next chunk
-                            # reception.
-                            while self.neighbor == None:
-                                neighbor_index = list(self.pending.keys()).index(self.neighbor)
-                                self.neighbor = list(self.pending.keys())[(neighbor_index + 1) % len(self.pending)]
+                # Select a different neighbor for the next chunk
+                # reception.
+                #while self.neighbor == None:
+                #if self.neighbor != None:
+                if self.neighbor in self.pending:
+                    neighbor_index = list(self.pending.keys()).index(self.neighbor)
+                    self.neighbor = list(self.pending.keys())[(neighbor_index + 1) % len(self.pending)]
 
-                            # S I M U L A T I O N
-                            sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, self.neighbor))
-
-                except:
-                    lg.error("{}: neighbor={} pending={}".format(self.id, self.neighbor, self.pending))
-                    #raise
-
+                # S I M U L A T I O N
+                sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, self.neighbor))
 
         else: # message[CHUNK_NUMBER] < 0
 
@@ -474,7 +477,7 @@ class Peer_DBS(sim):
         # The first chunk to play is the firstly received chunk.
         self.played_chunk = chunk_number
 
-        lg.info("{}: position in the buffer of the first chunk to play".format(self.id, self.played_chunk))
+        lg.info("{}: position in the buffer of the first chunk to play = {}".format(self.id, self.played_chunk))
         
         while (chunk_number < self.played_chunk) or (((chunk_number - self.played_chunk) % self.buffer_size) < (self.buffer_size // 2)):
             (chunk_number, _) = self.process_next_message()
@@ -501,7 +504,8 @@ class Peer_DBS(sim):
             # <chunk_number>]. If after this, I will start receiving
             # duplicate chunks, then a [prune <chunk_number>] should
             # be sent to those peers which send duplicates.
-            self.request_chunk(chunk_number, self.neighbor)
+            if self.neighbor != None: # Este if no debería existir
+                self.request_chunk(chunk_number, self.neighbor)
             # Here, self.neighbor has been selected by
             # simplicity. However, other alternatives such as
             # requesting the lost chunk to the neighbor with smaller
