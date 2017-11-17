@@ -182,89 +182,6 @@ class Peer_DBS(sim):
             return True
         return False 
 
-    def process_message2(self, message, sender):
-
-        # ----- Check if new round for peer (simulation purposes) ------------- #
-        if not self.is_a_control_message(message) and sender == self.splitter:  #
-            if self.played > 0 and self.played >= len(self.peer_list):          #
-                clr = self.losses/self.played                                   #
-                sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))                 #
-                self.losses = 0                                                 #
-                self.played = 0                                                 #
-        # --------------------------------------------------------------------- #
-
-        if (message[0] < 0):
-            pass
-
-        else: # message[0] >= 0
-
-            lg.debug("{}: control message {} received".format(self.id, message))
-
-            if message[1] == 'H': # [hello]
-
-                if sender not in serlf.peer_list:
-
-                    # Insert sender to the list of peers
-                    self.peer_list.append(sender)
-                    self.debt[sender] = 0
-                    lg.debug("{}: inserted {} by [hello]".format(self.id, sender))  
-
-                    # --- simulator ---------------------------------------------- #
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
-                    # ------------------------------------------------------------ #
-
-            elif message[1] == 'G': # [goodbye]
-                pass
-                    
-            # Put chunk in buffer
-            chunk_number = message[0]
-            chunk = message[1]
-            self.received_chunks += 1
-            self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
-
-            # --- for simulation purposes only ---------------------------------------------- #
-            self.sender_of_chunks[chunk_number % self.buffer_size] = sender                   #
-                                                                                              #
-            chunks = ""                                                                       #
-            for n, c in self.chunks:                                                          #
-                chunks += c                                                                   #
-                if c == "L":                                                                  #
-                    self.sender_of_chunks[n % self.buffer_size] = ""                          #
-                                                                                              #
-            sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))  #
-            # ------------------------------------------------------------------------------- #
-
-        if (sender == self.splitter):
-
-            # Enter burst mode if pending chunk relays are found
-
-            # Load the new pending relays
-            self.relay = []
-            for i in self.peer_list:
-                self.relay[i].append(i)
-
-        else: # sender != self.splitter
-
-            if sender not in self.peer_list:
-
-                # Insert sender to the list of peers & establish its debt to 0
-                self.peer_list.append(sender)
-                lg.info("{}: {} added by chunk".formar(sender, chunk_number))
-                lg.info("{}: peer_list =".format(self.id, self.peer_list))
-                self.debt[sender] = 0
-
-                # -------- For simulation purposes only ---------------------- #
-                sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
-                sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
-                # ------------------------------------------------------------ #
-
-            else: # sender is in list of peers
-
-                # Load relayed 
-                pass
-                #flooding_list
-
     def process_message(self, message, sender):
 
         # ----- Check if new round for peer (simulation purposes) ------------- #
@@ -286,6 +203,16 @@ class Peer_DBS(sim):
             
             self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk)
 
+            # Showing buffer
+            buf = ""
+            for i in self.chunks:
+                if i[1] == "C":
+                    buf += "O"
+                else:
+                    buf += "."
+            lg.info("{}: buffer={}".format(self.id, buf))
+
+            
             # --- for simulation purposes only ---------------------------------------------- #
             self.sender_of_chunks[chunk_number % self.buffer_size] = sender                   #
                                                                                               #
