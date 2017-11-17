@@ -258,21 +258,24 @@ class Peer_DBS(sim):
                         self.sender_of_chunks[n % self.buffer_size] = ""
                         sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))
 
+                # ./test.me 2>&1 | grep inserted | grep chunk
                 if sender != self.splitter:
                     if self.neighbor == None: # Quizás se pueda quitar!!!!
                         self.neighbor = sender
                     if sender not in self.forward[self.id]:
                         self.forward[self.id].append(sender)
+                        lg.info("{}: inserted {} in {} by chunk {} (forward={})".format(self.id, sender, self.forward[self.id], (chunk_number, chunk, origin), self.forward))
                         
                 # When a peer X receives a chunk (number) C with origin O,
                 # for each peer P in forward[O], X performs
                 # pending[P].append(C).
                 if origin in self.forward: #True: #len(self.forward[origin]) > 0: #True: #origin != self.id:
                     for P in self.forward[origin]:
-                        if len(self.pending) == 0:
-                            self.pending[P] = []
-                        elif P in self.pending:
+                        if P in self.pending:
                             lg.info("{}: oooooooo {}".format(self.id, P))
+                            self.pending[P].append(chunk_number)
+                        elif len(self.pending) == 0:
+                            self.pending[P] = []
                             self.pending[P].append(chunk_number)
 
                 lg.info("{}: origin={} forward={} pending={}".format(self.id, origin, self.forward, self.pending))
@@ -290,6 +293,9 @@ class Peer_DBS(sim):
 
                         # Send the chunk C to the neighbor.
                         self.send_chunk(chunk_number, self.neighbor)
+
+                        # Update pending chunks.
+                        self.pending[self.neighbor].remove(chunk_number)
 
                         # Increment the debt of the neighbor.
                         if self.neighbor in self.debt:
