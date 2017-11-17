@@ -194,7 +194,7 @@ class Peer_DBS(sim):
         #print("/////////////////// {}".format(self.chunks))
         chunk_number = chunk_number % self.buffer_size
         #print(".............. {}".format(type(self.chunks[chunk_number][self.ORIGIN])))
-        print(".................{}".format(peer))
+        #print(".................{}".format(peer))
         msg = struct.pack("is6s", \
                           self.chunks[chunk_number][self.CHUNK_NUMBER], \
                           self.chunks[chunk_number][self.CHUNK], \
@@ -247,12 +247,21 @@ class Peer_DBS(sim):
                 origin = message[self.ORIGIN]
                 lg.info("{}: received chunk {} from {}".format(self.id, (chunk_number, chunk, origin), sender))
                 self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk, origin)
+
+                # Showing buffer
+                buf = ""
+                for i in self.chunks:
+                    if i[self.CHUNK_NUMBER] != -1:
+                        buf += "O"
+                    else:
+                        buf += "."
+                lg.info("{}: buffer={}".format(self.id, buf))
+
                 self.received_chunks += 1
 
                 # S I M U L A T I O N
                 self.sender_of_chunks[chunk_number % self.buffer_size] = sender
                 chunks = ""
-                print("{}: {}".format(self.id, self.chunks))
                 for n, c, o in self.chunks:
                     chunks += c.decode("utf-8")
                     if c == "L":
