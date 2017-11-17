@@ -189,7 +189,7 @@ class Peer_DBS(sim):
         self.splitter_socket.send(msg)
 
     def send_chunk(self, chunk_number, peer):
-        lg.info("{}: chunk {} sent to {}".format(self.id, chunk_number, peer))
+        lg.info("{}: sent chunk {} to {}".format(self.id, chunk_number, peer))
         #self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
         #print("/////////////////// {}".format(self.chunks))
         chunk_number = chunk_number % self.buffer_size
@@ -245,6 +245,7 @@ class Peer_DBS(sim):
                 # New chunk. (chunk_number, chunk, origin) -> buffer[chunk_number]
                 chunk = message[self.CHUNK]
                 origin = message[self.ORIGIN]
+                lg.info("{}: received chunk {} from {}".format(self.id, (chunk_number, chunk, origin), sender))
                 self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk, origin)
                 self.received_chunks += 1
 
@@ -272,11 +273,18 @@ class Peer_DBS(sim):
                 if origin in self.forward: #True: #len(self.forward[origin]) > 0: #True: #origin != self.id:
                     for P in self.forward[origin]:
                         if P in self.pending:
-                            lg.info("{}: oooooooo {}".format(self.id, P))
                             self.pending[P].append(chunk_number)
-                        elif len(self.pending) == 0:
+                        else:
                             self.pending[P] = []
                             self.pending[P].append(chunk_number)
+                        lg.info("{}: appended {} to pending[{}] (pending={})".format(self.id, chunk_number, P, self.pending))
+                        
+#                        if P in self.pending:
+#                            lg.info("{}: oooooooo {}".format(self.id, P))
+#                            self.pending[P].append(chunk_number)
+#                        elif len(self.pending) == 0:
+#                            self.pending[P] = []
+#                            self.pending[P].append(chunk_number)
 
                 lg.info("{}: origin={} forward={} pending={}".format(self.id, origin, self.forward, self.pending))
                             
