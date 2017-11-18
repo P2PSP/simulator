@@ -418,7 +418,7 @@ class Simulator():
         self.attended_mps = 0
 
         # run a monitor
-        p = Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1), True])
+        p = Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+0), True])
         p.start()
         self.processes["M"+str(self.attended_monitors+1)] = p.pid
         self.attended_monitors += 1
@@ -453,7 +453,7 @@ class Simulator():
         option = np.where(np.random.multinomial(1, probabilities))[0][0]
         if option == 0:
             if self.attended_monitors < self.number_of_monitors:
-                p = Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+1)])
+                p = Process(target=self.run_a_peer, args=["S", "monitor", "M"+str(self.attended_monitors+0)])
                 p.start()
                 self.processes["M"+str(self.attended_monitors+1)] = p.pid
                 self.attended_monitors += 1

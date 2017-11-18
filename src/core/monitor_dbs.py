@@ -28,6 +28,11 @@ class Monitor_DBS(Peer_DBS):
         self.team_socket.sendto(msg, self.splitter)
         self.lg.info("{}: [request {}] sent to {}".format(self.id, chunk_number, self.splitter))
 
+    def request_chunk(self, chunk_number, peer):
+        Peer_DBS.request_chunk(self, chunk_number, peer)
+        self.complain(chunk_number)
+
+    '''
     def play_chunk(self, chunk_number):
         if self.chunks[chunk_number % self.buffer_size][self.CHUNK] == b"C":
             self.played += 1
@@ -37,4 +42,4 @@ class Monitor_DBS(Peer_DBS):
             self.complain(chunk_number)
         self.number_of_chunks_consumed += 1
         return self.player_alive
-
+    '''

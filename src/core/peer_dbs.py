@@ -268,7 +268,7 @@ class Peer_DBS(sim):
                 buf = ""
                 for i in self.chunks:
                     if i[self.CHUNK_NUMBER] != -1:
-                        buf += "O"
+                        buf += i[self.ORIGIN][-1:]
                     else:
                         buf += "."
                 self.lg.info("{}: buffer={}".format(self.id, buf))
