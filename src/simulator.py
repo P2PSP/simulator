@@ -13,7 +13,7 @@ from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
-from core.simulator_stuff import lg
+#from core.simulator_stuff import lg
 from multiprocessing import Process, Queue, Manager
 from glob import glob
 import time
@@ -25,14 +25,9 @@ if __debug__:
 import numpy as np
 import platform
 import os
+import logging
 
 #import logging as lg
-#lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-#lg.critical('Critical messages enabled.')
-#lg.error('Error messages enabled.')
-#lg.warning('Warning message enabled.')
-#lg.info('Informative message enabled.')
-#lg.debug('Low-level debug message enabled.')
 
 class Simulator():
 
@@ -42,6 +37,22 @@ class Simulator():
     P_MP = 0.2
 
     def __init__(self, drawing_log, set_of_rules=None, number_of_monitors=0, number_of_peers=0, number_of_rounds=0, number_of_malicious=0, gui=False):
+
+        self.lg = logging.getLogger(__name__)
+        #self.lg = logging.getLogger(__name__)
+        #handler = logging.StreamHandler()
+        #formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
+        #formatter = logging.Formatter(fmt='peer_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
+        #handler.setFormatter(formatter)
+        #self.lg.addHandler(handler)
+        self.lg.setLevel(logging.ERROR)
+        self.lg.critical('Critical messages enabled.')
+        self.lg.error('Error messages enabled.')
+        self.lg.warning('Warning message enabled.')
+        self.lg.info('Informative message enabled.')
+        self.lg.debug('Low-level debug message enabled.')
+
+        
         self.set_of_rules = set_of_rules
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
@@ -86,10 +97,10 @@ class Simulator():
             if self.set_of_rules == "dbs":
                 peer = Monitor_DBS(id)
             elif self.set_of_rules == "cis":
-                lg.info("simulator: Monitors are TPs in CIS")
+                self.lg.info("simulator: Monitors are TPs in CIS")
                 peer = Monitor_STRPEDS(id)
             elif self.set_of_rules == "cis-sss":
-                lg.info("simulator: Monitors are TPs in CIS")
+                self.lg.info("simulator: Monitors are TPs in CIS")
                 peer = Monitor_SSS(id)
         elif type == "malicious":
             if self.set_of_rules == "cis":
@@ -97,7 +108,7 @@ class Simulator():
             elif self.set_of_rules == "cis-sss":
                 peer = Peer_Malicious_SSS(id)
             else:
-                lg.info("simulator: Malicious peers are only compatible with CIS")
+                self.lg.info("simulator: Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "dbs":
                 peer = Peer_DBS(id)
@@ -105,7 +116,7 @@ class Simulator():
                 peer = Peer_STRPEDS(id)
             elif self.set_of_rules == "cis-sss":
                 peer = Peer_SSS(id)
-        lg.info("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
+        self.lg.info("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
         peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
@@ -122,11 +133,11 @@ class Simulator():
         '''
         while not peer.ready_to_leave_the_team:
             if type != "malicious" and peer.number_of_chunks_consumed >= chunks_before_leave and peer.player_alive:
-                print("simulator:", id, "reached the number of chunks consumed before leave", peer.number_of_chunks_consumed)
+                self.lg.info("simulator:", id, "reached the number of chunks consumed before leave", peer.number_of_chunks_consumed)
                 peer.player_alive = False
             time.sleep(1)
         '''
-        lg.info("simulator: {}: left the team".format(id))
+        self.lg.info("simulator: {}: left the team".format(id))
 
     def draw_net(self):
         self.G = nx.Graph()
@@ -136,14 +147,14 @@ class Simulator():
 
     def update_net(self, node, edge, direction):
         plt.figure(1)
-        # print("Update net", node, edge, direction)
+        # self.lg.info("Update net", node, edge, direction)
         if node:
             self.net_labels[node] = node
             if node[0] == "M" and node[1] == "P":
                 if direction == "IN":
                     self.G.add_node(node, behaviour='malicious')
                 else:
-                    lg.info("simulator: {} removed from graph (MP)".format(node))
+                    self.lg.info("simulator: {} removed from graph (MP)".format(node))
                     self.G.remove_node(node)
                     del self.net_labels[node]
             elif node[0] == "M":
@@ -291,7 +302,7 @@ class Simulator():
             #    break
 
         drawing_log_file.write("Bye")
-        lg.info("CLOSING STORE")
+        self.lg.info("CLOSING STORE")
         drawing_log_file.close()
 
     def draw(self):
@@ -308,7 +319,7 @@ class Simulator():
                 self.number_of_rounds = int(m[4])
                 self.set_of_rules = m[5]
             else:
-                lg.error("Invalid forma file {}".format(self.drawing_log))
+                self.lg.info("Invalid forma file {}".format(self.drawing_log))
                 exit()
 
         plt.ion()
@@ -338,7 +349,7 @@ class Simulator():
                 self.update_team(m[1], m[2], m[3])
                 #except:
                     # For visualization in real time (line is not fully written)
-                #    print("simulator: ", "IndexError:", m, line)
+                #    self.lg.info("simulator: ", "IndexError:", m, line)
                 #    pass
 
             if m[0] == "B":
@@ -347,8 +358,8 @@ class Simulator():
                 buffer_shot = None
                 # except Exception as inst:
                 #    # For visualization in real time (line is not fully written)
-                #    print("simulator: ", "IndexError:", m, line)
-                #    print("simulator: ", inst.args)
+                #    self.lg.info("simulator: ", "IndexError:", m, line)
+                #    self.lg.info("simulator: ", inst.args)
                 #    pass
 
             if m[0] == "CLR":
@@ -364,7 +375,7 @@ class Simulator():
         #plt.show()
 
     def run(self):
-        lg.info("simulator: platform.system() = {}".format(platform.system()))
+        self.lg.info("simulator: platform.system() = {}".format(platform.system()))
         if __debug__:
             if platform.system() == 'Linux':
                 plt.switch_backend("TkAgg")
@@ -425,17 +436,17 @@ class Simulator():
         sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
         sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
         for name, pid in self.processes.items():
-            lg.info("Killing {}, ...".format(name))
+            self.lg.info("Killing {}, ...".format(name))
             os.system("kill -9 "+str(pid))
-            lg.info("{} killed".format(name))
+            self.lg.info("{} killed".format(name))
             
         if self.set_of_rules == "cis" or self.set_of_rules == "cis-sss":
-            lg.info("List of Malicious")
-            lg.info(sim.SHARED_LIST["malicious"])
-            lg.info("List of Regular detected")
-            lg.info(sim.SHARED_LIST["regular"])
-            lg.info("List of peer Attacked")
-            lg.info(sim.SHARED_LIST["attacked"])
+            self.lg.info("List of Malicious")
+            self.lg.info(sim.SHARED_LIST["malicious"])
+            self.lg.info("List of Regular detected")
+            self.lg.info(sim.SHARED_LIST["regular"])
+            self.lg.info("List of peer Attacked")
+            self.lg.info(sim.SHARED_LIST["attacked"])
             
     def addPeer(self):
         probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]
@@ -460,4 +471,14 @@ class Simulator():
                 self.attended_mps += 1
 
 if __name__ == "__main__":
+    
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    #lg.critical('Critical messages enabled.')
+    #lg.error('Error messages enabled.')
+    #lg.warning('Warning message enabled.')
+    #lg.info('Informative message enabled.')
+    #lg.debug('Low-level debug message enabled.')
+
     fire.Fire(Simulator)
+
+    logging.shutdown()

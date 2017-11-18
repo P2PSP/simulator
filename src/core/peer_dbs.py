@@ -14,9 +14,10 @@ from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Simulator_socket as socket
-from .simulator_stuff import lg
+#from .simulator_stuff import lg
 import sys
 import struct
+import logging
 
 class Peer_DBS(sim):
 
@@ -35,6 +36,20 @@ class Peer_DBS(sim):
     ORIGIN       = 2
     
     def __init__(self, id):
+
+        #lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+        self.lg = logging.getLogger(__name__)
+        #handler = logging.StreamHandler()
+        #formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
+        #formatter = logging.Formatter(fmt='peer_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
+        #handler.setFormatter(formatter)
+        #self.lg.addHandler(handler)
+        self.lg.setLevel(logging.DEBUG)
+        self.lg.critical('Critical messages enabled.')
+        self.lg.error('Error messages enabled.')
+        self.lg.warning('Warning message enabled.')
+        self.lg.info('Informative message enabled.')
+        self.lg.debug('Low-level debug message enabled.')
 
         # Peer identification. Depending on the simulation degree, it
         # can be a simple string or an endpoint.
@@ -97,7 +112,7 @@ class Peer_DBS(sim):
         
         self.number_of_chunks_consumed = 0
 
-        lg.info("{}: DBS initialized".format(self.id))
+        self.lg.info("{}: DBS initialized".format(self.id))
 
         self.losses = 0
         self.played = 0
@@ -126,7 +141,7 @@ class Peer_DBS(sim):
         msg_length = struct.calcsize("H")
         msg = self.splitter_socket.recv(msg_length)
         self.buffer_size = struct.unpack("H", msg)[0]
-        lg.info("{}: buffer size = {}".format(self.id, self.buffer_size))
+        self.lg.info("{}: buffer size = {}".format(self.id, self.buffer_size))
         # S I M U L A T I O N
         self.sender_of_chunks = [""]*self.buffer_size
 
@@ -134,24 +149,24 @@ class Peer_DBS(sim):
         msg_length = struct.calcsize("H")
         msg = self.splitter_socket.recv(msg_length)
         self.number_of_monitors = struct.unpack("H", msg)[0]
-        lg.info("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
+        self.lg.info("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
         
         msg_length = struct.calcsize("H")
         msg = self.splitter_socket.recv(msg_length)
         self.number_of_peers = struct.unpack("H", msg)[0]
-        lg.info("{}: number of peers = {}".format(self.id, self.number_of_peers))
+        self.lg.info("{}: number of peers = {}".format(self.id, self.number_of_peers))
         
     def say_hello(self, peer):
         #self.team_socket.sendto(Common.HELLO, "i", peer)
         msg = struct.pack("i", Common.HELLO)
         self.team_socket.sendto(msg, peer)
-        lg.info("{}: [hello] sent to {}".format(self.id, peer))
+        self.lg.info("{}: [hello] sent to {}".format(self.id, peer))
 
     def say_goodbye(self, index):
         #self.team_socket.sendto(Common.GOODBYE, "i", peer)
         msg = struct.pack("i", Common.GOODBYE)
         self.team_socket.sendto(msg, peer)
-        lg.info("{}: [goodbye] sent to {}".format(self.id, peer))
+        self.lg.info("{}: [goodbye] sent to {}".format(self.id, peer))
 
     def receive_the_list_of_peers(self):
         peers_pending_of_reception = self.number_of_peers
@@ -162,7 +177,7 @@ class Peer_DBS(sim):
             self.say_hello(peer)
             peers_pending_of_reception -= 1
 
-        lg.info("{}: sent [hello] to {} peers".format(self.id, self.number_of_peers))
+        self.lg.info("{}: sent [hello] to {} peers".format(self.id, self.number_of_peers))
 
         # Incoming peers populate their forwarding tables when chunks
         # are received from other peers. The rest of peers populate
@@ -177,19 +192,19 @@ class Peer_DBS(sim):
         try:
             self.splitter_socket.connect(self.splitter)
         except ConnectionRefusedError as e:
-            lg.error("{}: {}".format(self.id, e))
+            self.lg.error("{}: {}".format(self.id, e))
             raise
 
-        lg.info("{}: connected to the splitter".format(self.id))
+        self.lg.info("{}: connected to the splitter".format(self.id))
 
     def send_ready_for_receiving_chunks(self):
-        lg.info("{}: sent {} to {}".format(self.id, "[ready]", self.splitter))
+        self.lg.info("{}: sent {} to {}".format(self.id, "[ready]", self.splitter))
         #self.splitter_socket.send(b"R", "s") # R = Ready
         msg = struct.pack("s", b"R")
         self.splitter_socket.send(msg)
 
     def send_chunk(self, chunk_number, peer):
-        lg.info("{}: sent chunk {} to {}".format(self.id, chunk_number, peer))
+        self.lg.info("{}: sent chunk {} to {}".format(self.id, chunk_number, peer))
         #self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
         #print("/////////////////// {}".format(self.chunks))
         chunk_number = chunk_number % self.buffer_size
@@ -209,15 +224,13 @@ class Peer_DBS(sim):
             return False
 
     def prune_origin(self, chunk_number, peer):
-        lg.info("{}: peer_dbs.prune_origin({}, {})".format(self.id, chunk_number, peer))
+        self.lg.info("{}: peer_dbs.prune_origin({}, {})".format(self.id, chunk_number, peer))
         #self.team_socket.sendto((Common.PRUNE, chunk_number), "ii", peer)
         msg = struct.pack("ii", Common.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
 
     def process_message(self, message, sender):
         
-        lg.info("{}: received message {} from {}".format(self.id, message, sender))
-
         chunk_number = message[self.CHUNK_NUMBER]
 
         if chunk_number >= 0:
@@ -237,7 +250,7 @@ class Peer_DBS(sim):
                 # Duplicate chunk. Ignore it and warn the sender to
                 # stop sending chunks of the origin of the received
                 # chunk "chunk_number".
-                lg.info("Peer_DBS.process_message: duplicate chunk {} from {}".format(chunk_number, sender))
+                self.lg.info("Peer_DBS.process_message: duplicate chunk {} from {}".format(chunk_number, sender))
                 self.prune_origin(chunk_number, sender)
                 
             else:
@@ -245,7 +258,7 @@ class Peer_DBS(sim):
                 # New chunk. (chunk_number, chunk, origin) -> buffer[chunk_number]
                 chunk = message[self.CHUNK]
                 origin = message[self.ORIGIN]
-                lg.info("{}: received chunk {} from {}".format(self.id, (chunk_number, chunk, origin), sender))
+                self.lg.info("{}: received chunk {} from {}".format(self.id, (chunk_number, chunk, origin), sender))
                 self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk, origin)
 
                 # Showing buffer
@@ -255,7 +268,7 @@ class Peer_DBS(sim):
                         buf += "O"
                     else:
                         buf += "."
-                lg.info("{}: buffer={}".format(self.id, buf))
+                self.lg.info("{}: buffer={}".format(self.id, buf))
 
                 self.received_chunks += 1
 
@@ -274,7 +287,7 @@ class Peer_DBS(sim):
                         self.neighbor = sender
                     if sender not in self.forward[self.id]:
                         self.forward[self.id].append(sender)
-                        lg.info("{}: inserted {} in {} by chunk {} (forward={})".format(self.id, sender, self.forward[self.id], (chunk_number, chunk, origin), self.forward))
+                        self.lg.info("{}: inserted {} in {} by chunk {} (forward={})".format(self.id, sender, self.forward[self.id], (chunk_number, chunk, origin), self.forward))
                         
                 # When a peer X receives a chunk (number) C with origin O,
                 # for each peer P in forward[O], X performs
@@ -286,16 +299,16 @@ class Peer_DBS(sim):
                         else:
                             self.pending[P] = []
                             self.pending[P].append(chunk_number)
-                        lg.info("{}: appended {} to pending[{}] (pending={})".format(self.id, chunk_number, P, self.pending))
+                        self.lg.info("{}: appended {} to pending[{}] (pending={})".format(self.id, chunk_number, P, self.pending))
                         
 #                        if P in self.pending:
-#                            lg.info("{}: oooooooo {}".format(self.id, P))
+#                            self.lg.info("{}: oooooooo {}".format(self.id, P))
 #                            self.pending[P].append(chunk_number)
 #                        elif len(self.pending) == 0:
 #                            self.pending[P] = []
 #                            self.pending[P].append(chunk_number)
 
-                lg.info("{}: origin={} forward={} pending={}".format(self.id, origin, self.forward, self.pending))
+                self.lg.info("{}: origin={} forward={} pending={}".format(self.id, origin, self.forward, self.pending))
                             
                 # When peer X receives a chunk, X selects the next
                 # entry pending[E] (one or more chunk numbers),
@@ -322,7 +335,7 @@ class Peer_DBS(sim):
 
                                 # Selfish neighbor detected: stop
                                 # communicating with it.
-                                lg.info("{}: removing {} by unsupportive ({} debts)".format(self.id, self.neighbor, self.debt[self.neighbor]))
+                                self.lg.info("{}: removing {} by unsupportive ({} debts)".format(self.id, self.neighbor, self.debt[self.neighbor]))
                                 del self.debt[self.neighbor]
                                 for peer_list in self.forward:
                                     if self.neighbor in peer_list:
@@ -347,7 +360,7 @@ class Peer_DBS(sim):
             if chunk_number == Common.REQUEST:
 
                 requested_chunk = message[self.CHUNK]
-                lg.info("{}: received [request {}] from {}".format(self.id, requested_chunk, sender))
+                self.lg.info("{}: received [request {}] from {}".format(self.id, requested_chunk, sender))
 
                 # If a peer X receives [request Y] from peer Z, X will
                 # append Z to forward[Y.origin].
@@ -359,7 +372,7 @@ class Peer_DBS(sim):
 
                         # Insert sender in the forwarding table.
                         self.forward[origin].append(sender)
-                        lg.info("{}: chunks from {} will be sent to {}".format(self.id, origin, sender))
+                        self.lg.info("{}: chunks from {} will be sent to {}".format(self.id, origin, sender))
 
                         # Debt counter of sender.
                         self.debt[sender] = 0
@@ -371,7 +384,7 @@ class Peer_DBS(sim):
             elif chunk_number == Common.PRUNE:
                 
                 chunk_number = message[self.CHUNK]
-                lg.info("{}: received [prune {}] from {}".format(self.id, chunk_number, sender))
+                self.lg.info("{}: received [prune {}] from {}".format(self.id, chunk_number, sender))
 
                 origin = self.chunks[chunk_number % self.BUFFER_SIZE][self.ORIGIN]
 
@@ -380,7 +393,7 @@ class Peer_DBS(sim):
                         try:
                             self.forward[origin].remove(sender)
                         except ValueError:
-                            lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
+                            self.lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
                     
             elif chunk_number == Common.HELLO:
 
@@ -395,7 +408,7 @@ class Peer_DBS(sim):
                 # peers that request the explicit forwarding of other
                 # chunks.
 
-                lg.info("{}: received [hello] from {}".format(self.id, sender))
+                self.lg.info("{}: received [hello] from {}".format(self.id, sender))
 
                 # If a peer X receives [hello] from peer Z, X will
                 # append Z to forward[X].
@@ -404,7 +417,7 @@ class Peer_DBS(sim):
 
                     # Insert sender in the forward table.
                     self.forward[self.id].append(sender)
-                    lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.id, sender, self.id, sender, self.forward))
+                    self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.id, sender, self.id, sender, self.forward))
 
                     # Debt counter of sender.
                     self.debt[sender] = 0
@@ -417,11 +430,11 @@ class Peer_DBS(sim):
 
             elif chunk_number == self.GOODBYE:
 
-                lg.info("{}: received [goodbye] from {}".format(self.id, sender))
+                self.lg.info("{}: received [goodbye] from {}".format(self.id, sender))
 
                 if sender == self.splitter:
                     
-                    lg.info("{}: received [goodbye] from splitter".format(self.id))
+                    self.lg.info("{}: received [goodbye] from splitter".format(self.id))
                     self.waiting_for_goodbye = False
 
                 else:
@@ -430,19 +443,18 @@ class Peer_DBS(sim):
 
                         if sender in peers_list:
 
-                            lg.info("{}: {} removing from {}".format(self.id, sender, peers_list))
+                            self.lg.info("{}: {} removing from {}".format(self.id, sender, peers_list))
                             try:
                                 peers_list.remove(sender)
                             except ValueError:
-                                lg.error("{}: : failed to remove peer {} from {}".format(sef.id, sender, peers_list))
+                                self.lg.error("{}: : failed to remove peer {} from {}".format(sef.id, sender, peers_list))
                                 del self.debt[sender]
 
         return (chunk_number, sender)
         
     def process_next_message(self):
         msg, sender = self.team_socket.recvfrom(self.max_msg_length)
-        lg.info("{}: received {} from {} with length {}"\
-                .format(self,id, msg, sender, len(msg)))
+        #self.lg.info("{}: received {} from {} with length {}".format(self,id, msg, sender, len(msg)))
         if len(msg) == self.max_msg_length:
             message = struct.unpack("is6s", msg) # Chunk [number, data, origin]
             message = message[self.CHUNK_NUMBER], \
@@ -465,7 +477,7 @@ class Peer_DBS(sim):
         print("{}: ggggggggggggggg {}".format(self.id, len(self.forward[self.id])))
         while len(self.forward[self.id]) == 0:
             print("{}: ggggggggggggggg {}".format(self.id, len(self.forward[self.id])))
-            lg.info("{}: forward={}".format(self.id, self.forward))
+            self.lg.info("{}: forward={}".format(self.id, self.forward))
             msg, sender = self.team_socket.recvfrom(self.max_msg_length)
             if len(msg) == self.max_msg_length:
                 message = struct.unpack("is6s", msg) # Chunk [number, data, origin]
@@ -488,9 +500,9 @@ class Peer_DBS(sim):
                 self.forward[self.id].append(sender)
         self.neighbor = sender
         print("{}: ggggggggggggggg {}".format(self.id, len(self.forward[self.id])))
-        lg.info("{}: forward={}".format(self.id, self.forward))
+        self.lg.info("{}: forward={}".format(self.id, self.forward))
             
-        lg.info("{}: neighbor={}".format(self.id, self.neighbor))
+        self.lg.info("{}: neighbor={}".format(self.id, self.neighbor))
         '''
         
         # Receive a chunk.
@@ -502,7 +514,7 @@ class Peer_DBS(sim):
         # The first chunk to play is the firstly received chunk.
         self.played_chunk = chunk_number
 
-        lg.info("{}: position in the buffer of the first chunk to play = {}".format(self.id, self.played_chunk))
+        self.lg.info("{}: position in the buffer of the first chunk to play = {}".format(self.id, self.played_chunk))
         
         while (chunk_number < self.played_chunk) or (((chunk_number - self.played_chunk) % self.buffer_size) < (self.buffer_size // 2)):
             (chunk_number, _) = self.process_next_message()
@@ -513,14 +525,14 @@ class Peer_DBS(sim):
     def request_chunk(self, chunk_number, peer):
         msg = struct.pack("ii", Common.REQUEST, chunk_number)
         self.team_socket.sendto(msg, peer)
-        lg.info("{}: [request {}] sent to {}".format(self.id, chunk_number, peer))
+        self.lg.info("{}: [request {}] sent to {}".format(self.id, chunk_number, peer))
 
     def play_chunk(self, chunk_number):
         if self.chunks[chunk_number % self.buffer_size][self.CHUNK] == b"C":
             self.played += 1
         else:
             self.losses += 1
-            lg.info("{}: lost chunk! {}".format(self.id, chunk_number))
+            self.lg.info("{}: lost chunk! {}".format(self.id, chunk_number))
 
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change in
@@ -565,7 +577,7 @@ class Peer_DBS(sim):
             self.process_next_message()
 
         self.ready_to_leave_the_team = True
-        lg.info("{}: see you later!".format(self.id))
+        self.lg.info("{}: see you later!".format(self.id))
 
     def run(self):
         self.buffer_data()
