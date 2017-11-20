@@ -159,7 +159,7 @@ class Peer_DBS(sim):
         
     def say_hello(self, peer):
         r = random.random()
-        if r < 0.5:
+        if True:
             #self.team_socket.sendto(Common.HELLO, "i", peer)
             msg = struct.pack("i", Common.HELLO)
             self.team_socket.sendto(msg, peer)
@@ -341,11 +341,16 @@ class Peer_DBS(sim):
                                 self.lg.info("{}: removing {} by unsupportive ({} debts)".format(self.id, self.neighbor, self.debt[self.neighbor]))
                                 del self.debt[self.neighbor]
                                 self.lg.info("{}: removeeing (forward={})".format(self.id, self.forward))
-                                for p, l in self.forward:
-                                    if self.neighbor in l:
-                                        l.remove(self.neighbor)
-                                    if len(l) == 0:
-                                        del self.forward[self.neighbor]
+                                try:
+                                    for p, l in self.forward.items():
+                                        if self.neighbor in l:
+                                            l.remove(self.neighbor)
+                                        #if len(l) == 0:
+                                        #    del self.forward[p]
+                                except:
+                                    self.lg.debug("len(self.forward)={}".format(len(self.forward)))
+                                    self.lg.critical("{}: forward={}".format(self.id, self.forward))
+                                    raise
                         else:
                             
                             self.debt[self.neighbor] = 1
