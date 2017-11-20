@@ -286,6 +286,10 @@ class Peer_DBS(sim):
 
                 # ./test.me 2>&1 | grep inserted | grep chunk
                 if sender != self.splitter:
+                    if sender in self.debt:
+                        self.debt[sender] -= 1
+                    else:
+                        self.debt[sender] = -1
                     if self.neighbor == None: # Quizás se pueda quitar!!!!
                         self.neighbor = sender
                     if sender not in self.forward[self.id]:
