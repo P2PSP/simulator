@@ -159,7 +159,7 @@ class Peer_DBS(sim):
         
     def say_hello(self, peer):
         r = random.random()
-        if True:
+        if r < 0.9:
             #self.team_socket.sendto(Common.HELLO, "i", peer)
             msg = struct.pack("i", Common.HELLO)
             self.team_socket.sendto(msg, peer)
