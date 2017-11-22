@@ -463,7 +463,7 @@ class Peer_DBS(sim):
 
                 else:
 
-                    for peers_list in self.forward:
+                    for peers_list in self.forward.values():
 
                         if sender in peers_list:
 
@@ -472,7 +472,7 @@ class Peer_DBS(sim):
                                 peers_list.remove(sender)
                             except ValueError:
                                 self.lg.error("{}: : failed to remove peer {} from {}".format(sef.id, sender, peers_list))
-                                del self.debt[sender]
+                            del self.debt[sender]
 
         return (chunk_number, sender)
         
@@ -493,41 +493,6 @@ class Peer_DBS(sim):
     def buffer_data(self):
         for i in range(self.buffer_size):
             self.chunks.append((-1, b"L", None)) # L == Lost ??
-
-        # Receive the first message, which can come from any node of
-        # the team (splitter or peer). Let's suppose for now that this
-        # message contains a chunk.
-        '''
-        print("{}: ggggggggggggggg {}".format(self.id, len(self.forward[self.id])))
-        while len(self.forward[self.id]) == 0:
-            print("{}: ggggggggggggggg {}".format(self.id, len(self.forward[self.id])))
-            self.lg.info("{}: forward={}".format(self.id, self.forward))
-            msg, sender = self.team_socket.recvfrom(self.max_msg_length)
-            if len(msg) == self.max_msg_length:
-                message = struct.unpack("is6s", msg) # Chunk [number, data, origin]
-                message = message[self.CHUNK_NUMBER], \
-                          message[self.CHUNK], \
-                          str(message[self.ORIGIN].decode("utf-8").replace("\x00", ""))
-            elif len(msg) == struct.calcsize("ii"):
-                message  = struct.unpack("ii", msg) # Control message [control, parameter]
-            else:
-                message = struct.unpack("i", msg) # Control message [control]
-            chunk_number = message[self.CHUNK_NUMBER]
-            chunk = message[self.CHUNK]
-            origin = str(message[self.ORIGIN].decode("utf-8").replace("\x00", ""))
-            #message = message[self.CHUNK_NUMBER], \
-            #          message[self.CHUNK], \
-            #          str(message[self.ORIGIN].decode("utf-8").replace("\x00", ""))
-            self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk, origin)
-            self.received_chunks += 1
-            if sender != self.splitter:
-                self.forward[self.id].append(sender)
-        self.neighbor = sender
-        print("{}: ggggggggggggggg {}".format(self.id, len(self.forward[self.id])))
-        self.lg.info("{}: forward={}".format(self.id, self.forward))
-            
-        self.lg.info("{}: neighbor={}".format(self.id, self.neighbor))
-        '''
         
         # Receive a chunk.
         (chunk_number, sender) = self.process_next_message()
