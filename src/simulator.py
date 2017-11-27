@@ -384,7 +384,7 @@ class Simulator():
                 plt.style.use("seaborn-white")
 
         # Removing temporal socket files
-        for pattern in ['/tmp/*_udp', '/tmp/*_tcp']:
+        for pattern in ['*_udp', '*_tcp']:
             for tmp_file in glob(pattern):
                 os.remove(tmp_file)
         
