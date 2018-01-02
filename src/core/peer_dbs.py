@@ -244,7 +244,7 @@ class Peer_DBS(sim):
             # S I M U L A T I O N
             if sender == self.splitter:
                 if self.played > 0 and self.played >= self.number_of_peers:
-                    clr = self.losses/self.played
+                    clr = self.losses/(self.played + self.losses)
                     sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))
                     self.losses = 0
                     self.played = 0
@@ -283,7 +283,7 @@ class Peer_DBS(sim):
                     chunks += c.decode("utf-8")
                     if c == "L":
                         self.sender_of_chunks[n % self.buffer_size] = ""
-                        sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))
+                sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))
 
                 # ./test.me 2>&1 | grep inserted | grep chunk
                 if sender != self.splitter:
@@ -371,7 +371,7 @@ class Peer_DBS(sim):
                     self.neighbor = list(self.pending.keys())[(neighbor_index + 1) % len(self.pending)]
 
                 # S I M U L A T I O N
-                sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, self.neighbor))
+                #sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, self.neighbor))
 
         else: # message[CHUNK_NUMBER] < 0
 
