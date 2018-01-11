@@ -9,3 +9,5 @@ then
 else
     $exe
 fi
+
+rm -f *udp *tcp #removal trash files
