@@ -1,1 +1,3 @@
 src/core/__pycache__
+*udp
+*tcp
