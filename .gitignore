@@ -1,2 +1,4 @@
 src/core/__pycache__
 .vscode
+*udp
+*tcp
