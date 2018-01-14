@@ -5,4 +5,4 @@ install:
   - pip3 install -r requirements.txt
 script: pytest travis/test.py
 notifications:
-  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+  slack: tec-multimedia-ual:9uZ1q9XibQ3HZlXtad3Q7VGE
