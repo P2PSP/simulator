@@ -1,1 +1,1 @@
-print("It's OK")
+assert True
