@@ -2,5 +2,7 @@ language: Python
 python:
   - "3.6"
 install:
-  - pip3 install -r requeriments.txt
-script: pytest src/simulator.py run --set_of_rules dbs --number-of-monitors 2 --number-of-peers 2 --number-of-rounds 2 --drawing-log $HOME/log.txt
+  - pip3 install -r requirements.txt
+script: pytest travis/test.py
+notifications:
+  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
