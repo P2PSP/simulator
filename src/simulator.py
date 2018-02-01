@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-
+from core.encoder import encoder
 from core.splitter_dbs import Splitter_DBS
 from core.splitter_strpeds import Splitter_STRPEDS
 from core.splitter_sss import Splitter_SSS
@@ -150,11 +149,13 @@ class Simulator():
         m = queue.get()
 
         while m[0] != "Bye":
-            drawing_log_file.write(";".join(map(str, m))+'\n')
-
+            #drawing_log_file.write(";".join(map(str, m))+'\n')
             # Sometimes the queue doesn't receive Bye message.
             #try:
             m = queue.get()
+            if len(m)==4:
+                aux = str(m[0])+";"+str(m[1])+";"+encoder(str(m[2]))+";"+str(m[3])
+                drawing_log_file.write(aux+"\n")
             #except:
             #    break
 
