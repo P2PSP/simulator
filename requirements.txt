@@ -1,0 +1,10 @@
+cycler==0.10.0
+decorator==4.2.1
+fire==0.1.2
+matplotlib==2.0.0
+networkx==2.0
+numpy==1.14.0
+pyparsing==2.2.0
+python-dateutil==2.6.1
+pytz==2017.3
+six==1.11.0
