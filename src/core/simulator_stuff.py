@@ -3,20 +3,21 @@
 simulator module
 """
 
-#import time
+# import time
 import socket
 import struct
 import sys
 from datetime import datetime
 import os
 
-#import logging as lg
+# import logging as lg
 import logging
-#import coloredlogs
-#coloredlogs.install()
+
+
+# import coloredlogs
+# coloredlogs.install()
 
 class Simulator_stuff:
-
     # Shared lists between malicious peers.
     SHARED_LIST = {}
 
@@ -24,23 +25,23 @@ class Simulator_stuff:
     FEEDBACK = {}
 
     RECV_LIST = None
-    #LOCK = ""
+    # LOCK = ""
+
 
 class Simulator_socket:
-
     AF_UNIX = socket.AF_UNIX
     SOCK_DGRAM = socket.SOCK_DGRAM
     SOCK_STREAM = socket.SOCK_STREAM
 
     def __init__(self, family=None, typ=None, sock=None):
-        
-        #lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+        # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
         self.lg = logging.getLogger(__name__)
-        #handler = logging.StreamHandler()
-        #formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
-        #formatter = logging.Formatter(fmt='simulator_stuff.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
-        #handler.setFormatter(formatter)
-        #self.lg.addHandler(handler)
+        # handler = logging.StreamHandler()
+        # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
+        # formatter = logging.Formatter(fmt='simulator_stuff.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
+        # handler.setFormatter(formatter)
+        # self.lg.addHandler(handler)
         self.lg.setLevel(logging.ERROR)
         self.lg.critical('Critical messages enabled.')
         self.lg.error('Error messages enabled.')
@@ -54,19 +55,19 @@ class Simulator_socket:
         else:
             self.sock = sock
             self.type = typ
-        #self.now = str(datetime.now()) + "/"
-        #os.mkdir(self.now)
-    
-    #def set_id(self, id):
+            # self.now = str(datetime.now()) + "/"
+            # os.mkdir(self.now)
+
+    # def set_id(self, id):
     #    self.id = id
 
-    #def set_max_packet_size(self, size):
+    # def set_max_packet_size(self, size):
     #    self.max_packet_size = size
 
     def send(self, msg):
         self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), \
-                                          msg, \
-                                          self.sock.getpeername()))
+                                              msg, \
+                                              self.sock.getpeername()))
         return self.sock.send(msg)
 
     def recv(self, msg_length):
@@ -83,7 +84,7 @@ class Simulator_socket:
                                               msg, \
                                               self.sock.getpeername()))
         return self.sock.sendall(msg)
-        
+
     def sendto(self, msg, address):
         self.lg.info("{} - [{}] -> {}".format(self.sock.getsockname(), \
                                               msg, \
@@ -91,7 +92,9 @@ class Simulator_socket:
         try:
             return self.sock.sendto(msg, socket.MSG_DONTWAIT, address + "_udp")
         except ConnectionRefusedError:
-            self.lg.error("simulator_stuff.sendto: the message {} has not been delivered because the destination {} left the team".format(msg, address))
+            self.lg.error(
+                "simulator_stuff.sendto: the message {} has not been delivered because the destination {} left the team".format(
+                    msg, address))
             raise
         except KeyboardInterrupt:
             self.lg.warning("simulator_stuff.sendto: send_packet {} to {}".format(msg, address))
@@ -133,14 +136,14 @@ class Simulator_socket:
             except:
                 self.lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address + "_udp"))
                 raise
-       
+
     def listen(self, n):
         self.lg.info("simulator_stuff.listen({}): {}".format(n, self.sock))
         return self.sock.listen(n)
 
     def close(self):
         self.lg.info("simulator_stuff.close(): {}".format(self.sock))
-        return self.sock.close() # Should delete files
+        return self.sock.close()  # Should delete files
 
     def settimeout(self, value):
         self.lg.info("simulator_stuff.settimeout({}): {}".format(value, self.sock))

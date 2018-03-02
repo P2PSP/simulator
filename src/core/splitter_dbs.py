@@ -19,24 +19,24 @@ from threading import Lock
 import time
 from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Simulator_socket as socket
-#from .simulator_stuff import lg
+# from .simulator_stuff import lg
 import sys
 import struct
 import logging
 
-class Splitter_DBS(Simulator_stuff):
 
+class Splitter_DBS(Simulator_stuff):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
 
     def __init__(self):
 
-        #lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+        # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
         self.lg = logging.getLogger(__name__)
-        #handler = logging.StreamHandler()
-        #formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
-        #formatter = logging.Formatter(fmt='splitter_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
-        #handler.setFormatter(formatter)
-        #self.lg.addHandler(handler)
+        # handler = logging.StreamHandler()
+        # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
+        # formatter = logging.Formatter(fmt='splitter_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
+        # handler.setFormatter(formatter)
+        # self.lg.addHandler(handler)
         self.lg.setLevel(logging.ERROR)
         self.lg.critical('Critical messages enabled.')
         self.lg.error('Error messages enabled.')
@@ -45,39 +45,38 @@ class Splitter_DBS(Simulator_stuff):
         self.lg.debug('Low-level debug message enabled.')
 
         self.id = "S"
-        self.alive = True                                              # While True, keeps the splitter alive
-        self.chunk_number = 0                                          # First chunk (number) to send
-        self.peer_list = []                                            # Current peers in the team
-        self.losses = {}                                               # (Detected) lost chunks per peer
-        self.destination_of_chunk = []                                 # Destination peer of the buffered chunks
-        self.buffer_size = Common.BUFFER_SIZE                          # Buffer (of chunks) size
-        self.peer_number = 0                                           # First peer to serve in the list of peers
-        self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_LOST_CHUNKS # More lost, team removing
-        self.number_of_monitors = 0                                    # Monitors report lost chunks
-        self.outgoing_peer_list = []                                   # Peers which requested to leave the team
+        self.alive = True  # While True, keeps the splitter alive
+        self.chunk_number = 0  # First chunk (number) to send
+        self.peer_list = []  # Current peers in the team
+        self.losses = {}  # (Detected) lost chunks per peer
+        self.destination_of_chunk = []  # Destination peer of the buffered chunks
+        self.buffer_size = Common.BUFFER_SIZE  # Buffer (of chunks) size
+        self.peer_number = 0  # First peer to serve in the list of peers
+        self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_LOST_CHUNKS  # More lost, team removing
+        self.number_of_monitors = 0  # Monitors report lost chunks
+        self.outgoing_peer_list = []  # Peers which requested to leave the team
 
         # S I M U L A T I O N 
-        self.current_round = 0                                         # Number of round (maybe not here).
+        self.current_round = 0  # Number of round (maybe not here).
 
-        
         self.lg.info("{}: initialized".format(self.id))
 
     def setup_peer_connection_socket(self):
         self.peer_connection_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        #self.peer_connection_socket.set_id(self.id)
+        # self.peer_connection_socket.set_id(self.id)
         self.peer_connection_socket.bind(self.id)
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
         self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        #self.team_socket.set_id(self.id)
+        # self.team_socket.set_id(self.id)
         self.team_socket.bind(self.id)
-        #self.team_socket.set_max_packet_size(struct.calcsize("is3s")) # Chunck index, chunk, origin 
-        
+        # self.team_socket.set_max_packet_size(struct.calcsize("is3s")) # Chunck index, chunk, origin
+
     def send_chunk(self, chunk_msg, peer):
-        #self.lg.info("splitter_dbs.send_chunk({}, {})".format(chunk_msg, peer))
+        # self.lg.info("splitter_dbs.send_chunk({}, {})".format(chunk_msg, peer))
         msg = struct.pack("is6s", *chunk_msg)
-        #msg = struct.pack("is3s", chunk_msg[0], bytes(chunk_msg[1]), chunk_msg[2])
+        # msg = struct.pack("is3s", chunk_msg[0], bytes(chunk_msg[1]), chunk_msg[2])
         self.team_socket.sendto(msg, peer)
 
     def receive_chunk(self):
@@ -86,12 +85,11 @@ class Splitter_DBS(Simulator_stuff):
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
         return b"C"
 
-
     def handle_arrivals(self):
         while self.alive:
             peer_serve_socket, peer = self.peer_connection_socket.accept()
             peer_serve_socket = socket(sock=peer_serve_socket)
-            #peer_serve_socket.set_id(peer)
+            # peer_serve_socket.set_id(peer)
             self.lg.info("{}: connection from {}".format(self.id, peer))
             Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()
 
@@ -107,7 +105,7 @@ class Splitter_DBS(Simulator_stuff):
         self.send_the_list_of_peers(serve_socket)
 
         self.lg.info("{}: waiting for incoming peer".format(self.id))
-        
+
         msg_length = struct.calcsize("s")
         msg = serve_socket.recv(msg_length)
         message = struct.unpack("s", msg)[0]
@@ -117,7 +115,7 @@ class Splitter_DBS(Simulator_stuff):
 
         # S I M U L A T I O N
         Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
- 
+
         if (incoming_peer[0] == "M"):
             self.number_of_monitors += 1
         self.lg.info("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
@@ -126,24 +124,24 @@ class Splitter_DBS(Simulator_stuff):
 
     def send_buffer_size(self, peer_serve_socket):
         self.lg.info("{}: buffer size = {}".format(self.id, self.buffer_size))
-        #peer_serve_socket.sendall(self.buffer_size, "H")
+        # peer_serve_socket.sendall(self.buffer_size, "H")
         msg = struct.pack("H", self.buffer_size)
         peer_serve_socket.sendall(msg)
 
     def send_the_number_of_peers(self, peer_serve_socket):
         self.lg.info("{}: sending number of monitors = {}".format(self.id, self.number_of_monitors))
-        #peer_serve_socket.sendall(self.number_of_monitors, "H")
+        # peer_serve_socket.sendall(self.number_of_monitors, "H")
         msg = struct.pack("H", self.number_of_monitors)
         peer_serve_socket.sendall(msg)
         self.lg.info("{}: sending list of peers of length = {}".format(self.id, len(self.peer_list)))
-        #peer_serve_socket.sendall(len(self.peer_list), "H")
+        # peer_serve_socket.sendall(len(self.peer_list), "H")
         msg = struct.pack("H", len(self.peer_list))
         peer_serve_socket.sendall(msg)
 
     def send_the_list_of_peers(self, peer_serve_socket):
         self.lg.info("{}: sending peer list = {}".format(self.id, self.peer_list))
         for p in self.peer_list:
-            #peer_serve_socket.sendall(p, "6s")
+            # peer_serve_socket.sendall(p, "6s")
             msg = struct.pack("6s", bytes(p, "utf-8"))
             peer_serve_socket.sendall(msg)
 
@@ -157,21 +155,23 @@ class Splitter_DBS(Simulator_stuff):
         try:
             self.losses[peer] += 1
         except KeyError:
-            self.lg.error("{}: unexpected error, the unsupportive peer {} does not exist!".format(peer)) 
+            self.lg.error("{}: unexpected error, the unsupportive peer {} does not exist!".format(peer))
         else:
             self.lg.info("{}: peer {} has lost {} chunks".format(self.id, peer, self.losses[peer]))
             if self.losses[peer] > Common.MAX_CHUNK_LOSS:
                 self.lg.info("{}: {} removed".format(self.id, peer))
                 self.remove_peer(peer)
         finally:
-           pass     
+            pass
 
     def process_lost_chunk(self, lost_chunk_number, sender):
         destination = self.get_losser(lost_chunk_number)
-        self.lg.info("{}: sender {} complains about lost chunk {} with destination {}".format(self.id, sender, lost_chunk_number, destination))
+        self.lg.info(
+            "{}: sender {} complains about lost chunk {} with destination {}".format(self.id, sender, lost_chunk_number,
+                                                                                     destination))
         self.increment_unsupportivity_of_peer(destination)
 
-    #def get_lost_chunk_number(self, message):
+    # def get_lost_chunk_number(self, message):
     #    return message[1]
 
     def get_losser(self, lost_chunk_number):
@@ -183,7 +183,7 @@ class Splitter_DBS(Simulator_stuff):
         except ValueError:
             self.lg.error("{}: unexpected error, the removed peer {} does not exist!".format(self.id, peer))
         else:
-            #self.peer_number -= 1
+            # self.peer_number -= 1
             # S I M U L A T I O N
             Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", peer))
             if peer[0] == "M" and peer[1] != "P":
@@ -204,7 +204,7 @@ class Splitter_DBS(Simulator_stuff):
                 self.lg.info("{}: marked for deletion".format(self.id, peer))
 
     def say_goodbye(self, peer):
-        #self.team_socket.sendto(Common.GOODBYE, "i" , peer)
+        # self.team_socket.sendto(Common.GOODBYE, "i" , peer)
         msg = struct.pack("i", Common.GOODBYE)
         self.team_socket.sendto(msg, peer)
 
@@ -219,14 +219,14 @@ class Splitter_DBS(Simulator_stuff):
 
     def moderate_the_team(self):
         while self.alive:
-            #message, sender = self.team_socket.recvfrom()
+            # message, sender = self.team_socket.recvfrom()
             msg, sender = self.team_socket.recvfrom(100)
             if len(msg) == 2:
-                #msg = struct.unpack("i", packed_msg)
+                # msg = struct.unpack("i", packed_msg)
                 self.process_goodbye(sender)
             else:
                 lost_chunk_number = struct.unpack("ii", msg)[1]
-                #lost_chunk_number = self.get_lost_chunk_number(message)
+                # lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)
 
     def reset_counters(self):
@@ -255,38 +255,39 @@ class Splitter_DBS(Simulator_stuff):
         while len(self.peer_list) == 0:
             print(".")
             time.sleep(0.1)
-        
+
         while self.alive:
-            
+
             chunk = self.receive_chunk()
 
             # ????
             if self.peer_number == 0:
-                self.on_round_beginning() # Remove outgoing peers
+                self.on_round_beginning()  # Remove outgoing peers
 
                 # S I M U L A T I O N
                 self.lg.info("{}: current round {}".format(self.id, self.current_round))
                 Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
                 Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
                 Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
-                Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors), self.current_round))
+                Simulator_stuff.FEEDBACK["DRAW"].put(
+                    ("T", "P", (len(self.peer_list) - self.number_of_monitors), self.current_round))
 
-            #try:
+            # try:
             peer = self.peer_list[self.peer_number]
-            #except IndexError:
-            #lg.error("peer_list={} peer_number={}".format(self.peer_list, self.peer_number))
-            #raise
+            # except IndexError:
+            # lg.error("peer_list={} peer_number={}".format(self.peer_list, self.peer_number))
+            # raise
             message = (self.chunk_number, chunk, bytes(peer, 'utf-8'))
             self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
             #            try:
             self.send_chunk(message, peer)
             self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
             self.compute_next_peer_number(peer)
-                
-#            except IndexError:
-#                self.lg.error("{}: the monitor peer has died!".format(self.id))
-#                self.lg.error("{}: peer_list = {}".format(self.id, self.peer_list))
-#                self.lg.error("{}: peer_number = {}".format(self.id, self.peer_number))
+
+            #            except IndexError:
+            #                self.lg.error("{}: the monitor peer has died!".format(self.id))
+            #                self.lg.error("{}: peer_list = {}".format(self.id, self.peer_list))
+            #                self.lg.error("{}: peer_number = {}".format(self.id, self.peer_number))
 
             # S I M U L A T I O N
             if self.peer_number == 0:

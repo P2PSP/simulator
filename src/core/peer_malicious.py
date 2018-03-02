@@ -9,7 +9,6 @@ import random
 
 
 class Peer_Malicious(Peer_STRPEDS):
-
     def __init__(self, id):
         super().__init__(id)
         self.MPTR = 5
@@ -30,9 +29,9 @@ class Peer_Malicious(Peer_STRPEDS):
         target = None
         malicious_list = sim.SHARED_LIST["malicious"]
         extra_attacks = len(set(self.peer_list) & set(sim.SHARED_LIST["regular"]))
-        if (self.attacked_count + extra_attacks) < (len(self.peer_list)//2 - len(malicious_list)):
+        if (self.attacked_count + extra_attacks) < (len(self.peer_list) // 2 - len(malicious_list)):
             attacked_list = sim.SHARED_LIST["attacked"]
-            availables = list(set(self.peer_list)-set(attacked_list)-set(malicious_list))
+            availables = list(set(self.peer_list) - set(attacked_list) - set(malicious_list))
 
             if availables:
                 target = random.choice(availables)
@@ -54,7 +53,7 @@ class Peer_Malicious(Peer_STRPEDS):
 
     def send_chunk(self, peer):
         poisoned_chunk = self.get_poisoned_chunk(self.receive_and_feed_previous)
-        
+
         if self.persistent_attack:
             if peer == self.main_target:
                 if self.chunks_sent_to_main_target < self.MPTR:
@@ -62,7 +61,8 @@ class Peer_Malicious(Peer_STRPEDS):
                     self.sendto_counter += 1
                     self.chunks_sent_to_main_target += 1
                     if __debug__:
-                        print(self.id, "Attacking Main target", self.main_target, "attack", self.chunks_sent_to_main_target)
+                        print(self.id, "Attacking Main target", self.main_target, "attack",
+                              self.chunks_sent_to_main_target)
                 else:
                     self.all_attack()
                     self.team_socket.sendto("isi", poisoned_chunk, peer)

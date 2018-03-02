@@ -8,7 +8,6 @@ from .common import Common
 
 
 class Peer_SSS(Peer_STRPEDS):
-
     def __init__(self, id):
         self.first_round = 0
         super().__init__(id)
@@ -28,19 +27,20 @@ class Peer_SSS(Peer_STRPEDS):
     # ----------- simulation purposes ----------
     def polite_farewell(self):
         print(self.id, ": (see you later)")
-      
+
         for peer in self.peer_list:
             self.say_goodbye(peer)
 
         del sim.RECV_LIST[self.id]
         self.ready_to_leave_the_team = True
         print(self.id, ": ready to leave the team")
+
     # -------------------------------------------
 
     def say_hello(self, peer):
         hello = (-1, "H", -1, -1)
         self.team_socket.sendto("isii", hello, peer)
-        
+
     def say_goodbye(self, peer):
         if peer == self.splitter:
             goodbye = (-1, "G", self.id)
@@ -48,11 +48,11 @@ class Peer_SSS(Peer_STRPEDS):
         else:
             goodbye = (-1, "G", -1, -1)
             self.team_socket.sendto("isii", goodbye, peer)
-    
+
     def process_next_message(self):
         message, sender = self.team_socket.recvfrom("isii")
         return self.process_message(message, sender)
-    
+
     def process_message(self, message, sender):
 
         # ----------- simulation purposes ---------
@@ -63,7 +63,7 @@ class Peer_SSS(Peer_STRPEDS):
             else:
                 sim.RECV_LIST[self.id] = message[0]
         # ----------------------------------------
-        
+
         if sender in self.bad_peers:
             if __debug__:
                 print(self.id, "Sender is in the bad peer list", sender)
@@ -86,9 +86,11 @@ class Peer_SSS(Peer_STRPEDS):
 
                     print(self.id, "current_round", current_round)
 
-                    if ((current_round-1) in self.t):
-                        print(self.id, "t", self.t[(current_round-1)], "splitter_t", self.splitter_t[(current_round-1)])
-                        print(self.id, "this.t", self.t[(current_round)], "this.splitter_t", self.splitter_t[(current_round)])
+                    if ((current_round - 1) in self.t):
+                        print(self.id, "t", self.t[(current_round - 1)], "splitter_t",
+                              self.splitter_t[(current_round - 1)])
+                        print(self.id, "this.t", self.t[(current_round)], "this.splitter_t",
+                              self.splitter_t[(current_round)])
 
                     return self.process_message_burst(message, sender)
 
@@ -99,18 +101,20 @@ class Peer_SSS(Peer_STRPEDS):
         return -1
 
     def send_chunk(self, peer):
-        encrypted_chunk = (self.receive_and_feed_previous[0], "B", self.receive_and_feed_previous[2], self.receive_and_feed_previous[3])
+        encrypted_chunk = (
+        self.receive_and_feed_previous[0], "B", self.receive_and_feed_previous[2], self.receive_and_feed_previous[3])
         current_round = self.receive_and_feed_previous[2]
-        if ((current_round-1) in self.t) and (self.first_round != (current_round-1)):
-            if self.t[(current_round-1)] >= self.splitter_t[(current_round-1)]:
+        if ((current_round - 1) in self.t) and (self.first_round != (current_round - 1)):
+            if self.t[(current_round - 1)] >= self.splitter_t[(current_round - 1)]:
                 self.team_socket.sendto("isii", self.receive_and_feed_previous, peer)
                 self.sendto_counter += 1
             else:
-                print("###########=================>>>>", self.id, "Need more shares, I had", self.t[(current_round-1)], "from", self.splitter_t[(current_round-1)], "needed")
+                print("###########=================>>>>", self.id, "Need more shares, I had",
+                      self.t[(current_round - 1)], "from", self.splitter_t[(current_round - 1)], "needed")
                 self.team_socket.sendto("isii", encrypted_chunk, peer)
                 self.sendto_counter += 1
         else:
-            if (current_round-1) == self.first_round:
+            if (current_round - 1) == self.first_round:
                 print(self.id, "I cant get enough shares in my first round")
             else:
                 print(self.id, "is my first round")
@@ -123,7 +127,7 @@ class Peer_SSS(Peer_STRPEDS):
         # ----- Check if new round for peer -------
         if not self.is_a_control_message(message) and sender == self.splitter:
             if self.played > 0 and self.played >= len(self.peer_list):
-                clr = self.losses/self.played
+                clr = self.losses / self.played
                 sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))
                 self.losses = 0
                 self.played = 0
@@ -144,7 +148,7 @@ class Peer_SSS(Peer_STRPEDS):
                 if c == "L":
                     self.sender_of_chunks[n % self.buffer_size] = ""
 
-            sim.FEEDBACK["DRAW"].put(("B", self.id, chunks,":".join(self.sender_of_chunks)))
+            sim.FEEDBACK["DRAW"].put(("B", self.id, chunks, ":".join(self.sender_of_chunks)))
             # --------------------------------------
 
             self.received_chunks += 1
@@ -154,7 +158,7 @@ class Peer_SSS(Peer_STRPEDS):
             ####################################################
 
             if (sender == self.splitter):
-                while(self.peer_index < len(self.peer_list)):
+                while (self.peer_index < len(self.peer_list)):
                     peer = self.peer_list[self.peer_index]
                     self.receive_and_feed_previous = message
 
@@ -194,8 +198,8 @@ class Peer_SSS(Peer_STRPEDS):
                     self.debt[sender] = 0
                     print(self.id, ":", sender, "added by [hello]")
                     # --- simulator ---------------------------------------------- #
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))          #
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender)) #
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))  #
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))  #
                     # ------------------------------------------------------------ #
 
             if message[1] == 'G':
@@ -206,7 +210,7 @@ class Peer_SSS(Peer_STRPEDS):
                         print(self.id, ":", sender, "removed from peer_list")
                     except ValueError:
                         print(self.id, ": failed to remove peer", sender, "from peer_list", self.peer_list)
-                        
+
                     del self.debt[sender]
                 else:
                     if (sender == self.splitter):

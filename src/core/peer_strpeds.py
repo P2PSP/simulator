@@ -7,7 +7,6 @@ from .peer_dbs import Peer_DBS
 
 
 class Peer_STRPEDS(Peer_DBS):
-
     def __init__(self, id):
         super().__init__(id)
         self.bad_peers = []
@@ -28,7 +27,7 @@ class Peer_STRPEDS(Peer_DBS):
         else:
             goodbye = (-1, "G", -1)
             self.team_socket.sendto("isi", goodbye, peer)
-    
+
     def process_bad_message(self, message, sender):
         print(self.id, "adding", sender, "to bad list", message)
         self.bad_peers.append(sender)
