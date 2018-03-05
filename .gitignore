@@ -1,4 +1,6 @@
-src/core/__pycache__
+.idea
 .vscode
+venv
+*.pyc
 *udp
 *tcp
