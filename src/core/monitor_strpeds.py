@@ -7,7 +7,6 @@ from .peer_strpeds import Peer_STRPEDS
 
 
 class Monitor_STRPEDS(Peer_STRPEDS):
-
     def __init__(self, id):
         super().__init__(id)
         print("STRPEDS initialized by monitor")
@@ -18,7 +17,7 @@ class Monitor_STRPEDS(Peer_STRPEDS):
         self.buffer_size //= 2
 
         # --- Only for simulation purposes ----
-        self.sender_of_chunks = [""]*self.buffer_size
+        self.sender_of_chunks = [""] * self.buffer_size
         # -------------------------------------
 
     def complain(self, chunk_position):

@@ -11,15 +11,15 @@ max_number_of_nodes = 3
 buffer_size = max_number_of_nodes
 queues = [None] * max_number_of_nodes
 
-class Node():
 
+class Node:
     def __init__(self, node_number):
-        super(Node,self).__init__()
+        super(Node, self).__init__()
         self.node = node_number
         self.neighbors = []
         self.distances = [1000] * number_of_nodes
-        self.gw = [None] * number_of_nodes # GW of each peer
-        self.chunks_to_send = {} # To each neighbor
+        self.gw = [None] * number_of_nodes  # GW of each peer
+        self.chunks_to_send = {}  # To each neighbor
         self.buffer = [None] * buffer_size
         queues[self.node] = queue.Queue(10)
         self.distances[self.node] = 0
@@ -28,13 +28,13 @@ class Node():
         self.neighbors.append(node)
         self.distances[node] = 1
         self.gw[node] = -1
-        
+
     def get_neighbors(self):
         return self.neighbors
 
     def get_distances(self):
         return self.distances
-    
+
     # Run forwarding algorithm
     def run(self):
 
@@ -42,7 +42,7 @@ class Node():
 
         neighbors_counter = 0
         found_new_route = False
-        
+
         while True:
             # Receive a chunk
             chunk, received_distances, sender = queues[self.node].get()
@@ -54,7 +54,7 @@ class Node():
                     self.distances[i] = distance + self.distances[sender]
                     self.gw[i] = sender
                     found_new_route = True
-            
+
             # Store the chunk in the buffer
             self.buffer[chunk % buffer_size] = chunk
 
@@ -67,12 +67,12 @@ class Node():
                     self.chunks_to_send[node] = chunk
 
             for node in self.chunks_to_send
-                    
+
             if len(self.neighbors) > 0:
                 # Determine a destination
                 destination_node = self.neighbors[neighbors_counter % len(self.neighbors)]
                 while destination_node == sender:
-                    neighbors_counter = ( neighbors_counter + 1 ) % len(self.neighbors)
+                    neighbors_counter = (neighbors_counter + 1) % len(self.neighbors)
                     destination_node = self.neighbors[neighbors_counter % len(self.neighbors)]
                     if destination_node == sender:
                         break
@@ -82,16 +82,15 @@ class Node():
                     # Send the chunk
                     queues[destination_node].put((chunk, self.node))
                     print('Node', self.node, ': sent chunk', chunk, 'towards', destination_node)
-                
+
             if __debug__:
                 print('Node', self.node, 'neighbors_counter =', neighbors_counter, \
                       'neighbors =', self.neighbors, \
                       'destination =', destination_node, \
                       'chunk =', chunk)
-            
+
             sys.stdout.flush()
             time.sleep(0.1)
 
     def start(self):
         threading.Thread(target=self.run).start()
-        

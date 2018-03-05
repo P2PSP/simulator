@@ -11,7 +11,6 @@ import sys
 
 
 class Splitter_STRPEDS(Splitter_DBS):
-
     def __init__(self):
         super().__init__()
         self.trusted_peers = []
@@ -42,7 +41,7 @@ class Splitter_STRPEDS(Splitter_DBS):
     def handle_a_peer_arrival(self, connection):
         serve_socket = connection[0]
         incoming_peer = connection[1]
-        
+
         print(self.id, "acepted connection from peer", incoming_peer)
 
         self.send_buffer_size(serve_socket)
@@ -64,7 +63,7 @@ class Splitter_STRPEDS(Splitter_DBS):
         elif (incoming_peer[0] == "M"):
             self.number_of_monitors += 1
             self.trusted_peers.append(incoming_peer)
-                    
+
         print("NUMBER OF MONITORS", self.number_of_monitors)
         serve_socket.close()
 
@@ -82,7 +81,7 @@ class Splitter_STRPEDS(Splitter_DBS):
 
     def handle_bad_peer_from_regular(self, bad_peer, sender):
         self.add_complaint(bad_peer, sender)
-        complaint_ratio = len(self.complaints[bad_peer])/len(self.peer_list)
+        complaint_ratio = len(self.complaints[bad_peer]) / len(self.peer_list)
         if complaint_ratio >= self.majority_ratio:
             self.punish_peer(bad_peer, "by majority decision")
 
@@ -98,22 +97,22 @@ class Splitter_STRPEDS(Splitter_DBS):
     def on_round_beginning(self):
         self.remove_outgoing_peers()
         self.punish_peers()
-        #self.punish_TPs()
+        # self.punish_TPs()
 
     def punish_peers(self):
         for b in self.bad_peers:
             r = random.randint(0, 1)
             if r <= self.p_mpl:
-                #--- Only for simulation purposes ---
+                # --- Only for simulation purposes ---
                 if b in self.peer_list:
                     self.number_of_malicious -= 1
-                #------------------------------------
+                # ------------------------------------
                 self.punish_peer(b, "by trusted")
                 self.bad_peers.remove(b)
 
     def punish_TPs(self):
         for tp in self.trusted_peers_discovered:
-            r = random.randint(0,1)
+            r = random.randint(0, 1)
             if r <= self.p_tpl:
                 self.punish_peer(tp, "by splitter")
                 self.trusted_peers_discovered.remove(tp)
@@ -169,7 +168,9 @@ class Splitter_STRPEDS(Splitter_DBS):
                 sim.FEEDBACK["STATUS"].put(("R", self.current_round))
                 sim.FEEDBACK["DRAW"].put(("R", self.current_round))
                 sim.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
-                sim.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list)-self.number_of_monitors - self.number_of_malicious), self.current_round))
+                sim.FEEDBACK["DRAW"].put(("T", "P",
+                                          (len(self.peer_list) - self.number_of_monitors - self.number_of_malicious),
+                                          self.current_round))
                 sim.FEEDBACK["DRAW"].put(("T", "MP", self.number_of_malicious, self.current_round))
 
                 self.current_round += 1
@@ -177,7 +178,7 @@ class Splitter_STRPEDS(Splitter_DBS):
                 for p in self.outgoing_peer_list:
                     self.say_goodbye(p)
                     self.remove_peer(p)
-            
+
             try:
                 peer = self.peer_list[self.peer_number]
                 message = (self.chunk_number, chunk, self.current_round)

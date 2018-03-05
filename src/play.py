@@ -13,12 +13,13 @@ from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
-#from core.simulator_stuff import lg
+# from core.simulator_stuff import lg
 from multiprocessing import Process, Queue, Manager
 from glob import glob
 
 import time
 import fire
+
 if __debug__:
     import networkx as nx
     import matplotlib.pyplot as plt
@@ -28,19 +29,20 @@ import platform
 import os
 import logging
 
-#import logging as lg
+
+# import logging as lg
 
 class Play():
-    
-    def __init__(self, drawing_log, set_of_rules=None, number_of_monitors=0, number_of_peers=0, number_of_rounds=0, number_of_malicious=0, gui=False):
+    def __init__(self, drawing_log, set_of_rules=None, number_of_monitors=0, number_of_peers=0, number_of_rounds=0,
+                 number_of_malicious=0, gui=False):
 
         self.lg = logging.getLogger(__name__)
-        #self.lg = logging.getLogger(__name__)
-        #handler = logging.StreamHandler()
-        #formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
-        #formatter = logging.Formatter(fmt='peer_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
-        #handler.setFormatter(formatter)
-        #self.lg.addHandler(handler)
+        # self.lg = logging.getLogger(__name__)
+        # handler = logging.StreamHandler()
+        # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
+        # formatter = logging.Formatter(fmt='peer_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
+        # handler.setFormatter(formatter)
+        # self.lg.addHandler(handler)
         self.lg.setLevel(logging.ERROR)
         self.lg.critical('Critical messages enabled.')
         self.lg.error('Error messages enabled.')
@@ -48,7 +50,6 @@ class Play():
         self.lg.info('Informative message enabled.')
         self.lg.debug('Low-level debug message enabled.')
 
-        
         self.set_of_rules = set_of_rules
         self.number_of_peers = number_of_peers
         self.number_of_monitors = number_of_monitors
@@ -60,11 +61,11 @@ class Play():
         self.processes = {}
 
     def get_team_size(self, n):
-        return 2**(n-1).bit_length()
+        return 2 ** (n - 1).bit_length()
 
     def get_buffer_size(self):
-        #return self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        team_size = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious)*8)
+        # return self.number_of_monitors + self.number_of_peers + self.number_of_malicious
+        team_size = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious) * 8)
         if (team_size < 32):
             return 32
         else:
@@ -110,16 +111,20 @@ class Play():
         self.net_figure.clf()
         edges = self.G.edges()
         edge_color = [self.G[u][v]['color'] for u, v in edges]
-        node_color = [self.color_map[self.G.node[node]['behaviour']]for node in self.G]
+        node_color = [self.color_map[self.G.node[node]['behaviour']] for node in self.G]
         self.net_figure.suptitle("Overlay Network of the Team", size=16)
-        nx.draw_circular(self.G, node_color=node_color, node_size=400, edge_color=edge_color, labels=self.net_labels, font_size=10, font_weight='bold')
+        nx.draw_circular(self.G, node_color=node_color, node_size=400, edge_color=edge_color, labels=self.net_labels,
+                         font_size=10, font_weight='bold')
         self.net_figure.canvas.draw()
 
     def plot_team(self):
         self.team_figure, self.team_ax = plt.subplots()
-        self.lineWIPs, = self.team_ax.plot([1,2], [10,10], color='#A9BCF5', label="# WIPs", marker='o', ls='None', markeredgecolor='#A9BCF5', animated=True)
-        self.lineMonitors, = self.team_ax.plot([1,2], [10,10], color = '#A9F5D0', label="# Monitor Peers", marker='o', ls='None', markeredgecolor='#A9F5D0', animated=True)
-        self.lineMPs, = self.team_ax.plot([1,2], [10,10], color='#DF0101', label="# Malicious Peers", marker='o', ls='None', markeredgecolor='#DF0101', animated=True)
+        self.lineWIPs, = self.team_ax.plot([1, 2], [10, 10], color='#A9BCF5', label="# WIPs", marker='o', ls='None',
+                                           markeredgecolor='#A9BCF5', animated=True)
+        self.lineMonitors, = self.team_ax.plot([1, 2], [10, 10], color='#A9F5D0', label="# Monitor Peers", marker='o',
+                                               ls='None', markeredgecolor='#A9F5D0', animated=True)
+        self.lineMPs, = self.team_ax.plot([1, 2], [10, 10], color='#DF0101', label="# Malicious Peers", marker='o',
+                                          ls='None', markeredgecolor='#DF0101', animated=True)
         self.team_figure.suptitle("Number of Peers in the Team", size=16)
         plt.legend(loc=2, numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
@@ -144,14 +149,16 @@ class Play():
 
     def draw_buffer(self):
         self.buffer_figure, self.buffer_ax = plt.subplots()
-        self.lineIN, = self.buffer_ax.plot([1]*2, [1]*2, color='#000000', ls="None", label="IN", marker='o', animated=True)
-        self.lineOUT, = self.buffer_ax.plot([1]*2, [1]*2, color='#CCCCCC', ls="None", label="OUT", marker='o', animated=True)
+        self.lineIN, = self.buffer_ax.plot([1] * 2, [1] * 2, color='#000000', ls="None", label="IN", marker='o',
+                                           animated=True)
+        self.lineOUT, = self.buffer_ax.plot([1] * 2, [1] * 2, color='#CCCCCC', ls="None", label="OUT", marker='o',
+                                            animated=True)
         self.buffer_figure.suptitle("Buffer Status", size=16)
         plt.legend(loc=2, numpoints=1)
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         self.buffer_colors = cm.rainbow(np.linspace(0, 1, total_peers))
-        plt.axis([0, total_peers+1, 0, self.get_buffer_size()])
-        plt.xticks(range(0, total_peers+1, 1))
+        plt.axis([0, total_peers + 1, 0, self.get_buffer_size()])
+        plt.xticks(range(0, total_peers + 1, 1))
         self.buffer_order = {}
         self.buffer_index = 1
         self.buffer_labels = self.buffer_ax.get_xticks().tolist()
@@ -159,29 +166,29 @@ class Play():
         self.buffer_figure.canvas.draw()
 
     def update_buffer_round(self, number_of_round):
-        self.buffer_figure.suptitle("Buffer Status "+number_of_round, size=16)
+        self.buffer_figure.suptitle("Buffer Status " + number_of_round, size=16)
 
     def update_buffer(self, node, buffer_shot, senders_shot):
         if self.buffer_order.get(node) is None:
             self.buffer_order[node] = self.buffer_index
             self.buffer_labels[self.buffer_index] = node
             self.buffer_ax.set_xticklabels(self.buffer_labels)
-            self.buffer_ax.get_xticklabels()[self.buffer_index].set_color(self.buffer_colors[(self.buffer_index-1)])
+            self.buffer_ax.get_xticklabels()[self.buffer_index].set_color(self.buffer_colors[(self.buffer_index - 1)])
             self.buffer_index += 1
 
         buffer_out = [pos for pos, char in enumerate(buffer_shot) if char == "L"]
-        self.lineOUT.set_xdata([self.buffer_order[node]]*len(buffer_out))
+        self.lineOUT.set_xdata([self.buffer_order[node]] * len(buffer_out))
         self.lineOUT.set_ydata(buffer_out)
         self.buffer_ax.draw_artist(self.lineOUT)
 
         buffer_in = [pos for pos, char in enumerate(buffer_shot) if char == "C"]
         sender_list = senders_shot.split(":")
-        self.lineIN.set_xdata([self.buffer_order[node]]*len(buffer_in))
+        self.lineIN.set_xdata([self.buffer_order[node]] * len(buffer_in))
         for pos in buffer_in:
             sender_node = sender_list[pos]
             if sender_node != "S":
                 if self.buffer_order.get(sender_node) is not None:
-                    color_position = self.buffer_order[sender_node]-1
+                    color_position = self.buffer_order[sender_node] - 1
                     self.lineIN.set_color(self.buffer_colors[color_position])
                 else:
                     self.lineIN.set_color("#FFFFFF")
@@ -195,7 +202,8 @@ class Play():
     def plot_clr(self):
         self.clrs_per_round = []
         self.clr_figure, self.clr_ax = plt.subplots()
-        self.lineCLR, = self.clr_ax.plot([1,2], [10,10], color='#000000', label="CLR", marker='o', ls='None', markeredgecolor='#000000', animated=True)
+        self.lineCLR, = self.clr_ax.plot([1, 2], [10, 10], color='#000000', label="CLR", marker='o', ls='None',
+                                         markeredgecolor='#000000', animated=True)
         self.clr_figure.suptitle("Chunk Loss Ratio", size=16)
         plt.legend(loc=2, numpoints=1)
         plt.axis([0, self.number_of_rounds, 0, 1])
@@ -253,10 +261,10 @@ class Play():
                         self.update_net(None, (m[3], m[4]), "OUT")
 
             if m[0] == "T":
-                #try:
+                # try:
                 self.update_team(m[1], m[2], m[3])
-                #except:
-                    # For visualization in real time (line is not fully written)
+                # except:
+                # For visualization in real time (line is not fully written)
                 #    self.lg.info("simulator: ", "IndexError:", m, line)
                 #    pass
 
@@ -279,17 +287,17 @@ class Play():
 
             line = drawing_log_file.readline()
 
-        #plt.ioff()
-        #plt.show()
+            # plt.ioff()
+            # plt.show()
+
 
 if __name__ == "__main__":
-    
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    #lg.critical('Critical messages enabled.')
-    #lg.error('Error messages enabled.')
-    #lg.warning('Warning message enabled.')
-    #lg.info('Informative message enabled.')
-    #lg.debug('Low-level debug message enabled.')
+    # lg.critical('Critical messages enabled.')
+    # lg.error('Error messages enabled.')
+    # lg.warning('Warning message enabled.')
+    # lg.info('Informative message enabled.')
+    # lg.debug('Low-level debug message enabled.')
 
     fire.Fire(Play)
 

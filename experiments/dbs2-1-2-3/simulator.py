@@ -7,13 +7,13 @@ import time
 number_of_nodes = 3
 buffer_size = number_of_nodes
 
-queues = [None]*number_of_nodes
+queues = [None] * number_of_nodes
 
-class Node():
 
+class Node:
     def __init__(self, node):
-        super(Node,self).__init__()
-        self.node = node # Node number
+        super(Node, self).__init__()
+        self.node = node  # Node number
         self.neighbors = []
         self.buffer = [None] * buffer_size
         queues[self.node] = queue.Queue(10)
@@ -34,7 +34,7 @@ class Node():
             # Receive a chunk
             chunk, sender = queues[self.node].get()
             print('Node', self.node, ': received chunk', chunk, 'from', sender)
-            
+
             # Store the chunk in the buffer
             self.buffer[chunk % buffer_size] = chunk
 
@@ -42,7 +42,7 @@ class Node():
                 # Determine a destination
                 destination_node = self.neighbors[neighbors_counter % len(self.neighbors)]
                 while destination_node == sender:
-                    neighbors_counter = ( neighbors_counter + 1 ) % len(self.neighbors)
+                    neighbors_counter = (neighbors_counter + 1) % len(self.neighbors)
                     destination_node = self.neighbors[neighbors_counter % len(self.neighbors)]
                     if destination_node == sender:
                         break
@@ -52,16 +52,15 @@ class Node():
                     # Send the chunk
                     queues[destination_node].put((chunk, self.node))
                     print('Node', self.node, ': sent chunk', chunk, 'towards', destination_node)
-                
+
             if __debug__:
                 print('Node', self.node, 'neighbors_counter =', neighbors_counter, \
                       'neighbors =', self.neighbors, \
                       'destination =', destination_node, \
                       'chunk =', chunk)
-            
+
             sys.stdout.flush()
             time.sleep(0.1)
 
     def start(self):
         threading.Thread(target=self.run).start()
-        

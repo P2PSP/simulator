@@ -4,6 +4,7 @@ import sys
 import getopt
 import os
 
+
 def main(argv):
     inputfile = ''
     outputfile = ''
@@ -22,8 +23,8 @@ def main(argv):
     filename = os.path.basename(inputfile)
 
     draw_log_file = open(inputfile, "r")
-    team_log_file = open(filename+".team", "w", 1)
-    buffer_log_file = open(filename+".buffer", "w", 1)
+    team_log_file = open(filename + ".team", "w", 1)
+    buffer_log_file = open(filename + ".buffer", "w", 1)
 
     team_log_file.write("Round\tTPs\tWIPs\tMPs")
     buffer_log_file.write("Round\tCLR")
@@ -36,7 +37,7 @@ def main(argv):
         if m[0] == "R":
             team_log_file.write('\n' + m[1] + '\t')
             if number_of_peers > 0:
-                mean_clr = clr/number_of_peers
+                mean_clr = clr / number_of_peers
             else:
                 mean_clr = 0
             buffer_log_file.write('\n' + m[1] + '\t' + str(mean_clr))
@@ -61,4 +62,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-   main(sys.argv[1:])
+    main(sys.argv[1:])
