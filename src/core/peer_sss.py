@@ -148,7 +148,7 @@ class Peer_SSS(Peer_STRPEDS):
                 if c == "L":
                     self.sender_of_chunks[n % self.buffer_size] = ""
 
-            sim.FEEDBACK["DRAW"].put(("B", self.id, chunks, ":".join(self.sender_of_chunks)))
+            sim.FEEDBACK["DRAW"].put(("B", self.id, ":".join(self.sender_of_chunks)))
             # --------------------------------------
 
             self.received_chunks += 1

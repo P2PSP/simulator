@@ -33,44 +33,20 @@ import logging
 # import logging as lg
 
 class Play():
-    def __init__(self, drawing_log, set_of_rules=None, number_of_monitors=0, number_of_peers=0, number_of_rounds=0,
-                 number_of_malicious=0, gui=False):
-
-        self.lg = logging.getLogger(__name__)
-        # self.lg = logging.getLogger(__name__)
-        # handler = logging.StreamHandler()
-        # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
-        # formatter = logging.Formatter(fmt='peer_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
-        # handler.setFormatter(formatter)
-        # self.lg.addHandler(handler)
-        self.lg.setLevel(logging.ERROR)
-        self.lg.critical('Critical messages enabled.')
-        self.lg.error('Error messages enabled.')
-        self.lg.warning('Warning message enabled.')
-        self.lg.info('Informative message enabled.')
-        self.lg.debug('Low-level debug message enabled.')
-
-        self.set_of_rules = set_of_rules
-        self.number_of_peers = number_of_peers
-        self.number_of_monitors = number_of_monitors
+    
+    def __init__(self, drawing_log):
         self.drawing_log = drawing_log
-        self.number_of_rounds = number_of_rounds
-        self.number_of_malicious = number_of_malicious
-        self.current_round = 0
-        self.gui = gui
-        self.processes = {}
 
     def get_team_size(self, n):
         return 2 ** (n - 1).bit_length()
-
+        
     def get_buffer_size(self):
-        # return self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         team_size = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious) * 8)
         if (team_size < 32):
             return 32
         else:
             return team_size
-
+        
     def draw_net(self):
         self.G = nx.Graph()
         self.net_labels = {}
@@ -168,7 +144,7 @@ class Play():
     def update_buffer_round(self, number_of_round):
         self.buffer_figure.suptitle("Buffer Status " + number_of_round, size=16)
 
-    def update_buffer(self, node, buffer_shot, senders_shot):
+    def update_buffer(self, node, senders_shot):
         if self.buffer_order.get(node) is None:
             self.buffer_order[node] = self.buffer_index
             self.buffer_labels[self.buffer_index] = node
@@ -176,16 +152,16 @@ class Play():
             self.buffer_ax.get_xticklabels()[self.buffer_index].set_color(self.buffer_colors[(self.buffer_index - 1)])
             self.buffer_index += 1
 
-        buffer_out = [pos for pos, char in enumerate(buffer_shot) if char == "L"]
+        senders_list = senders_shot.split(":")
+        buffer_out = [pos for pos, char in enumerate(senders_list) if char == ""]
         self.lineOUT.set_xdata([self.buffer_order[node]] * len(buffer_out))
         self.lineOUT.set_ydata(buffer_out)
         self.buffer_ax.draw_artist(self.lineOUT)
 
-        buffer_in = [pos for pos, char in enumerate(buffer_shot) if char == "C"]
-        sender_list = senders_shot.split(":")
+        buffer_in = [pos for pos, char in enumerate(senders_list) if char != ""]
         self.lineIN.set_xdata([self.buffer_order[node]] * len(buffer_in))
         for pos in buffer_in:
-            sender_node = sender_list[pos]
+            sender_node = senders_list[pos]
             if sender_node != "S":
                 if self.buffer_order.get(sender_node) is not None:
                     color_position = self.buffer_order[sender_node] - 1
@@ -227,16 +203,15 @@ class Play():
         # Read configuration from the first line
         line = drawing_log_file.readline()
         m = line.strip().split(";", 6)
-        if self.gui is False:
-            if m[0] == "C":
-                self.number_of_monitors = int(m[1])
-                self.number_of_peers = int(m[2])
-                self.number_of_malicious = int(m[3])
-                self.number_of_rounds = int(m[4])
-                self.set_of_rules = m[5]
-            else:
-                self.lg.info("Invalid forma file {}".format(self.drawing_log))
-                exit()
+        if m[0] == "C":
+            self.number_of_monitors = int(m[1])
+            self.number_of_peers = int(m[2])
+            self.number_of_malicious = int(m[3])
+            self.number_of_rounds = int(m[4])
+            self.set_of_rules = m[5]
+        else:
+            self.lg.info("Invalid format file {}".format(self.drawing_log))
+            exit()
 
         plt.ion()
 
@@ -244,7 +219,7 @@ class Play():
         self.plot_team()
         self.draw_buffer()
         self.plot_clr()
-        time.sleep(2)
+        time.sleep(1)
         line = drawing_log_file.readline()
         while line != "Bye":
             m = line.strip().split(";", 4)
@@ -270,8 +245,7 @@ class Play():
 
             if m[0] == "B":
                 # try:
-                self.update_buffer(m[1], m[2], m[3])
-                buffer_shot = None
+                self.update_buffer(m[1], m[2])
                 # except Exception as inst:
                 #    # For visualization in real time (line is not fully written)
                 #    self.lg.info("simulator: ", "IndexError:", m, line)

@@ -277,13 +277,13 @@ class Peer_DBS(sim):
                 self.received_chunks += 1
 
                 # S I M U L A T I O N
-                self.sender_of_chunks[chunk_number % self.buffer_size] = sender
-                chunks = ""
-                for n, c, o in self.chunks:
-                    chunks += c.decode("utf-8")
-                    if c == "L":
-                        self.sender_of_chunks[n % self.buffer_size] = ""
-                sim.FEEDBACK["DRAW"].put(("B", self.id, chunks, ":".join(self.sender_of_chunks)))
+                self.sender_of_chunks = []
+                for i in self.chunks:
+                    if i[self.CHUNK_NUMBER] != -1:
+                        self.sender_of_chunks.append(i[self.ORIGIN])
+                    else:
+                        self.sender_of_chunks.append("")
+                    sim.FEEDBACK["DRAW"].put(("B", self.id, ":".join(self.sender_of_chunks)))
 
                 # ./test.me 2>&1 | grep inserted | grep chunk
                 if sender != self.splitter:
