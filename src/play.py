@@ -1,36 +1,12 @@
 #!/usr/bin/env python3
 
-from core.splitter_dbs import Splitter_DBS
-from core.splitter_strpeds import Splitter_STRPEDS
-from core.splitter_sss import Splitter_SSS
-from core.peer_dbs import Peer_DBS
-from core.peer_strpeds import Peer_STRPEDS
-from core.peer_sss import Peer_SSS
-from core.peer_malicious import Peer_Malicious
-from core.peer_malicious_sss import Peer_Malicious_SSS
-from core.monitor_dbs import Monitor_DBS
-from core.monitor_strpeds import Monitor_STRPEDS
-from core.monitor_sss import Monitor_SSS
-from core.common import Common
-from core.simulator_stuff import Simulator_stuff as sim
-# from core.simulator_stuff import lg
-from multiprocessing import Process, Queue, Manager
-from glob import glob
-
 import time
 import fire
-
-if __debug__:
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import matplotlib.cm as cm
+import networkx as nx
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
-import platform
-import os
 import logging
-
-
-# import logging as lg
 
 class Play():
     
@@ -159,7 +135,9 @@ class Play():
         self.buffer_ax.draw_artist(self.lineOUT)
 
         buffer_in = [pos for pos, char in enumerate(senders_list) if char != ""]
+        
         self.lineIN.set_xdata([self.buffer_order[node]] * len(buffer_in))
+        
         for pos in buffer_in:
             sender_node = senders_list[pos]
             if sender_node != "S":
@@ -172,14 +150,13 @@ class Play():
                 self.lineIN.set_color("#000000")
             self.lineIN.set_ydata(pos)
             self.buffer_ax.draw_artist(self.lineIN)
-
+        
         self.buffer_figure.canvas.blit(self.buffer_ax.bbox)
 
     def plot_clr(self):
         self.clrs_per_round = []
         self.clr_figure, self.clr_ax = plt.subplots()
-        self.lineCLR, = self.clr_ax.plot([1, 2], [10, 10], color='#000000', label="CLR", marker='o', ls='None',
-                                         markeredgecolor='#000000', animated=True)
+        self.lineCLR, = self.clr_ax.plot([1, 2], [10, 10], color='#000000', label="CLR", marker='o', ls='None', markeredgecolor='#000000', animated=True)
         self.clr_figure.suptitle("Chunk Loss Ratio", size=16)
         plt.legend(loc=2, numpoints=1)
         plt.axis([0, self.number_of_rounds, 0, 1])
@@ -236,21 +213,10 @@ class Play():
                         self.update_net(None, (m[3], m[4]), "OUT")
 
             if m[0] == "T":
-                # try:
                 self.update_team(m[1], m[2], m[3])
-                # except:
-                # For visualization in real time (line is not fully written)
-                #    self.lg.info("simulator: ", "IndexError:", m, line)
-                #    pass
 
             if m[0] == "B":
-                # try:
                 self.update_buffer(m[1], m[2])
-                # except Exception as inst:
-                #    # For visualization in real time (line is not fully written)
-                #    self.lg.info("simulator: ", "IndexError:", m, line)
-                #    self.lg.info("simulator: ", inst.args)
-                #    pass
 
             if m[0] == "CLR":
                 self.update_clrs(m[1], float(m[2]))

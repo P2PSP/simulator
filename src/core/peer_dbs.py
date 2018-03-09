@@ -283,7 +283,7 @@ class Peer_DBS(sim):
                         self.sender_of_chunks.append(i[self.ORIGIN])
                     else:
                         self.sender_of_chunks.append("")
-                    sim.FEEDBACK["DRAW"].put(("B", self.id, ":".join(self.sender_of_chunks)))
+                sim.FEEDBACK["DRAW"].put(("B", self.id, ":".join(self.sender_of_chunks)))
 
                 # ./test.me 2>&1 | grep inserted | grep chunk
                 if sender != self.splitter:
