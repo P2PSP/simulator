@@ -85,16 +85,16 @@ class Play():
 
     def update_team(self, node, quantity, n_round):
         if node == "M":
-            self.lineMonitors.set_xdata(n_round)
-            self.lineMonitors.set_ydata(quantity)
+            self.lineMonitors.set_xdata(float(n_round))
+            self.lineMonitors.set_ydata(float(quantity))
             self.team_ax.draw_artist(self.lineMonitors)
         elif node == "P":
-            self.lineWIPs.set_xdata(n_round)
-            self.lineWIPs.set_ydata(quantity)
+            self.lineWIPs.set_xdata(float(n_round))
+            self.lineWIPs.set_ydata(float(quantity))
             self.team_ax.draw_artist(self.lineWIPs)
         else:
-            self.lineMPs.set_xdata(n_round)
-            self.lineMPs.set_ydata(quantity)
+            self.lineMPs.set_xdata(float(n_round))
+            self.lineMPs.set_ydata(float(quantity))
             self.team_ax.draw_artist(self.lineMPs)
 
         self.team_figure.canvas.blit(self.team_ax.bbox)
@@ -168,7 +168,7 @@ class Play():
 
     def update_clr_plot(self, n_round):
         if len(self.clrs_per_round) > 0:
-            self.lineCLR.set_xdata(n_round)
+            self.lineCLR.set_xdata(float(n_round))
             self.lineCLR.set_ydata(np.mean(self.clrs_per_round))
             self.clr_ax.draw_artist(self.lineCLR)
             self.clr_figure.canvas.blit(self.clr_ax.bbox)
