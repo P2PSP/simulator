@@ -77,7 +77,7 @@ class Splitter_DBS(Simulator_stuff):
         # self.lg.info("splitter_dbs.send_chunk({}, {})".format(chunk_msg, peer))
         msg = struct.pack("is6s", *chunk_msg)
         # msg = struct.pack("is3s", chunk_msg[0], bytes(chunk_msg[1]), chunk_msg[2])
-        self.team_socket.sendto(msg, peer)
+        self.team_socket.sendto_encoded(msg, peer)
 
     def receive_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
@@ -107,7 +107,7 @@ class Splitter_DBS(Simulator_stuff):
         self.lg.info("{}: waiting for incoming peer".format(self.id))
 
         msg_length = struct.calcsize("s")
-        msg = serve_socket.recv(msg_length)
+        msg = serve_socket.recv_encoded(msg_length)
         message = struct.unpack("s", msg)[0]
         self.lg.info("{}: received {} from {}".format(self.id, message, incoming_peer))
 
@@ -126,24 +126,24 @@ class Splitter_DBS(Simulator_stuff):
         self.lg.info("{}: buffer size = {}".format(self.id, self.buffer_size))
         # peer_serve_socket.sendall(self.buffer_size, "H")
         msg = struct.pack("H", self.buffer_size)
-        peer_serve_socket.sendall(msg)
+        peer_serve_socket.sendall_encoded(msg)
 
     def send_the_number_of_peers(self, peer_serve_socket):
         self.lg.info("{}: sending number of monitors = {}".format(self.id, self.number_of_monitors))
         # peer_serve_socket.sendall(self.number_of_monitors, "H")
         msg = struct.pack("H", self.number_of_monitors)
-        peer_serve_socket.sendall(msg)
+        peer_serve_socket.sendall_encoded(msg)
         self.lg.info("{}: sending list of peers of length = {}".format(self.id, len(self.peer_list)))
         # peer_serve_socket.sendall(len(self.peer_list), "H")
         msg = struct.pack("H", len(self.peer_list))
-        peer_serve_socket.sendall(msg)
+        peer_serve_socket.sendall_encoded(msg)
 
     def send_the_list_of_peers(self, peer_serve_socket):
         self.lg.info("{}: sending peer list = {}".format(self.id, self.peer_list))
         for p in self.peer_list:
             # peer_serve_socket.sendall(p, "6s")
             msg = struct.pack("6s", bytes(p, "utf-8"))
-            peer_serve_socket.sendall(msg)
+            peer_serve_socket.sendall_encoded(msg)
 
     def insert_peer(self, peer):
         if peer not in self.peer_list:
@@ -204,9 +204,9 @@ class Splitter_DBS(Simulator_stuff):
                 self.lg.info("{}: marked for deletion".format(self.id, peer))
 
     def say_goodbye(self, peer):
-        # self.team_socket.sendto(Common.GOODBYE, "i" , peer)
+        # self.team_socket.sendto_encoded(Common.GOODBYE, "i" , peer)
         msg = struct.pack("i", Common.GOODBYE)
-        self.team_socket.sendto(msg, peer)
+        self.team_socket.sendto_encoded(msg, peer)
 
     def remove_outgoing_peers(self):
         for p in self.outgoing_peer_list:
@@ -220,7 +220,7 @@ class Splitter_DBS(Simulator_stuff):
     def moderate_the_team(self):
         while self.alive:
             # message, sender = self.team_socket.recvfrom()
-            msg, sender = self.team_socket.recvfrom(100)
+            msg, sender = self.team_socket.recvfrom_encoded(100)
             if len(msg) == 2:
                 # msg = struct.unpack("i", packed_msg)
                 self.process_goodbye(sender)
