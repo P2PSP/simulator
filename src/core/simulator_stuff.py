@@ -13,6 +13,8 @@ import os
 # import logging as lg
 import logging
 
+from . import reed_solomon_codec
+
 
 # import coloredlogs
 # coloredlogs.install()
@@ -32,6 +34,7 @@ class Simulator_socket:
     AF_UNIX = socket.AF_UNIX
     SOCK_DGRAM = socket.SOCK_DGRAM
     SOCK_STREAM = socket.SOCK_STREAM
+    MAX_MSG_MENGTH = 256
 
     def __init__(self, family=None, typ=None, sock=None):
 
@@ -111,7 +114,7 @@ class Simulator_socket:
         self.lg.info("{} <- [{}] - {}".format(self.sock.getsockname(), \
                                               msg, \
                                               sender))
-        return (msg, sender)
+        return msg, sender
 
     def connect(self, address):
         self.lg.info("simulator_stuff.connect({}): {}".format(address, self.sock))
@@ -120,7 +123,7 @@ class Simulator_socket:
     def accept(self):
         self.lg.info("simulator_stuff.accept(): {}".format(self.sock))
         peer_serve_socket, peer = self.sock.accept()
-        return (peer_serve_socket, peer.replace("_tcp", "").replace("udp", ""))
+        return peer_serve_socket, peer.replace("_tcp", "").replace("udp", "")
 
     def bind(self, address):
         self.lg.info("simulator_stuff.bind({}): {}".format(address, self.sock))
@@ -148,3 +151,92 @@ class Simulator_socket:
     def settimeout(self, value):
         self.lg.info("simulator_stuff.settimeout({}): {}".format(value, self.sock))
         return self.sock.settimeout(value)
+
+    # ------- Encoded message exchangers -------
+
+    def send_encoded(self, msg):
+        self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), \
+                                              msg, \
+                                              self.sock.getpeername()))
+        transmittable_message = reed_solomon_codec.encode(msg)
+        data_length = 0
+        start_message = "message_start_chunk_length %d" % len(transmittable_message)
+        self.sock.send(reed_solomon_codec.encode(start_message)[0])     # initial message specifying no of chunks
+        for message in transmittable_message:
+            data_length += self.sock.send(message)
+        return data_length
+
+    def sendall_encoded(self, msg):
+        self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), \
+                                              msg, \
+                                              self.sock.getpeername()))
+        transmittable_message = reed_solomon_codec.encode(msg)
+        data_length = 0
+        start_message = "message_start_chunk_length %d" % len(transmittable_message)
+        self.sock.sendall(reed_solomon_codec.encode(start_message)[0])  # initial message specifying message length
+        for message in transmittable_message:
+            data_length += self.sock.sendall(message)
+        return data_length
+
+    def sendto_encoded(self, msg, address):
+        self.lg.info("{} - [{}] -> {}".format(self.sock.getsockname(), \
+                                              msg, \
+                                              address))
+        try:
+            transmittable_message = reed_solomon_codec.encode(msg)
+            data_length = 0
+            start_message = "message_start_chunk_length %d" % len(transmittable_message)
+            self.sock.sendto(reed_solomon_codec.encode(start_message)[0], socket.MSG_DONTWAIT, address + "_udp")
+            for message in transmittable_message:
+                data_length += self.sock.sendto(message, socket.MSG_DONTWAIT, address + "_udp")
+            return data_length
+        except ConnectionRefusedError:
+            self.lg.error(
+                "simulator_stuff.sendto: the message {} has not been delivered because the destination {} left the team".format(
+                    msg, address))
+            raise
+        except KeyboardInterrupt:
+            self.lg.warning("simulator_stuff.sendto: send_packet {} to {}".format(msg, address))
+            raise
+        except FileNotFoundError:
+            self.lg.error("simulator_stuff.sendto: {}".format(address + "_udp"))
+            raise
+        except BlockingIOError:
+            raise
+
+    def recv_encoded(self, msg_length):
+        msg = self.sock.recv(self.MAX_MSG_MENGTH)
+        start_message = str(reed_solomon_codec.decode(msg))
+        no_of_chunks = int(start_message.split(' ')[-1])
+
+        message = None
+        for i in range(no_of_chunks):
+            msg = self.sock.recv(self.MAX_MSG_MENGTH)
+            decoded_msg = reed_solomon_codec.decode(msg)
+            if message is None:
+                message = decoded_msg
+            else:
+                message += decoded_msg
+            self.lg.info("{} <= [{}] - {}".format(self.sock.getsockname(), \
+                                                  decoded_msg, \
+                                                  self.sock.getpeername()))
+        return message
+
+    def recvfrom_encoded(self, max_msg_length):
+        msg, sender = self.sock.recvfrom(self.MAX_MSG_MENGTH)
+        start_message = str(reed_solomon_codec.decode(msg))
+        no_of_chunks = int(start_message.split(' ')[-1])
+
+        message = None
+        for i in range(no_of_chunks):
+            msg, sender = self.sock.recv(self.MAX_MSG_MENGTH)
+            decoded_msg = reed_solomon_codec.decode(msg)
+            if message is None:
+                message = decoded_msg
+            else:
+                message += decoded_msg
+            sender = sender.replace("_tcp", "").replace("_udp", "")
+            self.lg.info("{} <- [{}] - {}".format(self.sock.getsockname(), \
+                                                  decoded_msg, \
+                                                  sender))
+        return message, sender

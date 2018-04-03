@@ -4,6 +4,11 @@ coder = rs.RSCoder(n=255, k=128)
 
 
 def encode(packet):
+    """
+    Returns the encoded message. Breaks a message in the max chunks size of 100 bytes for encoding
+    :param packet: the chunk to be sent to the peers
+    :return: A list having the encoded messages.
+    """
     transmittable_message = []
     y = 0
     while y < len(packet):
