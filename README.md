@@ -7,7 +7,8 @@ A complete stand-alone simulator of the P2PSP protocol using Processes and messa
 # Pre-requisites
 ## Linux
 ```
-sudo apt install python3-tk
+$ sudo apt install python3-tk
+$ sudo apt-get install gnuplot
 $ pip3 install fire
 $ pip3 install matplotlib==2.0.0
 $ pip3 install networkx
@@ -35,13 +36,24 @@ $ python3 -u simulator.py run [options]
 **--number-of-malicious** NUMBER_OF_MALICIOUS (optional)  
 **--number-of-rounds** NUMBER_OF_ROUNDS  
 **--drawing-log** FILENAME  
-[**--gui**] (optional)  
+[**--gui**] (optional)
+
+Example:
+```
+# inside src folder, run
+$ python simulator.py run --set-of-rules dbs --number-of-monitors 1 --number-of-peers 20 --number-of-rounds 20 --drawing-log output_file
+```
 
 ## Drawing the simulation
 ```
-$ python3 simulator.py draw --drawing-log FILENAME
+$ python3 play.py draw --drawing-log FILENAME
 ```
 Note: If you want to draw in simulation time, you can add `--gui` option as a flag in the run command.
+
+Example:
+```
+$ python play.py draw --drawing-log output_file
+```
 
 ## Ploting team and buffer results
 Change to tools dir and use the plot script_
