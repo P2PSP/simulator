@@ -4,13 +4,13 @@ import sys
 import getopt
 
 
-def pollute(inputfile, outputfile):
+def pollute(inputfile, outputfile, chunk_size=1024, attackers=0, team_size=10):
     with open(inputfile, 'rb') as fi:
         with open(outputfile, 'wb') as fo:
             while True:
-                buf = fi.read(1024)
-                if buf:
-                    fo.write(buf)
+                chunk = fi.read(chunk_size)
+                if chunk:
+                    fo.write(chunk)
                 else:
                     break
 
