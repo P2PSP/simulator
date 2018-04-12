@@ -29,7 +29,7 @@ def pollute(inputfile, outputfile, chunk_size, attackers_number,
                             pass
                     else:
                         fo.write(chunk)
-                        last_chunk = chunk
+                        last_valid_chunk = chunk
                 else:
                     break
                 i = (i+1) % team_size
