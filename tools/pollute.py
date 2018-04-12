@@ -9,7 +9,7 @@ def pollute(inputfile, outputfile, chunk_size, attackers_number,
             team_size, mode):
     team = list(range(0, team_size))
     attackers = random.sample(team, attackers_number)
-    last_chunk = b'\x00'*chunk_size
+    last_valid_chunk = b'\x00'*chunk_size
     print("Lost chunks for every round:", attackers)
     i = 0
     with open(inputfile, 'rb') as fi:
@@ -23,7 +23,7 @@ def pollute(inputfile, outputfile, chunk_size, attackers_number,
                             fo.write(b'\x00'*chunk_size)
                         elif mode == 1:
                             # Writing the last valid chunk
-                            fo.write(last_chunk)
+                            fo.write(last_valid_chunk)
                         else:
                             # Writing nothing
                             pass
@@ -49,6 +49,7 @@ def main():
     chunk_size = 1024
     attackers_number = 0
     team_size = 10
+    mode = 0
     for opt, arg in opts:
         if opt == '-h':
             print("pollute.py -i <inputfile> -o <outputfile> -c <chunk_size> \
