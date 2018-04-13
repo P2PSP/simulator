@@ -48,8 +48,8 @@ def pollute(inputfile, outputfile, chunk_size, attackers_number,
     print("Malicious peers (lost chunks per round): {}".format(attackers))
     print("Header size (in rounds): {}".format(HEADER_SIZE))
     print("Chunk size: {}".format(chunk_size))
-    print("Rounds played:".format(number_of_round))
-    print("Chunks played:".format(chunk_played))
+    print("Rounds played: {}".format(number_of_round))
+    print("Chunks played: {}".format(chunk_played))
 
 
 def main():
