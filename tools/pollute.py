@@ -42,8 +42,8 @@ def pollute(inputfile, outputfile, chunk_size, attackers_number,
     # Statistics
     print("Team size: {}".format(team_size))
     print("Number of malicious: {}".format(attackers_number))
-    print("Percentage of lost chunks: {}%".format(
-        (attackers_number*100)/team_size)
+    print("Percentage of lost chunks: {} %".format(
+        float(attackers_number*100)/team_size)
     )
     print("Malicious peers (lost chunks per round): {}".format(attackers))
     print("Header size (in rounds): {}".format(HEADER_SIZE))
