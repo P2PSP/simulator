@@ -5,19 +5,26 @@ import getopt
 import random
 
 
+HEADER_SIZE = 1024  # In chunks
+
+
 def pollute(inputfile, outputfile, chunk_size, attackers_number,
             team_size, mode):
     team = list(range(0, team_size))
     attackers = random.sample(team, attackers_number)
     last_valid_chunk = b'\x00'*chunk_size
     print("Lost chunks for every round:", attackers)
+    number_of_round = -1
     i = 0
     with open(inputfile, 'rb') as fi:
         with open(outputfile, 'wb') as fo:
             while True:
+                if i == 0:
+                    number_of_round += 1
                 chunk = fi.read(chunk_size)
                 if chunk:
-                    if team[i] in attackers:
+                    chunk_played = ((number_of_round * team_size) + i)
+                    if team[i] in attackers and chunk_played > HEADER_SIZE:
                         if mode == 0:
                             # Writing zeros instead of the chunk
                             fo.write(b'\x00'*chunk_size)
