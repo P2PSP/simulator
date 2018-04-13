@@ -30,6 +30,6 @@ pollute.py -i <inputfile> -o <outputfile> -c <chunk_size> -a <number_of_attacker
 - number_of_attackers: number of mailicious peers attacking to the team. It is equal to the number of lost chunk for each round.
 - team_size: size of the team.
 - mode: it is a number between 0 and 2.
-  - (0) The lost chunk is replaced by a chunks with zeros. (default).
+  - (0) The lost chunk is replaced by a chunk with zeros. (default).
   - (1) The lost chunk is replaced by the last valid chunk.
   - (2) The lost chunk is replaced by nothing. Then, if the lost chunk is the number 4,the stream looks like 01235678...
