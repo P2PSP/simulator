@@ -13,7 +13,6 @@ def pollute(inputfile, outputfile, chunk_size, attackers_number,
     team = list(range(0, team_size))
     attackers = random.sample(team, attackers_number)
     last_valid_chunk = b'\x00'*chunk_size
-    print("Lost chunks for every round:", attackers)
     number_of_round = -1
     i = 0
     with open(inputfile, 'rb') as fi:
@@ -40,6 +39,17 @@ def pollute(inputfile, outputfile, chunk_size, attackers_number,
                 else:
                     break
                 i = (i+1) % team_size
+    # Statistics
+    print("Team size: {}".format(team_size))
+    print("Number of malicious: {}".format(attackers_number))
+    print("Percentage of lost chunks: {}%".format(
+        (attackers_number*100)/team_size)
+    )
+    print("Malicious peers (lost chunks per round): {}".format(attackers))
+    print("Header size (in rounds): {}".format(HEADER_SIZE))
+    print("Chunk size: {}".format(chunk_size))
+    print("Rounds played:".format(number_of_round))
+    print("Chunks played:".format(chunk_played))
 
 
 def main():
