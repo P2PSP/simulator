@@ -1,3 +1,12 @@
+import os
+import time
+import numpy as np
+import platform
+import logging
+from glob import glob
+import fire
+from multiprocessing import Process, Queue, Manager
+
 from core.splitter_dbs import Splitter_DBS
 from core.splitter_strpeds import Splitter_STRPEDS
 from core.splitter_sss import Splitter_SSS
@@ -11,25 +20,23 @@ from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
+
 # from core.simulator_stuff import lg
-from multiprocessing import Process, Queue, Manager
-from glob import glob
-import time
-import fire
+
 
 if __debug__:
     import networkx as nx
     # import matplotlib.pyplot as plt
     # import matplotlib.cm as cm
-import numpy as np
-import platform
-import os
-import logging
 
 
 # import logging as lg
 
-class Simulator():
+
+class Simulator:
+    """
+    Main simulator class
+    """
     P_IN = 0.4
     P_MoP = 0.2
     P_WIP = 0.6
@@ -45,6 +52,8 @@ class Simulator():
         # formatter = logging.Formatter(fmt='peer_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
         # handler.setFormatter(formatter)
         # self.lg.addHandler(handler)
+
+        # initializing the logging
         self.lg.setLevel(logging.ERROR)
         self.lg.critical('Critical messages enabled.')
         self.lg.error('Error messages enabled.')
@@ -62,18 +71,29 @@ class Simulator():
         self.gui = gui
         self.processes = {}
 
-    def get_team_size(self, n):
-        return 2 ** (n - 1).bit_length()
+    def get_team_size(self):
+        # return 2 ** (n - 1).bit_length()
+        return self.number_of_monitors + self.number_of_peers + self.number_of_malicious
 
     def get_buffer_size(self):
+        """
+        Returns buffer size
+        Effectively: buffer size = team size * 8
+        """
         # return self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        team_size = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious) * 8)
-        if (team_size < 32):
+        # team_size = self.get_team_size((self.number_of_monitors
+        #                                 + self.number_of_peers + self.number_of_malicious) * 8)
+        team_size = self.get_team_size()
+        buffer_size = 2 ** (team_size * 8 - 1).bit_length()
+        if buffer_size < 32:
             return 32
         else:
-            return team_size
+            return buffer_size
 
     def run_a_splitter(self):
+        """
+        Starts a splitter
+        """
         Common.BUFFER_SIZE = self.get_buffer_size()
         if self.set_of_rules == "dbs":
             splitter = Splitter_DBS()
@@ -81,11 +101,10 @@ class Simulator():
             splitter = Splitter_STRPEDS()
         elif self.set_of_rules == "cis-sss":
             splitter = Splitter_SSS()
-
-        # splitter.start()
+        else:
+            # Raising exception instead of logging
+            raise AttributeError("%s: Set of rules not found")
         splitter.run()
-        # while splitter.alive:
-        #    time.sleep(1)
 
     def run_a_peer(self, splitter_id, type, id, first_monitor=False):
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
@@ -139,6 +158,9 @@ class Simulator():
         self.lg.info("simulator: {}: left the team".format(id))
 
     def store(self):
+        """
+        Creates the output/drawing-log file
+        """
         drawing_log_file = open(self.drawing_log, "w", 1)
 
         # Configuration in the first line
@@ -150,18 +172,21 @@ class Simulator():
         m = queue.get()
 
         while m[0] != "Bye":
-            drawing_log_file.write(";".join(map(str, m))+'\n')
+            drawing_log_file.write(";".join(map(str, m)) + '\n')
             # Sometimes the queue doesn't receive Bye message.
             # try:
             m = queue.get()
-                # except:
-                #    break
+            # except:
+            #    break
 
         drawing_log_file.write("Bye")
         self.lg.info("CLOSING STORE")
         drawing_log_file.close()
 
     def run(self):
+        """
+        Starting point for simulations
+        """
         self.lg.info("simulator: platform.system() = {}".format(platform.system()))
         # if __debug__:
         #     if platform.system() == 'Linux':
@@ -181,12 +206,19 @@ class Simulator():
 
         if __debug__:
             if self.gui is True:
+                # TODO: correct this line, no attribute 'draw' in the class
                 Process(target=self.draw).start()
+                '''
+                # steps described below will throw "file not found" error or will not show anything on graph
+                # as the file will be empty during the time of reading for graph plotting
+                play = Play(self.drawing_log)
+                Process(target=self.draw).start()
+                '''
 
         # Listen to the team for simulation life
         sim.FEEDBACK["STATUS"] = Queue()
 
-        # create shared list for CIS set of rules (only when cis is choosen?)
+        # create shared list for CIS set of rules (only when cis is chosen?)
         manager = Manager()
         sim.SHARED_LIST["malicious"] = manager.list()
         sim.SHARED_LIST["regular"] = manager.list()
@@ -213,7 +245,7 @@ class Simulator():
         queue = sim.FEEDBACK["STATUS"]
         m = queue.get()
         while m[0] != "Bye" and self.current_round < self.number_of_rounds:
-            if (m[0] == "R"):
+            if m[0] == "R":
                 self.current_round = m[1]
                 r = np.random.uniform(0, 1)
                 if r <= Simulator.P_IN:

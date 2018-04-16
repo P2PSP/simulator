@@ -593,7 +593,7 @@ class Peer_DBS(sim):
 
     def run(self):
         self.buffer_data()
-        while (self.player_alive or self.waiting_for_goodbye):
+        while self.player_alive or self.waiting_for_goodbye:
             self.keep_the_buffer_full()
             if not self.player_alive:
                 self.say_goodbye(self.splitter)

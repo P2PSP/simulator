@@ -3,29 +3,35 @@
 splitter_dbs module
 """
 
-# DBS (Data Broadcasting Set) layer
+"""
+DBS (Data Broadcasting Set) layer
 
-# DBS is the most basic layer to provide communication among splitter
-# (source of the stream) and peers (destination of the stream), using
-# unicast transmissions. The splitter sends a different chunk of
-# stream to each peer, using a random round-robin scheduler.
+DBS is the most basic layer to provide communication among splitter
+(source of the stream) and peers (destination of the stream), using
+unicast transmissions. The splitter sends a different chunk of
+stream to each peer, using a random round-robin scheduler.
+"""
 
 # TODO: In each round peers are selected at random, but all peers are
 # sent a chunk, in a round).
 
-from .common import Common
-from threading import Thread
-from threading import Lock
 import time
+import sys
+import struct
+from threading import Thread
+import logging
+from threading import Lock
+
+from .common import Common
 from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Simulator_socket as socket
 # from .simulator_stuff import lg
-import sys
-import struct
-import logging
 
 
 class Splitter_DBS(Simulator_stuff):
+    """
+    Splitter for Data broadcasting
+    """
     MAX_NUMBER_OF_LOST_CHUNKS = 32
 
     def __init__(self):
@@ -86,6 +92,9 @@ class Splitter_DBS(Simulator_stuff):
         return b"C"
 
     def handle_arrivals(self):
+        """
+        Accepts and handles incoming connections from peers
+        """
         while self.alive:
             peer_serve_socket, peer = self.peer_connection_socket.accept()
             peer_serve_socket = socket(sock=peer_serve_socket)
@@ -94,6 +103,10 @@ class Splitter_DBS(Simulator_stuff):
             Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()
 
     def handle_a_peer_arrival(self, connection):
+        """
+        Handle the arrival of a peer. Initializes the peer peer with buffer size and other necessary information
+        :param connection: a tuple for the incoming peer connection (conn socket, address)
+        """
 
         serve_socket = connection[0]
         incoming_peer = connection[1]
@@ -116,7 +129,7 @@ class Splitter_DBS(Simulator_stuff):
         # S I M U L A T I O N
         Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
 
-        if (incoming_peer[0] == "M"):
+        if incoming_peer[0] == "M":
             self.number_of_monitors += 1
         self.lg.info("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
 
