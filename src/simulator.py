@@ -11,6 +11,7 @@ from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
 from core.common import Common
 from core.simulator_stuff import Simulator_stuff as sim
+from core.simulator_stuff import Simulator_socket
 # from core.simulator_stuff import lg
 from multiprocessing import Process, Queue, Manager
 from glob import glob
@@ -29,14 +30,14 @@ import logging
 
 # import logging as lg
 
-class Simulator():
+class Simulator:
     P_IN = 0.4
     P_MoP = 0.2
     P_WIP = 0.6
     P_MP = 0.2
 
     def __init__(self, drawing_log, set_of_rules=None, number_of_monitors=0, number_of_peers=0, number_of_rounds=0,
-                 number_of_malicious=0, gui=False):
+                 number_of_malicious=0, gui=False, encode=False):
 
         self.lg = logging.getLogger(__name__)
         # self.lg = logging.getLogger(__name__)
@@ -61,6 +62,8 @@ class Simulator():
         self.current_round = 0
         self.gui = gui
         self.processes = {}
+        self.encode = encode        # bool, signifies whether to use reed-solomon encoding or not
+        Simulator_socket.ENCODE = encode
 
     def get_team_size(self, n):
         return 2 ** (n - 1).bit_length()
