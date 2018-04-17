@@ -7,6 +7,7 @@ simulator module
 import socket
 import struct
 import sys
+import traceback
 from datetime import datetime
 import os
 
@@ -69,9 +70,12 @@ class Simulator_socket:
     #    self.max_packet_size = size
 
     def send(self, msg):
+        # traceback.print_stack()
+        print('msg (send): ', msg)
         self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), msg, self.sock.getpeername()))
         if self.ENCODE:
             msg = reed_solomon_codec.encode(msg)
+            # print('encoded message (send): ', msg)
         return self.sock.send(msg)
 
     def recv(self, msg_length):
@@ -84,15 +88,21 @@ class Simulator_socket:
         return msg
 
     def sendall(self, msg):
+        print('msg (sendall): ', msg)
+        # traceback.print_stack()
         self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), msg, self.sock.getpeername()))
         if self.ENCODE:
             msg = reed_solomon_codec.encode(msg)
+            # print('encoded message (sendall): ', msg)
         return self.sock.sendall(msg)
 
     def sendto(self, msg, address):
+        print('msg (sendto): ', msg)
+        # traceback.print_stack()
         self.lg.info("{} - [{}] -> {}".format(self.sock.getsockname(), msg, address))
         if self.ENCODE:
             msg = reed_solomon_codec.encode(msg)
+            # print('encoded message (sendto): ', msg)
         try:
             return self.sock.sendto(msg, socket.MSG_DONTWAIT, address + "_udp")
         except ConnectionRefusedError:
