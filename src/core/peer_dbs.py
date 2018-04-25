@@ -20,7 +20,6 @@ import struct
 import logging
 import random
 
-
 class Peer_DBS(sim):
     # Peers interchange chunks. If a peer A sends MAX_CHUNK_DEBT more
     # chunks to a peer B than viceversa, A stops sending to B.
@@ -541,9 +540,9 @@ class Peer_DBS(sim):
             self.lg.info("{}: lost chunk! {}".format(self.id, chunk_number))
 
             # The chunk "chunk_number" has not been received on time
-            # and it is quite probable that is not going to change in
-            # the near future. The action here is to request the lost
-            # chunk to one or more peers using a [request
+            # and it is quite probable that is not going to change
+            # this in the near future. The action here is to request
+            # the lost chunk to one or more peers using a [request
             # <chunk_number>]. If after this, I will start receiving
             # duplicate chunks, then a [prune <chunk_number>] should
             # be sent to those peers which send duplicates.

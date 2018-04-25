@@ -11,7 +11,7 @@ class Common:
     MAX_CHUNK_LOSS = 16  # In chunks.
 
     # Control messages transmitted between peers (the messages
-    # interchanged with the slitter are excluded in this list):
+    # interchanged with the slitter are excluded of this list):
     HELLO = -1  # Sent to me your chunks (received from the splitter)
     GOODBYE = -2  # See you later.
     REQUEST = -3  # Send to me the chunks originated at ...
