@@ -35,9 +35,12 @@ class Simulator():
     P_WIP = 0.6
     P_MP = 0.2
 
-    def __init__(self, drawing_log, set_of_rules="dbs",
-                 number_of_monitors=1, number_of_peers=9,
-                 number_of_rounds=100, number_of_malicious=0,
+    def __init__(self, drawing_log="/tmp/1", #
+                 set_of_rules="dbs",         #
+                 number_of_monitors=1,       #
+                 number_of_peers=9,          #
+                 number_of_rounds=100,       #
+                 number_of_malicious=0,      #
                  gui=False):
 
         self.lg = logging.getLogger(__name__)
