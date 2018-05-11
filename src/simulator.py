@@ -35,8 +35,10 @@ class Simulator():
     P_WIP = 0.6
     P_MP = 0.2
 
-    def __init__(self, drawing_log, set_of_rules=None, number_of_monitors=0, number_of_peers=0, number_of_rounds=0,
-                 number_of_malicious=0, gui=False):
+    def __init__(self, drawing_log, set_of_rules="dbs",
+                 number_of_monitors=1, number_of_peers=9,
+                 number_of_rounds=100, number_of_malicious=0,
+                 gui=False):
 
         self.lg = logging.getLogger(__name__)
         # self.lg = logging.getLogger(__name__)
@@ -62,6 +64,12 @@ class Simulator():
         self.gui = gui
         self.processes = {}
 
+        self.lg.info("set_of_rules        = \"{}\"".format(self.set_of_rules))
+        self.lg.info("number_of_peers     = {}".format(self.number_of_peers))
+        self.lg.info("number_of_monitors  = {}".format(self.number_of_monitors))
+        self.lg.info("number_of_rounds    = {}".format(self.number_of_rounds))
+        self.lg.info("number_of_malicious = {}".format(self.number_of_malicious))
+        
     def get_team_size(self, n):
         return 2 ** (n - 1).bit_length()
 
