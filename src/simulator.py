@@ -230,6 +230,7 @@ class Simulator():
                 if r <= Simulator.P_IN:
                     self.addPeer()
             m = queue.get()
+            self.lg.info("round = {}/{}".format(self.current_round, self.number_of_rounds))
 
         sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
         sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
