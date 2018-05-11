@@ -30,6 +30,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def __init__(self):
 
+        #logging.basicConfig(format='%(MYVAR)s - %(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
         self.lg = logging.getLogger(__name__)
         # handler = logging.StreamHandler()
@@ -37,7 +38,7 @@ class Splitter_DBS(Simulator_stuff):
         # formatter = logging.Formatter(fmt='splitter_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
         # handler.setFormatter(formatter)
         # self.lg.addHandler(handler)
-        self.lg.setLevel(logging.ERROR)
+        self.lg.setLevel(logging.DEBUG)
         self.lg.critical('Critical messages enabled.')
         self.lg.error('Error messages enabled.')
         self.lg.warning('Warning message enabled.')
@@ -261,6 +262,8 @@ class Splitter_DBS(Simulator_stuff):
             chunk = self.receive_chunk()
 
             # ????
+            self.lg.info("peer_number = {}".format(self.peer_number))
+            print("peer_number = {}".format(self.peer_number))
             if self.peer_number == 0:
                 self.on_round_beginning()  # Remove outgoing peers
 
@@ -292,3 +295,4 @@ class Splitter_DBS(Simulator_stuff):
             # S I M U L A T I O N
             if self.peer_number == 0:
                 self.current_round += 1
+                #self.lg.info("round = {}".format(self.current_round))
