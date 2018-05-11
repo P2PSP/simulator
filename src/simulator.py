@@ -222,7 +222,7 @@ class Simulator():
         m = queue.get()
         while m[0] != "Bye" and self.current_round < self.number_of_rounds:
             if (m[0] == "R"):
-                Simulator.current_round = m[1]
+                self.current_round = m[1]
                 r = np.random.uniform(0, 1)
                 if r <= Simulator.P_IN:
                     self.addPeer()
