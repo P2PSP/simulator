@@ -92,10 +92,9 @@ class Simulator_socket:
         try:
             return self.sock.sendto(msg, socket.MSG_DONTWAIT, address + "_udp")
         except ConnectionRefusedError:
-            self.lg.error(
+            self.lg.warning(
                 "simulator_stuff.sendto: the message {} has not been delivered because the destination {} left the team".format(
                     msg, address))
-            raise
         except KeyboardInterrupt:
             self.lg.warning("simulator_stuff.sendto: send_packet {} to {}".format(msg, address))
             raise
