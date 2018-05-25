@@ -10,15 +10,14 @@ peer_dbs module
 # peers. In a nutshell, if a peer X wants to receive from peer Y
 # the chunks from origin Z, X must request it to Y, explicitally.
 
+import time
+import struct
+import logging
+import random
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Simulator_socket as socket
-# from .simulator_stuff import lg
-import sys
-import struct
-import logging
-import random
 
 
 class Peer_DBS(sim):
@@ -45,7 +44,7 @@ class Peer_DBS(sim):
         # formatter = logging.Formatter(fmt='peer_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
         # handler.setFormatter(formatter)
         # self.lg.addHandler(handler)
-        self.lg.setLevel(logging.DEBUG)
+        self.lg.setLevel(logging.INFO)
         self.lg.critical('Critical messages enabled.')
         self.lg.error('Error messages enabled.')
         self.lg.warning('Warning message enabled.')
@@ -548,9 +547,9 @@ class Peer_DBS(sim):
             self.lg.info("{}: lost chunk! {}".format(self.id, chunk_number))
 
             # The chunk "chunk_number" has not been received on time
-            # and it is quite probable that is not going to change in
-            # the near future. The action here is to request the lost
-            # chunk to one or more peers using a [request
+            # and it is quite probable that is not going to change
+            # this in the near future. The action here is to request
+            # the lost chunk to one or more peers using a [request
             # <chunk_number>]. If after this, I will start receiving
             # duplicate chunks, then a [prune <chunk_number>] should
             # be sent to those peers which send duplicates.
@@ -599,7 +598,10 @@ class Peer_DBS(sim):
         self.lg.info("{}: see you later!".format(self.id))
 
     def run(self):
+        start_time = time.time()
         self.buffer_data()
+        buffering_time = time.time() - start_time
+        self.lg.info("{}: buffering time (main latency)= {}".format(self.id, buffering_time))
         while (self.player_alive or self.waiting_for_goodbye):
             self.keep_the_buffer_full()
             if not self.player_alive:

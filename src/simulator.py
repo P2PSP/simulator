@@ -1,3 +1,5 @@
+##!/home/vruiz/.pyenv/shims/python -i
+
 from core.splitter_dbs import Splitter_DBS
 from core.splitter_strpeds import Splitter_STRPEDS
 from core.splitter_sss import Splitter_SSS
@@ -26,7 +28,6 @@ import platform
 import os
 import logging
 
-
 # import logging as lg
 
 class Simulator():
@@ -34,18 +35,18 @@ class Simulator():
     P_MoP = 0.2
     P_WIP = 0.6
     P_MP = 0.2
-
-    def __init__(self, drawing_log, set_of_rules=None, number_of_monitors=0, number_of_peers=0, number_of_rounds=0,
-                 number_of_malicious=0, gui=False):
-
+    
+    def __init__(self, drawing_log="/tmp/1", #
+                 set_of_rules="dbs",         #
+                 number_of_monitors=1,       #
+                 number_of_peers=9,          #
+                 number_of_rounds=100,       #
+                 number_of_malicious=0,      #
+                 gui=False):
+        
+        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.lg = logging.getLogger(__name__)
-        # self.lg = logging.getLogger(__name__)
-        # handler = logging.StreamHandler()
-        # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
-        # formatter = logging.Formatter(fmt='peer_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
-        # handler.setFormatter(formatter)
-        # self.lg.addHandler(handler)
-        self.lg.setLevel(logging.ERROR)
+        self.lg.setLevel(logging.DEBUG)
         self.lg.critical('Critical messages enabled.')
         self.lg.error('Error messages enabled.')
         self.lg.warning('Warning message enabled.')
@@ -62,6 +63,12 @@ class Simulator():
         self.gui = gui
         self.processes = {}
 
+        self.lg.info("set_of_rules        = \"{}\"".format(self.set_of_rules))
+        self.lg.info("number_of_peers     = {}".format(self.number_of_peers))
+        self.lg.info("number_of_monitors  = {}".format(self.number_of_monitors))
+        self.lg.info("number_of_rounds    = {}".format(self.number_of_rounds))
+        self.lg.info("number_of_malicious = {}".format(self.number_of_malicious))
+        
     def get_team_size(self, n):
         return 2 ** (n - 1).bit_length()
 
@@ -166,6 +173,7 @@ class Simulator():
         drawing_log_file.close()
 
     def run(self):
+        #import pdb; pdb.set_trace()
         self.lg.info("simulator: platform.system() = {}".format(platform.system()))
         # if __debug__:
         #     if platform.system() == 'Linux':
@@ -227,6 +235,9 @@ class Simulator():
                 if r <= Simulator.P_IN:
                     self.addPeer()
             m = queue.get()
+            #import pdb; pdb.set_trace()
+            self.lg.info("round = {}/{}".format(self.current_round, self.number_of_rounds))
+            #print("------------------> round = {}/{} <-----------------------".format(self.current_round, self.number_of_rounds))
 
         sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
         sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
@@ -267,7 +278,8 @@ class Simulator():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    #import pdb; pdb.set_trace()
+    #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     # lg.critical('Critical messages enabled.')
     # lg.error('Error messages enabled.')
     # lg.warning('Warning message enabled.')
