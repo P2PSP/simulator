@@ -86,8 +86,7 @@ class Peer_DBS(sim):
         # from origin (endpoint) Y will be forwarded towards
         # (index) Z.
         self.forward = {}
-        # At this moment, I don't know any other peer.
-        self.forward[self.id] = []
+
         self.neighbor = None
 
         # List of pending chunks (numbers) to be sent to peers. Por
@@ -108,7 +107,7 @@ class Peer_DBS(sim):
         self.received_chunks = 0
 
         # The longest message expected to be received.
-        self.max_msg_length = struct.calcsize("is6s")
+        self.max_msg_length = struct.calcsize("isli")
 
         self.number_of_chunks_consumed = 0
 
@@ -119,7 +118,7 @@ class Peer_DBS(sim):
         self.chunks_before_leave = 0
 
     def listen_to_the_team(self):
-        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         # self.team_socket.set_id(self.id) # ojo, simulation dependent
         # self.team_socket.set_max_packet_size(["isi", "i", "ii"])
         # "chunk_index, chunk, origin", "[hello]/[goodbye]",  "[request <chunk>]/[prune <chunk>]"
@@ -173,10 +172,11 @@ class Peer_DBS(sim):
 
     def receive_the_list_of_peers(self):
         peers_pending_of_reception = self.number_of_peers
-        msg_length = struct.calcsize("6s")
+        msg_length = struct.calcsize("li")
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
-            peer = str(struct.unpack("6s", msg)[0].decode("utf-8").replace("\x00", ""))
+            peer = struct.unpack("li", msg)
+            peer = (socket.int2ip(peer[0]),peer[1])
             self.say_hello(peer)
             peers_pending_of_reception -= 1
 
@@ -189,9 +189,15 @@ class Peer_DBS(sim):
             # the splitter, if necessary.
 
     def connect_to_the_splitter(self):
-        self.splitter_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
-        self.splitter_socket.bind(self.id)
+        host = socket.gethostbyname(socket.gethostname())
+        self.splitter_socket.bind((host,0))
+
+         # At this moment, I don't know any other peer.
+        self.id = self.splitter_socket.getsockname()
+        self.forward[self.id] = []
+
         try:
             self.splitter_socket.connect(self.splitter)
         except ConnectionRefusedError as e:
@@ -213,10 +219,11 @@ class Peer_DBS(sim):
         chunk_number = chunk_number % self.buffer_size
         # print(".............. {}".format(type(self.chunks[chunk_number][self.ORIGIN])))
         # print(".................{}".format(peer))
-        msg = struct.pack("is6s", \
+        msg = struct.pack("isli", \
                           self.chunks[chunk_number][self.CHUNK_NUMBER], \
                           self.chunks[chunk_number][self.CHUNK], \
-                          bytes(self.chunks[chunk_number][self.ORIGIN], 'utf-8'))
+                          socket.ip2int(self.chunks[chunk_number][self.ORIGIN][0]), \
+                          self.chunks[chunk_number][self.ORIGIN][1])
         self.team_socket.sendto(msg, peer)
         self.sendto_counter += 1
 
@@ -268,7 +275,7 @@ class Peer_DBS(sim):
                 buf = ""
                 for i in self.chunks:
                     if i[self.CHUNK_NUMBER] != -1:
-                        buf += i[self.ORIGIN][-1:]
+                        buf += ':'.join(map(str,i[self.ORIGIN]))
                     else:
                         buf += "."
                 self.lg.info("{}: buffer={}".format(self.id, buf))
@@ -279,10 +286,10 @@ class Peer_DBS(sim):
                 self.sender_of_chunks = []
                 for i in self.chunks:
                     if i[self.CHUNK_NUMBER] != -1:
-                        self.sender_of_chunks.append(i[self.ORIGIN])
+                        self.sender_of_chunks.append(','.join(map(str,i[self.ORIGIN])))
                     else:
                         self.sender_of_chunks.append("")
-                sim.FEEDBACK["DRAW"].put(("B", self.id, ":".join(self.sender_of_chunks)))
+                sim.FEEDBACK["DRAW"].put(("B", ','.join(map(str,self.id)), ":".join(self.sender_of_chunks)))
 
                 # ./test.me 2>&1 | grep inserted | grep chunk
                 if sender != self.splitter:
@@ -404,8 +411,8 @@ class Peer_DBS(sim):
                         self.debt[sender] = 0
 
                         # S I M U L A T I O N
-                        sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
-                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
+                        sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
+                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
 
                 else:
 
@@ -463,8 +470,8 @@ class Peer_DBS(sim):
                     self.neighbor = sender
 
                     # S I M U L A T I O N
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", sender))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", self.id, sender))
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
 
             elif chunk_number == self.GOODBYE:
 
@@ -495,10 +502,10 @@ class Peer_DBS(sim):
         msg, sender = self.team_socket.recvfrom(self.max_msg_length)
         # self.lg.info("{}: received {} from {} with length {}".format(self,id, msg, sender, len(msg)))
         if len(msg) == self.max_msg_length:
-            message = struct.unpack("is6s", msg)  # Chunk [number, data, origin]
+            message = struct.unpack("isli", msg)  # Chunk [number, data, origin]
             message = message[self.CHUNK_NUMBER], \
                       message[self.CHUNK], \
-                      str(message[self.ORIGIN].decode("utf-8").replace("\x00", ""))
+                      (socket.int2ip(message[self.ORIGIN]),message[self.ORIGIN+1])
         elif len(msg) == struct.calcsize("ii"):
             message = struct.unpack("ii", msg)  # Control message [control, parameter]
         else:
@@ -605,6 +612,10 @@ class Peer_DBS(sim):
     def am_i_a_monitor(self):
         return self.number_of_peers < self.number_of_monitors
 
+    def set_id(self):
+        # At this moment, I don't know any other peer.
+        self.id = self.splitter_socket.getsockname()
+        self.forward[self.id] = []
 # Old stuff:
 
 # During their life in the team (for example, when a peer refuse to

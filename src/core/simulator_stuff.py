@@ -29,6 +29,7 @@ class Simulator_stuff:
 
 
 class Simulator_socket:
+    AF_INET = socket.AF_INET
     AF_UNIX = socket.AF_UNIX
     SOCK_DGRAM = socket.SOCK_DGRAM
     SOCK_STREAM = socket.SOCK_STREAM
@@ -90,7 +91,7 @@ class Simulator_socket:
                                               msg, \
                                               address))
         try:
-            return self.sock.sendto(msg, socket.MSG_DONTWAIT, address + "_udp")
+            return self.sock.sendto(msg, socket.MSG_DONTWAIT, address)
         except ConnectionRefusedError:
             self.lg.warning(
                 "simulator_stuff.sendto: the message {} has not been delivered because the destination {} left the team".format(
@@ -99,14 +100,13 @@ class Simulator_socket:
             self.lg.warning("simulator_stuff.sendto: send_packet {} to {}".format(msg, address))
             raise
         except FileNotFoundError:
-            self.lg.error("simulator_stuff.sendto: {}".format(address + "_udp"))
+            self.lg.error("simulator_stuff.sendto: {}".format(address))
             raise
         except BlockingIOError:
             raise
 
     def recvfrom(self, max_msg_length):
         msg, sender = self.sock.recvfrom(max_msg_length)
-        sender = sender.replace("_tcp", "").replace("_udp", "")
         self.lg.info("{} <- [{}] - {}".format(self.sock.getsockname(), \
                                               msg, \
                                               sender))
@@ -114,26 +114,26 @@ class Simulator_socket:
 
     def connect(self, address):
         self.lg.info("simulator_stuff.connect({}): {}".format(address, self.sock))
-        return self.sock.connect(address + "_tcp")
+        return self.sock.connect(address)
 
     def accept(self):
         self.lg.info("simulator_stuff.accept(): {}".format(self.sock))
         peer_serve_socket, peer = self.sock.accept()
-        return (peer_serve_socket, peer.replace("_tcp", "").replace("udp", ""))
+        return (peer_serve_socket, peer)
 
     def bind(self, address):
         self.lg.info("simulator_stuff.bind({}): {}".format(address, self.sock))
         if self.type == self.SOCK_STREAM:
             try:
-                return self.sock.bind(address + "_tcp")
+                return self.sock.bind(address)
             except:
-                self.lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address + "_tcp"))
+                self.lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address))
                 raise
         else:
             try:
-                return self.sock.bind(address + "_udp")
+                return self.sock.bind(address)
             except:
-                self.lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address + "_udp"))
+                self.lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address))
                 raise
 
     def listen(self, n):
@@ -147,3 +147,19 @@ class Simulator_socket:
     def settimeout(self, value):
         self.lg.info("simulator_stuff.settimeout({}): {}".format(value, self.sock))
         return self.sock.settimeout(value)
+
+    def gethostbyname(name):
+        return socket.gethostbyname(name)
+
+    def gethostname():
+        return socket.gethostname()
+
+    def getsockname(self):
+        return self.sock.getsockname()
+
+    def ip2int(addr):                                                               
+        return struct.unpack("!I", socket.inet_aton(addr))[0]                       
+
+
+    def int2ip(addr):                                                               
+        return socket.inet_ntoa(struct.pack("!I", addr))

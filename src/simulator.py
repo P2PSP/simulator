@@ -80,7 +80,7 @@ class Simulator():
         else:
             return team_size
 
-    def run_a_splitter(self):
+    def run_a_splitter(self,splitter_id):
         Common.BUFFER_SIZE = self.get_buffer_size()
         if self.set_of_rules == "dbs":
             splitter = Splitter_DBS()
@@ -90,6 +90,9 @@ class Simulator():
             splitter = Splitter_SSS()
 
         # splitter.start()
+        splitter.setup_peer_connection_socket()
+        splitter.setup_team_socket()
+        splitter_id['address'] = splitter.get_id()
         splitter.run()
         # while splitter.alive:
         #    time.sleep(1)
@@ -126,6 +129,7 @@ class Simulator():
 
         peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
+        # peer.set_id()
         peer.connect_to_the_splitter()
         peer.receive_buffer_size()
         peer.receive_the_number_of_peers()
@@ -204,16 +208,20 @@ class Simulator():
         sim.RECV_LIST = manager.dict()
         # sim.LOCK = Semaphore()
 
+        # share splitter (ip address,port) with peers
+        self.splitter_id = manager.dict()
+
         # run splitter
-        p = Process(target=self.run_a_splitter)
+        p = Process(target=self.run_a_splitter,args=[self.splitter_id])
         p.start()
         self.processes["S"] = p.pid
         self.attended_monitors = 0
         self.attended_peers = 0
         self.attended_mps = 0
-
+        
+        time.sleep(1)
         # run a monitor
-        p = Process(target=self.run_a_peer, args=["S", "monitor", "M" + str(self.attended_monitors + 0), True])
+        p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "monitor", "M" + str(self.attended_monitors + 0), True])
         p.start()
         self.processes["M" + str(self.attended_monitors + 1)] = p.pid
         self.attended_monitors += 1
@@ -251,19 +259,19 @@ class Simulator():
         option = np.where(np.random.multinomial(1, probabilities))[0][0]
         if option == 0:
             if self.attended_monitors < self.number_of_monitors:
-                p = Process(target=self.run_a_peer, args=["S", "monitor", "M" + str(self.attended_monitors + 0)])
+                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "monitor", "M" + str(self.attended_monitors + 0)])
                 p.start()
                 self.processes["M" + str(self.attended_monitors + 1)] = p.pid
                 self.attended_monitors += 1
         elif option == 1:
             if self.attended_peers < self.number_of_peers:
-                p = Process(target=self.run_a_peer, args=["S", "peer", "P" + str(self.attended_peers + 1)])
+                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "peer", "P" + str(self.attended_peers + 1)])
                 p.start()
                 self.processes["P" + str(self.attended_peers + 1)] = p.pid
                 self.attended_peers += 1
         elif option == 2:
             if self.attended_mps < self.number_of_malicious:
-                p = Process(target=self.run_a_peer, args=["S", "malicious", "MP" + str(self.attended_mps + 1)])
+                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "malicious", "MP" + str(self.attended_mps + 1)])
                 p.start()
                 self.processes["MP" + str(self.attended_mps + 1)] = p.pid
                 self.attended_mps += 1
