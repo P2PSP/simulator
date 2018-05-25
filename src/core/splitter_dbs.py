@@ -62,20 +62,22 @@ class Splitter_DBS(Simulator_stuff):
         self.lg.info("{}: initialized".format(self.id))
 
     def setup_peer_connection_socket(self):
-        self.peer_connection_socket = socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.peer_connection_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.peer_connection_socket.set_id(self.id)
-        self.peer_connection_socket.bind(self.id)
+        host = socket.gethostbyname(socket.gethostname())
+        self.peer_connection_socket.bind((host,0))
+        self.id = self.peer_connection_socket.getsockname()
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
-        self.team_socket = socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         # self.team_socket.set_id(self.id)
         self.team_socket.bind(self.id)
         # self.team_socket.set_max_packet_size(struct.calcsize("is3s")) # Chunck index, chunk, origin
 
     def send_chunk(self, chunk_msg, peer):
         # self.lg.info("splitter_dbs.send_chunk({}, {})".format(chunk_msg, peer))
-        msg = struct.pack("is6s", *chunk_msg)
+        msg = struct.pack("isli", *chunk_msg)
         # msg = struct.pack("is3s", chunk_msg[0], bytes(chunk_msg[1]), chunk_msg[2])
         self.team_socket.sendto(msg, peer)
 
@@ -114,7 +116,7 @@ class Splitter_DBS(Simulator_stuff):
         self.insert_peer(incoming_peer)
 
         # S I M U L A T I O N
-        Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
+        Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,incoming_peer))))
 
         if (incoming_peer[0] == "M"):
             self.number_of_monitors += 1
@@ -142,7 +144,7 @@ class Splitter_DBS(Simulator_stuff):
         self.lg.info("{}: sending peer list = {}".format(self.id, self.peer_list))
         for p in self.peer_list:
             # peer_serve_socket.sendall(p, "6s")
-            msg = struct.pack("6s", bytes(p, "utf-8"))
+            msg = struct.pack("li",socket.ip2int(p[0]),p[1])
             peer_serve_socket.sendall(msg)
 
     def insert_peer(self, peer):
@@ -244,9 +246,10 @@ class Splitter_DBS(Simulator_stuff):
     def start(self):
         Thread(target=self.run).start()
 
+    def get_id(self):
+        return self.id
+
     def run(self):
-        self.setup_peer_connection_socket()
-        self.setup_team_socket()
 
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
@@ -277,7 +280,7 @@ class Splitter_DBS(Simulator_stuff):
             # except IndexError:
             # lg.error("peer_list={} peer_number={}".format(self.peer_list, self.peer_number))
             # raise
-            message = (self.chunk_number, chunk, bytes(peer, 'utf-8'))
+            message = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
             self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
             #            try:
             self.send_chunk(message, peer)
