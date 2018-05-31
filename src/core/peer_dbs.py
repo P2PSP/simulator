@@ -18,7 +18,7 @@ from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Simulator_socket as socket
-
+from .simulator_stuff import hash
 
 class Peer_DBS(sim):
     # Peers interchange chunks. If a peer A sends MAX_CHUNK_DEBT more
@@ -275,7 +275,7 @@ class Peer_DBS(sim):
                 buf = ""
                 for i in self.chunks:
                     if i[self.CHUNK_NUMBER] != -1:
-                        buf += ':'.join(map(str,i[self.ORIGIN]))
+                        buf += hash(i[self.ORIGIN])
                     else:
                         buf += "."
                 self.lg.info("{}: buffer={}".format(self.id, buf))
