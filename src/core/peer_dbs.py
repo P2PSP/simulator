@@ -337,8 +337,8 @@ class Peer_DBS(sim):
                 # be selected to sent first to those peers that we
                 # want to forward us chunks not originated in them.
                 if self.neighbor in self.pending:
-                    for chunk_number in self.pending[self.neighbor]:
-
+                    for chunk_number in self.pending[self.neighbor][:]:
+                        
                         # Send the chunk C to the neighbor.
                         self.send_chunk(chunk_number, self.neighbor)
 
