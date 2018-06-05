@@ -407,9 +407,6 @@ class Peer_DBS(sim):
                         self.forward[origin].append(sender)
                         self.lg.info("{}: chunks from {} will be sent to {}".format(self.id, origin, sender))
 
-                        # Debt counter of sender.
-                        self.debt[sender] = 0
-
                         # S I M U L A T I O N
                         sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
                         sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
