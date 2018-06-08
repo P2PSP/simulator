@@ -337,8 +337,8 @@ class Peer_DBS(sim):
                 # be selected to sent first to those peers that we
                 # want to forward us chunks not originated in them.
                 if self.neighbor in self.pending:
-                    for chunk_number in self.pending[self.neighbor]:
-
+                    for chunk_number in self.pending[self.neighbor][:]:
+                        
                         # Send the chunk C to the neighbor.
                         self.send_chunk(chunk_number, self.neighbor)
 
@@ -406,9 +406,6 @@ class Peer_DBS(sim):
                         # Insert sender in the forwarding table.
                         self.forward[origin].append(sender)
                         self.lg.info("{}: chunks from {} will be sent to {}".format(self.id, origin, sender))
-
-                        # Debt counter of sender.
-                        self.debt[sender] = 0
 
                         # S I M U L A T I O N
                         sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
