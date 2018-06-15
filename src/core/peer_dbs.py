@@ -55,6 +55,8 @@ class Peer_DBS(sim):
         # can be a simple string or an endpoint.
         self.id = id
 
+        self._id = id
+
         # Chunk currently played.
         self.played_chunk = 0
 
@@ -188,6 +190,16 @@ class Peer_DBS(sim):
             # messages. Randomization could be produced at this instant in
             # the splitter, if necessary.
 
+    # Only for simulation purpose
+    def send_peer_type(self):
+        if(self._id[0:2]=='MP'):
+            msg = struct.pack('H',2)    # Malicious Peer
+        elif(self._id[0]=='M'):
+            msg = struct.pack('H',0)    # Monitor Peer
+        else:
+            msg = struct.pack('H',1)    # Regular Peer
+        self.splitter_socket.send(msg)
+
     def connect_to_the_splitter(self):
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
@@ -251,7 +263,7 @@ class Peer_DBS(sim):
             if sender == self.splitter:
                 if self.played > 0 and self.played >= self.number_of_peers:
                     clr = self.losses / (self.played + self.losses)
-                    sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))
+                    sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), clr))
                     self.losses = 0
                     self.played = 0
 

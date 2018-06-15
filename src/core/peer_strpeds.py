@@ -25,7 +25,7 @@ class Peer_STRPEDS(Peer_DBS):
         self.bad_peers.append(sender)
         if self.id in self.forward and sender in self.forward[self.id]:
             self.forward[self.id].remove(sender)
-        sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", self.id, sender))
+        sim.FEEDBACK["DRAW"].put(("O", "Edge", "OUT", ','.join(map(str,self.id)), ','.join(map(str,sender))))
 
     def check_message(self, message, sender):
         if not self.is_a_control_message(message):

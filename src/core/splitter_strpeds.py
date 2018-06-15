@@ -52,16 +52,20 @@ class Splitter_STRPEDS(Splitter_DBS):
 
         self.insert_peer(incoming_peer)
         # ------------------
-        sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", incoming_peer))
-        # ------------------
         # ---- Only for simulation purposes. Unknown in real implementation -----
-        if (incoming_peer[0:2] == "MP"):
+        msg = serve_socket.recv(struct.calcsize('H'))
+        ptype = struct.unpack('H',msg)
+        ptype = ptype[0]
+        if (ptype == 2):    #Malicious Peer
             self.number_of_malicious += 1
-        # -----------------------------------------------------------------------
-        elif (incoming_peer[0] == "M"):
+            sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"MP"))
+        elif (ptype == 0):  #Monitor Peer
             self.number_of_monitors += 1
+            sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
             self.trusted_peers.append(incoming_peer)
 
+        # ------------------
+        sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,incoming_peer))))
         print("NUMBER OF MONITORS", self.number_of_monitors)
         serve_socket.close()
 

@@ -16,11 +16,15 @@ class Peer_Malicious(Peer_STRPEDS):
         self.chunks_sent_to_main_target = 0
         self.persistent_attack = True
         self.attacked_count = 0
-        sim.SHARED_LIST["malicious"].append(self.id)
+        # sim.SHARED_LIST["malicious"].append(self.id)
         print("Peer Malicious initialized")
+
+    def add_to_malicious_list(self):
+        sim.SHARED_LIST["malicious"].append(self.id)
 
     def receive_the_list_of_peers(self):
         Peer_STRPEDS.receive_the_list_of_peers(self)
+        self.add_to_malicious_list()
         self.first_main_target()
 
     def first_main_target(self):
