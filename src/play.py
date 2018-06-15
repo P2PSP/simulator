@@ -12,6 +12,7 @@ class Play():
     
     def __init__(self, drawing_log):
         self.drawing_log = drawing_log
+        self.Type = {}
 
     def get_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -34,14 +35,14 @@ class Play():
         # self.lg.info("Update net", node, edge, direction)
         if node:
             self.net_labels[node] = node
-            if node[0] == "M" and node[1] == "P":
+            if node in self.Type and self.Type[node]=="MP":
                 if direction == "IN":
                     self.G.add_node(node, behaviour='malicious')
                 else:
                     self.lg.info("simulator: {} removed from graph (MP)".format(node))
                     self.G.remove_node(node)
                     del self.net_labels[node]
-            elif node[0] == "M":
+            elif node in self.Type and self.Type[node]== "M":
                 if direction == "IN":
                     self.G.add_node(node, behaviour='monitor')
                 else:
@@ -163,7 +164,7 @@ class Play():
         self.clr_figure.canvas.draw()
 
     def update_clrs(self, peer, clr):
-        if peer[:2] != "MP":
+        if peer in self.Type and self.Type[peer] != "MP":
             self.clrs_per_round.append(clr)
 
     def update_clr_plot(self, n_round):
@@ -200,6 +201,8 @@ class Play():
         line = drawing_log_file.readline()
         while line != "Bye":
             m = line.strip().split(";", 4)
+            if m[0]=="MAP":
+                self.Type[m[1]] = m[2] 
             if m[0] == "O":
                 if m[1] == "Node":
                     if m[2] == "IN":
