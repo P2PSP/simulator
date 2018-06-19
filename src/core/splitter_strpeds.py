@@ -144,8 +144,8 @@ class Splitter_STRPEDS(Splitter_DBS):
                           msg[1], \
                           (socket.int2ip(msg[2]),msg[3])
                 if (message[1] == b'S'):
-                    # if __debug__:
-                    print("Bad complaint received from", sender)
+                    if __debug__:
+                        print("Bad complaint received from", sender)
                     if sender in self.trusted_peers:
                         if __debug__:
                             print("Complaint about bad peers from", sender, "bad list", message[2])
