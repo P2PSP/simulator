@@ -86,7 +86,7 @@ class Splitter_DBS(Simulator_stuff):
         # Simulator_stuff.LOCK.acquire(True,0.1)
         time.sleep(0.05)  # Simulates bit-rate control
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
-        return b"C"
+        return b'C'
 
     def handle_arrivals(self):
         while self.alive:

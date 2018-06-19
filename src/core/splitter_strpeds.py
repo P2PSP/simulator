@@ -139,12 +139,13 @@ class Splitter_STRPEDS(Splitter_DBS):
         while self.alive:
             msg, sender = self.team_socket.recvfrom(struct.calcsize("isli"))
             if len(msg) == struct.calcsize('isli'):
+                message = struct.unpack('isli',msg)
                 message = msg[0], \
                           msg[1], \
                           (socket.int2ip(msg[2]),msg[3])
-                if (message[1] == 'S'):
-                    if __debug__:
-                        print("Bad complaint received from", sender)
+                if (message[1] == b'S'):
+                    # if __debug__:
+                    print("Bad complaint received from", sender)
                     if sender in self.trusted_peers:
                         if __debug__:
                             print("Complaint about bad peers from", sender, "bad list", message[2])

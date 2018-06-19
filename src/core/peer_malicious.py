@@ -55,7 +55,7 @@ class Peer_Malicious(Peer_STRPEDS):
         sim.SHARED_LIST["regular"].append(self.main_target)
 
     def get_poisoned_chunk(self, chunk):
-        return (chunk[0], b"B", socket.ip2int(chunk[2][0]),chunk[2][1])
+        return (chunk[0], b'B', socket.ip2int(chunk[2][0]),chunk[2][1])
 
     def send_chunk(self, chunk_number,peer):
         chunk_number = chunk_number % self.buffer_size

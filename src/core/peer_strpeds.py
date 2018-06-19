@@ -29,7 +29,7 @@ class Peer_STRPEDS(Peer_DBS):
 
     def check_message(self, message, sender):
         if not self.is_a_control_message(message):
-            if message[1] == b"C":
+            if message[1] == b'C':
                 return True
             else:  # (L)ost or (B)roken
                 return False
@@ -55,7 +55,7 @@ class Peer_STRPEDS(Peer_DBS):
             return (-1,-1)
 
         if self.check_message(message, sender):
-            if self.is_a_control_message(message) and len(message)>1 and message[1] == 'S':
+            if self.is_a_control_message(message) and len(message)>1 and message[1] == b'S':
                 return self.handle_bad_peers_request()
             else:
                 return Peer_DBS.process_message(self, message, sender)
