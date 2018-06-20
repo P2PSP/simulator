@@ -153,7 +153,6 @@ class Splitter_STRPEDS(Splitter_DBS):
                         self.process_bad_peers_message(message, sender)
 
             elif(len(msg) == struct.calcsize('ii')):
-                message = struct.unpack('ii',msg)
                 lost_chunk_number = struct.unpack("ii", msg)[1]
                 self.process_lost_chunk(lost_chunk_number, sender)
 
