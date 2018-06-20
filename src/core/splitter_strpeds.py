@@ -140,9 +140,9 @@ class Splitter_STRPEDS(Splitter_DBS):
             msg, sender = self.team_socket.recvfrom(struct.calcsize("isli"))
             if len(msg) == struct.calcsize('isli'):
                 message = struct.unpack('isli',msg)
-                message = msg[0], \
-                          msg[1], \
-                          (socket.int2ip(msg[2]),msg[3])
+                message = message[0], \
+                          message[1], \
+                          (socket.int2ip(message[2]),message[3])
                 if (message[1] == b'S'):
                     if __debug__:
                         print("Bad complaint received from", sender)

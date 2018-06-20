@@ -193,7 +193,7 @@ class Splitter_DBS(Simulator_stuff):
         else:
             # self.peer_number -= 1
             # S I M U L A T I O N
-            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.joint(map(str,peer))))
+            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,peer))))
             if peer[0] == "M" and peer[1] != "P":
                 self.number_of_monitors -= 1
 
