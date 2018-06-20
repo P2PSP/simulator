@@ -4,9 +4,10 @@ peer_malicious module
 """
 
 from .simulator_stuff import Simulator_stuff as sim
+from .simulator_stuff import Simulator_socket as socket
 from .peer_strpeds import Peer_STRPEDS
 import random
-
+import struct
 
 class Peer_Malicious(Peer_STRPEDS):
     def __init__(self, id):
@@ -15,11 +16,15 @@ class Peer_Malicious(Peer_STRPEDS):
         self.chunks_sent_to_main_target = 0
         self.persistent_attack = True
         self.attacked_count = 0
-        sim.SHARED_LIST["malicious"].append(self.id)
+        # sim.SHARED_LIST["malicious"].append(self.id)
         print("Peer Malicious initialized")
+
+    def add_to_malicious_list(self):
+        sim.SHARED_LIST["malicious"].append(self.id)
 
     def receive_the_list_of_peers(self):
         Peer_STRPEDS.receive_the_list_of_peers(self)
+        self.add_to_malicious_list()
         self.first_main_target()
 
     def first_main_target(self):
@@ -28,10 +33,11 @@ class Peer_Malicious(Peer_STRPEDS):
     def choose_main_target(self):
         target = None
         malicious_list = sim.SHARED_LIST["malicious"]
-        extra_attacks = len(set(self.peer_list) & set(sim.SHARED_LIST["regular"]))
-        if (self.attacked_count + extra_attacks) < (len(self.peer_list) // 2 - len(malicious_list)):
+        peer_list = self.forward[self.id]
+        extra_attacks = len(set(peer_list) & set(sim.SHARED_LIST["regular"]))
+        if (self.attacked_count + extra_attacks) < (len(peer_list) // 2 - len(malicious_list)):
             attacked_list = sim.SHARED_LIST["attacked"]
-            availables = list(set(self.peer_list) - set(attacked_list) - set(malicious_list))
+            availables = list(set(peer_list) - set(attacked_list) - set(malicious_list))
 
             if availables:
                 target = random.choice(availables)
@@ -49,15 +55,18 @@ class Peer_Malicious(Peer_STRPEDS):
         sim.SHARED_LIST["regular"].append(self.main_target)
 
     def get_poisoned_chunk(self, chunk):
-        return (chunk[0], "B", chunk[2])
+        return (chunk[0], b'B', socket.ip2int(chunk[2][0]),chunk[2][1])
 
-    def send_chunk(self, peer):
-        poisoned_chunk = self.get_poisoned_chunk(self.receive_and_feed_previous)
+    def send_chunk(self, chunk_number,peer):
+        chunk_number = chunk_number % self.buffer_size
+        chunk = self.chunks[chunk_number]
+        poisoned_chunk = self.get_poisoned_chunk(chunk)
+        msg = struct.pack('isli',*poisoned_chunk)
 
         if self.persistent_attack:
             if peer == self.main_target:
                 if self.chunks_sent_to_main_target < self.MPTR:
-                    self.team_socket.sendto("isi", poisoned_chunk, peer)
+                    self.team_socket.sendto(msg, peer)
                     self.sendto_counter += 1
                     self.chunks_sent_to_main_target += 1
                     if __debug__:
@@ -65,20 +74,19 @@ class Peer_Malicious(Peer_STRPEDS):
                               self.chunks_sent_to_main_target)
                 else:
                     self.all_attack()
-                    self.team_socket.sendto("isi", poisoned_chunk, peer)
+                    self.team_socket.sendto(msg, peer)
                     self.sendto_counter += 1
                     self.main_target = self.choose_main_target()
                     if __debug__:
                         print(self.id, "Attacking Main target", peer, ". Replaced by", self.main_target)
             else:
                 if peer in sim.SHARED_LIST["regular"]:
-                    self.team_socket.sendto("isi", poisoned_chunk, peer)
+                    self.team_socket.sendto(msg, peer)
                     self.sendto_counter += 1
                     if __debug__:
                         print(self.id, "All Attack:", peer)
                 else:
-                    self.team_socket.sendto("isi", self.receive_and_feed_previous, peer)
-                    self.sendto_counter += 1
+                    Peer_STRPEDS.send_chunk(self,chunk_number,peer)
                     if __debug__:
                         print(self.id, "No attack", peer)
 
@@ -86,5 +94,4 @@ class Peer_Malicious(Peer_STRPEDS):
                 self.main_target = self.choose_main_target()
 
         else:
-            self.team_socket.sendto("isi", self.receive_and_feed_previous, peer)
-            self.sendto_counter += 1
+            Peer_STRPEDS.send_chunk(self,chunk_number,peer)

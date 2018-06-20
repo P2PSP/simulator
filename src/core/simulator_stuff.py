@@ -165,10 +165,10 @@ class Simulator_socket:
         return socket.inet_ntoa(struct.pack("!I", addr))
 
 def f(x):
-    return (x*x)%127
+    return (x*x)
 
 def g(x):
-    return (x*x*x)%127
+    return (x*x*x)
 
 def hash(addr):
     if addr is None or len(addr)<2:
@@ -177,7 +177,7 @@ def hash(addr):
     bk = [int(x) for x in blk]
     sh = bk[0]^f(bk[1])
     sh = sh^g(bk[2])
-    sh = (sh + f(bk[3]))%127
-    sh = (sh + g(addr[1]))%127 
+    sh = (sh + f(bk[3]))
+    sh = (sh + g(addr[1]))
     return chr(33+sh%94)
 

@@ -55,6 +55,8 @@ class Peer_DBS(sim):
         # can be a simple string or an endpoint.
         self.id = id
 
+        self._id = id
+
         # Chunk currently played.
         self.played_chunk = 0
 
@@ -188,6 +190,16 @@ class Peer_DBS(sim):
             # messages. Randomization could be produced at this instant in
             # the splitter, if necessary.
 
+    # Only for simulation purpose
+    def send_peer_type(self):
+        if(self._id[0:2]=='MP'):
+            msg = struct.pack('H',2)    # Malicious Peer
+        elif(self._id[0]=='M'):
+            msg = struct.pack('H',0)    # Monitor Peer
+        else:
+            msg = struct.pack('H',1)    # Regular Peer
+        self.splitter_socket.send(msg)
+
     def connect_to_the_splitter(self):
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
@@ -251,7 +263,7 @@ class Peer_DBS(sim):
             if sender == self.splitter:
                 if self.played > 0 and self.played >= self.number_of_peers:
                     clr = self.losses / (self.played + self.losses)
-                    sim.FEEDBACK["DRAW"].put(("CLR", self.id, clr))
+                    sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), clr))
                     self.losses = 0
                     self.played = 0
 
@@ -511,7 +523,7 @@ class Peer_DBS(sim):
 
     def buffer_data(self):
         for i in range(self.buffer_size):
-            self.chunks.append((-1, b"L", None))  # L == Lost ??
+            self.chunks.append((-1, b'L', None))  # L == Lost ??
 
         # Receive a chunk.
         (chunk_number, sender) = self.process_next_message()
@@ -537,7 +549,7 @@ class Peer_DBS(sim):
         self.lg.info("{}: [request {}] sent to {}".format(self.id, chunk_number, peer))
 
     def play_chunk(self, chunk_number):
-        if self.chunks[chunk_number % self.buffer_size][self.CHUNK] == b"C":
+        if self.chunks[chunk_number % self.buffer_size][self.CHUNK] == b'C':
             self.played += 1
         else:
             self.losses += 1
@@ -569,7 +581,7 @@ class Peer_DBS(sim):
     def play_next_chunks(self, last_received_chunk):
         for i in range(last_received_chunk - self.prev_received_chunk):
             self.player_alive = self.play_chunk(self.played_chunk)
-            self.chunks[self.played_chunk % self.buffer_size] = (-1, b"L", None)
+            self.chunks[self.played_chunk % self.buffer_size] = (-1, b'L', None)
             self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk

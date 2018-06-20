@@ -86,7 +86,7 @@ class Splitter_DBS(Simulator_stuff):
         # Simulator_stuff.LOCK.acquire(True,0.1)
         time.sleep(0.05)  # Simulates bit-rate control
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
-        return b"C"
+        return b'C'
 
     def handle_arrivals(self):
         while self.alive:
@@ -115,12 +115,17 @@ class Splitter_DBS(Simulator_stuff):
         self.lg.info("{}: received {} from {}".format(self.id, message, incoming_peer))
 
         self.insert_peer(incoming_peer)
-
+        # ------------------
+        # ---- Only for simulation purposes. Unknown in real implementation -----
+        msg = server_socket.recv(struct.calcsize('H'))
+        ptype = struct.unpack('H',msg)
+        ptype = ptype[0]
+        if (ptype == 0):
+            self.number_of_monitors += 1
+            sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
+        
         # S I M U L A T I O N
         Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,incoming_peer))))
-
-        if (incoming_peer[0] == "M"):
-            self.number_of_monitors += 1
         self.lg.info("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
 
         serve_socket.close()
@@ -188,7 +193,7 @@ class Splitter_DBS(Simulator_stuff):
         else:
             # self.peer_number -= 1
             # S I M U L A T I O N
-            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", peer))
+            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,peer))))
             if peer[0] == "M" and peer[1] != "P":
                 self.number_of_monitors -= 1
 

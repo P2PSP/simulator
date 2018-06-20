@@ -41,7 +41,7 @@ class Simulator():
                  number_of_monitors=1,       #
                  number_of_peers=9,          #
                  number_of_rounds=100,       #
-                 number_of_malicious=0,      #
+                 number_of_malicious=1,      #
                  gui=False):
         
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -136,6 +136,7 @@ class Simulator():
         peer.listen_to_the_team()
         peer.receive_the_list_of_peers()
         peer.send_ready_for_receiving_chunks()
+        peer.send_peer_type()   #Only for simulation purpose
         # peer.buffer_data()
         # peer.start()
         peer.run()
