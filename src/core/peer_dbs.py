@@ -251,6 +251,7 @@ class Peer_DBS(sim):
         msg = struct.pack("ii", Common.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
 
+    # Implements DBS logic
     def process_message(self, message, sender):
 
         chunk_number = message[self.CHUNK_NUMBER]
@@ -313,10 +314,7 @@ class Peer_DBS(sim):
                         self.neighbor = sender
                     if sender not in self.forward[self.id]:
                         self.forward[self.id].append(sender)
-                        self.lg.info("{}: inserted {} in {} by chunk {} (forward={})".format(self.id, sender,
-                                                                                             self.forward[self.id], (
-                                                                                             chunk_number, chunk,
-                                                                                             origin), self.forward))
+                        self.lg.info("{}: inserted {} in {} by chunk {} (forward={})".format(self.id, sender, self.forward[self.id], (chunk_number, chunk, origin), self.forward))
 
                 # When a peer X receives a chunk (number) C with origin O,
                 # for each peer P in forward[O], X performs
@@ -469,9 +467,7 @@ class Peer_DBS(sim):
                     # Insert sender in the forward table.
                     self.forward[self.id].append(sender)
                     self.lg.info(
-                        "{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.id, sender,
-                                                                                                self.id, sender,
-                                                                                                self.forward))
+                        "{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.id, sender, self.id, sender, self.forward))
 
                     # Debt counter of sender.
                     self.debt[sender] = 0
