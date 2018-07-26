@@ -117,12 +117,12 @@ class Splitter_DBS(Simulator_stuff):
         self.insert_peer(incoming_peer)
         # ------------------
         # ---- Only for simulation purposes. Unknown in real implementation -----
-        msg = server_socket.recv(struct.calcsize('H'))
-        ptype = struct.unpack('H',msg)
+        msg = serve_socket.recv(struct.calcsize('H'))
+        ptype = struct.unpack('H', msg)
         ptype = ptype[0]
         if (ptype == 0):
             self.number_of_monitors += 1
-            sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
+            Simulator_stuff.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
         
         # S I M U L A T I O N
         Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,incoming_peer))))
