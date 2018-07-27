@@ -1,4 +1,5 @@
 import argparse
+import logging
 from core.splitter_dbs import Splitter_DBS
 from core.common import Common
 
@@ -10,6 +11,8 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--buffer-size", type=int,
                         help="Buffer size")
     args = parser.parse_args()
+
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     Common.BUFFER_SIZE = args.buffer_size
     if args.set_of_rules == "dbs":
