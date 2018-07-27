@@ -10,6 +10,7 @@ peer_dbs module
 # peers. In a nutshell, if a peer X wants to receive from peer Y
 # the chunks from origin Z, X must request it to Y, explicitally.
 
+import os
 import time
 import struct
 import logging
@@ -605,8 +606,9 @@ class Peer_DBS(sim):
         for peer in self.forward[self.id]:
             self.say_goodbye(peer)
 
-        while (all(len(d) > 0 for d in self.pending)):
-            self.process_next_message()
+        # Next commented lines freeze the peer (in a receive() call)
+        # while (all(len(d) > 0 for d in self.pending)):
+        #     self.process_next_message()
 
         self.ready_to_leave_the_team = True
         self.lg.info("{}: see you later!".format(self.id))
@@ -621,6 +623,7 @@ class Peer_DBS(sim):
             if not self.player_alive:
                 self.say_goodbye(self.splitter)
         self.say_goodbye_to_the_team()
+        
         self.team_socket.close()
 
     def am_i_a_monitor(self):
