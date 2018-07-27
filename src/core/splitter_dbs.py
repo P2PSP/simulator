@@ -232,7 +232,7 @@ class Splitter_DBS(Simulator_stuff):
         while self.alive:
             # message, sender = self.team_socket.recvfrom()
             msg, sender = self.team_socket.recvfrom(100)
-            if len(msg) == 2:
+            if len(msg) == 4:
                 # msg = struct.unpack("i", packed_msg)
                 self.process_goodbye(sender)
             else:

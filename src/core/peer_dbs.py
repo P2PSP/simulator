@@ -487,7 +487,7 @@ class Peer_DBS(sim):
                         sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
                         sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
 
-            elif chunk_number == self.GOODBYE:
+            elif chunk_number == Common.GOODBYE:
 
                 self.lg.info("{}: received [goodbye] from {}".format(self.id, sender))
 
@@ -602,7 +602,7 @@ class Peer_DBS(sim):
         Thread(target=self.run).start()
 
     def say_goodbye_to_the_team(self):
-        for peer in self.peer_list:
+        for peer in self.forward[self.id]:
             self.say_goodbye(peer)
 
         while (all(len(d) > 0 for d in self.pending)):
