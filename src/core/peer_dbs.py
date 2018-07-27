@@ -10,6 +10,7 @@ peer_dbs module
 # peers. In a nutshell, if a peer X wants to receive from peer Y
 # the chunks from origin Z, X must request it to Y, explicitally.
 
+import os
 import time
 import struct
 import logging
@@ -19,6 +20,7 @@ from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import hash
+
 
 class Peer_DBS(sim):
     # Peers interchange chunks. If a peer A sends MAX_CHUNK_DEBT more
@@ -166,7 +168,7 @@ class Peer_DBS(sim):
             self.team_socket.sendto(msg, peer)
             self.lg.info("{}: sent [hello] to {}".format(self.id, peer))
 
-    def say_goodbye(self, index):
+    def say_goodbye(self, peer):
         # self.team_socket.sendto(Common.GOODBYE, "i", peer)
         msg = struct.pack("i", Common.GOODBYE)
         self.team_socket.sendto(msg, peer)
@@ -264,7 +266,8 @@ class Peer_DBS(sim):
             if sender == self.splitter:
                 if self.played > 0 and self.played >= self.number_of_peers:
                     clr = self.losses / (self.played + self.losses)
-                    sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), clr))
+                    if sim.FEEDBACK:
+                        sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), clr))
                     self.losses = 0
                     self.played = 0
 
@@ -296,13 +299,18 @@ class Peer_DBS(sim):
                 self.received_chunks += 1
 
                 # S I M U L A T I O N
+                if (self.received_chunks >= self.chunks_before_leave):
+                    self.player_alive = False
                 self.sender_of_chunks = []
                 for i in self.chunks:
                     if i[self.CHUNK_NUMBER] != -1:
                         self.sender_of_chunks.append(','.join(map(str,i[self.ORIGIN])))
                     else:
                         self.sender_of_chunks.append("")
-                sim.FEEDBACK["DRAW"].put(("B", ','.join(map(str,self.id)), ":".join(self.sender_of_chunks)))
+
+                if sim.FEEDBACK:
+                    sim.FEEDBACK["DRAW"].put(("B", ','.join(map(str,self.id)), ":".join(self.sender_of_chunks)))
+                # # # # # # # # # # #
 
                 # ./test.me 2>&1 | grep inserted | grep chunk
                 if sender != self.splitter:
@@ -310,7 +318,7 @@ class Peer_DBS(sim):
                         self.debt[sender] -= 1
                     else:
                         self.debt[sender] = -1
-                    if self.neighbor == None:  # Quizás se pueda quitar!!!!
+                    if self.neighbor is None:  # Quizás se pueda quitar!!!!
                         self.neighbor = sender
                     if sender not in self.forward[self.id]:
                         self.forward[self.id].append(sender)
@@ -418,8 +426,9 @@ class Peer_DBS(sim):
                         self.lg.info("{}: chunks from {} will be sent to {}".format(self.id, origin, sender))
 
                         # S I M U L A T I O N
-                        sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
-                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
+                        if sim.FEEDBACK:
+                            sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
+                            sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
 
                 else:
 
@@ -475,10 +484,11 @@ class Peer_DBS(sim):
                     self.neighbor = sender
 
                     # S I M U L A T I O N
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
+                    if sim.FEEDBACK:
+                        sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
+                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
 
-            elif chunk_number == self.GOODBYE:
+            elif chunk_number == Common.GOODBYE:
 
                 self.lg.info("{}: received [goodbye] from {}".format(self.id, sender))
 
@@ -563,7 +573,7 @@ class Peer_DBS(sim):
                 self.request_chunk(chunk_number, min(self.debt, key=self.debt.get))
             except ValueError:
                 self.lg.info("{}: debt={}".format(self.id, self.debt))
-                if self.neighbor != None:  # Este if no debería existir
+                if self.neighbor is not None:  # Este if no debería existir
                     self.request_chunk(chunk_number, self.neighbor)
 
                     # Here, self.neighbor has been selected by
@@ -593,11 +603,12 @@ class Peer_DBS(sim):
         Thread(target=self.run).start()
 
     def say_goodbye_to_the_team(self):
-        for peer in self.peer_list:
+        for peer in self.forward[self.id]:
             self.say_goodbye(peer)
 
-        while (all(len(d) > 0 for d in self.pending)):
-            self.process_next_message()
+        # Next commented lines freeze the peer (in a receive() call)
+        # while (all(len(d) > 0 for d in self.pending)):
+        #     self.process_next_message()
 
         self.ready_to_leave_the_team = True
         self.lg.info("{}: see you later!".format(self.id))
@@ -612,6 +623,7 @@ class Peer_DBS(sim):
             if not self.player_alive:
                 self.say_goodbye(self.splitter)
         self.say_goodbye_to_the_team()
+        
         self.team_socket.close()
 
     def am_i_a_monitor(self):
