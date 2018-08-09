@@ -55,7 +55,7 @@ class Peer_DBS(sim):
 
         # Peer identification. Depending on the simulation degree, it
         # can be a simple string or an endpoint.
-        self.id = id
+        self.id = None
 
         self._id = id
 
@@ -202,6 +202,16 @@ class Peer_DBS(sim):
             msg = struct.pack('H',1)    # Regular Peer
         self.splitter_socket.send(msg)
 
+    def map_peer_type(self,real_id):
+        if sim.FEEDBACK:
+            if self._id[0] == 'M':
+                if self._id[1] == 'P':
+                    sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"MP"))
+                else:
+                    sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"M"))
+            else:
+                sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"P"))        
+
     def connect_to_the_splitter(self):
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
@@ -211,6 +221,7 @@ class Peer_DBS(sim):
          # At this moment, I don't know any other peer.
         self.id = self.splitter_socket.getsockname()
         self.forward[self.id] = []
+        self.map_peer_type(self.id);
 
         try:
             self.splitter_socket.connect(self.splitter)
@@ -409,6 +420,9 @@ class Peer_DBS(sim):
 
                 requested_chunk = message[self.CHUNK]
 
+                # if sender not in self.forward[self.id]:
+                    # return
+
                 # If a peer X receives [request Y] from peer Z, X will
                 # append Z to forward[Y.origin].
 
@@ -510,6 +524,8 @@ class Peer_DBS(sim):
                                 self.lg.error(
                                     "{}: : failed to remove peer {} from {}".format(sef.id, sender, peers_list))
                             del self.debt[sender]
+                    # sim.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,sender))))     # To remove ghost peer
+
 
         return (chunk_number, sender)
 
