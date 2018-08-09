@@ -9,13 +9,14 @@ The purpose of this repository is to demonstrate plotting alternatives for the [
  PyQtGraph use pyqt as backend so you would need to install pyqt.
  Visit [http://www.pyqtgraph.org/](http://www.pyqtgraph.org/) for other information.
  ## Results
+
 ### Team Status 
  I already have implemented, the whole Team Status plotting method (inside play.py) in pyqtgraph. And results are amazing. Earlier graphs were even not rendering properly on my Macintosh but now it is plotting like butter. 
 Execute following command to plot team status.
 ```sh
 $ ./test.me
 ```
-![team](res/team.gif)
+![team](res/team)
 
 ### Network Overlay
 
@@ -27,7 +28,7 @@ It shows how the network overlay evolves during the simulation.
 - blue: regular peer (WIPs)
 - red: malicious peer (MPs)
 
-![overlay](res/overlay_network.gif)
+![overlay](res/overlay_network)
 
 ### Buffer status
 
@@ -37,4 +38,7 @@ Buffer status for each peer. Each point in the chart represents a chunk in the b
 - gray: chunk consumed.
 - others: chunk from other peers. One different color for each peer.
  
-![buffer status](res/buffer_status.gif)
+![buffer status](res/buffer_status)
+
+### Lost chunk Ratio
+![chunk ratio](res/chunk_ratio)

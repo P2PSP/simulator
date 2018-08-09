@@ -15,7 +15,7 @@ class Graph(pg.GraphItem):
         self.pos = []
         self.edges = [[0,0]]    # edges should have atleast one edge else it will throw error
         self.texts = []
-        self.V =0
+        self.V = 0
         self.lineColor = []
         self.nodeColors = []
     
@@ -74,6 +74,7 @@ class Graph(pg.GraphItem):
             self.texts.append(name)
             self.nodeColors.append(color)
             self.setData(pos=np.array(self.pos,dtype=float), adj=np.array(self.edges,dtype=int),size=0.1, pxMode=False, text=np.array(self.texts),symbolBrush=np.array(self.nodeColors,dtype=[('red',np.ubyte),('green',np.ubyte),('blue',np.ubyte),('alpha',np.ubyte)]))
+            self.updateGraph() 
             self.V += 1
             # print("{} added ".format(name))
 
@@ -95,6 +96,7 @@ class Graph(pg.GraphItem):
             self.pos = self.getNodePosn(self.V)   # Get position for V-1 nodes
             self.setData(pos=np.array(self.pos,dtype=float), adj=np.array(self.edges,dtype=int),size=0.1, pxMode=False, text=self.texts,symbolBrush=np.array(self.nodeColors,dtype=[('red',np.ubyte),('green',np.ubyte),('blue',np.ubyte),('alpha',np.ubyte)]))
             print("{} removed ".format(name))
+
 
 
     
@@ -122,10 +124,10 @@ class Graph(pg.GraphItem):
         try: 
             i = self.texts.index(u)
             j = self.texts.index(v)
+            self._remove_edge([i,j])
         except ValueError:
             print("No such edge exist")
 
-        self._remove_edge([i,j])
         # print("{} removed".format(edge)) 
 
 
@@ -138,6 +140,7 @@ class Graph(pg.GraphItem):
         if edge in self.edges:
             self.edges.remove(edge)
             self.setData(pos=np.array(self.pos,dtype=float), adj=np.array(self.edges,dtype=int),size=0.1, pxMode=False, text=np.array(self.texts),symbolBrush=np.array(self.nodeColors,dtype=[('red',np.ubyte),('green',np.ubyte),('blue',np.ubyte),('alpha',np.ubyte)]))
+            self.updateGraph()
         else:
             print("No such edge exist")
 
@@ -173,11 +176,12 @@ if __name__ == '__main__':
         app.processEvents()
         time.sleep(1)
 
-
+    app.processEvents()
     remove_edges = [['N0','N1'],['N1','N2'],['N0','N2'],['N3','N4'],['N1','N4']]
-        
-    for edge in remove_edges:
-        g.remove_edge(edge)
+    
+    remove_node = ['N2','N1','N0','N3']
+    for node in remove_node:
+        g.remove_node(node)
         app.processEvents()
         time.sleep(1)
 
