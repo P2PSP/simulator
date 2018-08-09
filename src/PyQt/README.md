@@ -16,7 +16,7 @@ Execute following command to plot team status.
 ```sh
 $ ./test.me
 ```
-![team](res/team)
+![team](res/team.png)
 
 ### Network Overlay
 
@@ -28,7 +28,7 @@ It shows how the network overlay evolves during the simulation.
 - blue: regular peer (WIPs)
 - red: malicious peer (MPs)
 
-![overlay](res/overlay_network)
+![overlay](res/network_overlay.png)
 
 ### Buffer status
 
@@ -38,7 +38,7 @@ Buffer status for each peer. Each point in the chart represents a chunk in the b
 - gray: chunk consumed.
 - others: chunk from other peers. One different color for each peer.
  
-![buffer status](res/buffer_status)
+![buffer status](res/buffer_status.png)
 
 ### Lost chunk Ratio
-![chunk ratio](res/chunk_ratio)
+![chunk ratio](res/chunk_ratio.png)
