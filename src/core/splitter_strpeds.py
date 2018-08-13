@@ -58,10 +58,10 @@ class Splitter_STRPEDS(Splitter_DBS):
         ptype = ptype[0]
         if (ptype == 2):    #Malicious Peer
             self.number_of_malicious += 1
-            sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"MP"))
+            # sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"MP"))
         elif (ptype == 0):  #Monitor Peer
             self.number_of_monitors += 1
-            sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
+            # sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
             self.trusted_peers.append(incoming_peer)
 
         # ------------------

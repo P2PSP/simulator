@@ -122,8 +122,8 @@ class Splitter_DBS(Simulator_stuff):
         ptype = ptype[0]
         if (ptype == 0):
             self.number_of_monitors += 1
-            if Simulator_stuff.FEEDBACK:
-                Simulator_stuff.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
+            # if Simulator_stuff.FEEDBACK:
+                # Simulator_stuff.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
         
         # S I M U L A T I O N
         if Simulator_stuff.FEEDBACK:
