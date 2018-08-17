@@ -66,7 +66,7 @@ class Peer_DBS(sim):
         self.chunks = []
 
         # While True, keeps the peer alive.
-        self.player_alive = True
+        self.player_connected = True
 
         # Number of monitors in the team (information sent by the
         # splitter but unsed at this level, maybe it could be placed
@@ -265,7 +265,7 @@ class Peer_DBS(sim):
         self.team_socket.sendto(msg, peer)
 
     # Implements DBS logic
-    def process_message(self, message, sender):
+    def process_unpacked_message(self, message, sender):
 
         chunk_number = message[self.CHUNK_NUMBER]
 
@@ -287,7 +287,7 @@ class Peer_DBS(sim):
                 # Duplicate chunk. Ignore it and warn the sender to
                 # stop sending chunks of the origin of the received
                 # chunk "chunk_number".
-                self.lg.info("Peer_DBS.process_message: duplicate chunk {} from {}".format(chunk_number, sender))
+                self.lg.info("Peer_DBS.process_unpacked_message: duplicate chunk {} from {}".format(chunk_number, sender))
                 self.prune_origin(chunk_number, sender)
 
             else:
@@ -311,7 +311,7 @@ class Peer_DBS(sim):
 
                 # S I M U L A T I O N
                 if (self.received_chunks >= self.chunks_before_leave):
-                    self.player_alive = False
+                    self.player_connected = False
                 self.sender_of_chunks = []
                 for i in self.chunks:
                     if i[self.CHUNK_NUMBER] != -1:
@@ -529,7 +529,7 @@ class Peer_DBS(sim):
 
         return (chunk_number, sender)
 
-    def process_next_message(self):
+    def process_message(self):
         msg, sender = self.team_socket.recvfrom(self.max_msg_length)
         # self.lg.info("{}: received {} from {} with length {}".format(self,id, msg, sender, len(msg)))
         if len(msg) == self.max_msg_length:
@@ -541,28 +541,30 @@ class Peer_DBS(sim):
             message = struct.unpack("ii", msg)  # Control message [control, parameter]
         else:
             message = struct.unpack("i", msg)  # Control message [control]
-        return self.process_message(message, sender)
+        return self.process_unpacked_message(message, sender)
 
     def buffer_data(self):
         for i in range(self.buffer_size):
             self.chunks.append((-1, b'L', None))  # L == Lost ??
 
         # Receive a chunk.
-        (chunk_number, sender) = self.process_next_message()
+        (chunk_number, sender) = self.process_message()
         while (chunk_number < 0):
-            (chunk_number, sender) = self.process_next_message()
+            (chunk_number, sender) = self.process_message()
         # self.neighbor = sender
 
-        # The first chunk to play is the firstly received chunk.
+        # The first chunk to play is the firstly received chunk (which
+        # probably will not be the received chunk with the smallest
+        # index).
         self.chunk_to_play = chunk_number
 
         self.lg.info("{}: position in the buffer of the first chunk to play = {}".format(self.id, self.chunk_to_play))
 
         while (chunk_number < self.chunk_to_play) or (
             ((chunk_number - self.chunk_to_play) % self.buffer_size) < (self.buffer_size // 2)):
-            (chunk_number, _) = self.process_next_message()
+            (chunk_number, _) = self.process_message()
             while (chunk_number < self.chunk_to_play):
-                (chunk_number, _) = self.process_next_message()
+                (chunk_number, _) = self.process_message()
         self.prev_received_chunk = chunk_number
 
     def request_chunk(self, chunk_number, peer):
@@ -598,20 +600,20 @@ class Peer_DBS(sim):
                     # debt could also be explored.
 
         self.number_of_chunks_consumed += 1
-        return self.player_alive
+        return self.player_connected
 
     def play_next_chunks(self, last_received_chunk):
         for i in range(last_received_chunk - self.prev_received_chunk):
-            self.player_alive = self.play_chunk(self.chunk_to_play)
+            self.player_connected = self.play_chunk(self.chunk_to_play)
             self.chunks[self.chunk_to_play % self.buffer_size] = (-1, b'L', None)
             self.chunk_to_play = (self.chunk_to_play + 1) % Common.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
 
-    def keep_the_buffer_full(self):
-        (last_received_chunk, _) = self.process_next_message()
+    def buffer_and_play(self):
+        (last_received_chunk, _) = self.process_message()
         while (last_received_chunk < 0):
-            (last_received_chunk, _) = self.process_next_message()
+            (last_received_chunk, _) = self.process_message()
 
         self.play_next_chunks(last_received_chunk)
 
@@ -624,7 +626,7 @@ class Peer_DBS(sim):
 
         # Next commented lines freeze the peer (in a receive() call)
         # while (all(len(d) > 0 for d in self.pending)):
-        #     self.process_next_message()
+        #     self.process_message()
 
         self.ready_to_leave_the_team = True
         self.lg.info("{}: see you later!".format(self.id))
@@ -634,9 +636,13 @@ class Peer_DBS(sim):
         self.buffer_data()
         buffering_time = time.time() - start_time
         self.lg.info("{}: buffering time (main latency)= {}".format(self.id, buffering_time))
-        while (self.player_alive or self.waiting_for_goodbye):
-            self.keep_the_buffer_full()
-            if not self.player_alive:
+        while (self.player_connected or self.waiting_for_goodbye):
+            self.buffer_and_play()
+            # The goodbye messages sent to the splitter can be
+            # lost. Therefore, it's a good idea to keep sending
+            # [goodbye]'s to the splitter until the [goodbye] from the
+            # splitter arrives.
+            if not self.player_connected:
                 self.say_goodbye(self.splitter)
         self.say_goodbye_to_the_team()
         
