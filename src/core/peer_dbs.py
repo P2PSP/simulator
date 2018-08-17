@@ -264,7 +264,7 @@ class Peer_DBS(sim):
         msg = struct.pack("ii", Common.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
 
-    # Implements DBS logic
+    # DBS peer's logic
     def process_unpacked_message(self, message, sender):
 
         chunk_number = message[self.CHUNK_NUMBER]
