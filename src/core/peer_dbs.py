@@ -60,7 +60,7 @@ class Peer_DBS(sim):
         self._id = id
 
         # Chunk currently played.
-        self.played_chunk = 0
+        self.chunk_to_play = 0
 
         # Buffer of chunks (used as a circular queue).
         self.chunks = []
@@ -554,14 +554,14 @@ class Peer_DBS(sim):
         # self.neighbor = sender
 
         # The first chunk to play is the firstly received chunk.
-        self.played_chunk = chunk_number
+        self.chunk_to_play = chunk_number
 
-        self.lg.info("{}: position in the buffer of the first chunk to play = {}".format(self.id, self.played_chunk))
+        self.lg.info("{}: position in the buffer of the first chunk to play = {}".format(self.id, self.chunk_to_play))
 
-        while (chunk_number < self.played_chunk) or (
-            ((chunk_number - self.played_chunk) % self.buffer_size) < (self.buffer_size // 2)):
+        while (chunk_number < self.chunk_to_play) or (
+            ((chunk_number - self.chunk_to_play) % self.buffer_size) < (self.buffer_size // 2)):
             (chunk_number, _) = self.process_next_message()
-            while (chunk_number < self.played_chunk):
+            while (chunk_number < self.chunk_to_play):
                 (chunk_number, _) = self.process_next_message()
         self.prev_received_chunk = chunk_number
 
@@ -602,9 +602,9 @@ class Peer_DBS(sim):
 
     def play_next_chunks(self, last_received_chunk):
         for i in range(last_received_chunk - self.prev_received_chunk):
-            self.player_alive = self.play_chunk(self.played_chunk)
-            self.chunks[self.played_chunk % self.buffer_size] = (-1, b'L', None)
-            self.played_chunk = (self.played_chunk + 1) % Common.MAX_CHUNK_NUMBER
+            self.player_alive = self.play_chunk(self.chunk_to_play)
+            self.chunks[self.chunk_to_play % self.buffer_size] = (-1, b'L', None)
+            self.chunk_to_play = (self.chunk_to_play + 1) % Common.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
 
