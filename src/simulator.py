@@ -42,6 +42,7 @@ class Simulator():
                  number_of_peers=9,          #
                  number_of_rounds=100,       #
                  number_of_malicious=1,      #
+                 buffer_size=0,              #
                  gui=False):
         
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -59,6 +60,7 @@ class Simulator():
         self.drawing_log = drawing_log
         self.number_of_rounds = number_of_rounds
         self.number_of_malicious = number_of_malicious
+        self.buffer_size = buffer_size
         self.current_round = 0
         self.gui = gui
         self.processes = {}
@@ -68,7 +70,8 @@ class Simulator():
         self.lg.info("number_of_monitors  = {}".format(self.number_of_monitors))
         self.lg.info("number_of_rounds    = {}".format(self.number_of_rounds))
         self.lg.info("number_of_malicious = {}".format(self.number_of_malicious))
-        
+        self.lg.info("buffer_size         = {}".format(self.buffer_size))
+
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
 
@@ -81,7 +84,11 @@ class Simulator():
             return team_size
 
     def run_a_splitter(self,splitter_id):
-        Common.BUFFER_SIZE = self.compute_buffer_size()
+        if self.buffer_size == 0:
+            Common.BUFFER_SIZE = self.compute_buffer_size()
+        else:
+            Common.BUFFER_SIZE = self.buffer_size
+        self.lg.info("(definitive) buffer_size={}".format(Common.BUFFER_SIZE))
         if self.set_of_rules == "dbs":
             splitter = Splitter_DBS()
         elif self.set_of_rules == "cis":
