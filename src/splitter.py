@@ -3,7 +3,6 @@ import logging
 from core.splitter_dbs import Splitter_DBS
 from core.common import Common
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--set-of-rules",

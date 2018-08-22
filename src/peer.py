@@ -2,7 +2,6 @@ import argparse
 import logging
 from core.peer_dbs import Peer_DBS
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--set-of-rules",

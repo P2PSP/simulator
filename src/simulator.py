@@ -69,19 +69,19 @@ class Simulator():
         self.lg.info("number_of_rounds    = {}".format(self.number_of_rounds))
         self.lg.info("number_of_malicious = {}".format(self.number_of_malicious))
         
-    def get_team_size(self, n):
+    def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
 
-    def get_buffer_size(self):
+    def compute_buffer_size(self):
         # return self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        team_size = self.get_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious) * 8)
+        team_size = self.compute_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious) * 8)
         if (team_size < 32):
             return 32
         else:
             return team_size
 
     def run_a_splitter(self,splitter_id):
-        Common.BUFFER_SIZE = self.get_buffer_size()
+        Common.BUFFER_SIZE = self.compute_buffer_size()
         if self.set_of_rules == "dbs":
             splitter = Splitter_DBS()
         elif self.set_of_rules == "cis":
