@@ -84,7 +84,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def receive_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
-        time.sleep(0.05)  # Simulates bit-rate control
+        time.sleep(Common.CHUNK_SLEEP_TIME)  # Simulates bit-rate control
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
         return b'C'
 

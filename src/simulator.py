@@ -43,6 +43,7 @@ class Simulator():
                  number_of_rounds=100,       #
                  number_of_malicious=1,      #
                  buffer_size=0,              #
+                 chunk_sleep_time=0.05,      #
                  gui=False):
         
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -61,6 +62,7 @@ class Simulator():
         self.number_of_rounds = number_of_rounds
         self.number_of_malicious = number_of_malicious
         self.buffer_size = buffer_size
+        self.chunk_sleep_time = chunk_sleep_time
         self.current_round = 0
         self.gui = gui
         self.processes = {}
@@ -71,6 +73,7 @@ class Simulator():
         self.lg.info("number_of_rounds    = {}".format(self.number_of_rounds))
         self.lg.info("number_of_malicious = {}".format(self.number_of_malicious))
         self.lg.info("buffer_size         = {}".format(self.buffer_size))
+        self.lg.info("chunk_sleep_time    = {}".format(self.chunk_sleep_time))
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -84,6 +87,7 @@ class Simulator():
             return team_size
 
     def run_a_splitter(self,splitter_id):
+        Common.CHUNK_SLEEP_TIME = self.chunk_sleep_time
         if self.buffer_size == 0:
             Common.BUFFER_SIZE = self.compute_buffer_size()
         else:
