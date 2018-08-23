@@ -7,7 +7,6 @@ import struct
 from .common import Common
 from .peer_dbs import Peer_DBS
 
-
 class Monitor_DBS(Peer_DBS):
     def __init__(self, id):
         self.losses = 0
@@ -17,7 +16,7 @@ class Monitor_DBS(Peer_DBS):
         Peer_DBS.receive_buffer_size(self)
         # self.buffer_size = self.splitter_socket.recv("H")
         # print(self.id, ": received buffer_size =", self.buffer_size, "from S")
-        self.buffer_size //= 2
+        self.buffer_size //= 2 # To MRS
 
         # S I M U L A T I O N
         self.sender_of_chunks = [""] * self.buffer_size
