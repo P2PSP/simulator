@@ -16,15 +16,15 @@ class Monitor_DBS(Peer_DBS):
         Peer_DBS.receive_buffer_size(self)
         # self.buffer_size = self.splitter_socket.recv("H")
         # print(self.id, ": received buffer_size =", self.buffer_size, "from S")
-        self.buffer_size //= 2 # To MRS
+        # self.buffer_size //= 2 # To MRS
 
         # S I M U L A T I O N
         self.sender_of_chunks = [""] * self.buffer_size
 
     def complain(self, chunk_number):
-        msg = struct.pack("ii", Common.REQUEST, chunk_number)
+        msg = struct.pack("ii", Common.LOST_CHUNK, chunk_number)
         self.team_socket.sendto(msg, self.splitter)
-        self.lg.info("{}: [request {}] sent to {}".format(self.id, chunk_number, self.splitter))
+        self.lg.info("{}: [lost chunk {}] sent to {}".format(self.id, chunk_number, self.splitter))
 
     def request_chunk(self, chunk_number, peer):
         Peer_DBS.request_chunk(self, chunk_number, peer)

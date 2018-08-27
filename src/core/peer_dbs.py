@@ -10,9 +10,6 @@ peer_dbs module
 # peers. In a nutshell, if a peer X wants to receive from peer Y
 # the chunks from origin Z, X must request it to Y, explicitally.
 
-# Useful stuff for debugging:
-# ./test.me 2>&1 | grep inserted | grep chunk
-
 import sys
 import os
 import time
@@ -178,7 +175,7 @@ class Peer_DBS(sim):
         self.lg.info("{}: number of peers = {}".format(self.id, self.number_of_peers))
 
         self.peer_number = self.number_of_peers
-        self.ext_id = (self.peer_number, self.id)
+        self.ext_id = ("%03d" % self.peer_number, self.id[0], "%5d" % self.id[1])
         self.lg.info("{}: peer number = {}".format(self.ext_id, self.number_of_peers))
 
     def say_hello(self, peer):
@@ -190,11 +187,22 @@ class Peer_DBS(sim):
         self.team_socket.sendto(msg, peer)
         self.lg.info("{}: sent [hello] to {}".format(self.ext_id, peer))
 
+    # To be placed in peer_dbs_sim ?
+    def compose_goodbye_message(self):
+        msg = struct.pack("ii", Common.GOODBYE, self.losses)
+        self.lg.info("{}: losses = {}".format(self.ext_id, self.losses))
+        return msg
+
+    # To be here
+    # def compose_goodbye_message(self):
+    #    msg = struct.pack("i", Common.GOODBYE)
+    #    return msg
+
     def say_goodbye(self, peer):
         # self.team_socket.sendto(Common.GOODBYE, "i", peer)
-        msg = struct.pack("i", Common.GOODBYE)
+        msg = self.compose_goodbye_message()
         self.team_socket.sendto(msg, peer)
-        self.lg.info("{}: [goodbye] sent to {}".format(self.ext_id, peer))
+        self.lg.info("{}: sent [goodbye] to {}".format(self.ext_id, peer))
 
     def receive_the_list_of_peers(self):
         self.index_of_peer = {}
@@ -489,7 +497,7 @@ class Peer_DBS(sim):
             elif chunk_number == Common.PRUNE:
 
                 chunk_number = message[self.CHUNK]
-                origin = self.chunks[chunk_number % self.BUFFER_SIZE][self.ORIGIN]
+                origin = self.chunks[chunk_number % self.buffer_size][self.ORIGIN]
 
                 if origin in self.forward:
                     if sender in self.forward[origin]:
@@ -547,6 +555,7 @@ class Peer_DBS(sim):
 
                     self.lg.info("{}: received [goodbye] from splitter".format(self.ext_id))
                     self.waiting_for_goodbye = False
+                    self.player_connected = False
 
                 else:
 
@@ -591,8 +600,10 @@ class Peer_DBS(sim):
 
         # Receive a chunk.
         (chunk_number, sender) = self.process_message()
-        while (chunk_number < 0):
+        while chunk_number < 0:
             (chunk_number, sender) = self.process_message()
+            if self.player_connected == False:
+                break
         # self.neighbor = sender
 
         # The first chunk to play is the firstly received chunk (which
@@ -605,8 +616,12 @@ class Peer_DBS(sim):
         while (chunk_number < self.chunk_to_play) or (
             ((chunk_number - self.chunk_to_play) % self.buffer_size) < (self.buffer_size // 2)):
             (chunk_number, _) = self.process_message()
+            if self.player_connected == False:
+                break
             while (chunk_number < self.chunk_to_play):
                 (chunk_number, _) = self.process_message()
+                if self.player_connected == False:
+                    break
         self.prev_received_chunk = chunk_number
 
     def request_chunk(self, chunk_number, peer):
@@ -642,11 +657,12 @@ class Peer_DBS(sim):
                     # debt could also be explored.
 
         self.number_of_chunks_consumed += 1
-        return self.player_connected
+        #return self.player_connected
 
     def play_next_chunks(self, last_received_chunk):
         for i in range(last_received_chunk - self.prev_received_chunk):
-            self.player_connected = self.play_chunk(self.chunk_to_play)
+            #self.player_connected = self.play_chunk(self.chunk_to_play)
+            self.play_chunk(self.chunk_to_play)
             self.chunks[self.chunk_to_play % self.buffer_size] = (-1, b'L', None)
             self.chunk_to_play = (self.chunk_to_play + 1) % Common.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):

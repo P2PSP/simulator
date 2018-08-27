@@ -59,6 +59,8 @@ class Splitter_DBS(Simulator_stuff):
 
         # S I M U L A T I O N 
         self.current_round = 0  # Number of round (maybe not here).
+        self.max_number_of_rounds = 10
+        self.total_lost_chunks = 0
 
         self.lg.info("{}: initialized".format(self.id))
 
@@ -165,7 +167,7 @@ class Splitter_DBS(Simulator_stuff):
         try:
             self.losses[peer] += 1
         except KeyError:
-            self.lg.error("{}: unexpected error, the unsupportive peer {} does not exist!".format(peer))
+            self.lg.error("{}: unexpected error, the unsupportive peer {} does not exist!".format(self.id, peer))
         else:
             self.lg.info("{}: peer {} has lost {} chunks".format(self.id, peer, self.losses[peer]))
             if self.losses[peer] > Common.MAX_CHUNK_LOSS:
@@ -208,7 +210,6 @@ class Splitter_DBS(Simulator_stuff):
             pass
 
     def process_goodbye(self, peer):
-        self.lg.info("{}: received [goodbye] from".format(self.id, peer))
         if peer not in self.outgoing_peer_list:
             if peer in self.peer_list:
                 self.outgoing_peer_list.append(peer)
@@ -231,14 +232,22 @@ class Splitter_DBS(Simulator_stuff):
     def moderate_the_team(self):
         while self.alive:
             # message, sender = self.team_socket.recvfrom()
-            msg, sender = self.team_socket.recvfrom(100)
-            if len(msg) == 4:
-                # msg = struct.unpack("i", packed_msg)
+            packed_msg, sender = self.team_socket.recvfrom(100)
+            msg = struct.unpack("ii", packed_msg)
+            if msg[0] == Common.GOODBYE:
+                # Message sent by all peers when leaving the team
                 self.process_goodbye(sender)
-            else:
-                lost_chunk_number = struct.unpack("ii", msg)[1]
+                self.total_lost_chunks += msg[1]
+                self.lg.info("{}: received [goodbye {}] from {}".format(self.id, msg[1], sender))
+                self.lg.info("{}: total_lost_chunks = {}".format(self.id, self.total_lost_chunks))
+            elif msg[0] == Common.LOST_CHUNK:
+                # Message sent only by monitors when they lost a chunk
+                lost_chunk_number = msg[1]
                 # lost_chunk_number = self.get_lost_chunk_number(message)
                 self.process_lost_chunk(lost_chunk_number, sender)
+                self.lg.info("{}: received [lost chunk {}] from {}".format(self.id, msg[1], sender))
+            else:
+                self.lg.warning("{}: received unexpected message with code {}".format(self.id, msg[0]))
 
     def reset_counters(self):
         for i in self.losses:
@@ -268,7 +277,8 @@ class Splitter_DBS(Simulator_stuff):
             print(".")
             time.sleep(0.1)
 
-        while self.alive:
+        #while self.alive:
+        while self.current_round < self.max_number_of_rounds:
 
             chunk = self.receive_chunk()
 
@@ -308,3 +318,12 @@ class Splitter_DBS(Simulator_stuff):
             if self.peer_number == 0:
                 self.current_round += 1
                 #self.lg.info("round = {}".format(self.current_round))
+
+                self.lg.info("{}: total_lost_chunks = {}".format(self.id, self.total_lost_chunks))
+
+        self.alive = False
+        self.lg.info("{}: alive = {}".format(self.id, self.alive))
+        for p in self.peer_list:
+            self.say_goodbye(p)
+        if Simulator_stuff.FEEDBACK:
+            Simulator_stuff.FEEDBACK["STATUS"].put("bye")

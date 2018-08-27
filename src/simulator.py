@@ -1,4 +1,4 @@
-##!/home/vruiz/.pyenv/shims/python -i
+#!/home/vruiz/.pyenv/shims/python -i
 
 from core.splitter_dbs import Splitter_DBS
 from core.splitter_strpeds import Splitter_STRPEDS
@@ -37,16 +37,17 @@ class Simulator():
     P_MP = 0.2
     
     def __init__(self, drawing_log="/tmp/1", #
-                 set_of_rules="dbs",         #
+                 set_of_rules="DBS",         #
                  number_of_monitors=1,       #
                  number_of_peers=9,          #
                  number_of_rounds=100,       #
-                 number_of_malicious=1,      #
+                 number_of_malicious=0,      #
                  buffer_size=0,              #
                  chunk_sleep_time=0.05,      #
                  gui=False):
         
-        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging.basicConfig(format="%(message)s - %(asctime)s - %(name)s - %(levelname)s")
         self.lg = logging.getLogger(__name__)
         self.lg.setLevel(logging.DEBUG)
         self.lg.critical('Critical messages enabled.')
@@ -93,49 +94,64 @@ class Simulator():
         else:
             Common.BUFFER_SIZE = self.buffer_size
         self.lg.info("(definitive) buffer_size={}".format(Common.BUFFER_SIZE))
-        if self.set_of_rules == "dbs":
+        if self.set_of_rules == "DBS":
             splitter = Splitter_DBS()
-        elif self.set_of_rules == "cis":
+            self.lg.info("simulator: DBS splitter created")
+        elif self.set_of_rules == "CIS":
             splitter = Splitter_STRPEDS()
-        elif self.set_of_rules == "cis-sss":
+            self.lg.info("simulator: CIS splitter created")
+        elif self.set_of_rules == "CIS-SSS":
             splitter = Splitter_SSS()
+            self.lg.info("simulator: CIS-SSS splitter created")
 
         # splitter.start()
         splitter.setup_peer_connection_socket()
         splitter.setup_team_socket()
         splitter_id['address'] = splitter.get_id()
+        splitter.max_number_of_rounds = self.number_of_rounds
         splitter.run()
+        #while splitter.current_round < self.number_of_rounds:
+        #    self.lg.info("{}: splitter.current_round = {}".format(self.id, splitter.current_round))
+        #    time.sleep(1)
+        #splitter.alive = False
         # while splitter.alive:
         #    time.sleep(1)
 
     def run_a_peer(self, splitter_id, type, id, first_monitor=False):
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         chunks_before_leave = np.random.weibull(2) * (total_peers * (self.number_of_rounds - self.current_round))
+        print("type", type)
         if type == "monitor":
             if first_monitor is True:
                 chunks_before_leave = 99999999
-            if self.set_of_rules == "dbs":
+            if self.set_of_rules == "DBS":
                 peer = Monitor_DBS(id)
-            elif self.set_of_rules == "cis":
-                self.lg.info("simulator: Monitors are TPs in CIS")
+                self.lg.info("simulator: DBS monitor created")
+            elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
-            elif self.set_of_rules == "cis-sss":
-                self.lg.info("simulator: Monitors are TPs in CIS")
+                self.lg.info("simulator: STRPEDS monitor created")                
+            elif self.set_of_rules == "CIS-SSS":
                 peer = Monitor_SSS(id)
+                self.lg.info("simulator: SSS monitor created")
         elif type == "malicious":
-            if self.set_of_rules == "cis":
+            if self.set_of_rules == "CIS":
                 peer = Peer_Malicious(id)
-            elif self.set_of_rules == "cis-sss":
+                self.lg.info("simulator: CIS malicious created")
+            elif self.set_of_rules == "CIS-SSS":
                 peer = Peer_Malicious_SSS(id)
+                self.lg.info("simulator: CIS-SSS malicious created")
             else:
                 self.lg.info("simulator: Malicious peers are only compatible with CIS")
         else:
-            if self.set_of_rules == "dbs":
+            if self.set_of_rules == "DBS":
                 peer = Peer_DBS(id)
-            elif self.set_of_rules == "cis":
+                self.lg.info("simulator: DBS peer created")
+            elif self.set_of_rules == "CIS":
                 peer = Peer_STRPEDS(id)
-            elif self.set_of_rules == "cis-sss":
+                self.lg.info("simulator: CIS peer created")
+            elif self.set_of_rules == "CIS-SSS":
                 peer = Peer_SSS(id)
+                self.lg.info("simulator: CIS-SSS peer created")
         self.lg.info("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
         peer.chunks_before_leave = chunks_before_leave
@@ -210,7 +226,7 @@ class Simulator():
         # Listen to the team for simulation life
         sim.FEEDBACK["STATUS"] = Queue()
 
-        # create shared list for CIS set of rules (only when cis is choosen?)
+        # Create shared list for CIS set of rules (only when cis is choosen?)
         manager = Manager()
         sim.SHARED_LIST["malicious"] = manager.list()
         sim.SHARED_LIST["regular"] = manager.list()
@@ -220,10 +236,10 @@ class Simulator():
         sim.RECV_LIST = manager.dict()
         # sim.LOCK = Semaphore()
 
-        # share splitter (ip address,port) with peers
+        # Share splitter (ip address,port) with peers
         self.splitter_id = manager.dict()
 
-        # run splitter
+        # Run splitter
         p = Process(target=self.run_a_splitter,args=[self.splitter_id])
         p.start()
         self.processes["S"] = p.pid
@@ -253,12 +269,12 @@ class Simulator():
 
         sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
         sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-        for name, pid in self.processes.items():
-            self.lg.info("Killing {}, ...".format(name))
-            os.system("kill -9 " + str(pid))
-            self.lg.info("{} killed".format(name))
+        # for name, pid in self.processes.items():
+        #    self.lg.info("Killing {}, ...".format(name))
+        #    os.system("kill -9 " + str(pid))
+        #    self.lg.info("{} killed".format(name))
 
-        if self.set_of_rules == "cis" or self.set_of_rules == "cis-sss":
+        if self.set_of_rules == "CIS" or self.set_of_rules == "CIS-SSS":
             self.lg.info("List of Malicious")
             self.lg.info(sim.SHARED_LIST["malicious"])
             self.lg.info("List of Regular detected")
