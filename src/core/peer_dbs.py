@@ -634,7 +634,7 @@ class Peer_DBS(sim):
             self.played += 1
         else:
             self.losses += 1
-            self.lg.info("{}: lost chunk! {}".format(self.ext_id, chunk_number))
+            self.lg.info("{}: lost chunk! {} (total losses = {})".format(self.ext_id, chunk_number, self.losses))
 
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change

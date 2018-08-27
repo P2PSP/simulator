@@ -321,7 +321,7 @@ class Splitter_DBS(Simulator_stuff):
             if self.peer_number == 0:
                 self.current_round += 1
                 #self.lg.info("round = {}".format(self.current_round))
-                print("splitter: round = {}".format(self.current_round))
+                print("splitter: round = {} number of peers = {}".format(self.current_round, len(self.peer_list)))
 
 
         self.alive = False
