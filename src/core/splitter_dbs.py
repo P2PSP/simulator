@@ -60,7 +60,6 @@ class Splitter_DBS(Simulator_stuff):
         # S I M U L A T I O N 
         self.current_round = 0  # Number of round (maybe not here).
         self.max_number_of_rounds = 10
-        self.total_lost_chunks = 0
 
         self.lg.info("{}: initialized".format(self.id))
 
@@ -119,6 +118,7 @@ class Splitter_DBS(Simulator_stuff):
         self.insert_peer(incoming_peer)
         # ------------------
         # ---- Only for simulation purposes. Unknown in real implementation -----
+        self.lost_chunks_from[incoming_peer] = 0
         msg = serve_socket.recv(struct.calcsize('H'))
         ptype = struct.unpack('H', msg)
         ptype = ptype[0]
@@ -219,6 +219,7 @@ class Splitter_DBS(Simulator_stuff):
         # self.team_socket.sendto(Common.GOODBYE, "i" , peer)
         msg = struct.pack("i", Common.GOODBYE)
         self.team_socket.sendto(msg, peer)
+        self.lg.info("{}: sent [goodbye] to {}".format(self.id, peer))
 
     def remove_outgoing_peers(self):
         for p in self.outgoing_peer_list:
@@ -237,8 +238,11 @@ class Splitter_DBS(Simulator_stuff):
             if msg[0] == Common.GOODBYE:
                 # Message sent by all peers when they leave the team
                 self.process_goodbye(sender)
-                self.total_lost_chunks += msg[1]
+                if self.lost_chunks_from[sender] == 0:
+                    self.lost_chunks_from[sender] = msg[1]
+                    self.total_lost_chunks += self.lost_chunks_from[sender]
                 self.lg.info("{}: received [goodbye {}] from {}".format(self.id, msg[1], sender))
+                self.lg.info("{}: lost_chunks_from[{}] = {}".format(self.id, sender, self.lost_chunks_from[sender]))
                 self.lg.info("{}: total_lost_chunks = {}".format(self.id, self.total_lost_chunks))
             elif msg[0] == Common.LOST_CHUNK:
                 # Message sent only by monitors when they lost a chunk
@@ -270,7 +274,9 @@ class Splitter_DBS(Simulator_stuff):
     def run(self):
 
         chunk_counter = 0
-        
+        self.lost_chunks_from = {}
+        self.total_lost_chunks = 0
+
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
         Thread(target=self.reset_counters_thread).start()

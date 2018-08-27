@@ -323,7 +323,7 @@ class Peer_DBS(sim):
                     clr = self.losses / (self.played + self.losses)
                     if sim.FEEDBACK:
                         sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), clr))
-                    self.losses = 0
+                    #self.losses = 0
                     self.played = 0
 
             if (self.chunks[chunk_number % self.buffer_size][self.CHUNK_NUMBER]) == chunk_number:
