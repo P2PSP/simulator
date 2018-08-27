@@ -235,7 +235,7 @@ class Splitter_DBS(Simulator_stuff):
             packed_msg, sender = self.team_socket.recvfrom(100)
             msg = struct.unpack("ii", packed_msg)
             if msg[0] == Common.GOODBYE:
-                # Message sent by all peers when leaving the team
+                # Message sent by all peers when they leave the team
                 self.process_goodbye(sender)
                 self.total_lost_chunks += msg[1]
                 self.lg.info("{}: received [goodbye {}] from {}".format(self.id, msg[1], sender))
@@ -269,6 +269,8 @@ class Splitter_DBS(Simulator_stuff):
 
     def run(self):
 
+        chunk_counter = 0
+        
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
         Thread(target=self.reset_counters_thread).start()
@@ -281,10 +283,11 @@ class Splitter_DBS(Simulator_stuff):
         while self.current_round < self.max_number_of_rounds:
 
             chunk = self.receive_chunk()
+            chunk_counter += 1
 
             # ????
-            self.lg.info("peer_number = {}".format(self.peer_number))
-            print("peer_number = {}".format(self.peer_number))
+            #self.lg.info("peer_number = {}".format(self.peer_number))
+            #print("peer_number = {}".format(self.peer_number))
             if self.peer_number == 0:
                 self.on_round_beginning()  # Remove outgoing peers
 
@@ -318,8 +321,8 @@ class Splitter_DBS(Simulator_stuff):
             if self.peer_number == 0:
                 self.current_round += 1
                 #self.lg.info("round = {}".format(self.current_round))
+                print("splitter: round = {}".format(self.current_round))
 
-                self.lg.info("{}: total_lost_chunks = {}".format(self.id, self.total_lost_chunks))
 
         self.alive = False
         self.lg.info("{}: alive = {}".format(self.id, self.alive))
@@ -328,3 +331,5 @@ class Splitter_DBS(Simulator_stuff):
         if Simulator_stuff.FEEDBACK:
             Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
             self.lg.info("{}: Bye sent to simulator".format(self.id))
+
+        self.lg.info("{}: (definitive) total_lost_chunks = {} of {} sent chunks".format(self.id, self.total_lost_chunks, chunk_counter))
