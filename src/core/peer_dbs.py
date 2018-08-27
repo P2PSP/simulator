@@ -671,6 +671,8 @@ class Peer_DBS(sim):
     def buffer_and_play(self):
         (last_received_chunk, _) = self.process_message()
         while (last_received_chunk < 0):
+            if self.player_connected == False:
+                break
             (last_received_chunk, _) = self.process_message()
 
         self.play_next_chunks(last_received_chunk)

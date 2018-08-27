@@ -326,4 +326,5 @@ class Splitter_DBS(Simulator_stuff):
         for p in self.peer_list:
             self.say_goodbye(p)
         if Simulator_stuff.FEEDBACK:
-            Simulator_stuff.FEEDBACK["STATUS"].put("bye")
+            Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+            self.lg.info("{}: Bye sent to simulator".format(self.id))
