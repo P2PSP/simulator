@@ -78,6 +78,7 @@ class Splitter_DBS(Simulator_stuff):
         # self.team_socket.set_max_packet_size(struct.calcsize("is3s")) # Chunck index, chunk, origin
 
     def send_chunk(self, chunk_msg, peer):
+        self.lg.info("{}: send chunk {} to {}".format(self.id, chunk_msg[0], peer))
         # self.lg.info("splitter_dbs.send_chunk({}, {})".format(chunk_msg, peer))
         msg = struct.pack("isli", *chunk_msg)
         # msg = struct.pack("is3s", chunk_msg[0], bytes(chunk_msg[1]), chunk_msg[2])
@@ -327,7 +328,11 @@ class Splitter_DBS(Simulator_stuff):
             if self.peer_number == 0:
                 self.current_round += 1
                 #self.lg.info("round = {}".format(self.current_round))
-                print("splitter: round = {} number of peers = {}".format(self.current_round, len(self.peer_list)))
+                print("(splitter) round={:03} chunk_number={:05} number_of_peers={:03}".format(self.current_round, self.chunk_number, len(self.peer_list)), end=' ')
+                for peer,loss in self.losses.items():
+                    if loss>0:
+                        print("{}:{}".format(peer,loss), end=' ')
+                print()
 
 
         self.alive = False

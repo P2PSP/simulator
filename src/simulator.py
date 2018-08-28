@@ -36,7 +36,7 @@ class Simulator():
     P_WIP = 0.6
     P_MP = 0.2
     
-    def __init__(self, drawing_log="/tmp/1", #
+    def __init__(self, drawing_log="/tmp/drawing_log.txt", #
                  set_of_rules="DBS",         #
                  number_of_monitors=1,       #
                  number_of_peers=9,          #
@@ -120,7 +120,7 @@ class Simulator():
     def run_a_peer(self, splitter_id, type, id, first_monitor=False):
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         chunks_before_leave = np.random.weibull(2) * (total_peers * (self.number_of_rounds - self.current_round))
-        print("simulator: creating", type)
+        print("(simulator) creating", type)
         if type == "monitor":
             if first_monitor is True:
                 chunks_before_leave = 99999999

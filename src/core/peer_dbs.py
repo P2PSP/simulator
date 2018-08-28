@@ -10,12 +10,12 @@ peer_dbs module
 # peers. In a nutshell, if a peer X wants to receive from peer Y
 # the chunks from origin Z, X must request it to Y, explicitally.
 
-import sys
-import os
+# import sys
+# import os
 import time
 import struct
 import logging
-import random
+# import random
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
@@ -214,6 +214,7 @@ class Peer_DBS(sim):
             peer = struct.unpack("li", msg)
             peer = (socket.int2ip(peer[0]),peer[1])
             self.say_hello(peer)
+            self.forward[self.id].append(peer)
             self.index_of_peer[peer] = counter
             counter += 1
             peers_pending_of_reception -= 1
@@ -280,10 +281,10 @@ class Peer_DBS(sim):
     def send_chunk(self, chunk_number, peer):
         # self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
         # print("/////////////////// {}".format(self.chunks))
-        chunk_number = chunk_number % self.buffer_size
-        # print(".............. {}".format(type(self.chunks[chunk_number][self.ORIGIN])))
+        chunk_position = chunk_number % self.buffer_size
+        # print(".............. {}".format(type(self.chunks[chunk_position][self.ORIGIN])))
         # print(".................{}".format(peer))
-        chunk = self.chunks[chunk_number]
+        chunk = self.chunks[chunk_position]
         stored_chunk_number = chunk[self.CHUNK_NUMBER]
         chunk_data = chunk[self.CHUNK]
         try:
@@ -320,9 +321,9 @@ class Peer_DBS(sim):
             # S I M U L A T I O N
             if sender == self.splitter:
                 if self.played > 0 and self.played >= self.number_of_peers:
-                    clr = self.losses / (self.played + self.losses)
+                    CLR = self.losses / (self.played + self.losses) # Chunk Loss Ratio
                     if sim.FEEDBACK:
-                        sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), clr))
+                        sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), CLR))
                     #self.losses = 0
                     self.played = 0
 
@@ -380,6 +381,7 @@ class Peer_DBS(sim):
                     if sender not in self.forward[self.id]:
                         self.forward[self.id].append(sender)
                         self.lg.info("{}: inserted {} in {} by chunk {} (forward={})".format(self.ext_id, sender, self.forward[self.id], (chunk_number, chunk, origin), self.forward))
+                        print("({}) forward={}".format(self.ext_id, self.forward))
 
                 # When a peer X receives a chunk (number) C with origin O,
                 # for each peer P in forward[O], X performs
@@ -400,7 +402,7 @@ class Peer_DBS(sim):
                     #                            self.pending[P] = []
                     #                            self.pending[P].append(chunk_number)
 
-                self.lg.info("{}: origin={} forward={} pending={}".format(self.ext_id, origin, self.forward, self.pending))
+                #self.lg.info("{}: origin={} forward={} pending={}".format(self.ext_id, origin, self.forward, self.pending))
 
                 # When peer X receives a chunk, X selects the next
                 # entry pending[E] (one or more chunk numbers),
@@ -436,6 +438,7 @@ class Peer_DBS(sim):
                                     for p, l in self.forward.items():
                                         if self.neighbor in l:
                                             l.remove(self.neighbor)
+                                            print("({}) forward={}".format(self.ext_id, self.forward))
                                             # if len(l) == 0:
                                             #    del self.forward[p]
                                 except:
@@ -483,6 +486,7 @@ class Peer_DBS(sim):
                         # Insert sender in the forwarding table.
                         self.forward[origin].append(sender)
                         self.lg.info("{}: chunks from {} will be sent to {}".format(self.ext_id, origin, sender))
+                        print("({}) forward={}".format(self.ext_id, self.forward))
 
                         # S I M U L A T I O N
                         if sim.FEEDBACK:
@@ -503,6 +507,7 @@ class Peer_DBS(sim):
                     if sender in self.forward[origin]:
                         try:
                             self.forward[origin].remove(sender)
+                            print("({}) forward={}".format(self.ext_id, self.forward))
                         except ValueError:
                             self.lg.error(
                                 "{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id,
@@ -532,6 +537,7 @@ class Peer_DBS(sim):
                 if sender not in self.forward[self.id]:
                     # Insert sender in the forward table.
                     self.forward[self.id].append(sender)
+                    print("({}) forward={}".format(self.ext_id, self.forward))
                     self.lg.info(
                         "{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
 
@@ -553,7 +559,6 @@ class Peer_DBS(sim):
 
                 if sender == self.splitter:
 
-                    self.lg.info("{}: received [goodbye] from splitter".format(self.ext_id))
                     self.waiting_for_goodbye = False
                     self.player_connected = False
 
@@ -566,6 +571,7 @@ class Peer_DBS(sim):
                             self.lg.info("{}: {} removing from {}".format(self.ext_id, sender, peers_list))
                             try:
                                 peers_list.remove(sender)
+                                print("({}) forward={}".format(self.ext_id, self.forward))
                             except ValueError:
                                 self.lg.error(
                                     "{}: : failed to remove peer {} from {}".format((self.peer_number, sef.id), sender, peers_list))
@@ -634,7 +640,8 @@ class Peer_DBS(sim):
             self.played += 1
         else:
             self.losses += 1
-            self.lg.info("{}: lost chunk! {} (total losses = {})".format(self.ext_id, chunk_number, self.losses))
+            self.lg.info("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
+            print("({}) lost chunk {} (losses={})".format(self.ext_id, chunk_number, self.losses))
 
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change
@@ -689,7 +696,7 @@ class Peer_DBS(sim):
         #     self.process_message()
 
         self.ready_to_leave_the_team = True
-        self.lg.info("{}: see you later!".format(self.ext_id))
+        self.lg.info("{}: said goodbye to the team".format(self.ext_id))
 
     def run(self):
         start_time = time.time()
@@ -705,7 +712,19 @@ class Peer_DBS(sim):
             if not self.player_connected:
                 self.say_goodbye(self.splitter)
         self.say_goodbye_to_the_team()
-        
+
+        for peer, chunks in self.pending.items():
+            for chunk in chunks:
+                self.send_chunk(chunk, peer)
+#                print("------------------------------------", peer, "/", chunk)
+#        for peer in self.forward:
+#            print("=================================", self.pending)
+#            if peer in self.pending:
+#                print(peer, "in", self.pending)
+#                for chunk in self.pending[peer][:]:
+#                    print("sent chunk", chunk, "to", peer)
+#                    self.send_chunk(chunk, peer)
+
         self.team_socket.close()
 
     # Unused

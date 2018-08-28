@@ -9,7 +9,7 @@ from .peer_dbs import Peer_DBS
 
 class Monitor_DBS(Peer_DBS):
     def __init__(self, id):
-        self.losses = 0
+        #self.losses = 0
         super().__init__(id)
 
     def receive_buffer_size(self):
