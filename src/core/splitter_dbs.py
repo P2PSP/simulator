@@ -344,3 +344,4 @@ class Splitter_DBS(Simulator_stuff):
             self.lg.info("{}: Bye sent to simulator".format(self.id))
 
         self.lg.info("{}: (definitive) total_lost_chunks = {} of {} sent chunks".format(self.id, self.total_lost_chunks, chunk_counter))
+        self.lg.info("CLR={}".format(self.total_lost_chunks/chunk_counter))

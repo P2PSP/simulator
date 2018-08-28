@@ -43,7 +43,7 @@ class Simulator():
                  number_of_rounds=100,       #
                  number_of_malicious=0,      #
                  buffer_size=0,              #
-                 chunk_sleep_time=0.05,      #
+                 chunk_delay=0.05,           #
                  gui=False):
         
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -63,18 +63,18 @@ class Simulator():
         self.number_of_rounds = number_of_rounds
         self.number_of_malicious = number_of_malicious
         self.buffer_size = buffer_size
-        self.chunk_sleep_time = chunk_sleep_time
+        self.chunk_delay = chunk_delay
         self.current_round = 0
         self.gui = gui
         self.processes = {}
 
-        self.lg.info("set_of_rules        = \"{}\"".format(self.set_of_rules))
-        self.lg.info("number_of_peers     = {}".format(self.number_of_peers))
-        self.lg.info("number_of_monitors  = {}".format(self.number_of_monitors))
-        self.lg.info("number_of_rounds    = {}".format(self.number_of_rounds))
-        self.lg.info("number_of_malicious = {}".format(self.number_of_malicious))
-        self.lg.info("buffer_size         = {}".format(self.buffer_size))
-        self.lg.info("chunk_sleep_time    = {}".format(self.chunk_sleep_time))
+        self.lg.info("set_of_rules=\"{}\"".format(self.set_of_rules))
+        self.lg.info("number_of_peers={}".format(self.number_of_peers))
+        self.lg.info("number_of_monitors={}".format(self.number_of_monitors))
+        self.lg.info("number_of_rounds={}".format(self.number_of_rounds))
+        self.lg.info("number_of_malicious={}".format(self.number_of_malicious))
+        self.lg.info("buffer_size={}".format(self.buffer_size))
+        self.lg.info("chunk_delay={}".format(self.chunk_delay))
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -88,7 +88,7 @@ class Simulator():
             return team_size
 
     def run_a_splitter(self,splitter_id):
-        Common.CHUNK_SLEEP_TIME = self.chunk_sleep_time
+        Common.CHUNK_DELAY = self.chunk_delay
         if self.buffer_size == 0:
             Common.BUFFER_SIZE = self.compute_buffer_size()
         else:
@@ -202,7 +202,7 @@ class Simulator():
 
     def run(self):
         #import pdb; pdb.set_trace()
-        self.lg.info("simulator: platform.system() = {}".format(platform.system()))
+        self.lg.info("simulator: platform.system()={}".format(platform.system()))
         # if __debug__:
         #     if platform.system() == 'Linux':
         #         plt.switch_backend("TkAgg")
