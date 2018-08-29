@@ -26,8 +26,9 @@ class Simulator_stuff:
     RECV_LIST = None
     # LOCK = ""
 
-
-class Simulator_socket:
+    loglevel = logging.ERROR
+    
+class Simulator_socket():
     AF_INET = socket.AF_INET
     AF_UNIX = socket.AF_UNIX
     SOCK_DGRAM = socket.SOCK_DGRAM
@@ -42,12 +43,13 @@ class Simulator_socket:
         # formatter = logging.Formatter(fmt='simulator_stuff.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
         # handler.setFormatter(formatter)
         # self.lg.addHandler(handler)
-        self.lg.setLevel(logging.ERROR)
-        self.lg.critical('Critical messages enabled.')
-        self.lg.error('Error messages enabled.')
-        self.lg.warning('Warning message enabled.')
-        self.lg.info('Informative message enabled.')
-        self.lg.debug('Low-level debug message enabled.')
+        #self.lg.setLevel(logging.ERROR)
+        self.lg.setLevel(Simulator_stuff.loglevel)
+        # self.lg.critical('Critical messages enabled.')
+        # self.lg.error('Error messages enabled.')
+        # self.lg.warning('Warning message enabled.')
+        # self.lg.info('Informative message enabled.')
+        # self.lg.debug('Low-level debug message enabled.')
 
         if sock is None:
             self.sock = socket.socket(family, typ)
@@ -146,6 +148,10 @@ class Simulator_socket:
     def settimeout(self, value):
         self.lg.info("simulator_stuff.settimeout({}): {}".format(value, self.sock))
         return self.sock.settimeout(value)
+
+    #def timeout(self):
+    #    self.lg.info("simulator_stuff: timeout on".format(self.sock))
+    #    return self.sock.timeout
 
     def gethostbyname(name):
         return socket.gethostbyname(name)

@@ -15,7 +15,7 @@ splitter_dbs module
 
 from .common import Common
 from threading import Thread
-from threading import Lock
+# from threading import Lock
 import time
 from .simulator_stuff import Simulator_stuff
 from .simulator_stuff import Simulator_socket as socket
@@ -38,12 +38,13 @@ class Splitter_DBS(Simulator_stuff):
         # formatter = logging.Formatter(fmt='splitter_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
         # handler.setFormatter(formatter)
         # self.lg.addHandler(handler)
-        self.lg.setLevel(logging.DEBUG)
-        self.lg.critical('Critical messages enabled.')
-        self.lg.error('Error messages enabled.')
-        self.lg.warning('Warning message enabled.')
-        self.lg.info('Informative message enabled.')
-        self.lg.debug('Low-level debug message enabled.')
+        # self.lg.setLevel(logging.DEBUG)
+        self.lg.setLevel(Simulator_stuff.loglevel)
+        # self.lg.critical('Critical messages enabled.')
+        # self.lg.error('Error messages enabled.')
+        # self.lg.warning('Warning message enabled.')
+        # self.lg.info('Informative message enabled.')
+        # self.lg.debug('Low-level debug message enabled.')
 
         self.id = "S"
         self.alive = True  # While True, keeps the splitter alive
@@ -86,7 +87,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def receive_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
-        time.sleep(Common.CHUNK_SLEEP_TIME)  # Simulates bit-rate control
+        time.sleep(Common.CHUNK_CADENCE)  # Simulates bit-rate control
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
         return b'C'
 
@@ -190,7 +191,7 @@ class Splitter_DBS(Simulator_stuff):
     def get_losser(self, lost_chunk_number):
         return self.destination_of_chunk[lost_chunk_number % self.buffer_size]
 
-    def remove_peer(self, peer):
+    def remove_peer_old(self, peer):
         try:
             self.peer_list.remove(peer)
         except ValueError:
@@ -209,6 +210,19 @@ class Splitter_DBS(Simulator_stuff):
             self.lg.error("{}: unexpected error, the removed peer {} does not exist in losses".format(self.id, peer))
         finally:
             pass
+
+    def remove_peer(self, peer):
+        if peer in self.peer_list:
+            self.peer_list.remove(peer)
+        # self.peer_number -= 1
+        # S I M U L A T I O N
+        if Simulator_stuff.FEEDBACK:
+            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,peer))))
+        if peer[0] == "M" and peer[1] != "P":
+            self.number_of_monitors -= 1
+
+        if peer in self.losses:
+            del self.losses[peer]
 
     def process_goodbye(self, peer):
         if peer not in self.outgoing_peer_list:
@@ -283,8 +297,9 @@ class Splitter_DBS(Simulator_stuff):
         Thread(target=self.reset_counters_thread).start()
 
         while len(self.peer_list) == 0:
-            print(".")
+            print(".", end=' ')
             time.sleep(0.1)
+        print()
 
         #while self.alive:
         while self.current_round < self.max_number_of_rounds:
@@ -307,11 +322,13 @@ class Splitter_DBS(Simulator_stuff):
                     Simulator_stuff.FEEDBACK["DRAW"].put(
                      ("T", "P", (len(self.peer_list) - self.number_of_monitors), self.current_round))
 
-            # try:
-            peer = self.peer_list[self.peer_number]
-            # except IndexError:
-            # lg.error("peer_list={} peer_number={}".format(self.peer_list, self.peer_number))
-            # raise
+            try:
+                peer = self.peer_list[self.peer_number]
+            except IndexError:
+                self.lg.warning("{}: the peer with index {} does not exist. peer_list={} peer_number={}"
+                                .format(self.id, self.peer_number, self.peer_list, self.peer_number))
+                # raise
+            
             message = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
             self.destination_of_chunk.insert(self.chunk_number % self.buffer_size, peer)
             #            try:
@@ -329,6 +346,7 @@ class Splitter_DBS(Simulator_stuff):
                 self.current_round += 1
                 #self.lg.info("round = {}".format(self.current_round))
                 print("(splitter) round={:03} chunk_number={:05} number_of_peers={:03}".format(self.current_round, self.chunk_number, len(self.peer_list)), end=' ')
+                sys.stderr.write(str(self.current_round)+"/"+str(self.max_number_of_rounds)+"\r")
                 for peer,loss in self.losses.items():
                     if loss>0:
                         print("{}:{}".format(peer,loss), end=' ')
@@ -343,5 +361,4 @@ class Splitter_DBS(Simulator_stuff):
             Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
             self.lg.info("{}: Bye sent to simulator".format(self.id))
 
-        self.lg.info("{}: (definitive) total_lost_chunks = {} of {} sent chunks".format(self.id, self.total_lost_chunks, chunk_counter))
-        self.lg.info("CLR={}".format(self.total_lost_chunks/chunk_counter))
+        print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, chunk_counter))

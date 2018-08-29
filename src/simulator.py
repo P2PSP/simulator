@@ -36,25 +36,27 @@ class Simulator():
     P_WIP = 0.6
     P_MP = 0.2
     
-    def __init__(self, drawing_log="/tmp/drawing_log.txt", #
-                 set_of_rules="DBS",         #
-                 number_of_monitors=1,       #
-                 number_of_peers=9,          #
-                 number_of_rounds=100,       #
-                 number_of_malicious=0,      #
-                 buffer_size=0,              #
-                 chunk_delay=0.05,           #
+    def __init__(self, drawing_log="/tmp/drawing_log.txt",
+                 set_of_rules="DBS",
+                 number_of_monitors=1,
+                 number_of_peers=9,
+                 number_of_rounds=100,
+                 number_of_malicious=0,
+                 buffer_size=0,
+                 chunk_cadence=0.01,
+                 log=logging.ERROR,
                  gui=False):
         
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         logging.basicConfig(format="%(message)s - %(asctime)s - %(name)s - %(levelname)s")
         self.lg = logging.getLogger(__name__)
-        self.lg.setLevel(logging.DEBUG)
-        self.lg.critical('Critical messages enabled.')
-        self.lg.error('Error messages enabled.')
-        self.lg.warning('Warning message enabled.')
-        self.lg.info('Informative message enabled.')
-        self.lg.debug('Low-level debug message enabled.')
+        sim.loglevel = log
+        self.lg.setLevel(log)
+        # self.lg.critical('Critical messages enabled.')
+        # self.lg.error('Error messages enabled.')
+        # self.lg.warning('Warning message enabled.')
+        # self.lg.info('Informative message enabled.')
+        # self.lg.debug('Low-level debug message enabled.')
 
         self.set_of_rules = set_of_rules
         self.number_of_peers = number_of_peers
@@ -63,7 +65,7 @@ class Simulator():
         self.number_of_rounds = number_of_rounds
         self.number_of_malicious = number_of_malicious
         self.buffer_size = buffer_size
-        self.chunk_delay = chunk_delay
+        self.chunk_cadence = chunk_cadence
         self.current_round = 0
         self.gui = gui
         self.processes = {}
@@ -74,7 +76,7 @@ class Simulator():
         self.lg.info("number_of_rounds={}".format(self.number_of_rounds))
         self.lg.info("number_of_malicious={}".format(self.number_of_malicious))
         self.lg.info("buffer_size={}".format(self.buffer_size))
-        self.lg.info("chunk_delay={}".format(self.chunk_delay))
+        self.lg.info("chunk_cadence={}".format(self.chunk_cadence))
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -88,7 +90,7 @@ class Simulator():
             return team_size
 
     def run_a_splitter(self,splitter_id):
-        Common.CHUNK_DELAY = self.chunk_delay
+        Common.CHUNK_CADENCE = self.chunk_cadence
         if self.buffer_size == 0:
             Common.BUFFER_SIZE = self.compute_buffer_size()
         else:
