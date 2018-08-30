@@ -190,8 +190,9 @@ class Peer_DBS(sim):
 
     # To be placed in peer_dbs_sim ?
     def compose_goodbye_message(self):
-        msg = struct.pack("ii", Common.GOODBYE, self.losses)
-        self.lg.info("{}: losses = {}".format(self.ext_id, self.losses))
+        msg = struct.pack("iii", Common.GOODBYE, self.received_chunks, self.losses)
+        self.lg.info("{}: losses={}".format(self.ext_id, self.losses))
+        self.lg.info("{}: received={}".format(self.ext_id, self.received_chunks))
         return msg
 
     # To be here
@@ -346,7 +347,7 @@ class Peer_DBS(sim):
         self.lg.info("{}: add neighbor {} (forward={})".format(self.ext_id, neighbor, self.forward))
 
     def send_chunks(self):
-        print("-----> send chunks (neighbor={}, pending={})".format(self.neighbor, self.pending))
+        #print("-----> send chunks (neighbor={}, pending={})".format(self.neighbor, self.pending))
         # When peer X receives a chunk, X selects the next
         # entry pending[E] (with one or more chunk numbers),
         # sends the chunk with chunk_number C indicated by
@@ -410,7 +411,6 @@ class Peer_DBS(sim):
                 # Insert sender in the forwarding table.
                 self.forward[origin].append(sender)
                 self.lg.info("{}: chunks from {} will be sent to {}".format(self.ext_id, origin, sender))
-                print("({}) forward={}".format(self.ext_id, self.forward))
 
                 # S I M U L A T I O N
                 if sim.FEEDBACK:
@@ -428,10 +428,8 @@ class Peer_DBS(sim):
             if sender in self.forward[origin]:
                 try:
                     self.forward[origin].remove(sender)
-                    print("({}) forward={}".format(self.ext_id, self.forward))
                 except ValueError:
-                    self.lg.error(
-                        "{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
+                    self.lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
 
         self.lg.info("{}: received [prune {}] from {}".format(self.ext_id, chunk_number, sender))
 
@@ -453,7 +451,6 @@ class Peer_DBS(sim):
         if sender not in self.forward[self.id]:
             self.forward[self.id].append(sender)
             self.pending[sender] = []
-            print("({}) forward={}".format(self.ext_id, self.forward))
             self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
 
             # Debt counter of sender.
@@ -485,7 +482,6 @@ class Peer_DBS(sim):
                     self.lg.info("{}: {} removing from {}".format(self.ext_id, sender, peers_list))
                     try:
                         peers_list.remove(sender)
-                        print("({}) forward={}".format(self.ext_id, self.forward))
                     except ValueError:
                         self.lg.error("{}: : failed to remove peer {} from {}".format(self.ext_id, sender, peers_list))
                     try:
@@ -611,6 +607,9 @@ class Peer_DBS(sim):
             message = message[self.CHUNK_NUMBER], \
                       message[self.CHUNK_DATA], \
                       (socket.int2ip(message[self.ORIGIN]),message[self.ORIGIN+1])
+        elif len(msg) == struct.calcsize("iii"):
+            message = struct.unpack("iii", msg)  # Control message:
+                                                 # [control, parameter]
         elif len(msg) == struct.calcsize("ii"):
             message = struct.unpack("ii", msg)  # Control message:
                                                 # [control, parameter]
@@ -662,7 +661,6 @@ class Peer_DBS(sim):
         else:
             self.losses += 1
             self.lg.info("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
-            print("({}) lost chunk {} (losses={})".format(self.ext_id, chunk_number, self.losses))
 
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change

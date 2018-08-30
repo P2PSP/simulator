@@ -24,7 +24,6 @@ import sys
 import struct
 import logging
 
-
 class Splitter_DBS(Simulator_stuff):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
 
@@ -121,6 +120,7 @@ class Splitter_DBS(Simulator_stuff):
         # ------------------
         # ---- Only for simulation purposes. Unknown in real implementation -----
         self.lost_chunks_from[incoming_peer] = 0
+        self.received_chunks_from[incoming_peer] = 0
         msg = serve_socket.recv(struct.calcsize('H'))
         ptype = struct.unpack('H', msg)
         ptype = ptype[0]
@@ -249,17 +249,24 @@ class Splitter_DBS(Simulator_stuff):
         while self.alive:
             # message, sender = self.team_socket.recvfrom()
             packed_msg, sender = self.team_socket.recvfrom(100)
-            msg = struct.unpack("ii", packed_msg)
-            if msg[0] == Common.GOODBYE:
-                # Message sent by all peers when they leave the team
-                self.process_goodbye(sender)
-                if self.lost_chunks_from[sender] == 0:
-                    self.lost_chunks_from[sender] = msg[1]
-                    self.total_lost_chunks += self.lost_chunks_from[sender]
-                self.lg.info("{}: received [goodbye {}] from {}".format(self.id, msg[1], sender))
-                self.lg.info("{}: lost_chunks_from[{}] = {}".format(self.id, sender, self.lost_chunks_from[sender]))
-                self.lg.info("{}: total_lost_chunks = {}".format(self.id, self.total_lost_chunks))
-            elif msg[0] == Common.LOST_CHUNK:
+            if len(packed_msg) == struct.calcsize("iii"):
+                msg = struct.unpack("iii", packed_msg)
+                if msg[0] == Common.GOODBYE:
+                    # Message sent by all peers when they leave the team
+                    self.process_goodbye(sender)
+                    if self.lost_chunks_from[sender] == 0:
+                        self.received_chunks_from[sender] = msg[1]
+                        self.lost_chunks_from[sender] = msg[2]
+                        self.total_received_chunks += self.received_chunks_from[sender]
+                        self.total_lost_chunks += self.lost_chunks_from[sender]
+                    self.lg.info("{}: received [goodbye {} {}] from {}".format(self.id, msg[1], msg[2], sender))
+                    self.lg.info("{}: received_chunks_from[{}]={}".format(self.id, sender, self.received_chunks_from[sender]))
+                    self.lg.info("{}: lost_chunks_from[{}] = {}".format(self.id, sender, self.lost_chunks_from[sender]))
+                    self.lg.info("{}: total_received_chunks={}".format(self.id, self.total_received_chunks))
+                    self.lg.info("{}: total_lost_chunks={}".format(self.id, self.total_lost_chunks))
+            elif len(packed_msg) == struct.calcsize("ii"):
+                msg = struct.unpack("ii", packed_msg)
+                msg[0] == Common.LOST_CHUNK
                 # Message sent only by monitors when they lost a chunk
                 lost_chunk_number = msg[1]
                 # lost_chunk_number = self.get_lost_chunk_number(message)
@@ -289,7 +296,9 @@ class Splitter_DBS(Simulator_stuff):
     def run(self):
 
         chunk_counter = 0
+        self.received_chunks_from = {}
         self.lost_chunks_from = {}
+        self.total_received_chunks = 0
         self.total_lost_chunks = 0
 
         Thread(target=self.handle_arrivals).start()
@@ -367,4 +376,4 @@ class Splitter_DBS(Simulator_stuff):
                 self.lg.info("{}: Bye sent to simulator".format(self.id))
             counter += 1
 
-        print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, chunk_counter))
+        print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks))
