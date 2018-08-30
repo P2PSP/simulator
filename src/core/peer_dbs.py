@@ -141,7 +141,7 @@ class Peer_DBS(sim):
     def listen_to_the_team(self):
         self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.team_socket.bind(self.id)
-    #    self.team_socket.settimeout(1)
+        self.team_socket.settimeout(1)
 
     def set_splitter(self, splitter):
         self.splitter = splitter
@@ -285,23 +285,25 @@ class Peer_DBS(sim):
         self.lg.info("{}: sent {} to {}".format(self.ext_id, "[ready]", self.splitter))
 
     def send_chunk(self, chunk_number, peer):
-        # self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
-        # print("/////////////////// {}".format(self.chunks))
-        chunk_position = chunk_number % self.buffer_size
-        # print(".............. {}".format(type(self.chunks[chunk_position][self.ORIGIN])))
-        # print(".................{}".format(peer))
-        chunk = self.chunks[chunk_position]
-        stored_chunk_number = chunk[self.CHUNK_NUMBER]
-        chunk_data = chunk[self.CHUNK_DATA]
-        #    if chunk[self.ORIGIN] is not None:
-        chunk_origin_IP = chunk[self.ORIGIN][0]
-        chunk_origin_port = chunk[self.ORIGIN][1]
-        msg = struct.pack("isli", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
-        self.team_socket.sendto(msg, peer)
-        self.sendto_counter += 1
-        self.lg.info("{}: sent chunk {} to {}".format(self.ext_id, chunk_number, peer))
-        #except NoneType:
-        #    self.lg.error("{}: chunk {} not sent because unknown origin".format(self.ext_id, chunk_number))
+        try:
+            # self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
+            # print("/////////////////// {}".format(self.chunks))
+            chunk_position = chunk_number % self.buffer_size
+            # print(".............. {}".format(type(self.chunks[chunk_position][self.ORIGIN])))
+            # print(".................{}".format(peer))
+            chunk = self.chunks[chunk_position]
+            stored_chunk_number = chunk[self.CHUNK_NUMBER]
+            chunk_data = chunk[self.CHUNK_DATA]
+            #    if chunk[self.ORIGIN] is not None:
+            chunk_origin_IP = chunk[self.ORIGIN][0]
+            chunk_origin_port = chunk[self.ORIGIN][1]
+            msg = struct.pack("isli", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
+            self.team_socket.sendto(msg, peer)
+            self.sendto_counter += 1
+            self.lg.info("{}: sent chunk {} to {}".format(self.ext_id, chunk_number, peer))
+        except TypeError:
+            self.lg.warning("{}: chunk {} not sent because it was lost".format(self.ext_id, chunk_number))
+            pass
  
     def is_a_control_message(self, message):
         if message[0] < 0:
@@ -419,8 +421,7 @@ class Peer_DBS(sim):
                 if origin != None:
                     self.forward[origin] = [sender]
 
-    def process_prune(self, sender):
-        chunk_number = message[self.CHUNK_NUMBER]
+    def process_prune(self, chunk_number, sender):
         origin = self.chunks[chunk_number % self.buffer_size][self.ORIGIN]
 
         if origin in self.forward:
@@ -590,7 +591,7 @@ class Peer_DBS(sim):
             if chunk_number == Common.REQUEST:
                 self.process_request(chunk_number, sender)
             elif chunk_number == Common.PRUNE:
-                self.process_prune(sender)
+                self.process_prune(chunk_number, sender)
             elif chunk_number == Common.HELLO:
                 self.process_hello(sender)
             elif chunk_number == Common.GOODBYE:
@@ -600,23 +601,23 @@ class Peer_DBS(sim):
 
     def process_message(self):
         #try:
-            msg, sender = self.team_socket.recvfrom(self.max_msg_length)
-            # self.lg.info("{}: received {} from {} with length {}".format(self,id, msg, sender, len(msg)))
-            if len(msg) == self.max_msg_length:
-                message = struct.unpack("isli", msg) # Data message:
-                                                     # [chunk number,
-                                                     # chunk, origin
-                                                     # (address and port)]
-                message = message[self.CHUNK_NUMBER], \
-                          message[self.CHUNK_DATA], \
-                          (socket.int2ip(message[self.ORIGIN]),message[self.ORIGIN+1])
-            elif len(msg) == struct.calcsize("ii"):
-                message = struct.unpack("ii", msg)  # Control message:
-                                                    # [control, parameter]
-            else:
-                message = struct.unpack("i", msg)  # Control message:
-                                                   # [control]
-            return self.process_unpacked_message(message, sender)
+        msg, sender = self.team_socket.recvfrom(self.max_msg_length)
+        # self.lg.info("{}: received {} from {} with length {}".format(self,id, msg, sender, len(msg)))
+        if len(msg) == self.max_msg_length:
+            message = struct.unpack("isli", msg) # Data message:
+                                                 # [chunk number,
+                                                 # chunk, origin
+                                                 # (address and port)]
+            message = message[self.CHUNK_NUMBER], \
+                      message[self.CHUNK_DATA], \
+                      (socket.int2ip(message[self.ORIGIN]),message[self.ORIGIN+1])
+        elif len(msg) == struct.calcsize("ii"):
+            message = struct.unpack("ii", msg)  # Control message:
+                                                # [control, parameter]
+        else:
+            message = struct.unpack("i", msg)  # Control message:
+                                               # [control]
+        return self.process_unpacked_message(message, sender)
         #except:
         #    return (0, self.id)
         
@@ -696,11 +697,15 @@ class Peer_DBS(sim):
             self.prev_received_chunk = last_received_chunk
 
     def buffer_and_play(self):
-        (last_received_chunk, _) = self.process_message()
-        while (last_received_chunk < 0):
-            if self.player_connected == False:
-                break
+        last_received_chunk = -1
+        while (last_received_chunk < 0) and (self.player_connected):
             (last_received_chunk, _) = self.process_message()
+
+#        (last_received_chunk, _) = self.process_message()
+#        while last_received_chunk < 0:
+#            if self.player_connected == False:
+#                break
+#            (last_received_chunk, _) = self.process_message()
 
         self.play_next_chunks(last_received_chunk)
 
@@ -730,7 +735,8 @@ class Peer_DBS(sim):
             # [goodbye]'s to the splitter until the [goodbye] from the
             # splitter arrives.
             if not self.player_connected:
-                self.say_goodbye(self.splitter)
+                break
+        self.say_goodbye(self.splitter)
         self.say_goodbye_to_the_team()
 
         for peer, chunks in self.pending.items():

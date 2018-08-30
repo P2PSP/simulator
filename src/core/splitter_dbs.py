@@ -355,10 +355,16 @@ class Splitter_DBS(Simulator_stuff):
 
         self.alive = False
         self.lg.info("{}: alive = {}".format(self.id, self.alive))
-        for p in self.peer_list:
-            self.say_goodbye(p)
-        if Simulator_stuff.FEEDBACK:
-            Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-            self.lg.info("{}: Bye sent to simulator".format(self.id))
+
+        counter = 0
+        while (len(self.peer_list) > 0) and (counter < 10):
+            self.lg.info("{}: peer_list={}".format(self.id, self.peer_list))
+            time.sleep(0.1)
+            for p in self.peer_list:
+                self.say_goodbye(p)
+            if Simulator_stuff.FEEDBACK:
+                Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+                self.lg.info("{}: Bye sent to simulator".format(self.id))
+            counter += 1
 
         print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, chunk_counter))
