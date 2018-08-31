@@ -259,21 +259,21 @@ class Splitter_DBS(Simulator_stuff):
                         self.lost_chunks_from[sender] = msg[2]
                         self.total_received_chunks += self.received_chunks_from[sender]
                         self.total_lost_chunks += self.lost_chunks_from[sender]
-                    self.lg.info("{}: received [goodbye {} {}] from {}".format(self.id, msg[1], msg[2], sender))
-                    self.lg.info("{}: received_chunks_from[{}]={}".format(self.id, sender, self.received_chunks_from[sender]))
-                    self.lg.info("{}: lost_chunks_from[{}] = {}".format(self.id, sender, self.lost_chunks_from[sender]))
-                    self.lg.info("{}: total_received_chunks={}".format(self.id, self.total_received_chunks))
-                    self.lg.info("{}: total_lost_chunks={}".format(self.id, self.total_lost_chunks))
+                    self.lg.debug("{}: received [goodbye {} {}] from {}".format(self.id, msg[1], msg[2], sender))
+                    self.lg.debug("{}: received_chunks_from[{}]={}".format(self.id, sender, self.received_chunks_from[sender]))
+                    self.lg.debug("{}: lost_chunks_from[{}] = {}".format(self.id, sender, self.lost_chunks_from[sender]))
+                    self.lg.debug("{}: total_received_chunks={}".format(self.id, self.total_received_chunks))
+                    self.lg.debug("{}: total_lost_chunks={}".format(self.id, self.total_lost_chunks))
             elif len(packed_msg) == struct.calcsize("ii"):
                 msg = struct.unpack("ii", packed_msg)
-                msg[0] == Common.LOST_CHUNK
-                # Message sent only by monitors when they lost a chunk
-                lost_chunk_number = msg[1]
-                # lost_chunk_number = self.get_lost_chunk_number(message)
-                self.process_lost_chunk(lost_chunk_number, sender)
-                self.lg.info("{}: received [lost chunk {}] from {}".format(self.id, msg[1], sender))
+                if msg[0] == Common.LOST_CHUNK:
+                    # Message sent only by monitors when they lost a chunk
+                    lost_chunk_number = msg[1]
+                    # lost_chunk_number = self.get_lost_chunk_number(message)
+                    self.process_lost_chunk(lost_chunk_number, sender)
+                    self.lg.debug("{}: received [lost chunk {}] from {}".format(self.id, msg[1], sender))
             else:
-                self.lg.warning("{}: received unexpected message with code {}".format(self.id, msg[0]))
+                self.lg.warning("{}: received unexpected message".format(self.id))
 
     def reset_counters(self):
         for i in self.losses:
@@ -285,7 +285,10 @@ class Splitter_DBS(Simulator_stuff):
             time.sleep(Common.COUNTERS_TIMING)
 
     def compute_next_peer_number(self, peer):
-        self.peer_number = (self.peer_number + 1) % len(self.peer_list)
+        try:
+            self.peer_number = (self.peer_number + 1) % len(self.peer_list)
+        except ZeroDivisionError:
+            pass
 
     def start(self):
         Thread(target=self.run).start()

@@ -61,7 +61,9 @@ if [ $__debug__ -eq 1 ]; then
     set -x
 fi
 
-filename=${buffer}_${cadence}_${monitors}_${peers}_${rounds}.txt
+dirname=${buffer}_${cadence}_${monitors}_${peers}_${rounds}
+mkdir $dirname
+filename=$dirname/`date "+%F-%T"`.txt
 rm -f $filename
 echo \# monitors=$monitors >> $filename
 echo \# peers=$peers >> $filename

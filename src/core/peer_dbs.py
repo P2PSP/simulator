@@ -116,7 +116,9 @@ class Peer_DBS(sim):
 
         # Sent and received chunks.
         self.sendto_counter = 0  # Unused
-        self.received_chunks = 0 # S I M U L A T I O N
+
+        # S I M U L A T I O N
+        self.received_chunks = 0
 
         # The longest message expected to be received: chunk_number,
         # chunk, IP address of the origin peer, and port of the origin
@@ -125,7 +127,8 @@ class Peer_DBS(sim):
 
         self.neighbor_index = 0
 
-        self.number_of_chunks_consumed = 0 # Unused
+        # Played or lost
+        self.number_of_chunks_consumed = 0
 
         # S I M U L A T I O N
         self.losses = 0
@@ -190,9 +193,9 @@ class Peer_DBS(sim):
 
     # To be placed in peer_dbs_sim ?
     def compose_goodbye_message(self):
-        msg = struct.pack("iii", Common.GOODBYE, self.received_chunks, self.losses)
+        msg = struct.pack("iii", Common.GOODBYE, self.number_of_chunks_consumed, self.losses)
+        self.lg.info("{}: played={}".format(self.ext_id, self.number_of_chunks_consumed))
         self.lg.info("{}: losses={}".format(self.ext_id, self.losses))
-        self.lg.info("{}: received={}".format(self.ext_id, self.received_chunks))
         return msg
 
     # To be here
@@ -507,8 +510,8 @@ class Peer_DBS(sim):
                     CLR = self.losses / (self.played + self.losses) # Chunk Loss Ratio
                     if sim.FEEDBACK:
                         sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), CLR))
-                    #self.losses = 0
-                    self.played = 0
+                    #self.losses = 0 # Ojo, puesto a 0 para calcular CLR
+                    #self.played = 0 # Ojo, puesto a 0 para calcular CLR
 
             # 1. Store or report duplicates
             if (self.chunks[chunk_number % self.buffer_size][self.CHUNK_NUMBER]) == chunk_number:
