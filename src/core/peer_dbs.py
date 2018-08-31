@@ -15,7 +15,7 @@ peer_dbs module
 import time
 import struct
 import logging
-# import random
+import random
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
@@ -139,6 +139,12 @@ class Peer_DBS(sim):
         # S I M U L A T I O N
         self.chunks_before_leave = 0
 
+        # S I M U L A T I O N
+        self.hellos_loss_ratio = 0.0
+
+        # S I M U L A T I O N
+        self.max_number_of_neighbors = 5
+        
         self.rounds_counter = 0
         
         self.lg.info("{}: DBS initialized".format(self.id))
@@ -185,10 +191,6 @@ class Peer_DBS(sim):
         self.lg.info("{}: peer number = {}".format(self.ext_id, self.number_of_peers))
 
     def say_hello(self, peer):
-        #r = random.random()
-        # if r < 0.9:
-        #if True:
-        # self.team_socket.sendto(Common.HELLO, "i", peer)
         msg = struct.pack("i", Common.HELLO)
         self.team_socket.sendto(msg, peer)
         self.lg.info("{}: sent [hello] to {}".format(self.ext_id, peer))
@@ -216,10 +218,20 @@ class Peer_DBS(sim):
         peers_pending_of_reception = self.number_of_peers
         msg_length = struct.calcsize("li")
         counter = 0
+        isolations = 0
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("li", msg)
             peer = (socket.int2ip(peer[0]),peer[1])
+
+            # S I M U L A T O R
+            if isolations < 1:
+                r = random.random()
+                if r <= self.hellos_loss_ratio:
+                    isolations += 1
+                    self.team_socket.isolate(self.id, peer)
+                    self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
+                
             self.say_hello(peer)
             self.forward[self.id].append(peer)
             self.pending[peer] = []
@@ -303,6 +315,12 @@ class Peer_DBS(sim):
             #    if chunk[self.ORIGIN] is not None:
             chunk_origin_IP = chunk[self.ORIGIN][0]
             chunk_origin_port = chunk[self.ORIGIN][1]
+
+            # S I M U L A T O R
+            self.lg.warning("{}: send_chunk {} originated at {}".format(self.ext_id, chunk_number, (chunk_origin_IP, chunk_origin_port)))
+            if (chunk_origin_IP, chunk_origin_port) != self.id:
+                self.lg.warning("{}: sending chunk {} originated at {}".format(self.ext_id, chunk_number, (chunk_origin_IP, chunk_origin_port)))
+            
             msg = struct.pack("isli", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
             self.team_socket.sendto(msg, peer)
             self.sendto_counter += 1
@@ -321,14 +339,14 @@ class Peer_DBS(sim):
         # self.team_socket.sendto((Common.PRUNE, chunk_number), "ii", peer)
         msg = struct.pack("ii", Common.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
-        self.lg.info("{}: peer_dbs.prune_origin({}, {})".format(self.ext_id, chunk_number, peer))
+        self.lg.info("{}: sent [prune {}] to {}".format(self.ext_id, chunk_number, peer))
 
     def report_duplicate_chunk(self, chunk_number, sender):
         # Duplicate chunk. Ignore it and warn the sender to
         # stop sending chunks of the origin of the received
         # chunk "chunk_number".
         self.prune_origin(chunk_number, sender)
-        self.lg.info("Peer_DBS.process_unpacked_message: duplicate chunk {} from {}".format(chunk_number, sender))
+        self.lg.info("{}: duplicate chunk {} from {}".format(self.ext_id, chunk_number, sender))
 
     def buffer_new_chunk(self, chunk_number, chunk_data, origin, sender):
         self.lg.info("{}: received chunk {} from {}".format(self.ext_id, (chunk_number, chunk_data, origin), sender))
@@ -398,7 +416,7 @@ class Peer_DBS(sim):
             
             #                            self.debt[self.neighbor] = 1
 
-    def process_request(self, requested_chunk, sender):
+    def process_request(self, chunk_number, sender):
 
         # if sender not in self.forward[self.id]:
         # return
@@ -406,10 +424,9 @@ class Peer_DBS(sim):
         # If a peer X receives [request Y] from peer Z, X will
         # append Z to forward[Y.origin].
 
-        origin = self.chunks[requested_chunk % self.buffer_size][self.ORIGIN]
+        origin = self.chunks[chunk_number % self.buffer_size][self.ORIGIN]
 
-        self.lg.info("{}: received [request {}] from {} (origin={}, forward={})".format(self.ext_id, requested_chunk, sender, origin, self.forward))
-
+        self.lg.info("{}: received [request {}] from {} (origin={}, forward={})".format(self.ext_id, chunk_number, sender, origin, self.forward))
         if origin in self.forward:
             #self.lg.info("{}: aqui (sender={} forward={})".format(self.id, sender, self.forward))
             if sender not in self.forward[origin]:
@@ -422,10 +439,13 @@ class Peer_DBS(sim):
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
                     sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
                     
-            else:
-                if origin != None:
-                    self.forward[origin] = [sender]
-
+        else:
+            if origin != None:
+                self.forward[origin] = [sender]
+                self.lg.info("{}: chunks from {} will be sent (2) to {}".format(self.ext_id, origin, sender))
+        self.lg.critical("{}: chunk={} origin={} forward={}".format(self.ext_id, self.chunks[chunk_number % self.buffer_size], origin, self.forward))
+        self.lg.critical("{}: length_forward={}".format(self.ext_id, len(self.forward)))
+        
     def process_prune(self, chunk_number, sender):
         origin = self.chunks[chunk_number % self.buffer_size][self.ORIGIN]
 
@@ -587,9 +607,9 @@ class Peer_DBS(sim):
         else:  # message[CHUNK_NUMBER] < 0
 
             if chunk_number == Common.REQUEST:
-                self.process_request(chunk_number, sender)
+                self.process_request(message[1], sender)
             elif chunk_number == Common.PRUNE:
-                self.process_prune(chunk_number, sender)
+                self.process_prune(message[1], sender)
             elif chunk_number == Common.HELLO:
                 self.process_hello(sender)
             elif chunk_number == Common.GOODBYE:

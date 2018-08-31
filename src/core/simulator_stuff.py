@@ -60,17 +60,22 @@ class Simulator_socket():
             # self.now = str(datetime.now()) + "/"
             # os.mkdir(self.now)
 
+        self.isolations = set()
     # def set_id(self, id):
     #    self.id = id
 
     # def set_max_packet_size(self, size):
     #    self.max_packet_size = size
 
+    def isolate(self, endpoint1, endpoint2):
+        self.isolations.add((endpoint1, endpoint2))
+    
     def send(self, msg):
-        self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), \
-                                              msg, \
-                                              self.sock.getpeername()))
-        return self.sock.send(msg)
+        if (self.sock.getsockname(), self.sock.getpeername()) not in self.isolations:
+            self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), msg, self.sock.getpeername()))
+            return self.sock.send(msg)
+        else:
+            self.lg.warning("{} not sent from {} to {} (isolated)".format(msg, self.sock.getsockname(), self.sock.getpeername()))
 
     def recv(self, msg_length):
         msg = self.sock.recv(msg_length)
@@ -82,29 +87,33 @@ class Simulator_socket():
         return msg
 
     def sendall(self, msg):
-        self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), \
-                                              msg, \
-                                              self.sock.getpeername()))
-        return self.sock.sendall(msg)
+        if (self.sock.getsockname(), self.sock.getpeername()) not in self.isolations:
+            self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), \
+                                                  msg, \
+                                                  self.sock.getpeername()))
+            return self.sock.sendall(msg)
+        else:
+            self.lg.warning("{} not sent from {} to {} (isolated)".format(msg, self.sock.getsockname(), self.sock.getpeername()))
 
     def sendto(self, msg, address):
-        self.lg.info("{} - [{}] -> {}".format(self.sock.getsockname(), \
-                                              msg, \
-                                              address))
-        try:
-            return self.sock.sendto(msg, socket.MSG_DONTWAIT, address)
-        except ConnectionRefusedError:
-            self.lg.warning(
-                "simulator_stuff.sendto: the message {} has not been delivered because the destination {} left the team".format(
-                    msg, address))
-        except KeyboardInterrupt:
-            self.lg.warning("simulator_stuff.sendto: send_packet {} to {}".format(msg, address))
-            raise
-        except FileNotFoundError:
-            self.lg.error("simulator_stuff.sendto: {}".format(address))
-            raise
-        except BlockingIOError:
-            raise
+        if (self.sock.getsockname(), address) not in self.isolations:
+            self.lg.info("{} - [{}] -> {}".format(self.sock.getsockname(), msg, address))
+            try:
+                return self.sock.sendto(msg, socket.MSG_DONTWAIT, address)
+            except ConnectionRefusedError:
+                self.lg.warning(
+                    "simulator_stuff.sendto: the message {} has not been delivered because the destination {} left the team".format(
+                        msg, address))
+            except KeyboardInterrupt:
+                self.lg.warning("simulator_stuff.sendto: send_packet {} to {}".format(msg, address))
+                raise
+            except FileNotFoundError:
+                self.lg.error("simulator_stuff.sendto: {}".format(address))
+                raise
+            except BlockingIOError:
+                raise
+        else:
+            self.lg.warning("{} not sent from {} to {} (isolated)".format(msg, self.sock.getsockname(), address))
 
     def recvfrom(self, max_msg_length):
         msg, sender = self.sock.recvfrom(max_msg_length)

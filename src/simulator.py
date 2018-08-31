@@ -44,6 +44,8 @@ class Simulator():
                  number_of_malicious=0,
                  buffer_size=0,
                  chunk_cadence=0.01,
+                 hellos_loss_ratio=0.0,
+                 max_number_of_neighbors=5,
                  log=logging.ERROR,
                  gui=False):
         
@@ -66,6 +68,8 @@ class Simulator():
         self.number_of_malicious = number_of_malicious
         self.buffer_size = buffer_size
         self.chunk_cadence = chunk_cadence
+        self.hellos_loss_ratio = hellos_loss_ratio
+        self.max_number_of_neighbors = max_number_of_neighbors
         self.current_round = 0
         self.gui = gui
         self.processes = {}
@@ -77,6 +81,8 @@ class Simulator():
         self.lg.info("number_of_malicious={}".format(self.number_of_malicious))
         self.lg.info("buffer_size={}".format(self.buffer_size))
         self.lg.info("chunk_cadence={}".format(self.chunk_cadence))
+        self.lg.info("hellos_loss_ratio={}".format(hellos_loss_ratio))
+        self.lg.info("max_number_of_neighbors={}".format(max_number_of_neighbors))
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -156,6 +162,8 @@ class Simulator():
                 self.lg.info("simulator: CIS-SSS peer created")
         self.lg.info("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
+        peer.hellos_loss_ratio = self.hellos_loss_ratio
+        peer.max_number_of_neighbors = self.max_number_of_neighbors
         peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
         # peer.set_id()
