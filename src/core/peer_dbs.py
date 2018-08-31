@@ -138,6 +138,8 @@ class Peer_DBS(sim):
 
         # S I M U L A T I O N
         self.chunks_before_leave = 0
+
+        self.rounds_counter = 0
         
         self.lg.info("{}: DBS initialized".format(self.id))
 
@@ -455,11 +457,7 @@ class Peer_DBS(sim):
             self.forward[self.id].append(sender)
             self.pending[sender] = []
             self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
-
-            # Debt counter of sender.
             self.debt[sender] = 0
-
-#            self.neighbor = sender
 
             # S I M U L A T I O N
             if sim.FEEDBACK:
@@ -549,6 +547,7 @@ class Peer_DBS(sim):
 
                 if sender == self.splitter:
                     self.update_pendings(self.id, chunk_number)
+                    self.rounds_counter += 1
                 else:
                     if sender in self.debt:
                         self.debt[sender] -= 1
@@ -673,17 +672,27 @@ class Peer_DBS(sim):
             # duplicate chunks, then a [prune <chunk_number>] should
             # be sent to those peers which send duplicates.
 
-            try:
-                self.request_chunk(chunk_number, min(self.debt, key=self.debt.get))
-            except ValueError:
-                self.lg.info("{}: debt={}".format(self.ext_id, self.debt))
-                if self.neighbor is not None:  # Este if no debería existir
-                    self.request_chunk(chunk_number, self.neighbor)
+            # We send the request to the neighbor that we have served.
+            self.request_chunk(chunk_number, self.neighbor)
 
-                    # Here, self.neighbor has been selected by
-                    # simplicity. However, other alternatives such as
-                    # requesting the lost chunk to the neighbor with smaller
-                    # debt could also be explored.
+            # As an alternative, to selected peer to send to it the
+            # request, we run the buffer towards increasing positions
+            # looking for a chunk whose origin peer is also a
+            # neighbor. Doing that, we will found a neighbor that sent
+            # its chunk to us a long time ago.
+            
+            # Here, self.neighbor has been selected by
+            # simplicity. However, other alternatives such as
+            # requesting the lost chunk to the neighbor with smaller
+            # debt could also be explored.
+            
+            # try:
+            #     self.request_chunk(chunk_number, min(self.debt, key=self.debt.get))
+            # except ValueError:
+            #     self.lg.info("{}: debt={}".format(self.ext_id, self.debt))
+            #     if self.neighbor is not None:  # Este if no debería existir
+            #        self.request_chunk(chunk_number, self.neighbor)
+
 
         self.number_of_chunks_consumed += 1
         #return self.player_connected
