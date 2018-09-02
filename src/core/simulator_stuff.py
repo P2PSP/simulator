@@ -72,7 +72,7 @@ class Simulator_socket():
     
     def send(self, msg):
         if (self.sock.getsockname(), self.sock.getpeername()) not in self.isolations:
-            self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), msg, self.sock.getpeername()))
+            self.lg.debug("{} - [{}] => {}".format(self.sock.getsockname(), msg, self.sock.getpeername()))
             return self.sock.send(msg)
         else:
             self.lg.warning("{} not sent from {} to {} (isolated)".format(msg, self.sock.getsockname(), self.sock.getpeername()))
@@ -81,14 +81,14 @@ class Simulator_socket():
         msg = self.sock.recv(msg_length)
         while len(msg) < msg_length:
             msg += self.sock.recv(msg_length - len(msg))
-        self.lg.info("{} <= [{}] - {}".format(self.sock.getsockname(), \
+        self.lg.debug("{} <= [{}] - {}".format(self.sock.getsockname(), \
                                               msg, \
                                               self.sock.getpeername()))
         return msg
 
     def sendall(self, msg):
         if (self.sock.getsockname(), self.sock.getpeername()) not in self.isolations:
-            self.lg.info("{} - [{}] => {}".format(self.sock.getsockname(), \
+            self.lg.debug("{} - [{}] => {}".format(self.sock.getsockname(), \
                                                   msg, \
                                                   self.sock.getpeername()))
             return self.sock.sendall(msg)
@@ -97,7 +97,7 @@ class Simulator_socket():
 
     def sendto(self, msg, address):
         if (self.sock.getsockname(), address) not in self.isolations:
-            self.lg.info("{} - [{}] -> {}".format(self.sock.getsockname(), msg, address))
+            self.lg.debug("{} - [{}] -> {}".format(self.sock.getsockname(), msg, address))
             try:
                 return self.sock.sendto(msg, socket.MSG_DONTWAIT, address)
             except ConnectionRefusedError:
@@ -117,22 +117,22 @@ class Simulator_socket():
 
     def recvfrom(self, max_msg_length):
         msg, sender = self.sock.recvfrom(max_msg_length)
-        self.lg.info("{} <- [{}] - {}".format(self.sock.getsockname(), \
+        self.lg.debug("{} <- [{}] - {}".format(self.sock.getsockname(), \
                                               msg, \
                                               sender))
         return (msg, sender)
 
     def connect(self, address):
-        self.lg.info("simulator_stuff.connect({}): {}".format(address, self.sock))
+        self.lg.debug("simulator_stuff.connect({}): {}".format(address, self.sock))
         return self.sock.connect(address)
 
     def accept(self):
-        self.lg.info("simulator_stuff.accept(): {}".format(self.sock))
+        self.lg.debug("simulator_stuff.accept(): {}".format(self.sock))
         peer_serve_socket, peer = self.sock.accept()
         return (peer_serve_socket, peer)
 
     def bind(self, address):
-        self.lg.info("simulator_stuff.bind({}): {}".format(address, self.sock))
+        self.lg.debug("simulator_stuff.bind({}): {}".format(address, self.sock))
         if self.type == self.SOCK_STREAM:
             try:
                 return self.sock.bind(address)
@@ -147,19 +147,19 @@ class Simulator_socket():
                 raise
 
     def listen(self, n):
-        self.lg.info("simulator_stuff.listen({}): {}".format(n, self.sock))
+        self.lg.debug("simulator_stuff.listen({}): {}".format(n, self.sock))
         return self.sock.listen(n)
 
     def close(self):
-        self.lg.info("simulator_stuff.close(): {}".format(self.sock))
+        self.lg.debug("simulator_stuff.close(): {}".format(self.sock))
         return self.sock.close()  # Should delete files
 
     def settimeout(self, value):
-        self.lg.info("simulator_stuff.settimeout({}): {}".format(value, self.sock))
+        self.lg.debug("simulator_stuff.settimeout({}): {}".format(value, self.sock))
         return self.sock.settimeout(value)
 
     #def timeout(self):
-    #    self.lg.info("simulator_stuff: timeout on".format(self.sock))
+    #    self.lg.debug("simulator_stuff: timeout on".format(self.sock))
     #    return self.sock.timeout
 
     def gethostbyname(name):

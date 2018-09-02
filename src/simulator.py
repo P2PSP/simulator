@@ -74,15 +74,15 @@ class Simulator():
         self.gui = gui
         self.processes = {}
 
-        self.lg.info("set_of_rules=\"{}\"".format(self.set_of_rules))
-        self.lg.info("number_of_peers={}".format(self.number_of_peers))
-        self.lg.info("number_of_monitors={}".format(self.number_of_monitors))
-        self.lg.info("number_of_rounds={}".format(self.number_of_rounds))
-        self.lg.info("number_of_malicious={}".format(self.number_of_malicious))
-        self.lg.info("buffer_size={}".format(self.buffer_size))
-        self.lg.info("chunk_cadence={}".format(self.chunk_cadence))
-        self.lg.info("hellos_loss_ratio={}".format(hellos_loss_ratio))
-        self.lg.info("max_number_of_neighbors={}".format(max_number_of_neighbors))
+        self.lg.debug("set_of_rules=\"{}\"".format(self.set_of_rules))
+        self.lg.debug("number_of_peers={}".format(self.number_of_peers))
+        self.lg.debug("number_of_monitors={}".format(self.number_of_monitors))
+        self.lg.debug("number_of_rounds={}".format(self.number_of_rounds))
+        self.lg.debug("number_of_malicious={}".format(self.number_of_malicious))
+        self.lg.debug("buffer_size={}".format(self.buffer_size))
+        self.lg.debug("chunk_cadence={}".format(self.chunk_cadence))
+        self.lg.debug("hellos_loss_ratio={}".format(hellos_loss_ratio))
+        self.lg.debug("max_number_of_neighbors={}".format(max_number_of_neighbors))
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -101,7 +101,7 @@ class Simulator():
             Common.BUFFER_SIZE = self.compute_buffer_size()
         else:
             Common.BUFFER_SIZE = self.buffer_size
-        self.lg.info("(definitive) buffer_size={}".format(Common.BUFFER_SIZE))
+        self.lg.debug("(definitive) buffer_size={}".format(Common.BUFFER_SIZE))
         if self.set_of_rules == "DBS":
             splitter = Splitter_DBS()
             self.lg.info("simulator: DBS splitter created")
@@ -128,7 +128,7 @@ class Simulator():
     def run_a_peer(self, splitter_id, type, id, first_monitor=False):
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
         chunks_before_leave = np.random.weibull(2) * (total_peers * (self.number_of_rounds - self.current_round))
-        print("(simulator) creating", type)
+        self.lg.info("simulator: creating {}".format(type))
         if type == "monitor":
             if first_monitor is True:
                 chunks_before_leave = 99999999
@@ -207,12 +207,12 @@ class Simulator():
                 #    break
 
         drawing_log_file.write("Bye")
-        self.lg.info("CLOSING STORE")
+        self.lg.debug("CLOSING STORE")
         drawing_log_file.close()
 
     def run(self):
         #import pdb; pdb.set_trace()
-        self.lg.info("simulator: platform.system()={}".format(platform.system()))
+        self.lg.debug("simulator: platform.system()={}".format(platform.system()))
         # if __debug__:
         #     if platform.system() == 'Linux':
         #         plt.switch_backend("TkAgg")
@@ -285,12 +285,12 @@ class Simulator():
         #    self.lg.info("{} killed".format(name))
 
         if self.set_of_rules == "CIS" or self.set_of_rules == "CIS-SSS":
-            self.lg.info("List of Malicious")
-            self.lg.info(sim.SHARED_LIST["malicious"])
-            self.lg.info("List of Regular detected")
-            self.lg.info(sim.SHARED_LIST["regular"])
-            self.lg.info("List of peer Attacked")
-            self.lg.info(sim.SHARED_LIST["attacked"])
+            self.lg.debug("List of Malicious")
+            self.lg.debug(sim.SHARED_LIST["malicious"])
+            self.lg.debug("List of Regular detected")
+            self.lg.debug(sim.SHARED_LIST["regular"])
+            self.lg.debug("List of peer Attacked")
+            self.lg.debug(sim.SHARED_LIST["attacked"])
 
     def addPeer(self):
         probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]
