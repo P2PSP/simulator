@@ -233,9 +233,7 @@ class Peer_DBS(sim):
                     self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
                 
             self.say_hello(peer)
-            print("{}: peer={}".format(self.ext_id, peer))
-            if type(peer) != tuple:
-                self.lg.critical("{}: NOTUPLE receive_the_list_of_peers".formar(self.ext_id))
+            #print("{}: peer={}".format(self.ext_id, peer))
             self.forward[self.id] = [peer]
             # self.forward[self.id].append(peer)
             self.pending[peer] = []
@@ -243,7 +241,7 @@ class Peer_DBS(sim):
             counter += 1
             peers_pending_of_reception -= 1
 
-        self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
+        self.lg.debug("{}: forward={} pending={}".format(self.ext_id, self.forward, self.pending))
         
             # self.lg.debug("{}: sent [hello] to {} peers".format(self.id, self.number_of_peers))
 
@@ -285,7 +283,11 @@ class Peer_DBS(sim):
         #self.neighbor = self.id
         #print("self.neighbor={}".format(self.neighbor))
         #self.pending[self.id] = []
-        #self.forward[self.id] = []
+
+        # The first peer in the team (probably a monitor) will not
+        # receive any neighbor and therefore, it is necessary to
+        # create its forwarding list as this.
+        self.forward[self.id] = []
 
         # S I M U L A T I O N
         self.map_peer_type(self.id); # Maybe at the end of this
@@ -323,8 +325,8 @@ class Peer_DBS(sim):
         # Duplicate chunk. Ignore it and warn the sender to
         # stop sending chunks of the origin of the received
         # chunk "chunk_number".
+        self.lg.info("{}: duplicate chunk {} from {} (the first one was sent by {})".format(self.ext_id, chunk_number, sender, self.chunks[chunk_number % self.buffer_size][self.ORIGIN]))
         self.prune_origin(chunk_number, sender)
-        self.lg.info("{}: duplicate chunk {} from {}".format(self.ext_id, chunk_number, sender))
 
     def buffer_new_chunk(self, chunk_number, chunk_data, origin, sender):
         self.lg.debug("{}: received chunk {} from {}".format(self.ext_id, (chunk_number, chunk_data, origin), sender))
@@ -332,9 +334,24 @@ class Peer_DBS(sim):
         self.chunks[chunk_number % self.buffer_size] = (chunk_number, chunk_data, origin)
 
     def update_pendings(self, origin, chunk_number):
+        # The peer has received a new chunk, and the chunk has an
+        # origin. In the forward table, each chunk has a list of
+        # origin peers and for each peer, a list of destination
+        # peers. All peers, by default, has in forward an entry with
+        # their end-point, that by default, points to the list of
+        # neighbors. So, when a peer has received a chunk with a
+        # origin the peer itself, it will forward that chunk (after
+        # updating the pending structure) to all its neighbors. The
+        # forward table can have more entries, created by [request]
+        # messages. So, when a peer receives a chunk (from the
+        # splitter or another peer), and the origin of the chunk is in
+        # the forwarding table, the chunk should be added to each
+        # entry of pending that there is in the list of peers pointed
+        # by the origin in the forward table.
+        
         # A new chunk has been received from an origin. For all peers
         # in forward[origin] the chunk (number) is appended. 
-        print("{}: update_pendings({}, {})".format(self.ext_id, origin, chunk_number))
+        #print("{}: update_pendings({}, {})".format(self.ext_id, origin, chunk_number))
         try:
 #            self.lg.debug("{}: updating for {}".format(self.ext_id, origin))
 #            self.lg.debug("{}: self.forward={}".format(self.ext_id, self.forward))
@@ -342,19 +359,19 @@ class Peer_DBS(sim):
             for peer in self.forward[origin]:
                 #if sefl.pending[peer] = None:
                 #    self.peer_number[peer] = []
-                print("{} {} {} {} {} {} {}".format(self.ext_id, counter, peer, origin, len(self.forward[origin]), self.forward[origin], type(self.forward[origin])))
+                #print("{} {} {} {} {} {} {}".format(self.ext_id, counter, peer, origin, len(self.forward[origin]), self.forward[origin], type(self.forward[origin])))
                 counter += 1
                 self.pending[peer].append(chunk_number)
-                self.lg.debug("{}: appended {} to pending[{}] (pending={})".format(self.ext_id, chunk_number, peer, self.pending))
+                self.lg.debug("{}: appended {} to pending[{}] (pending={}, forward[{}]={})".format(self.ext_id, chunk_number, peer, self.pending, origin, self.forward[origin]))
         except KeyError:
             self.lg.error("{}: KeyError update_pendings(origin={}, chunk_number={}) forward={} pending={}".format(self.ext_id, origin, chunk_number, self.forward, self.pending))
             raise
 
     def add_new_forwarding_rule(self, origin, neighbor):
-        print("{}: add_new_forwarding_rule origin={} neighbor={} self.forward[{}]={}".format(self.ext_id, origin, neighbor, self.id, self.forward))
+        #print("{}: add_new_forwarding_rule origin={} neighbor={} self.forward[{}]={}".format(self.ext_id, origin, neighbor, self.id, self.forward))
         self.forward[origin].append(neighbor)
-        if type(neighbor)!=tuple:
-            self.lg.critical("{}: NOTUPLE add_new_forwarding_rule".formar(self.ext_id))
+        #if type(neighbor)!=tuple:
+        #    self.lg.critical("{}: NOTUPLE add_new_forwarding_rule".formar(self.ext_id))
         self.pending[neighbor] = []
         self.lg.debug("{}: add neighbor {} (forward={})".format(self.ext_id, neighbor, self.forward))
 
@@ -371,11 +388,6 @@ class Peer_DBS(sim):
             #    if chunk[self.ORIGIN] is not None:
             chunk_origin_IP = chunk[self.ORIGIN][0]
             chunk_origin_port = chunk[self.ORIGIN][1]
-
-            # S I M U L A T O R
-            self.lg.debug("{}: send_chunk {} originated at {}".format(self.ext_id, chunk_number, (chunk_origin_IP, chunk_origin_port)))
-            if (chunk_origin_IP, chunk_origin_port) != self.id:
-                self.lg.debug("{}: sending chunk {} originated at {}".format(self.ext_id, chunk_number, (chunk_origin_IP, chunk_origin_port)))
 
             msg = struct.pack("isli", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
             self.team_socket.sendto(msg, peer)
@@ -452,8 +464,8 @@ class Peer_DBS(sim):
         if origin != None:
             # In this case, I can start forwarding chunks from origin.
             self.forward[origin] = [sender]
-            if type(sender)!=tuple:
-                self.lg.critical("{}: NOTUPLE process_request".formar(self.ext_id))
+            #if type(sender)!=tuple:
+            #    self.lg.critical("{}: NOTUPLE process_request".formar(self.ext_id))
             
             self.lg.debug("{}: chunks from {} will be sent to {}".format(self.ext_id, origin, sender))
 
@@ -516,8 +528,8 @@ class Peer_DBS(sim):
 
         if sender not in self.forward[self.id]:
             self.forward[self.id].append(sender)
-            if type(sender)!=tuple:
-                self.lg.critical("{}: NOTUPLE process_hello".formar(self.ext_id))
+            #if type(sender)!=tuple:
+            #    self.lg.critical("{}: NOTUPLE process_hello".formar(self.ext_id))
             
             self.pending[sender] = []
             self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
@@ -594,7 +606,7 @@ class Peer_DBS(sim):
                         buf += hash(peer_number)
                     else:
                         buf += " "
-                self.lg.info("{}: buffer = {}".format(self.ext_id, buf))
+                self.lg.info("{}: buffer={}".format(self.ext_id, buf))
 
                 # S I M U L A T I O N
                 self.received_chunks += 1
@@ -610,7 +622,8 @@ class Peer_DBS(sim):
                     sim.FEEDBACK["DRAW"].put(("B", ','.join(map(str,self.id)), ":".join(self.sender_of_chunks)))
 
                 if sender == self.splitter:
-                    self.update_pendings(self.id, chunk_number)
+                    # if len(self.forward[self.id]) > 0:
+                    #self.update_pendings(self.id, chunk_number)
                     self.rounds_counter += 1
                 else:
                     if sender in self.debt:
@@ -619,10 +632,11 @@ class Peer_DBS(sim):
                         self.debt[sender] = -1
                     #if self.neighbor is None:  # Quizás se pueda quitar!!!!
                     #self.neighbor = sender
-                    if sender not in self.forward[self.id]:
-                        self.add_new_forwarding_rule(self.id, sender)
-                    for peer in self.forward:
-                        self.update_pendings(peer, chunk_number)
+                    #if sender not in self.forward[self.id]:
+                    #    self.add_new_forwarding_rule(self.id, sender)
+                    #for peer in self.forward:
+                if origin in self.forward:
+                    self.update_pendings(origin, chunk_number)
                 # When a peer X receives a chunk (number) C with origin O,
                 # for each peer P in forward[O], X performs
                 # pending[P].append(C).
@@ -643,7 +657,7 @@ class Peer_DBS(sim):
 
                 #self.lg.debug("{}: origin={} forward={} pending={}".format(self.ext_id, origin, self.forward, self.pending))
 
-                if len(self.pending) > 1:
+                if len(self.pending) > 0:
                     self.neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
                     self.send_chunks()
                     self.neighbor_index = list(self.pending.keys()).index(self.neighbor) + 1
