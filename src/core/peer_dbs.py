@@ -140,7 +140,7 @@ class Peer_DBS(sim):
         self.chunks_before_leave = 0
 
         # S I M U L A T I O N
-        self.hellos_loss_ratio = 0.0
+        self.link_loss_ratio = 0.0
 
         # S I M U L A T I O N
         self.max_number_of_neighbors = 5
@@ -228,7 +228,7 @@ class Peer_DBS(sim):
             # S I M U L A T O R
             if isolations < 1:
                 r = random.random()
-                if r <= self.hellos_loss_ratio:
+                if r <= self.link_loss_ratio:
                     isolations += 1
                     self.team_socket.isolate(self.id, peer)
                     self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
