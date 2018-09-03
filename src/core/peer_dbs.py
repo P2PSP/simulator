@@ -218,7 +218,7 @@ class Peer_DBS(sim):
         peers_pending_of_reception = self.number_of_peers
         msg_length = struct.calcsize("li")
         counter = 0
-        isolations = 0
+        #isolations = 0
         self.forward[self.id] = []
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
@@ -226,10 +226,11 @@ class Peer_DBS(sim):
             peer = (socket.int2ip(peer[0]),peer[1])
 
             # S I M U L A T O R
-            if isolations < 1:
+            #if isolations < 1:
+            if counter>0: # Monitor never is isolated
                 r = random.random()
                 if r <= self.link_loss_ratio:
-                    isolations += 1
+                    #isolations += 1
                     self.team_socket.isolate(self.id, peer)
                     self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
                 
