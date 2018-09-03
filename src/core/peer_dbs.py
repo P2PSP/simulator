@@ -219,6 +219,7 @@ class Peer_DBS(sim):
         msg_length = struct.calcsize("li")
         counter = 0
         isolations = 0
+        self.forward[self.id] = []
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("li", msg)
@@ -233,9 +234,9 @@ class Peer_DBS(sim):
                     self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
                 
             self.say_hello(peer)
+            self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
             #print("{}: peer={}".format(self.ext_id, peer))
-            self.forward[self.id] = [peer]
-            # self.forward[self.id].append(peer)
+            self.forward[self.id].append(peer)
             self.pending[peer] = []
             self.index_of_peer[peer] = counter
             counter += 1
@@ -316,17 +317,9 @@ class Peer_DBS(sim):
             return False
 
     def prune_origin(self, chunk_number, peer):
-        # self.team_socket.sendto((Common.PRUNE, chunk_number), "ii", peer)
         msg = struct.pack("ii", Common.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
         self.lg.info("{}: sent [prune {}] to {}".format(self.ext_id, chunk_number, peer))
-
-    def report_duplicate_chunk(self, chunk_number, sender):
-        # Duplicate chunk. Ignore it and warn the sender to
-        # stop sending chunks of the origin of the received
-        # chunk "chunk_number".
-        self.lg.info("{}: duplicate chunk {} from {} (the first one was sent by {})".format(self.ext_id, chunk_number, sender, self.chunks[chunk_number % self.buffer_size][self.ORIGIN]))
-        self.prune_origin(chunk_number, sender)
 
     def buffer_new_chunk(self, chunk_number, chunk_data, origin, sender):
         self.lg.debug("{}: received chunk {} from {}".format(self.ext_id, (chunk_number, chunk_data, origin), sender))
@@ -393,11 +386,6 @@ class Peer_DBS(sim):
             self.team_socket.sendto(msg, peer)
             self.sendto_counter += 1
             self.lg.debug("{}: sent chunk {} (with origin {}) to {}".format(self.ext_id, chunk_number, (chunk_origin_IP, chunk_origin_port), peer))
-            if __debug__:
-                if self.id != (chunk_origin_IP, chunk_origin_port):
-                    self.lg.debug("{}: chunk {} sent to {} that was originated at {}".format(self.ext_id, stored_chunk_number, peer, (chunk_origin_IP, chunk_origin_port)))
-                else:
-                    self.lg.debug("{}: chunk {} sent to {} that was originated at {}".format(self.ext_id, stored_chunk_number, peer, (chunk_origin_IP, chunk_origin_port)))
         except TypeError:
             self.lg.warning("{}: chunk {} not sent because it was lost".format(self.ext_id, chunk_number))
             pass
@@ -417,8 +405,9 @@ class Peer_DBS(sim):
         for chunk_number in self.pending[self.neighbor]:
             self.lg.debug("{}: send_chunks sel_chunk={} to neighbor={}".format(self.ext_id, chunk_number, self.neighbor))
             self.send_chunk(chunk_number, self.neighbor)
-        for chunk_number in self.pending[self.neighbor]:
-            self.pending[self.neighbor].remove(chunk_number)
+        self.pending[self.neighbor] = []
+        #for chunk_number in self.pending[self.neighbor]:
+        #    self.pending[self.neighbor].remove(chunk_number)
         self.lg.debug("{}: send_chunks (end) neighbor={} pending[{}]={}".format(self.ext_id, self.neighbor, self.neighbor, self.pending[self.neighbor]))
 
             # Increment the debt of the neighbor.
@@ -500,18 +489,22 @@ class Peer_DBS(sim):
         self.lg.debug("{}: length_forward={} forward={}".format(self.ext_id, len(self.forward), self.forward))
         
     def process_prune(self, chunk_number, sender):
-        origin = self.chunks[chunk_number % self.buffer_size][self.ORIGIN]
-
+        self.lg.debug("{}: received [prune {}] from {}".format(self.ext_id, chunk_number, sender))
+        chunk = self.chunks[chunk_number % self.buffer_size]
+        # Notice that chunk_number must be stored in the buffer
+        # because it has been sent to a neighbor.
+        origin = chunk[self.ORIGIN]
         if origin in self.forward:
             if sender in self.forward[origin]:
                 try:
                     self.forward[origin].remove(sender)
+                    self.lg.debug("{}: {} removed from forward[origin={}]={}".format(self.ext_id, sender, origin, self.forward[origin]))
                 except ValueError:
                     self.lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
 
-        self.lg.info("{}: received [prune {}] from {}".format(self.ext_id, chunk_number, sender))
-
     def process_hello(self, sender):
+        self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
+
         # Incoming peers request to the rest of peers of the
         # team those chunks whose source is the peer which
         # receives the request. So in the forwarding table of
@@ -539,8 +532,6 @@ class Peer_DBS(sim):
             if sim.FEEDBACK:
                 sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
                 sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
-
-        self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
 
     def process_goodbye(self, sender):
         self.lg.debug("{}: received [goodbye] from {}".format(self.ext_id, sender))
@@ -588,8 +579,12 @@ class Peer_DBS(sim):
                     #self.played = 0 # Ojo, puesto a 0 para calcular CLR
 
             # 1. Store or report duplicates
-            if (self.chunks[chunk_number % self.buffer_size][self.CHUNK_NUMBER]) == chunk_number:
-                self.report_duplicate_chunk(chunk_number, sender)
+            if self.chunks[chunk_number % self.buffer_size][self.CHUNK_NUMBER] == chunk_number:
+                # Duplicate chunk. Ignore it and warn the sender to
+                # stop sending more chunks from the origin of the received
+                # chunk "chunk_number".
+                self.lg.debug("{}: duplicate chunk {} from {} (the first one was sent by {}) BUFFER={}".format(self.ext_id, chunk_number, sender, self.chunks[chunk_number % self.buffer_size][self.ORIGIN], self.chunks))
+                self.prune_origin(chunk_number, sender)
             else:
                 self.buffer_new_chunk(chunk_number, chunk_data, origin, sender)
                 
@@ -606,7 +601,7 @@ class Peer_DBS(sim):
                         buf += hash(peer_number)
                     else:
                         buf += " "
-                self.lg.info("{}: buffer={}".format(self.ext_id, buf))
+                self.lg.debug("{}: buffer={}".format(self.ext_id, buf))
 
                 # S I M U L A T I O N
                 self.received_chunks += 1
@@ -630,6 +625,7 @@ class Peer_DBS(sim):
                         self.debt[sender] -= 1
                     else:
                         self.debt[sender] = -1
+                        # Usar mejor técnica de ir dividiendo entre 2 cada round
                     #if self.neighbor is None:  # Quizás se pueda quitar!!!!
                     #self.neighbor = sender
                     #if sender not in self.forward[self.id]:
@@ -739,6 +735,7 @@ class Peer_DBS(sim):
 
     def play_chunk(self, chunk_number):
         if self.chunks[chunk_number % self.buffer_size][self.CHUNK_DATA] == b'C':
+            self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
         else:
             self.losses += 1
@@ -783,7 +780,7 @@ class Peer_DBS(sim):
         for i in range(last_received_chunk - self.prev_received_chunk):
             #self.player_connected = self.play_chunk(self.chunk_to_play)
             self.play_chunk(self.chunk_to_play)
-            self.chunks[self.chunk_to_play % self.buffer_size] = (-1, b'L', None)
+            #self.chunks[self.chunk_to_play % self.buffer_size] = (-1, b'L', None)
             self.chunk_to_play = (self.chunk_to_play + 1) % Common.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
