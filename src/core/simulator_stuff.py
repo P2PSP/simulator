@@ -133,18 +133,18 @@ class Simulator_socket():
 
     def bind(self, address):
         self.lg.debug("simulator_stuff.bind({}): {}".format(address, self.sock))
-        if self.type == self.SOCK_STREAM:
-            try:
-                return self.sock.bind(address)
-            except:
-                self.lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address))
-                raise
-        else:
-            try:
-                return self.sock.bind(address)
-            except:
-                self.lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address))
-                raise
+        #if self.type == self.SOCK_STREAM:
+        try:
+            return self.sock.bind(address)
+        except:
+            self.lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address))
+            raise
+        #else:
+        #    try:
+        #        return self.sock.bind(address)
+        #    except:
+        #        self.lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address))
+        #        raise
 
     def listen(self, n):
         self.lg.debug("simulator_stuff.listen({}): {}".format(n, self.sock))

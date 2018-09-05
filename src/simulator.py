@@ -4,6 +4,7 @@ from core.splitter_dbs import Splitter_DBS
 from core.splitter_strpeds import Splitter_STRPEDS
 from core.splitter_sss import Splitter_SSS
 from core.peer_dbs import Peer_DBS
+from core.peer_ims import Peer_IMS
 from core.peer_strpeds import Peer_STRPEDS
 from core.peer_sss import Peer_SSS
 from core.peer_malicious import Peer_Malicious
@@ -102,9 +103,9 @@ class Simulator():
         else:
             Common.BUFFER_SIZE = self.buffer_size
         self.lg.debug("(definitive) buffer_size={}".format(Common.BUFFER_SIZE))
-        if self.set_of_rules == "DBS":
+        if self.set_of_rules == "DBS" or self.set_of_rules == "IMS":
             splitter = Splitter_DBS()
-            self.lg.info("simulator: DBS splitter created")
+            self.lg.info("simulator: DBS/IMS splitter created")
         elif self.set_of_rules == "CIS":
             splitter = Splitter_STRPEDS()
             self.lg.info("simulator: CIS splitter created")
@@ -132,9 +133,9 @@ class Simulator():
         if type == "monitor":
             if first_monitor is True:
                 chunks_before_leave = 99999999
-            if self.set_of_rules == "DBS":
+            if self.set_of_rules == "DBS" or self.set_of_rules == "IMS":
                 peer = Monitor_DBS(id)
-                self.lg.info("simulator: DBS monitor created")
+                self.lg.info("simulator: DBS/IMS monitor created")
             elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
                 self.lg.info("simulator: STRPEDS monitor created")                
@@ -154,6 +155,9 @@ class Simulator():
             if self.set_of_rules == "DBS":
                 peer = Peer_DBS(id)
                 self.lg.info("simulator: DBS peer created")
+            if self.set_of_rules == "IMS":
+                peer = Peer_IMS(id)
+                self.lg.info("simulator: IMS peer created")
             elif self.set_of_rules == "CIS":
                 peer = Peer_STRPEDS(id)
                 self.lg.info("simulator: CIS peer created")
