@@ -152,6 +152,7 @@ class Peer_DBS(sim):
     def listen_to_the_team(self):
         self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.team_socket.bind(self.id)
+        #self.team_socket.bind(("", self.id[1]))
         #self.team_socket.settimeout(1)
 
     def set_splitter(self, splitter):

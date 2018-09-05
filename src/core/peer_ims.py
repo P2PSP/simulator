@@ -54,3 +54,8 @@ class Peer_IMS(Peer_DBS):
             peers_pending_of_reception -= 1
 
         self.lg.debug("{}: forward={} pending={}".format(self.ext_id, self.forward, self.pending))
+
+    def listen_to_the_team(self):
+        Peer_DBS.listen_to_the_team(self)
+        self.team_socket.bind(("", 1234))
+        self.lg.debug("{}: binded ('0.0.0.0', 1234)".format(self.ext_id))
