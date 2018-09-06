@@ -33,7 +33,9 @@ class Simulator_socket():
     AF_UNIX = socket.AF_UNIX
     SOCK_DGRAM = socket.SOCK_DGRAM
     SOCK_STREAM = socket.SOCK_STREAM
-
+    SOL_SOCKET = socket.SOL_SOCKET
+    SO_REUSEADDR = socket.SO_REUSEADDR
+    
     def __init__(self, family=None, typ=None, sock=None):
 
         # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -171,11 +173,16 @@ class Simulator_socket():
     def getsockname(self):
         return self.sock.getsockname()
 
-    def ip2int(addr):                                                               
-        return struct.unpack("!I", socket.inet_aton(addr))[0]                       
+    def fileno(self):
+        return self.sock.fileno()
 
-
-    def int2ip(addr):                                                               
+    def setsockopt(self, level, optname, value):
+        return self.sock.setsockopt(level, optname, value)
+    
+    def ip2int(addr):
+        return struct.unpack("!I", socket.inet_aton(addr))[0]
+    
+    def int2ip(addr):
         return socket.inet_ntoa(struct.pack("!I", addr))
 
 def f(x):

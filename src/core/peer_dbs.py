@@ -331,13 +331,13 @@ class Peer_DBS(sim):
     def update_pendings(self, origin, chunk_number):
         # The peer has received a new chunk, and the chunk has an
         # origin. In the forward table, each chunk has a list of
-        # origin peers and for each peer, a list of destination
-        # peers. All peers, by default, has in forward an entry with
+        # origin peers and for each one, a list of destination
+        # peers. All peers, by default, has in forward[] an entry with
         # their end-point, that by default, points to the list of
         # neighbors. So, when a peer has received a chunk with a
         # origin the peer itself, it will forward that chunk (after
         # updating the pending structure) to all its neighbors. The
-        # forward table can have more entries, created by [request]
+        # forwarding table can have more entries, created by [request]
         # messages. So, when a peer receives a chunk (from the
         # splitter or another peer), and the origin of the chunk is in
         # the forwarding table, the chunk should be added to each
@@ -393,7 +393,6 @@ class Peer_DBS(sim):
             pass
  
     def send_chunks(self):
-        #print("-----> send chunks (neighbor={}, pending={})".format(self.neighbor, self.pending))
         # When peer X receives a chunk, X selects the next
         # entry pending[E] (with one or more chunk numbers),
         # sends the chunk with chunk_number C indicated by
@@ -442,9 +441,6 @@ class Peer_DBS(sim):
 
     def process_request(self, chunk_number, sender):
 
-        # if sender not in self.forward[self.id]:
-        # return
-        
         # If a peer X receives [request Y] from peer Z, X will
         # append Z to forward[Y.origin].
 
@@ -675,9 +671,12 @@ class Peer_DBS(sim):
 
         return (chunk_number, sender)
 
+    def receive_packet(self):
+        return self.team_socket.recvfrom(self.max_msg_length)
+    
     def process_message(self):
         #try:
-        msg, sender = self.team_socket.recvfrom(self.max_msg_length)
+        msg, sender = self.receive_packet()
         # self.lg.debug("{}: received {} from {} with length {}".format(self,id, msg, sender, len(msg)))
         if len(msg) == self.max_msg_length:
             message = struct.unpack("isli", msg) # Data message:

@@ -11,6 +11,7 @@ peer_ims module
 # chunk from the splitter, it will forward it to this multicast
 # channel (all hosts multicast group). The rest of the logic is identical?
 
+from selectors import select
 import struct
 import random
 from .simulator_stuff import Simulator_socket as socket
@@ -18,6 +19,14 @@ from core.peer_dbs import Peer_DBS
 
 class Peer_IMS(Peer_DBS):
 
+    def listen_to_the_team(self):
+        Peer_DBS.listen_to_the_team(self)
+        self.mcast_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.mcast_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.mcast_socket.bind(('', 1234)) # Listen any interface,
+                                           # including 224.0.0.1
+        self.lg.debug("{}: port 1234 bound to 0.0.0.0".format(self.ext_id))
+    
     def receive_the_list_of_peers(self):
         self.index_of_peer = {}
         peers_pending_of_reception = self.number_of_peers
@@ -55,7 +64,9 @@ class Peer_IMS(Peer_DBS):
 
         self.lg.debug("{}: forward={} pending={}".format(self.ext_id, self.forward, self.pending))
 
-    def listen_to_the_team(self):
-        Peer_DBS.listen_to_the_team(self)
-        self.team_socket.bind(("", 1234))
-        self.lg.debug("{}: binded ('0.0.0.0', 1234)".format(self.ext_id))
+    def receive_packet(self):
+        ready_socks, _, _ = select.select([self.team_socket,
+                                           self.mcast_socket], [], [])
+        for sock in ready_socks:
+            return sock.recvfrom(self.max_msg_length)
+        
