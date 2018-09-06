@@ -70,3 +70,19 @@ class Peer_IMS(Peer_DBS):
         for sock in ready_socks:
             return sock.recvfrom(self.max_msg_length)
         
+    def process_hello(self, sender):
+        if sender not in self.forward[self.id]:
+            if sender[0] == self.id[0]:
+                if ('224.0.0.1', 1234) not in self.forward[self.id]:
+                    self.forward[self.id].append(('224.0.0.1', 1234))
+            else:
+                self.forward[self.id].append(sender)
+            self.pending[sender] = []
+            self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
+            self.debt[sender] = 0
+
+            # S I M U L A T I O N
+            if sim.FEEDBACK:
+                sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
+                sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
+            
