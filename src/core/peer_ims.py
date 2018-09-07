@@ -14,10 +14,14 @@ peer_ims module
 from selectors import select
 import struct
 import random
+import logging
 from .simulator_stuff import Simulator_socket as socket
 from core.peer_dbs import Peer_DBS
 
 class Peer_IMS(Peer_DBS):
+
+    def __init__(self, id, name):
+        super().__init__(id, name)
 
     def listen_to_the_team(self):
         Peer_DBS.listen_to_the_team(self)
@@ -41,23 +45,21 @@ class Peer_IMS(Peer_DBS):
 
             # Check for peers running in the same subnet
             if self.id[0] == peer[0]:
-                peer = ("224.0.0.1", 1234)
-                if peer not in self.forward[self.id]:
-                    self.forward[self.id].append(peer)
-            # S I M U L A T O R
+                if ("224.0.0.1", 1234) not in self.forward[self.id]:
+                    self.forward[self.id].append(("224.0.0.1", 1234))
+                self.pending[("224.0.0.1", 1234)] = []
             else:
                 if counter >= self.number_of_monitors: # Monitors never are isolated
                     r = random.random()
                     if r <= self.link_loss_ratio:
                         self.team_socket.isolate(self.id, peer)
                         self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
-                
-                self.say_hello(peer)
-                self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
                 #print("{}: peer={}".format(self.ext_id, peer))
                 self.forward[self.id].append(peer)
+                self.pending[peer] = []
 
-            self.pending[peer] = []
+            self.say_hello(peer)
+            self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
             self.index_of_peer[peer] = counter
             counter += 1
             peers_pending_of_reception -= 1
@@ -71,18 +73,17 @@ class Peer_IMS(Peer_DBS):
             return sock.recvfrom(self.max_msg_length)
         
     def process_hello(self, sender):
-        if sender not in self.forward[self.id]:
-            if sender[0] == self.id[0]:
-                if ('224.0.0.1', 1234) not in self.forward[self.id]:
-                    self.forward[self.id].append(('224.0.0.1', 1234))
-            else:
-                self.forward[self.id].append(sender)
-            self.pending[sender] = []
-            self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
-            self.debt[sender] = 0
+        self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
+        if sender[0] == self.id[0]:
+            if ('224.0.0.1', 1234) not in self.forward[self.id]:
+                self.forward[self.id].append(('224.0.0.1', 1234))
+                self.pending[('224.0.0.1', 1234)] = []
+        else:
+            super().process_hello(sender)            
 
-            # S I M U L A T I O N
-            if sim.FEEDBACK:
-                sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
-                sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
-            
+    def process_goodbye(self, sender):
+        self.lg.debug("{}: received [goodbye] from {}".format(self.ext_id, sender))
+        if sender[0] == self.id[0]:
+            pass
+        else:
+            super().process_goodbye(sender)

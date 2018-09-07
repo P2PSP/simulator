@@ -40,10 +40,10 @@ class Peer_DBS(sim):
     # S I M U L A T I O N
     #                  |
     #                  v
-    def __init__(self, id):
+    def __init__(self, id, name):
 
         # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-        self.lg = logging.getLogger(__name__)
+        self.lg = logging.getLogger(name)
         # handler = logging.StreamHandler()
         # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
         # formatter = logging.Formatter(fmt='peer_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')

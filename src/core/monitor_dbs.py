@@ -8,9 +8,9 @@ from .common import Common
 from .peer_dbs import Peer_DBS
 
 class Monitor_DBS(Peer_DBS):
-    def __init__(self, id):
+    def __init__(self, id, name):
         #self.losses = 0
-        super().__init__(id)
+        super().__init__(id, name)
 
     def receive_buffer_size(self):
         Peer_DBS.receive_buffer_size(self)

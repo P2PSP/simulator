@@ -10,6 +10,7 @@ from core.peer_sss import Peer_SSS
 from core.peer_malicious import Peer_Malicious
 from core.peer_malicious_sss import Peer_Malicious_SSS
 from core.monitor_dbs import Monitor_DBS
+from core.monitor_ims import Monitor_IMS
 from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
 from core.common import Common
@@ -43,7 +44,7 @@ class Simulator():
                  number_of_peers=9,
                  number_of_rounds=100,
                  number_of_malicious=0,
-                 buffer_size=0,
+                 buffer_size=32,
                  chunk_cadence=0.01,
                  link_loss_ratio=0.0,
                  max_number_of_neighbors=5,
@@ -133,9 +134,12 @@ class Simulator():
         if type == "monitor":
             if first_monitor is True:
                 chunks_before_leave = 99999999
-            if self.set_of_rules == "DBS" or self.set_of_rules == "IMS":
-                peer = Monitor_DBS(id)
-                self.lg.info("simulator: DBS/IMS monitor created")
+            if self.set_of_rules == "DBS":
+                peer = Monitor_DBS(id, "Monitor_DBS")
+                self.lg.info("simulator: DBS monitor created")
+            elif self.set_of_rules == "IMS":
+                peer = Monitor_IMS(id, "Monitor_IMS")
+                self.lg.info("simulator: IMS monitor created")
             elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
                 self.lg.info("simulator: STRPEDS monitor created")                
@@ -153,10 +157,10 @@ class Simulator():
                 self.lg.info("simulator: Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "DBS":
-                peer = Peer_DBS(id)
+                peer = Peer_DBS(id, "Peer_DBS")
                 self.lg.info("simulator: DBS peer created")
             if self.set_of_rules == "IMS":
-                peer = Peer_IMS(id)
+                peer = Peer_IMS(id, "Peer_IMS")
                 self.lg.info("simulator: IMS peer created")
             elif self.set_of_rules == "CIS":
                 peer = Peer_STRPEDS(id)
