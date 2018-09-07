@@ -37,6 +37,8 @@ class Peer_DBS(sim):
     CHUNK_DATA = 1
     ORIGIN = 2
 
+    MAX_DEGREE = 3
+
     # S I M U L A T I O N
     #                  |
     #                  v
@@ -238,8 +240,9 @@ class Peer_DBS(sim):
             self.say_hello(peer)
             self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
             #print("{}: peer={}".format(self.ext_id, peer))
-            self.forward[self.id].append(peer)
-            self.pending[peer] = []
+            if len(self.forward[self.id]) <= self.MAX_DEGREE:
+                self.forward[self.id].append(peer)
+                self.pending[peer] = []
             self.index_of_peer[peer] = counter
             counter += 1
             peers_pending_of_reception -= 1
@@ -357,18 +360,20 @@ class Peer_DBS(sim):
                 #print("{} {} {} {} {} {} {}".format(self.ext_id, counter, peer, origin, len(self.forward[origin]), self.forward[origin], type(self.forward[origin])))
                 counter += 1
                 self.pending[peer].append(chunk_number)
-                self.lg.debug("{}: appended {} to pending[{}] (pending={}, forward[{}]={})".format(self.ext_id, chunk_number, peer, self.pending, origin, self.forward[origin]))
+                self.lg.debug("{}: appended {} to pending[{}]".format(self.ext_id, chunk_number, peer))
+            self.lg.debug("{}: pending={}".format(self.ext_id, self.pending))
+            self.lg.debug("{}: forward[{}]={}".format(self.ext_id, origin, self.forward[origin]))
         except KeyError:
             self.lg.error("{}: KeyError update_pendings(origin={}, chunk_number={}) forward={} pending={}".format(self.ext_id, origin, chunk_number, self.forward, self.pending))
             raise
 
-    def add_new_forwarding_rule(self, origin, neighbor):
-        #print("{}: add_new_forwarding_rule origin={} neighbor={} self.forward[{}]={}".format(self.ext_id, origin, neighbor, self.id, self.forward))
-        self.forward[origin].append(neighbor)
-        #if type(neighbor)!=tuple:
-        #    self.lg.critical("{}: NOTUPLE add_new_forwarding_rule".formar(self.ext_id))
-        self.pending[neighbor] = []
-        self.lg.debug("{}: add neighbor {} (forward={})".format(self.ext_id, neighbor, self.forward))
+    #def add_new_forwarding_rule(self, origin, neighbor):
+    #    #print("{}: add_new_forwarding_rule origin={} neighbor={} self.forward[{}]={}".format(self.ext_id, origin, neighbor, self.id, self.forward))
+    #    self.forward[origin].append(neighbor)
+    #    #if type(neighbor)!=tuple:
+    #    #    self.lg.critical("{}: NOTUPLE add_new_forwarding_rule".formar(self.ext_id))
+    #    self.pending[neighbor] = []
+    #    self.lg.debug("{}: add neighbor {} (forward={})".format(self.ext_id, neighbor, self.forward))
 
     def send_chunk(self, chunk_number, peer):
         try:
@@ -450,9 +455,21 @@ class Peer_DBS(sim):
 
         if origin != None:
             # In this case, I can start forwarding chunks from origin.
-            self.forward[origin] = [sender]
-            #if type(sender)!=tuple:
-            #    self.lg.critical("{}: NOTUPLE process_request".formar(self.ext_id))
+
+            # Ojo, funciona con:
+            #self.forward[origin] = [sender]
+            # pero yo creo que debiera ser:
+            if origin in self.forward:
+                if len(self.forward[origin]) == 0:
+                    self.forward[origin] = [sender]
+                    self.pending[sender] = []
+                else:
+                    if len(self.forward[origin]) <= self.MAX_DEGREE:
+                        self.forward[origin].append(sender)
+                        self.pending[sender] = []
+            else:
+                self.forward[origin] = []
+                self.pending[sender] = []
             
             self.lg.debug("{}: chunks from {} will be sent to {}".format(self.ext_id, origin, sender))
 
@@ -665,7 +682,8 @@ class Peer_DBS(sim):
             elif chunk_number == Common.PRUNE:
                 self.process_prune(message[1], sender)
             elif chunk_number == Common.HELLO:
-                self.process_hello(sender)
+                if len(self.forward[self.id]) <= self.MAX_DEGREE:
+                    self.process_hello(sender)
             elif chunk_number == Common.GOODBYE:
                 self.process_goodbye(sender)
 
