@@ -230,9 +230,9 @@ class Peer_DBS(sim):
 
             # S I M U L A T O R
             #if isolations < 1:
-            if counter>0: # Monitor never is isolated
+            if counter > self.number_of_monitors: # Monitors never are isolated
                 r = random.random()
-                if r <= self.link_loss_ratio:
+                if r < self.link_loss_ratio:
                     #isolations += 1
                     self.team_socket.isolate(self.id, peer)
                     self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
@@ -241,10 +241,11 @@ class Peer_DBS(sim):
             self.team.append(peer)
             self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
             #print("{}: peer={}".format(self.ext_id, peer))
-            if len(self.forward[self.id]) <= self.MAX_DEGREE:
-                self.forward[self.id].append(peer)
-                self.pending[peer] = []
-                self.debt[peer] = 0
+            if len(self.forward[self.id]) < self.MAX_DEGREE:
+                #self.forward[self.id].append(peer)
+                #self.pending[peer] = []
+                #self.debt[peer] = 0
+                pass
             self.index_of_peer[peer] = counter
             counter += 1
             peers_pending_of_reception -= 1
@@ -377,7 +378,7 @@ class Peer_DBS(sim):
         #    self.lg.critical("{}: NOTUPLE add_new_forwarding_rule".formar(self.ext_id))
         self.pending[neighbor] = []
         #self.lg.debug("{}: add neighbor {} (forward={})".format(self.ext_id, neighbor, self.forward))
-        if len(self.forward[self.id]) > self.MAX_DEGREE:
+        if len(self.forward[peer]) > self.MAX_DEGREE:
             try:
                 remove = max(self.debt, key=self.debt.get)
             except ValueError:
@@ -473,7 +474,7 @@ class Peer_DBS(sim):
                     self.forward[origin] = [sender]
                     self.pending[sender] = []
                 else:
-                    if len(self.forward[origin]) <= self.MAX_DEGREE:
+                    if len(self.forward[origin]) < self.MAX_DEGREE:
                         self.forward[origin].append(sender)
                         self.pending[sender] = []
                         self.debt[sender] = 0
@@ -584,7 +585,7 @@ class Peer_DBS(sim):
                     try:
                         del self.debt[sender]
                     except KeyError:
-                        self.lg.error("{}: {} is not it {}".format(self.ext_id, sender, self.debt))
+                        self.lg.debug("{}: {} is not it {}".format(self.ext_id, sender, self.debt))
             # sim.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,sender))))     # To remove ghost peer
 
     # DBS peer's logic
@@ -649,7 +650,10 @@ class Peer_DBS(sim):
                     # if len(self.forward[self.id]) > 0:
                     #self.update_pendings(self.id, chunk_number)
                     self.rounds_counter += 1
-                    print("{}: {}".format(self.ext_id, self.forward))
+                    for peer, peer_list in self.forward.items():
+                        if len(peer_list) > 0:
+                            buf = len(peer_list)*"#"
+                            self.lg.debug("{}: degree({})) {}".format(self.ext_id, peer, buf))
                 else:
                     if sender in self.debt:
                         self.debt[sender] -= 1
@@ -697,7 +701,7 @@ class Peer_DBS(sim):
             elif chunk_number == Common.PRUNE:
                 self.process_prune(message[1], sender)
             elif chunk_number == Common.HELLO:
-                if len(self.forward[self.id]) <= self.MAX_DEGREE:
+                if len(self.forward[self.id]) < self.MAX_DEGREE:
                     self.process_hello(sender)
             elif chunk_number == Common.GOODBYE:
                 self.process_goodbye(sender)

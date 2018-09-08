@@ -55,8 +55,8 @@ class Peer_IMS(Peer_DBS):
                         self.team_socket.isolate(self.id, peer)
                         self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
                 #print("{}: peer={}".format(self.ext_id, peer))
-                self.forward[self.id].append(peer)
-                self.pending[peer] = []
+                #self.forward[self.id].append(peer)
+                #self.pending[peer] = []
 
             self.say_hello(peer)
             self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
@@ -87,3 +87,7 @@ class Peer_IMS(Peer_DBS):
             pass
         else:
             super().process_goodbye(sender)
+
+    def add_new_forwarding_rule(self, peer, neighbor):
+        if peer[0] != self.id[0]:
+            super().add_new_forwarding_rule(peer, neighbor)
