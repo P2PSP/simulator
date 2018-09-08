@@ -302,6 +302,7 @@ class Splitter_DBS(Simulator_stuff):
         self.lost_chunks_from = {}
         self.total_received_chunks = 0
         self.total_lost_chunks = 0
+        total_peers = 0
 
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
@@ -322,6 +323,7 @@ class Splitter_DBS(Simulator_stuff):
             #self.lg.info("peer_number = {}".format(self.peer_number))
             #print("peer_number = {}".format(self.peer_number))
             if self.peer_number == 0:
+                total_peers += len(self.peer_list)
                 self.on_round_beginning()  # Remove outgoing peers
 
                 # S I M U L A T I O N
@@ -381,4 +383,5 @@ class Splitter_DBS(Simulator_stuff):
                 self.lg.debug("{}: Bye sent to simulator".format(self.id))
             counter += 1
 
-        print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks))
+        print("{}: {} lost chunks of {}, CLR={}".format(self.id, self.total_lost_chunks, self.total_received_chunks, (float)(self.total_lost_chunks)/(float)(self.total_received_chunks)))
+        print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))

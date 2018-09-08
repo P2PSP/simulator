@@ -378,7 +378,7 @@ class Peer_DBS(sim):
         #    self.lg.critical("{}: NOTUPLE add_new_forwarding_rule".formar(self.ext_id))
         self.pending[neighbor] = []
         #self.lg.debug("{}: add neighbor {} (forward={})".format(self.ext_id, neighbor, self.forward))
-        if len(self.forward[peer]) > self.MAX_DEGREE:
+        if len(self.forward[peer]) > self.max_degree:
             try:
                 remove = max(self.debt, key=self.debt.get)
             except ValueError:
@@ -474,7 +474,7 @@ class Peer_DBS(sim):
                     self.forward[origin] = [sender]
                     self.pending[sender] = []
                 else:
-                    if len(self.forward[origin]) < self.MAX_DEGREE:
+                    if len(self.forward[origin]) < self.max_degree:
                         self.forward[origin].append(sender)
                         self.pending[sender] = []
                         self.debt[sender] = 0
@@ -701,7 +701,7 @@ class Peer_DBS(sim):
             elif chunk_number == Common.PRUNE:
                 self.process_prune(message[1], sender)
             elif chunk_number == Common.HELLO:
-                if len(self.forward[self.id]) < self.MAX_DEGREE:
+                if len(self.forward[self.id]) < self.max_degree:
                     self.process_hello(sender)
             elif chunk_number == Common.GOODBYE:
                 self.process_goodbye(sender)
