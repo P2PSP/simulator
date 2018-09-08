@@ -47,7 +47,7 @@ class Simulator():
                  buffer_size=32,
                  chunk_cadence=0.01,
                  link_loss_ratio=0.0,
-                 max_number_of_neighbors=5,
+                 max_degree=5,
                  log=logging.ERROR,
                  gui=False):
         
@@ -71,7 +71,7 @@ class Simulator():
         self.buffer_size = buffer_size
         self.chunk_cadence = chunk_cadence
         self.link_loss_ratio = link_loss_ratio
-        self.max_number_of_neighbors = max_number_of_neighbors
+        self.max_degree = max_degree
         self.current_round = 0
         self.gui = gui
         self.processes = {}
@@ -84,7 +84,7 @@ class Simulator():
         self.lg.debug("buffer_size={}".format(self.buffer_size))
         self.lg.debug("chunk_cadence={}".format(self.chunk_cadence))
         self.lg.debug("link_loss_ratio={}".format(link_loss_ratio))
-        self.lg.debug("max_number_of_neighbors={}".format(max_number_of_neighbors))
+        self.lg.debug("max_degree={}".format(max_degree))
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -171,7 +171,7 @@ class Simulator():
         self.lg.info("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
         peer.link_loss_ratio = self.link_loss_ratio
-        peer.max_number_of_neighbors = self.max_number_of_neighbors
+        peer.max_degree = self.max_degree
         peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
         # peer.set_id()

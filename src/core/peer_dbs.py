@@ -145,7 +145,7 @@ class Peer_DBS(sim):
         self.link_loss_ratio = 0.0
 
         # S I M U L A T I O N
-        self.max_number_of_neighbors = 5
+        self.max_degree = self.MAX_DEGREE
         
         self.rounds_counter = 0
         
