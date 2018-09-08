@@ -148,6 +148,8 @@ class Peer_DBS(sim):
         self.max_degree = self.MAX_DEGREE
         
         self.rounds_counter = 0
+
+        self.chunk_number_delta = 0
         
         self.lg.debug("{}: DBS initialized".format(self.id))
 
@@ -598,6 +600,11 @@ class Peer_DBS(sim):
             # We have received a chunk.
             chunk_data = message[self.CHUNK_DATA]
             origin = message[self.ORIGIN]
+
+            # Compute deltas
+            self.chunk_number_delta = chunk_number - self.chunk_number_delta
+            self.lg.debug("{}: delta of chunk {} is {}".format(self.ext_id, chunk_number, self.chunk_number_delta))
+            self.chunk_number_delta = chunk_number
             
             # S I M U L A T I O N
             if sender == self.splitter:
