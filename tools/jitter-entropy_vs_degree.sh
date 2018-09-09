@@ -79,19 +79,22 @@ if [ $__debug__ -eq 1 ]; then
     set -x
 fi
 
-dirname=${buffer}_${cadence}_${monitors}_${peers}_${rounds}
+dirname=${buffer}_${cadence}_${link_loss_ratio}_${max_degree}_${monitors}_${peers}_${rounds}_${set_of_rules}
 mkdir $dirname
 filename=$dirname/`date "+%F-%T"`.txt
 rm -f $filename
+echo \# buffer_size=$buffer >> $filename
+echo \# cadence=$cadence >> $filename
+echo \# link_loss_ratio=$link_loss_ratio >> $filename
 echo \# monitors=$monitors >> $filename
 echo \# peers=$peers >> $filename
-echo \# rounds=$rounds >> $filename
-echo \# cadence=$cadence >> $filename
+echo \# number_of_rounds=$rounds >> $filename
+echo \# set_of_rules=$set_of_rules >> $filename
 
 iteration=1
-while [ $iteration -le $buffer ]; do
+while [ $iteration -le $max_degree ]; do
 
-    python3 -u ../src/simulator.py run --set_of_rules DBS --number_of_monitors $monitors --number_of_peers $peers --number_of_rounds $rounds --buffer_size $iteration --chunk_cadence $cadence > /tmp/$iteration
+    python3 -u ../src/simulator.py run --buffer_size $iteration --chunk_cadence $cadence --link_loss_ratio=$link_loss_ratio --max_degree=$max_degree --number_of_monitors $monitors --number_of_peers $peers --number_of_rounds $rounds --set_of_rules $set_of_rules > /tmp/$iteration
 
     lost_chunks=`grep "lost chunks" /tmp/$iteration | cut -d " " -f 3`
     sent_chunks=`grep "lost chunks" /tmp/$iteration | cut -d " " -f 7`
