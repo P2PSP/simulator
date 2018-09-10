@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Compute the entropy of the jitter (measured in chunks, not in time)
+# as a function of the neighborhood degree.
+
 buffer=32
 cadence=0.01
 max_degree=5
@@ -94,13 +97,12 @@ echo \# set_of_rules=$set_of_rules >> $filename
 iteration=1
 while [ $iteration -le $max_degree ]; do
 
-    python3 -u ../src/simulator.py run --buffer_size $iteration --chunk_cadence $cadence --link_loss_ratio=$link_loss_ratio --max_degree=$max_degree --number_of_monitors $monitors --number_of_peers $peers --number_of_rounds $rounds --set_of_rules $set_of_rules > /tmp/$iteration
+    python3 -u ../src/simulator.py run --buffer_size $buffer --chunk_cadence $cadence --link_loss_ratio=$link_loss_ratio --max_degree=$iteration --number_of_monitors $monitors --number_of_peers $peers --number_of_rounds $rounds --set_of_rules $set_of_rules --log=INFO 2> /tmp/$iteration
 
-    lost_chunks=`grep "lost chunks" /tmp/$iteration | cut -d " " -f 3`
-    sent_chunks=`grep "lost chunks" /tmp/$iteration | cut -d " " -f 7`
-    CLR=`echo $lost_chunks/$sent_chunks | bc -l`
-    
-    echo -e $iteration'\t'$lost_chunks'\t'$sent_chunks'\t'$CLR >> $filename
+    grep "delta of chunk" /tmp/$iteration | cut -d " " -f 9 > /tmp/$iteration.dat
+
+    entropy=`./entropy.py /tmp/$iteration $buffer`
+    echo -e $iteration'\t'$entropy >> $filename
 
     let iteration=iteration+1 
 
