@@ -102,7 +102,8 @@ while [ $iteration -le $max_degree ]; do
     grep "delta of chunk" /tmp/$iteration | cut -d " " -f 9 > /tmp/$iteration.dat
     entropy=`./entropy.py /tmp/$iteration.dat $buffer`
     echo -e $iteration'\t'$entropy >> $filename
-
+    echo "Pulse enter to continue ..."
+    read
     let iteration=iteration+1 
 
 done
