@@ -242,12 +242,6 @@ class Peer_DBS(sim):
             self.say_hello(peer)
             self.team.append(peer)
             self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
-            #print("{}: peer={}".format(self.ext_id, peer))
-            if len(self.forward[self.id]) < self.MAX_DEGREE:
-                #self.forward[self.id].append(peer)
-                #self.pending[peer] = []
-                #self.debt[peer] = 0
-                pass
             self.index_of_peer[peer] = counter
             counter += 1
             peers_pending_of_reception -= 1
@@ -380,12 +374,12 @@ class Peer_DBS(sim):
         #    self.lg.critical("{}: NOTUPLE add_new_forwarding_rule".formar(self.ext_id))
         self.pending[neighbor] = []
         #self.lg.debug("{}: add neighbor {} (forward={})".format(self.ext_id, neighbor, self.forward))
-        if len(self.forward[peer]) > self.max_degree:
-            try:
-                remove = max(self.debt, key=self.debt.get)
-            except ValueError:
-                remove = self.neighbor
-            self.process_goodbye(remove)
+#        if len(self.forward[peer]) > self.max_degree:
+#            try:
+#                remove = max(self.debt, key=self.debt.get)
+#            except ValueError:
+#                remove = self.neighbor
+#            self.process_goodbye(remove)
 
     def send_chunk(self, chunk_number, peer):
         try:
@@ -548,6 +542,19 @@ class Peer_DBS(sim):
         # append Z to forward[X].
 
         if sender not in self.forward[self.id]:
+            if len(self.forward[self.id]) > self.max_degree:
+                try:
+                    remove_me = max(self.debt, key=self.debt.get)
+                except ValueError:
+                    remove_me = self.neighbor
+                self.team.remove(remove_me)
+                for peers_list in self.forward.values():
+                    if remove_me in peers_list:
+                        peers_list.remove(remove_me)
+                        del self.debt[remove_me]
+                        self.lg.debug("{}: removed {} from {} by received [hello]".format(self.ext_id, remove_me, peers_list))
+                # sim.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,sender))))     # To remove ghost peer
+            
             self.forward[self.id].append(sender)
             #if type(sender)!=tuple:
             #    self.lg.critical("{}: NOTUPLE process_hello".formar(self.ext_id))
@@ -576,9 +583,7 @@ class Peer_DBS(sim):
             except ValueError:
                 pass
             for peers_list in self.forward.values():
-
                 if sender in peers_list:
-
                     self.lg.info("{}: {} removing from {}".format(self.ext_id, sender, peers_list))
                     try:
                         peers_list.remove(sender)
@@ -709,8 +714,8 @@ class Peer_DBS(sim):
             elif chunk_number == Common.PRUNE:
                 self.process_prune(message[1], sender)
             elif chunk_number == Common.HELLO:
-                if len(self.forward[self.id]) < self.max_degree:
-                    self.process_hello(sender)
+                #if len(self.forward[self.id]) < self.max_degree:
+                self.process_hello(sender)
             elif chunk_number == Common.GOODBYE:
                 self.process_goodbye(sender)
 
