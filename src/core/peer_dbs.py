@@ -603,6 +603,7 @@ class Peer_DBS(sim):
 
             # Compute deltas
             self.chunk_number_delta = chunk_number - self.chunk_number_delta
+            #self.chunk_number_delta = chunk_number - self.prev_received_chunk
             self.lg.info("{}: delta of chunk {} is {}".format(self.ext_id, chunk_number, self.chunk_number_delta))
             self.chunk_number_delta = chunk_number
             

@@ -100,8 +100,7 @@ while [ $iteration -le $max_degree ]; do
     ./trace python3 -u ../src/simulator.py run --buffer_size $buffer --chunk_cadence $cadence --link_loss_ratio=$link_loss_ratio --max_degree=$iteration --number_of_monitors $monitors --number_of_peers $peers --number_of_rounds $rounds --set_of_rules $set_of_rules --log=INFO 2> /tmp/$iteration
 
     grep "delta of chunk" /tmp/$iteration | cut -d " " -f 9 > /tmp/$iteration.dat
-
-    entropy=`./entropy.py /tmp/$iteration $buffer`
+    entropy=`./entropy.py /tmp/$iteration.dat $buffer`
     echo -e $iteration'\t'$entropy >> $filename
 
     let iteration=iteration+1 
