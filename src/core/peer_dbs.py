@@ -216,14 +216,14 @@ class Peer_DBS(sim):
         # self.team_socket.sendto(Common.GOODBYE, "i", peer)
         msg = self.compose_goodbye_message()
         self.team_socket.sendto(msg, peer)
-        print("{}: sent [goodbye] to {}".format(self.ext_id, peer))
+        self.lg.debug("{}: sent [goodbye] to {}".format(self.ext_id, peer))
 
     def receive_the_list_of_peers(self):
         self.index_of_peer = {}
         peers_pending_of_reception = self.number_of_peers
         msg_length = struct.calcsize("li")
         counter = 0
-        self.forward[self.id] = []
+        #self.forward[self.id] = []
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("li", msg)
@@ -520,6 +520,8 @@ class Peer_DBS(sim):
                     self.lg.debug("{}: {} removed from forward[origin={}]={}".format(self.ext_id, sender, origin, self.forward[origin]))
                 except ValueError:
                     self.lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
+                if len(self.forward[origin])==0:
+                    del self.forward[origin]
 
     def process_hello(self, sender):
         self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
@@ -538,7 +540,7 @@ class Peer_DBS(sim):
         # If a peer X receives [hello] from peer Z, X will
         # append Z to forward[X].
 
-        if sender not in self.forward[self.id]:            
+        if sender not in self.forward[self.id]:
             self.forward[self.id].append(sender)
             self.pending[sender] = []
             self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
@@ -554,7 +556,7 @@ class Peer_DBS(sim):
         self.lg.debug("{}: received [goodbye] from {}".format(self.ext_id, sender))
 
         if sender == self.splitter:
-            print("{}: received [goodbye] from splitter".format(self.ext_id))
+            self.lg.debug("{}: received [goodbye] from splitter".format(self.ext_id))
             self.waiting_for_goodbye = False
             self.player_connected = False
 
@@ -574,6 +576,9 @@ class Peer_DBS(sim):
                         del self.debt[sender]
                     except KeyError:
                         self.lg.debug("{}: {} is not it {}".format(self.ext_id, sender, self.debt))
+                    print("----------->", len(peers_list))
+                    #if len(peers_list)==0:
+                    #    del peers_list
             # sim.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,sender))))     # To remove ghost peer
 
     # DBS peer's logic
@@ -862,8 +867,9 @@ class Peer_DBS(sim):
 
         self.ready_to_leave_the_team = True
         self.lg.debug("{}: said goodbye to the team".format(self.ext_id))
-
-        print("{}: forward={}".format(self.ext_id, self.forward))
+        self.lg.info("{}: forward={}".format(self.ext_id, self.forward))
+        for origin, peers_list in self.forward.items():
+            print("{}: forward[{}]={} {}".format(self.ext_id, origin, peers_list, len(peers_list)))
 
     def run(self):
         start_time = time.time()

@@ -189,7 +189,7 @@ class Splitter_DBS(Simulator_stuff):
         return self.destination_of_chunk[lost_chunk_number % self.buffer_size]
 
     def remove_peer(self, peer):
-        print("{}: peer {} removed".format(self.id, peer))
+        self.lg.debug("{}: peer {} removed".format(self.id, peer))
         try:
             self.peer_list.remove(peer)
         except ValueError:
@@ -223,7 +223,7 @@ class Splitter_DBS(Simulator_stuff):
             del self.losses[peer]
 
     def process_goodbye(self, peer):
-        print("{}: received [goodbye] from {}".format(self.id, peer))
+        self.lg.debug("{}: received [goodbye] from {}".format(self.id, peer))
         if peer not in self.outgoing_peer_list:
             if peer in self.peer_list:
                 self.outgoing_peer_list.append(peer)
@@ -233,7 +233,7 @@ class Splitter_DBS(Simulator_stuff):
         # self.team_socket.sendto(Common.GOODBYE, "i" , peer)
         msg = struct.pack("i", Common.GOODBYE)
         self.team_socket.sendto(msg, peer)
-        print("{}: sent [goodbye] to {}".format(self.id, peer))
+        self.lg.debug("{}: sent [goodbye] to {}".format(self.id, peer))
 
     def remove_outgoing_peers(self):
         for p in self.outgoing_peer_list:
@@ -379,11 +379,12 @@ class Splitter_DBS(Simulator_stuff):
             time.sleep(0.1)
             for p in self.peer_list:
                 self.say_goodbye(p)
-                print("{}: peer_list={}".format(self.id, self.peer_list))
+                self.lg.debug("{}: peer_list={}".format(self.id, self.peer_list))
             if Simulator_stuff.FEEDBACK:
                 Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
                 self.lg.debug("{}: Bye sent to simulator".format(self.id))
             counter += 1
 
-        print("{}: {} lost chunks of {}, CLR={}".format(self.id, self.total_lost_chunks, self.total_received_chunks, (float)(self.total_lost_chunks)/(float)(self.total_received_chunks)))
         print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
+        #print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks, (float)(self.total_lost_chunks)/(float)(self.total_received_chunks)))
+        print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks))
