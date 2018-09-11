@@ -82,9 +82,9 @@ if [ $__debug__ -eq 1 ]; then
     set -x
 fi
 
-dirname=../experiments/${buffer}_${cadence}_${link_loss_ratio}_${max_degree}_${monitors}_${peers}_${rounds}_${set_of_rules}
+dirname=../results/${buffer}_${cadence}_${link_loss_ratio}_${max_degree}_${monitors}_${peers}_${rounds}_${set_of_rules}
 mkdir $dirname
-filename=$dirname/`date "+%F-%T"`.txt
+filename=$dirname/${0##*/}_`date "+%F-%T"`.txt
 rm -f $filename
 echo \# buffer_size=$buffer >> $filename
 echo \# cadence=$cadence >> $filename
