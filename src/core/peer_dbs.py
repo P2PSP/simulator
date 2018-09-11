@@ -223,7 +223,6 @@ class Peer_DBS(sim):
         peers_pending_of_reception = self.number_of_peers
         msg_length = struct.calcsize("li")
         counter = 0
-        #isolations = 0
         self.forward[self.id] = []
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
@@ -231,11 +230,9 @@ class Peer_DBS(sim):
             peer = (socket.int2ip(peer[0]),peer[1])
 
             # S I M U L A T O R
-            #if isolations < 1:
             if counter > self.number_of_monitors: # Monitors never are isolated
                 r = random.random()
                 if r < self.link_loss_ratio:
-                    #isolations += 1
                     self.team_socket.isolate(self.id, peer)
                     self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
                 
@@ -470,10 +467,9 @@ class Peer_DBS(sim):
                     self.forward[origin] = [sender]
                     self.pending[sender] = []
                 else:
-                    if len(self.forward[origin]) < self.max_degree:
-                        self.forward[origin].append(sender)
-                        self.pending[sender] = []
-                        self.debt[sender] = 0
+                    self.forward[origin].append(sender)
+                    self.pending[sender] = []
+                    self.debt[sender] = 0
             else:
                 self.forward[origin] = []
                 self.pending[sender] = []
@@ -541,24 +537,8 @@ class Peer_DBS(sim):
         # If a peer X receives [hello] from peer Z, X will
         # append Z to forward[X].
 
-        if sender not in self.forward[self.id]:
-            if len(self.forward[self.id]) > self.max_degree:
-                try:
-                    remove_me = max(self.debt, key=self.debt.get)
-                except ValueError:
-                    remove_me = self.neighbor
-                self.team.remove(remove_me)
-                for peers_list in self.forward.values():
-                    if remove_me in peers_list:
-                        peers_list.remove(remove_me)
-                        del self.debt[remove_me]
-                        self.lg.debug("{}: removed {} from {} by received [hello]".format(self.ext_id, remove_me, peers_list))
-                # sim.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,sender))))     # To remove ghost peer
-            
+        if sender not in self.forward[self.id]:            
             self.forward[self.id].append(sender)
-            #if type(sender)!=tuple:
-            #    self.lg.critical("{}: NOTUPLE process_hello".formar(self.ext_id))
-
             self.pending[sender] = []
             self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
             self.debt[sender] = 0
