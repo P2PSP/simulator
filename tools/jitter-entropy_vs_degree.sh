@@ -82,7 +82,7 @@ if [ $__debug__ -eq 1 ]; then
     set -x
 fi
 
-dirname=${buffer}_${cadence}_${link_loss_ratio}_${max_degree}_${monitors}_${peers}_${rounds}_${set_of_rules}
+dirname=../experiments/${buffer}_${cadence}_${link_loss_ratio}_${max_degree}_${monitors}_${peers}_${rounds}_${set_of_rules}
 mkdir $dirname
 filename=$dirname/`date "+%F-%T"`.txt
 rm -f $filename
@@ -97,7 +97,7 @@ echo \# set_of_rules=$set_of_rules >> $filename
 iteration=1
 while [ $iteration -le $max_degree ]; do
 
-    python3 -u ../src/simulator.py run --buffer_size $buffer --chunk_cadence $cadence --link_loss_ratio=$link_loss_ratio --max_degree=$iteration --number_of_monitors $monitors --number_of_peers $peers --number_of_rounds $rounds --set_of_rules $set_of_rules --log=INFO 2> /tmp/$iteration
+    ./trace python3 -u ../src/simulator.py run --buffer_size $buffer --chunk_cadence $cadence --link_loss_ratio=$link_loss_ratio --max_degree=$iteration --number_of_monitors $monitors --number_of_peers $peers --number_of_rounds $rounds --set_of_rules $set_of_rules --log=INFO 2> /tmp/$iteration
 
     grep "delta of chunk" /tmp/$iteration | cut -d " " -f 9 > /tmp/$iteration.dat
 
