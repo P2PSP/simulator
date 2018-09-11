@@ -189,9 +189,9 @@ class Splitter_DBS(Simulator_stuff):
         return self.destination_of_chunk[lost_chunk_number % self.buffer_size]
 
     def remove_peer(self, peer):
+        print("{}: peer {} removed".format(self.id, peer))
         try:
             self.peer_list.remove(peer)
-            self.lg.debug("{}: peer {} removed".format(self.id, peer))
         except ValueError:
             self.lg.warning("{}: the removed peer {} does not exist!".format(self.id, peer))
         else:
@@ -223,6 +223,7 @@ class Splitter_DBS(Simulator_stuff):
             del self.losses[peer]
 
     def process_goodbye(self, peer):
+        print("{}: received [goodbye] from {}".format(self.id, peer))
         if peer not in self.outgoing_peer_list:
             if peer in self.peer_list:
                 self.outgoing_peer_list.append(peer)
@@ -232,7 +233,7 @@ class Splitter_DBS(Simulator_stuff):
         # self.team_socket.sendto(Common.GOODBYE, "i" , peer)
         msg = struct.pack("i", Common.GOODBYE)
         self.team_socket.sendto(msg, peer)
-        self.lg.debug("{}: sent [goodbye] to {}".format(self.id, peer))
+        print("{}: sent [goodbye] to {}".format(self.id, peer))
 
     def remove_outgoing_peers(self):
         for p in self.outgoing_peer_list:
@@ -362,7 +363,7 @@ class Splitter_DBS(Simulator_stuff):
                 self.current_round += 1
                 #self.lg.info("round = {}".format(self.current_round))
                 self.lg.info("{}: round={:03} chunk_number={:05} number_of_peers={:03}".format(self.id, self.current_round, self.chunk_number, len(self.peer_list)))
-                self.lg.debug("{}: peer_list={}".format(self.id, self.peer_list))
+                print("{}: peer_list={}".format(self.id, self.peer_list))
                 sys.stderr.write(str(self.current_round)+"/"+str(self.max_number_of_rounds)+"\r")
                 if __debug__:
                     for peer,loss in self.losses.items():
@@ -378,6 +379,7 @@ class Splitter_DBS(Simulator_stuff):
             time.sleep(0.1)
             for p in self.peer_list:
                 self.say_goodbye(p)
+                print("{}: peer_list={}".format(self.id, self.peer_list))
             if Simulator_stuff.FEEDBACK:
                 Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
                 self.lg.debug("{}: Bye sent to simulator".format(self.id))

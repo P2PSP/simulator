@@ -216,7 +216,7 @@ class Peer_DBS(sim):
         # self.team_socket.sendto(Common.GOODBYE, "i", peer)
         msg = self.compose_goodbye_message()
         self.team_socket.sendto(msg, peer)
-        self.lg.debug("{}: sent [goodbye] to {}".format(self.ext_id, peer))
+        print("{}: sent [goodbye] to {}".format(self.ext_id, peer))
 
     def receive_the_list_of_peers(self):
         self.index_of_peer = {}
@@ -467,9 +467,10 @@ class Peer_DBS(sim):
                     self.forward[origin] = [sender]
                     self.pending[sender] = []
                 else:
-                    self.forward[origin].append(sender)
-                    self.pending[sender] = []
-                    self.debt[sender] = 0
+                    if sender not in self.forward[origin]:
+                        self.forward[origin].append(sender)
+                        self.pending[sender] = []
+                        self.debt[sender] = 0
             else:
                 self.forward[origin] = []
                 self.pending[sender] = []
@@ -553,7 +554,7 @@ class Peer_DBS(sim):
         self.lg.debug("{}: received [goodbye] from {}".format(self.ext_id, sender))
 
         if sender == self.splitter:
-
+            print("{}: received [goodbye] from splitter".format(self.ext_id))
             self.waiting_for_goodbye = False
             self.player_connected = False
 
@@ -627,17 +628,17 @@ class Peer_DBS(sim):
                 self.lg.debug("{}: buffer={}".format(self.ext_id, buf))
 
                 # S I M U L A T I O N
-                self.received_chunks += 1
-                if (self.received_chunks >= self.chunks_before_leave):
-                    self.player_connected = False
-                self.sender_of_chunks = []
-                for i in self.chunks:
-                    if i[self.CHUNK_NUMBER] != -1:
-                        self.sender_of_chunks.append(','.join(map(str,i[self.ORIGIN])))
-                    else:
-                        self.sender_of_chunks.append("")
-                if sim.FEEDBACK:
-                    sim.FEEDBACK["DRAW"].put(("B", ','.join(map(str,self.id)), ":".join(self.sender_of_chunks)))
+#                self.received_chunks += 1
+#                if (self.received_chunks >= self.chunks_before_leave):
+#                    self.player_connected = False
+#                self.sender_of_chunks = []
+#                for i in self.chunks:
+#                    if i[self.CHUNK_NUMBER] != -1:
+#                        self.sender_of_chunks.append(','.join(map(str,i[self.ORIGIN])))
+#                    else:
+#                        self.sender_of_chunks.append("")
+#                if sim.FEEDBACK:
+#                    sim.FEEDBACK["DRAW"].put(("B", ','.join(map(str,self.id)), ":".join(self.sender_of_chunks)))
 
                 if sender == self.splitter:
                     # if len(self.forward[self.id]) > 0:
@@ -861,6 +862,8 @@ class Peer_DBS(sim):
 
         self.ready_to_leave_the_team = True
         self.lg.debug("{}: said goodbye to the team".format(self.ext_id))
+
+        print("{}: forward={}".format(self.ext_id, self.forward))
 
     def run(self):
         start_time = time.time()
