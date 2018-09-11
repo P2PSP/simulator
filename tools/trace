@@ -4,3 +4,6 @@
 echo $@ >> trace
 $@
 exit $?
+python3 -u ../src/simulator.py run --buffer_size 32 --chunk_cadence 0.01 --link_loss_ratio=0.0 --max_degree=1 --number_of_monitors 1 --number_of_peers 9 --number_of_rounds 100 --set_of_rules DBS --log=INFO
+python3 -u ../src/simulator.py run --buffer_size 32 --chunk_cadence 0.01 --link_loss_ratio=0.0 --max_degree=2 --number_of_monitors 1 --number_of_peers 9 --number_of_rounds 100 --set_of_rules DBS --log=INFO
+python3 -u ../src/simulator.py run --buffer_size 32 --chunk_cadence 0.01 --link_loss_ratio=0.0 --max_degree=3 --number_of_monitors 1 --number_of_peers 9 --number_of_rounds 100 --set_of_rules DBS --log=INFO
