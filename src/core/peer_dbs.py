@@ -840,15 +840,6 @@ class Peer_DBS(sim):
 
         self.ready_to_leave_the_team = True
         self.lg.debug("{}: said goodbye to the team".format(self.ext_id))
-        self.lg.info("{}: forward={}".format(self.ext_id, self.forward))
-        total_lengths = 0
-        entries = 0
-        for origin, peers_list in self.forward.items():
-            self.lg.debug("{}: goodbye forward[{}]={} {}".format(self.ext_id, origin, peers_list, len(peers_list)))
-            total_lengths += len(peers_list)
-            if(len(peers_list)>0):
-                entries += 1
-        print("{}: average degree = {}".format(self.ext_id, total_lengths/entries))
 
     def run(self):
         start_time = time.time()
@@ -866,6 +857,15 @@ class Peer_DBS(sim):
         self.say_goodbye(self.splitter)
         self.say_goodbye_to_the_team()
 
+        self.lg.info("{}: forward={}".format(self.ext_id, self.forward))
+        total_lengths = 0
+        entries = 0
+        for origin, peers_list in self.forward.items():
+            self.lg.debug("{}: goodbye forward[{}]={} {}".format(self.ext_id, origin, peers_list, len(peers_list)))
+            total_lengths += len(peers_list)
+            if(len(peers_list)>0):
+                entries += 1
+        print("{}: average degree = {}".format(self.ext_id, total_lengths/entries))
         for peer, chunks in self.pending.items():
             for chunk in chunks:
                 self.send_chunk(chunk, peer)
