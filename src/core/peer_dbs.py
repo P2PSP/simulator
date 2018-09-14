@@ -223,7 +223,11 @@ class Peer_DBS(sim):
         peers_pending_of_reception = self.number_of_peers
         msg_length = struct.calcsize("li")
         counter = 0
-        #self.forward[self.id] = []
+
+        # Peer self.id will forward by default all chunks originated
+        # at itself.
+        self.forward[self.id] = []
+        
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("li", msg)
@@ -285,11 +289,6 @@ class Peer_DBS(sim):
         #self.neighbor = self.id
         #print("self.neighbor={}".format(self.neighbor))
         #self.pending[self.id] = []
-
-        # The first peer in the team (probably a monitor) will not
-        # receive any neighbor and therefore, it is necessary to
-        # create its forwarding list as this.
-        self.forward[self.id] = []
 
         # S I M U L A T I O N
         self.map_peer_type(self.id); # Maybe at the end of this
@@ -419,34 +418,6 @@ class Peer_DBS(sim):
         #    self.pending[self.neighbor].remove(chunk_number)
         self.lg.debug("{}: send_chunks (end) neighbor={} pending[{}]={}".format(self.ext_id, self.neighbor, self.neighbor, self.pending[self.neighbor]))
 
-            # Increment the debt of the neighbor.
-            #                        if self.neighbor in self.debt:
-            #                            self.debt[self.neighbor] += 1
-            
-            #                            if self.debt[self.neighbor] > self.MAX_CHUNK_DEBT:
-            
-            # Selfish neighbor detected: stop
-            # communicating with it.
-            #                                self.lg.debug("{}: removed {} by unsupportive ({} debts)".format(self.ext_id, self.neighbor,
-            #              self.debt[
-            #              self.neighbor]))
-            #                                del self.debt[self.neighbor]
-            #                                self.lg.debug("{}: removeeing (forward={})".format(self.ext_id, self.forward))
-            #                                try:
-            #                                    for p, l in self.forward.items():
-            #                                        if self.neighbor in l:
-            #                                            l.remove(self.neighbor)
-            #                                            print("({}) forward={}".format(self.ext_id, self.forward))
-            # if len(l) == 0:
-            #    del self.forward[p]
-            #                                except:
-            #                                    self.lg.debug("len(self.forward)={}".format(len(self.forward)))
-            #                                    self.lg.critical("{}: forward={}".format(self.ext_id, self.forward))
-            #                                    raise
-            #                        else:
-            
-            #                            self.debt[self.neighbor] = 1
-
     def process_request(self, chunk_number, sender):
 
         # If a peer X receives [request Y] from peer Z, X will
@@ -520,8 +491,8 @@ class Peer_DBS(sim):
                     self.lg.debug("{}: {} removed from forward[origin={}]={}".format(self.ext_id, sender, origin, self.forward[origin]))
                 except ValueError:
                     self.lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
-                if len(self.forward[origin])==0:
-                    del self.forward[origin]
+                #if len(self.forward[origin])==0:
+                #    del self.forward[origin]
 
     def process_hello(self, sender):
         self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
@@ -576,7 +547,7 @@ class Peer_DBS(sim):
                         del self.debt[sender]
                     except KeyError:
                         self.lg.debug("{}: {} is not it {}".format(self.ext_id, sender, self.debt))
-                    print("----------->", len(peers_list))
+                    #print("{}: -----------> {}".format(self.ext_id, len(peers_list)))
                     #if len(peers_list)==0:
                     #    del peers_list
             # sim.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,sender))))     # To remove ghost peer
@@ -858,8 +829,10 @@ class Peer_DBS(sim):
         Thread(target=self.run).start()
 
     def say_goodbye_to_the_team(self):
-        for peer in self.forward[self.id]:
-            self.say_goodbye(peer)
+        for origin, peer_list in self.forward.items():
+            for peer in peer_list:
+                self.lg.debug("{}: sent goodbye to {}".format(self.ext_id, peer))
+                self.say_goodbye(peer)
 
         # Next commented lines freeze the peer (in a receive() call)
         # while (all(len(d) > 0 for d in self.pending)):
@@ -868,8 +841,14 @@ class Peer_DBS(sim):
         self.ready_to_leave_the_team = True
         self.lg.debug("{}: said goodbye to the team".format(self.ext_id))
         self.lg.info("{}: forward={}".format(self.ext_id, self.forward))
+        total_lengths = 0
+        entries = 0
         for origin, peers_list in self.forward.items():
-            print("{}: forward[{}]={} {}".format(self.ext_id, origin, peers_list, len(peers_list)))
+            self.lg.debug("{}: goodbye forward[{}]={} {}".format(self.ext_id, origin, peers_list, len(peers_list)))
+            total_lengths += len(peers_list)
+            if(len(peers_list)>0):
+                entries += 1
+        print("{}: average degree = {}".format(self.ext_id, total_lengths/entries))
 
     def run(self):
         start_time = time.time()
