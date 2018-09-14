@@ -21,10 +21,9 @@ from glob import glob
 import time
 import fire
 
-if __debug__:
-    import networkx as nx
-    # import matplotlib.pyplot as plt
-    # import matplotlib.cm as cm
+import networkx as nx
+# import matplotlib.pyplot as plt
+# import matplotlib.cm as cm
 import numpy as np
 import platform
 import os
@@ -237,9 +236,8 @@ class Simulator():
         sim.FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
 
-        if __debug__:
-            if self.gui is True:
-                Process(target=self.draw).start()
+        if self.gui is True:
+            Process(target=self.draw).start()
 
         # Listen to the team for simulation life
         sim.FEEDBACK["STATUS"] = Queue()

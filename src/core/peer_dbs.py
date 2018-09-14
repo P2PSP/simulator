@@ -267,16 +267,17 @@ class Peer_DBS(sim):
             msg = struct.pack('H',1)    # Regular Peer
         self.splitter_socket.send(msg)
 
-    # S I M U L A T I O N
-    def map_peer_type(self,real_id):
-        if sim.FEEDBACK:
-            if self._id[0] == 'M':
-                if self._id[1] == 'P':
-                    sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"MP"))
+    if __debug__:
+        # S I M U L A T I O N
+        def map_peer_type(self,real_id):
+            if sim.FEEDBACK:
+                if self._id[0] == 'M':
+                    if self._id[1] == 'P':
+                        sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"MP"))
+                    else:
+                        sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"M"))
                 else:
-                    sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"M"))
-            else:
-                sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"P"))        
+                    sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"P"))    
 
     def connect_to_the_splitter(self):
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -290,10 +291,11 @@ class Peer_DBS(sim):
         #print("self.neighbor={}".format(self.neighbor))
         #self.pending[self.id] = []
 
-        # S I M U L A T I O N
-        self.map_peer_type(self.id); # Maybe at the end of this
-                                     # function to be easely extended
-                                     # in the peer_dbs_sim class.
+        if __debug__:
+            # S I M U L A T I O N
+            self.map_peer_type(self.id); # Maybe at the end of this
+                                         # function to be easely extended
+                                         # in the peer_dbs_sim class.
 
         try:
             self.splitter_socket.connect(self.splitter)
@@ -448,10 +450,11 @@ class Peer_DBS(sim):
             
             self.lg.debug("{}: chunks from {} will be sent to {}".format(self.ext_id, origin, sender))
 
-            # S I M U L A T I O N
-            if sim.FEEDBACK:
-                sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
-                sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
+            if __debug__:
+                # S I M U L A T I O N
+                if sim.FEEDBACK:
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
         else:
             # Otherwise, I can't help.
             if __debug__:
@@ -517,10 +520,11 @@ class Peer_DBS(sim):
             self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
             self.debt[sender] = 0
 
-            # S I M U L A T I O N
-            if sim.FEEDBACK:
-                sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
-                sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
+            if __debug__:
+                # S I M U L A T I O N
+                if sim.FEEDBACK:
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
         self.team.append(sender)
 
     def process_goodbye(self, sender):
@@ -568,15 +572,16 @@ class Peer_DBS(sim):
             #self.chunk_number_delta = chunk_number - self.prev_received_chunk
             self.lg.info("{}: delta of chunk {} is {}".format(self.ext_id, chunk_number, self.chunk_number_delta))
             self.chunk_number_delta = chunk_number
-            
-            # S I M U L A T I O N
-            if sender == self.splitter:
-                if self.played > 0 and self.played >= self.number_of_peers:
-                    CLR = self.losses / (self.played + self.losses) # Chunk Loss Ratio
-                    if sim.FEEDBACK:
-                        sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), CLR))
-                    #self.losses = 0 # Ojo, puesto a 0 para calcular CLR
-                    #self.played = 0 # Ojo, puesto a 0 para calcular CLR
+
+            if __debug__:
+                # S I M U L A T I O N
+                if sender == self.splitter:
+                    if self.played > 0 and self.played >= self.number_of_peers:
+                        CLR = self.losses / (self.played + self.losses) # Chunk Loss Ratio
+                        if sim.FEEDBACK:
+                            sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), CLR))
+                        #self.losses = 0 # Ojo, puesto a 0 para calcular CLR
+                        #self.played = 0 # Ojo, puesto a 0 para calcular CLR
 
             # 1. Store or report duplicates
             if self.chunks[chunk_number % self.buffer_size][self.CHUNK_NUMBER] == chunk_number:
@@ -675,7 +680,8 @@ class Peer_DBS(sim):
                 self.process_hello(sender)
             elif chunk_number == Common.GOODBYE:
                 self.process_goodbye(sender)
-
+            else:
+                print("=============> {}: unexpected control chunk of index={}".format(self.ext_id, chunk_number))
         return (chunk_number, sender)
 
     def receive_packet(self):
@@ -847,6 +853,7 @@ class Peer_DBS(sim):
         buffering_time = time.time() - start_time
         self.lg.info("{}: buffering time (main latency) = {}".format(self.ext_id, buffering_time))
         while (self.player_connected or self.waiting_for_goodbye):
+            print("--------------", self.player_connected, self.waiting_for_goodbye)
             self.buffer_and_play()
             # The goodbye messages sent to the splitter can be
             # lost. Therefore, it's a good idea to keep sending

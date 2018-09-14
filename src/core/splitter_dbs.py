@@ -117,22 +117,23 @@ class Splitter_DBS(Simulator_stuff):
         self.lg.debug("{}: received {} from {}".format(self.id, message, incoming_peer))
 
         self.insert_peer(incoming_peer)
-        # ------------------
-        # ---- Only for simulation purposes. Unknown in real implementation -----
-        self.lost_chunks_from[incoming_peer] = 0
-        self.received_chunks_from[incoming_peer] = 0
-        msg = serve_socket.recv(struct.calcsize('H'))
-        ptype = struct.unpack('H', msg)
-        ptype = ptype[0]
-        if (ptype == 0):
-            self.number_of_monitors += 1
-            # if Simulator_stuff.FEEDBACK:
-                # Simulator_stuff.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
-        
-        # S I M U L A T I O N
-        if Simulator_stuff.FEEDBACK:
-            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,incoming_peer))))
-        self.lg.debug("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
+        if __debug__:
+            # ------------------
+            # ---- Only for simulation purposes. Unknown in real implementation -----
+            self.lost_chunks_from[incoming_peer] = 0
+            self.received_chunks_from[incoming_peer] = 0
+            msg = serve_socket.recv(struct.calcsize('H'))
+            ptype = struct.unpack('H', msg)
+            ptype = ptype[0]
+            if (ptype == 0):
+                self.number_of_monitors += 1
+                # if Simulator_stuff.FEEDBACK:
+                    # Simulator_stuff.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
+
+            # S I M U L A T I O N
+            if Simulator_stuff.FEEDBACK:
+                Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,incoming_peer))))
+            self.lg.debug("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
 
         serve_socket.close()
 
@@ -196,11 +197,12 @@ class Splitter_DBS(Simulator_stuff):
             self.lg.warning("{}: the removed peer {} does not exist!".format(self.id, peer))
         else:
             # self.peer_number -= 1
-            # S I M U L A T I O N
-            if Simulator_stuff.FEEDBACK:
-                Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,peer))))
-            if peer[0] == "M" and peer[1] != "P":
-                self.number_of_monitors -= 1
+            if __debug__:
+                # S I M U L A T I O N
+                if Simulator_stuff.FEEDBACK:
+                    Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,peer))))
+                if peer[0] == "M" and peer[1] != "P":
+                    self.number_of_monitors -= 1
 
         try:
             del self.losses[peer]
@@ -213,11 +215,12 @@ class Splitter_DBS(Simulator_stuff):
         if peer in self.peer_list:
             self.peer_list.remove(peer)
         # self.peer_number -= 1
-        # S I M U L A T I O N
-        if Simulator_stuff.FEEDBACK:
-            Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,peer))))
-        if peer[0] == "M" and peer[1] != "P":
-            self.number_of_monitors -= 1
+        if __debug__:
+            # S I M U L A T I O N
+            if Simulator_stuff.FEEDBACK:
+                Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,peer))))
+            if peer[0] == "M" and peer[1] != "P":
+                self.number_of_monitors -= 1
 
         if peer in self.losses:
             del self.losses[peer]
@@ -327,12 +330,13 @@ class Splitter_DBS(Simulator_stuff):
                 total_peers += len(self.peer_list)
                 self.on_round_beginning()  # Remove outgoing peers
 
-                # S I M U L A T I O N
-                if Simulator_stuff.FEEDBACK:
-                    Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
-                    Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
-                    Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
-                    Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list) - self.number_of_monitors), self.current_round))
+                if __debug__:
+                    # S I M U L A T I O N
+                    if Simulator_stuff.FEEDBACK:
+                        Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
+                        Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
+                        Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
+                        Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list) - self.number_of_monitors), self.current_round))
 
             try:
                 peer = self.peer_list[self.peer_number]
@@ -358,17 +362,14 @@ class Splitter_DBS(Simulator_stuff):
             #                self.lg.error("{}: peer_list = {}".format(self.id, self.peer_list))
             #                self.lg.error("{}: peer_number = {}".format(self.id, self.peer_number))
 
-            # S I M U L A T I O N
-            if self.peer_number == 0:
-                self.current_round += 1
-                #self.lg.info("round = {}".format(self.current_round))
-                self.lg.info("{}: round={:03} chunk_number={:05} number_of_peers={:03}".format(self.id, self.current_round, self.chunk_number, len(self.peer_list)))
-                print("{}: peer_list={}".format(self.id, self.peer_list))
-                sys.stderr.write(str(self.current_round)+"/"+str(self.max_number_of_rounds)+"\r")
-                if __debug__:
-                    for peer,loss in self.losses.items():
-                        if loss>0:
-                            self.lg.debug("{}:{}".format(peer,loss))
+            if __debug__:
+                # S I M U L A T I O N
+                if self.peer_number == 0:
+                    self.current_round += 1
+                    #self.lg.info("round = {}".format(self.current_round))
+                    self.lg.info("{}: round={:03} chunk_number={:05} number_of_peers={:03}".format(self.id, self.current_round, self.chunk_number, len(self.peer_list)))
+                    print("{}: peer_list={}".format(self.id, self.peer_list))
+                    sys.stderr.write(str(self.current_round)+"/"+str(self.max_number_of_rounds)+"\r")
 
         self.alive = False
         self.lg.debug("{}: alive = {}".format(self.id, self.alive))
@@ -379,6 +380,7 @@ class Splitter_DBS(Simulator_stuff):
             time.sleep(0.1)
             for p in self.peer_list:
                 self.say_goodbye(p)
+                #print("{}: said goodbye to {}".format(self.id, p))
                 self.lg.debug("{}: peer_list={}".format(self.id, self.peer_list))
             if Simulator_stuff.FEEDBACK:
                 Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
