@@ -157,7 +157,7 @@ class Peer_DBS(sim):
         self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.team_socket.bind(self.id)
         #self.team_socket.bind(("", self.id[1]))
-        #self.team_socket.settimeout(1)
+        self.team_socket.settimeout(1)
 
     def set_splitter(self, splitter):
         self.splitter = splitter
@@ -685,31 +685,35 @@ class Peer_DBS(sim):
         return (chunk_number, sender)
 
     def receive_packet(self):
-        return self.team_socket.recvfrom(self.max_msg_length)
+        try:
+            return self.team_socket.recvfrom(self.max_msg_length)
+        except self.team_socket.timeout:
+            raise
     
     def process_message(self):
-        #try:
-        msg, sender = self.receive_packet()
-        # self.lg.debug("{}: received {} from {} with length {}".format(self,id, msg, sender, len(msg)))
-        if len(msg) == self.max_msg_length:
-            message = struct.unpack("isli", msg) # Data message:
-                                                 # [chunk number,
-                                                 # chunk, origin
-                                                 # (address and port)]
-            message = message[self.CHUNK_NUMBER], \
-                      message[self.CHUNK_DATA], \
-                      (socket.int2ip(message[self.ORIGIN]),message[self.ORIGIN+1])
-        elif len(msg) == struct.calcsize("iii"):
-            message = struct.unpack("iii", msg)  # Control message:
-                                                 # [control, parameter]
-        elif len(msg) == struct.calcsize("ii"):
-            message = struct.unpack("ii", msg)  # Control message:
-                                                # [control, parameter]
-        else:
-            message = struct.unpack("i", msg)  # Control message:
-                                               # [control]
-        return self.process_unpacked_message(message, sender)
-        #except:
+        try:
+            msg, sender = self.receive_packet()
+            # self.lg.debug("{}: received {} from {} with length {}".format(self,id, msg, sender, len(msg)))
+            if len(msg) == self.max_msg_length:
+                message = struct.unpack("isli", msg) # Data message:
+                                                     # [chunk number,
+                                                     # chunk, origin
+                                                     # (address and port)]
+                message = message[self.CHUNK_NUMBER], \
+                          message[self.CHUNK_DATA], \
+                          (socket.int2ip(message[self.ORIGIN]),message[self.ORIGIN+1])
+            elif len(msg) == struct.calcsize("iii"):
+                message = struct.unpack("iii", msg)  # Control message:
+                                                     # [control, parameter]
+            elif len(msg) == struct.calcsize("ii"):
+                message = struct.unpack("ii", msg)  # Control message:
+                                                    # [control, parameter]
+            else:
+                message = struct.unpack("i", msg)  # Control message:
+                                                   # [control]
+            return self.process_unpacked_message(message, sender)
+        except self.team_socket.timeout:
+            raise
         #    return (0, self.id)
         
     def buffer_data(self):
@@ -821,8 +825,13 @@ class Peer_DBS(sim):
     def buffer_and_play(self):
         last_received_chunk = -1
         while (last_received_chunk < 0) and (self.player_connected):
-            (last_received_chunk, _) = self.process_message()
-
+            try:
+                (last_received_chunk, _) = self.process_message()
+            except self.team_socket.timeout:
+                self.player_connected = False
+                self.waiting_for_goodbye = False
+                print("{}: timeout!".format(self.ext_id))
+                break
 #        (last_received_chunk, _) = self.process_message()
 #        while last_received_chunk < 0:
 #            if self.player_connected == False:
@@ -853,7 +862,6 @@ class Peer_DBS(sim):
         buffering_time = time.time() - start_time
         self.lg.info("{}: buffering time (main latency) = {}".format(self.ext_id, buffering_time))
         while (self.player_connected or self.waiting_for_goodbye):
-            print("--------------", self.player_connected, self.waiting_for_goodbye)
             self.buffer_and_play()
             # The goodbye messages sent to the splitter can be
             # lost. Therefore, it's a good idea to keep sending
