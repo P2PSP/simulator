@@ -76,22 +76,22 @@ if [ $__debug__ -eq 1 ]; then
     set -x
 fi
 
-dirname=../results/${buffer}_${cadence}_${link_loss_ratio}_${monitors}_${peers}_${rounds}_${set_of_rules}
+dirname=../results/${cadence}_${link_loss_ratio}_${monitors}_${peers}_${rounds}_${set_of_rules}
 mkdir $dirname
 filename=$dirname/${0##*/}_`date "+%F-%T"`.txt
 rm -f $filename
-echo \# buffer_size=$buffer >> $filename
 echo \# cadence=$cadence >> $filename
 echo \# link_loss_ratio=$link_loss_ratio >> $filename
 echo \# monitors=$monitors >> $filename
 echo \# peers=$peers >> $filename
 echo \# rounds=$rounds >> $filename
 echo \# set=$set_of_rules >> $filename
-
-iteration=$(($monitors+$peers))
+echo -e \# peers\taverage_degree
+#iteration=$(($monitors+$peers))
+iteration=1
 while [ $iteration -le $buffer ]; do
 
-    ./trace python3 -u ../src/simulator.py run --buffer_size $buffer --chunk_cadence $cadence --link_loss_ratio=$link_loss_ratio --number_of_monitors $monitors --number_of_peers $peers --number_of_rounds $rounds --set_of_rules $set_of_rules > /tmp/$iteration
+    ./trace python3 -u ../src/simulator.py run --buffer_size $iteration --chunk_cadence $cadence --link_loss_ratio=$link_loss_ratio --number_of_monitors $monitors --number_of_peers $peers --number_of_rounds $rounds --set_of_rules $set_of_rules > /tmp/$iteration
     grep "average degree" /tmp/$iteration | cut -d " " -f 7 > /tmp/$iteration.dat
     average=`./average.py /tmp/$iteration.dat`
     echo -e $iteration'\t'$average >> $filename
