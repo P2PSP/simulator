@@ -132,7 +132,8 @@ class Simulator():
         self.lg.info("simulator: creating {}".format(type))
         if type == "monitor":
             if first_monitor is True:
-                chunks_before_leave = 99999999
+                pass
+                #chunks_before_leave = 99999999
             if self.set_of_rules == "DBS":
                 peer = Monitor_DBS(id, "Monitor_DBS")
                 self.lg.info("simulator: DBS monitor created")

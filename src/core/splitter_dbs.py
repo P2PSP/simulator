@@ -181,6 +181,7 @@ class Splitter_DBS(Simulator_stuff):
     def process_lost_chunk(self, lost_chunk_number, sender):
         destination = self.get_losser(lost_chunk_number)
         self.lg.debug("{}: sender {} complains about lost chunk {} with destination {}".format(self.id, sender, lost_chunk_number, destination))
+        #self.total_lost_chunks += 1
         self.increment_unsupportivity_of_peer(destination)
 
     # def get_lost_chunk_number(self, message):
@@ -252,7 +253,7 @@ class Splitter_DBS(Simulator_stuff):
         while self.alive:
             # message, sender = self.team_socket.recvfrom()
             packed_msg, sender = self.team_socket.recvfrom(100)
-            print("{}: packet={}".format(self.id, packed_msg))
+            #print("{}: packet={}".format(self.id, packed_msg))
             if len(packed_msg) == struct.calcsize("iii"):
                 msg = struct.unpack("iii", packed_msg)
                 if msg[0] == Common.GOODBYE:
@@ -264,10 +265,10 @@ class Splitter_DBS(Simulator_stuff):
                         self.total_received_chunks += self.received_chunks_from[sender]
                         self.total_lost_chunks += self.lost_chunks_from[sender]
                     self.lg.critical("{}: received [goodbye {} {}] from {}".format(self.id, msg[1], msg[2], sender))
-                    self.lg.critical("{}: received_chunks_from[{}]={}".format(self.id, sender, self.received_chunks_from[sender]))
-                    self.lg.critical("{}: lost_chunks_from[{}]={}".format(self.id, sender, self.lost_chunks_from[sender]))
-                    self.lg.critical("{}: total_received_chunks={}".format(self.id, self.total_received_chunks))
-                    self.lg.critical("{}: total_lost_chunks={}".format(self.id, self.total_lost_chunks))
+                    self.lg.debug("{}: received_chunks_from[{}]={}".format(self.id, sender, self.received_chunks_from[sender]))
+                    self.lg.debug("{}: lost_chunks_from[{}]={}".format(self.id, sender, self.lost_chunks_from[sender]))
+                    self.lg.debug("{}: total_received_chunks={}".format(self.id, self.total_received_chunks))
+                    self.lg.debug("{}: total_lost_chunks={}".format(self.id, self.total_lost_chunks))
             elif len(packed_msg) == struct.calcsize("ii"):
                 msg = struct.unpack("ii", packed_msg)
                 if msg[0] == Common.LOST_CHUNK:
@@ -319,7 +320,8 @@ class Splitter_DBS(Simulator_stuff):
         print()
 
         #while self.alive:
-        while self.current_round < self.max_number_of_rounds:
+        #while self.current_round < self.max_number_of_rounds:
+        while len(self.peer_list) > 0:
 
             chunk = self.receive_chunk()
             chunk_counter += 1
@@ -381,12 +383,10 @@ class Splitter_DBS(Simulator_stuff):
         #    time.sleep(0.1)
         #    for p in self.peer_list:
         #        self.say_goodbye(p)
-                #print("{}: said goodbye to {}".format(self.id, p))
-        #        self.lg.debug("{}: peer_list={}".format(self.id, self.peer_list))
+        #    counter += 1
         if Simulator_stuff.FEEDBACK:
             Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
             self.lg.debug("{}: Bye sent to simulator".format(self.id))
-        #    counter += 1
 
         print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
         #print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks, (float)(self.total_lost_chunks)/(float)(self.total_received_chunks)))

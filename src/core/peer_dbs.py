@@ -330,27 +330,26 @@ class Peer_DBS(sim):
         # A new chunk has been received from an origin. For all peers
         # in forward[origin] the chunk (number) is appended. 
         #print("{}: update_pendings({}, {})".format(self.ext_id, origin, chunk_number))
-        try:
-#            self.lg.debug("{}: updating for {}".format(self.ext_id, origin))
-#            self.lg.debug("{}: self.forward={}".format(self.ext_id, self.forward))
-            counter = 0
-            for peer in self.forward[origin]:
+        for peer in self.forward[origin]:
                 #if sefl.pending[peer] = None:
                 #    self.peer_number[peer] = []
-                #print("{} {} {} {} {} {} {}".format(self.ext_id, counter, peer, origin, len(self.forward[origin]), self.forward[origin], type(self.forward[origin])))
-                counter += 1
+            try:
                 self.pending[peer].append(chunk_number)
-                self.lg.debug("{}: appended {} to pending[{}]".format(self.ext_id, chunk_number, peer))
-            self.lg.debug("{}: pending={}".format(self.ext_id, self.pending))
-            self.lg.debug("{}: forward[{}]={}".format(self.ext_id, origin, self.forward[origin]))
-        except KeyError:
-            self.lg.error("{}: KeyError update_pendings(origin={}, chunk_number={}) forward={} pending={}".format(self.ext_id, origin, chunk_number, self.forward, self.pending))
-            raise
+            except KeyError:
+                self.pending[peer] = [chunk_number]
+                #self.lg.error("{}: KeyError update_pendings(origin={}, chunk_number={}) forward={} pending={}".format(self.ext_id, origin, chunk_number, self.forward, self.pending))
+                #raise
+            self.lg.debug("{}: appended {} to pending[{}]".format(self.ext_id, chunk_number, peer))
+        self.lg.debug("{}: pending={}".format(self.ext_id, self.pending))
+        self.lg.debug("{}: forward[{}]={}".format(self.ext_id, origin, self.forward[origin]))
 
     def add_new_forwarding_rule(self, peer, neighbor):
         self.lg.debug("{}: {} adding new neighbor {}".format(self.ext_id, peer, neighbor))
         #print("{}: add_new_forwarding_rule origin={} neighbor={} self.forward[{}]={}".format(self.ext_id, origin, neighbor, self.id, self.forward))
+        #try:
         self.forward[peer].append(neighbor)
+        #except KeyError:
+        #    self.forward[peer] = [neighbor]
         #if type(neighbor)!=tuple:
         #    self.lg.critical("{}: NOTUPLE add_new_forwarding_rule".formar(self.ext_id))
         self.pending[neighbor] = []
@@ -511,10 +510,10 @@ class Peer_DBS(sim):
         self.team.append(sender)
 
     def process_goodbye(self, sender):
-        self.lg.critical("{}: received [goodbye] from {}".format(self.ext_id, sender))
+        self.lg.debug("{}: received [goodbye] from {}".format(self.ext_id, sender))
 
         if sender == self.splitter:
-            self.lg.critical("{}: received [goodbye] from splitter".format(self.ext_id))
+            self.lg.debug("{}: received [goodbye] from splitter".format(self.ext_id))
             self.waiting_for_goodbye = False
             self.player_connected = False
 
@@ -613,15 +612,17 @@ class Peer_DBS(sim):
                             buf = len(peer_list)*"#"
                             self.lg.debug("{}: degree({})) {}".format(self.ext_id, peer, buf))
                 else:
-                    if sender in self.debt:
-                        self.debt[sender] -= 1
-                    else:
-                        self.debt[sender] = -1
-                        # Usar mejor técnica de ir dividiendo entre 2 cada round
+                    #if sender in self.debt:
+                    #    self.debt[sender] -= 1
+                    #else:
+                    #    self.debt[sender] = -1
+                    # Usar mejor técnica de ir dividiendo entre 2 cada round
                     #if self.neighbor is None:  # Quizás se pueda quitar!!!!
                     #self.neighbor = sender
                     if sender not in self.forward[self.id]:
-                        self.add_new_forwarding_rule(self.id, sender)
+                        self.forward[self.id].append(sender)
+                        self.pending[sender] = []
+                        #self.add_new_forwarding_rule(self.id, sender)
                     #for peer in self.forward:
                 if origin in self.forward:
                     self.update_pendings(origin, chunk_number)
@@ -696,6 +697,8 @@ class Peer_DBS(sim):
                                                    # [control]
             return self.process_unpacked_message(message, sender)
         except self.team_socket.timeout:
+            #self.say_goodbye(self.splitter)
+            #self.say_goodbye_to_the_team()
             raise
         #    return (0, self.id)
         
@@ -771,8 +774,12 @@ class Peer_DBS(sim):
             #self.request_chunk(chunk_number, random.choice(self.team))
             
             # Send the request to all neighbors.
-            for neighbor in self.forward[self.id]:
-                self.request_chunk(chunk_number, neighbor)
+            #for neighbor in self.forward[self.id]:
+            #    self.request_chunk(chunk_number, neighbor)
+
+            # Send the request to all the team.
+            for peer in self.team:
+                self.request_chunk(chunk_number, peer)
 
             # As an alternative, to selected peer to send to it the
             # request, we run the buffer towards increasing positions
@@ -829,8 +836,8 @@ class Peer_DBS(sim):
     # To be placed in peer_dbs_sim ?
     def compose_goodbye_message(self):
         msg = struct.pack("iii", Common.GOODBYE, self.number_of_chunks_consumed, self.losses)
-        self.lg.critical("{}: played={}".format(self.ext_id, self.number_of_chunks_consumed))
-        self.lg.critical("{}: losses={}".format(self.ext_id, self.losses))
+        self.lg.debug("{}: played={}".format(self.ext_id, self.number_of_chunks_consumed))
+        self.lg.debug("{}: losses={}".format(self.ext_id, self.losses))
         return msg
 
     # To be here
@@ -842,7 +849,7 @@ class Peer_DBS(sim):
         # self.team_socket.sendto(Common.GOODBYE, "i", peer)
         msg = self.compose_goodbye_message()
         self.team_socket.sendto(msg, peer)
-        self.lg.critical("{}: sent [goodbye] to {}".format(self.ext_id, peer))
+        self.lg.debug("{}: sent [goodbye] to {}".format(self.ext_id, peer))
 
     def say_goodbye_to_the_team(self):
         for origin, peer_list in self.forward.items():
@@ -872,7 +879,6 @@ class Peer_DBS(sim):
         self.say_goodbye(self.splitter)
         self.say_goodbye_to_the_team()
 
-        self.lg.critical("{}: forward={}".format(self.ext_id, self.forward))
         total_lengths = 0
         max_length = 0
         entries = 0
@@ -883,7 +889,7 @@ class Peer_DBS(sim):
                 entries += 1
             if max_length < len(peers_list):
                 max_length = len(peers_list)
-        self.lg.debug("{}: forward={} max_degree={} avg_degree={:.2f} forward_entries={}".format(self.ext_id, self.forward, max_length, total_lengths/entries, entries))
+        print("{}: forward={} forward_entries={} max_length={}".format(self.ext_id, self.forward, entries, max_length))
         for peer, chunks in self.pending.items():
             for chunk in chunks:
                 self.send_chunk(chunk, peer)
