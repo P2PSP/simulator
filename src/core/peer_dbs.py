@@ -619,8 +619,12 @@ class Peer_DBS(sim):
                     # Usar mejor técnica de ir dividiendo entre 2 cada round
                     #if self.neighbor is None:  # Quizás se pueda quitar!!!!
                     #self.neighbor = sender
-                    if sender not in self.forward[self.id]:
-                        self.forward[self.id].append(sender)
+                    try:
+                        if sender not in self.forward[self.id]:
+                            self.forward[self.id].append(sender)
+                            self.pending[sender] = []
+                    except KeyError:
+                        self.forward[self.id] = [sender]
                         self.pending[sender] = []
                         #self.add_new_forwarding_rule(self.id, sender)
                     #for peer in self.forward:

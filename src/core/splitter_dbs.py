@@ -264,7 +264,7 @@ class Splitter_DBS(Simulator_stuff):
                         self.lost_chunks_from[sender] = msg[2]
                         self.total_received_chunks += self.received_chunks_from[sender]
                         self.total_lost_chunks += self.lost_chunks_from[sender]
-                    self.lg.critical("{}: received [goodbye {} {}] from {}".format(self.id, msg[1], msg[2], sender))
+                    self.lg.debug("{}: received [goodbye {} {}] from {}".format(self.id, msg[1], msg[2], sender))
                     self.lg.debug("{}: received_chunks_from[{}]={}".format(self.id, sender, self.received_chunks_from[sender]))
                     self.lg.debug("{}: lost_chunks_from[{}]={}".format(self.id, sender, self.lost_chunks_from[sender]))
                     self.lg.debug("{}: total_received_chunks={}".format(self.id, self.total_received_chunks))
@@ -371,8 +371,8 @@ class Splitter_DBS(Simulator_stuff):
                     self.current_round += 1
                     #self.lg.info("round = {}".format(self.current_round))
                     self.lg.info("{}: round={:03} chunk_number={:05} number_of_peers={:03}".format(self.id, self.current_round, self.chunk_number, len(self.peer_list)))
-                    print("{}: len(peer_list)={}".format(self.id, len(self.peer_list)))
-                    sys.stderr.write(str(self.current_round) + "/" + str(self.max_number_of_rounds) + " " + str(self.chunk_number) + "\r")
+                    #print("{}: len(peer_list)={}".format(self.id, len(self.peer_list)))
+                    sys.stderr.write(str(self.current_round) + "/" + str(self.max_number_of_rounds) + " " + str(self.chunk_number) + " " + str(len(self.peer_list)) + "\r")
 
         self.alive = False
         self.lg.debug("{}: alive = {}".format(self.id, self.alive))
