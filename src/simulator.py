@@ -45,7 +45,7 @@ class Simulator():
                  number_of_malicious=0,
                  buffer_size=32,
                  chunk_cadence=0.01,
-                 link_loss_ratio=0.0,
+                 link_failure_prob=0.0,
                  max_degree=5,
                  log=logging.ERROR,
                  gui=False):
@@ -69,7 +69,7 @@ class Simulator():
         self.number_of_malicious = number_of_malicious
         self.buffer_size = buffer_size
         self.chunk_cadence = chunk_cadence
-        self.link_loss_ratio = link_loss_ratio
+        self.link_failure_prob = link_failure_prob
         self.max_degree = max_degree
         self.current_round = 0
         self.gui = gui
@@ -82,7 +82,7 @@ class Simulator():
         self.lg.debug("number_of_malicious={}".format(self.number_of_malicious))
         self.lg.debug("buffer_size={}".format(self.buffer_size))
         self.lg.debug("chunk_cadence={}".format(self.chunk_cadence))
-        self.lg.debug("link_loss_ratio={}".format(link_loss_ratio))
+        self.lg.debug("link_failure_prob={}".format(link_failure_prob))
         self.lg.debug("max_degree={}".format(max_degree))
 
     def compute_team_size(self, n):
@@ -169,7 +169,7 @@ class Simulator():
                 self.lg.info("simulator: CIS-SSS peer created")
         self.lg.info("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
-        peer.link_loss_ratio = self.link_loss_ratio
+        peer.link_failure_prob = self.link_failure_prob
         peer.max_degree = self.max_degree
         peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)

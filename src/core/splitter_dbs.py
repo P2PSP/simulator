@@ -368,7 +368,7 @@ class Splitter_DBS(Simulator_stuff):
                     self.current_round += 1
                     #self.lg.info("round = {}".format(self.current_round))
                     self.lg.info("{}: round={:03} chunk_number={:05} number_of_peers={:03}".format(self.id, self.current_round, self.chunk_number, len(self.peer_list)))
-                    print("{}: peer_list={}".format(self.id, self.peer_list))
+                    print("{}: len(peer_list)={}".format(self.id, len(self.peer_list)))
                     sys.stderr.write(str(self.current_round)+"/"+str(self.max_number_of_rounds)+"\r")
 
         self.alive = False

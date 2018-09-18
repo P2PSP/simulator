@@ -142,7 +142,7 @@ class Peer_DBS(sim):
         self.chunks_before_leave = 0
 
         # S I M U L A T I O N
-        self.link_loss_ratio = 0.0
+        self.link_failure_prob = 0.0
 
         # S I M U L A T I O N
         self.max_degree = self.MAX_DEGREE
@@ -236,9 +236,9 @@ class Peer_DBS(sim):
             # S I M U L A T O R
             if counter > self.number_of_monitors: # Monitors never are isolated
                 r = random.random()
-                if r < self.link_loss_ratio:
+                if r < self.link_failure_prob:
                     self.team_socket.isolate(self.id, peer)
-                    self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
+                    self.lg.critical("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
                 
             self.say_hello(peer)
             self.team.append(peer)
@@ -433,20 +433,20 @@ class Peer_DBS(sim):
             # In this case, I can start forwarding chunks from origin.
 
             # Ojo, funciona con:
-            #self.forward[origin] = [sender]
+            self.forward[origin] = [sender]
             # pero yo creo que debiera ser:
-            if origin in self.forward:
-                if len(self.forward[origin]) == 0:
-                    self.forward[origin] = [sender]
-                    self.pending[sender] = []
-                else:
-                    if sender not in self.forward[origin]:
-                        self.forward[origin].append(sender)
-                        self.pending[sender] = []
-                        self.debt[sender] = 0
-            else:
-                self.forward[origin] = []
-                self.pending[sender] = []
+            #if origin in self.forward:
+            #    if len(self.forward[origin]) == 0:
+            #        self.forward[origin] = [sender]
+            #        self.pending[sender] = []
+            #    else:
+            #        if sender not in self.forward[origin]:
+            #            self.forward[origin].append(sender)
+            #            self.pending[sender] = []
+            #            self.debt[sender] = 0
+            #else:
+            #    self.forward[origin] = []
+            #    self.pending[sender] = []
             
             self.lg.debug("{}: chunks from {} will be sent to {}".format(self.ext_id, origin, sender))
 
@@ -491,11 +491,12 @@ class Peer_DBS(sim):
             if sender in self.forward[origin]:
                 try:
                     self.forward[origin].remove(sender)
-                    self.lg.debug("{}: {} removed from forward[origin={}]={}".format(self.ext_id, sender, origin, self.forward[origin]))
+                    print("{}: {} removed from forward[origin={}]={}".format(self.ext_id, sender, origin, self.forward[origin]))
                 except ValueError:
                     self.lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
-                #if len(self.forward[origin])==0:
-                #    del self.forward[origin]
+                if len(self.forward[origin])==0:
+                    del self.forward[origin]
+                    print("{}: removed list ------------------------------------------ forward={}".format(self.ext_id, self.forward))
 
     def process_hello(self, sender):
         self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
@@ -681,7 +682,7 @@ class Peer_DBS(sim):
             elif chunk_number == Common.GOODBYE:
                 self.process_goodbye(sender)
             else:
-                print("=============> {}: unexpected control chunk of index={}".format(self.ext_id, chunk_number))
+                self.lg.info("{}: unexpected control chunk of index={}".format(self.ext_id, chunk_number))
         return (chunk_number, sender)
 
     def receive_packet(self):
@@ -757,7 +758,7 @@ class Peer_DBS(sim):
             self.played += 1
         else:
             self.losses += 1
-            self.lg.info("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
+            print("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
 
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change
@@ -874,13 +875,17 @@ class Peer_DBS(sim):
 
         self.lg.info("{}: forward={}".format(self.ext_id, self.forward))
         total_lengths = 0
+        max_length = 0
         entries = 0
         for origin, peers_list in self.forward.items():
             self.lg.debug("{}: goodbye forward[{}]={} {}".format(self.ext_id, origin, peers_list, len(peers_list)))
             total_lengths += len(peers_list)
             if(len(peers_list)>0):
                 entries += 1
-        print("{}: average degree = {}".format(self.ext_id, total_lengths/entries))
+            if max_length < len(peers_list):
+                max_length = len(peers_list)
+        #print("{}: average degree = {}".format(self.ext_id, total_lengths/entries))
+        print("{}: forward={} max_degree={} avg_degree={:.2f} forward_entries={}".format(self.ext_id, self.forward, max_length, total_lengths/entries, entries))
         for peer, chunks in self.pending.items():
             for chunk in chunks:
                 self.send_chunk(chunk, peer)
