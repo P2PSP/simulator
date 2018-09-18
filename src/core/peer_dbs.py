@@ -215,11 +215,11 @@ class Peer_DBS(sim):
             peer = struct.unpack("li", msg)
             peer = (socket.int2ip(peer[0]),peer[1])
             self.team.append(peer)
+            self.forward[self.id].append(peer)
             self.index_of_peer[peer] = counter
 
             # S I M U L A T O R
             if counter >= self.number_of_monitors: # Monitors never are isolated
-                self.lg.critical("{}: number_of_monitors={} counter={} isolated".format(self.ext_id, self.number_of_monitors, counter))
                 r = random.random()
                 if r <= self.link_failure_prob:
                     self.team_socket.isolate(self.id, peer)
@@ -341,7 +341,7 @@ class Peer_DBS(sim):
                 #raise
             self.lg.debug("{}: appended {} to pending[{}]".format(self.ext_id, chunk_number, peer))
         self.lg.debug("{}: pending={}".format(self.ext_id, self.pending))
-        self.lg.debug("{}: forward[{}]={}".format(self.ext_id, origin, self.forward[origin]))
+        #self.lg.debug("{}: forward[{}]={}".format(self.ext_id, origin, self.forward[origin]))
 
     def add_new_forwarding_rule(self, peer, neighbor):
         self.lg.debug("{}: {} adding new neighbor {}".format(self.ext_id, peer, neighbor))
@@ -415,20 +415,19 @@ class Peer_DBS(sim):
             # In this case, I can start forwarding chunks from origin.
 
             # Ojo, funciona con:
-            self.forward[origin] = [sender]
+            #self.forward[origin] = [sender]
             # pero yo creo que debiera ser:
-            #if origin in self.forward:
-            #    if len(self.forward[origin]) == 0:
-            #        self.forward[origin] = [sender]
-            #        self.pending[sender] = []
-            #    else:
-            #        if sender not in self.forward[origin]:
-            #            self.forward[origin].append(sender)
-            #            self.pending[sender] = []
-            #            self.debt[sender] = 0
-            #else:
-            #    self.forward[origin] = []
-            #    self.pending[sender] = []
+            if origin in self.forward:
+                if len(self.forward[origin]) == 0:
+                    self.forward[origin] = [sender]
+                    self.pending[sender] = []
+                else:
+                    if sender not in self.forward[origin]:
+                        self.forward[origin].append(sender)
+                        self.pending[sender] = []
+            else:
+                self.forward[origin] = []
+                self.pending[sender] = []
             
             self.lg.debug("{}: chunks from {} will be sent to {}".format(self.ext_id, origin, sender))
 
@@ -627,6 +626,7 @@ class Peer_DBS(sim):
                         self.forward[self.id] = [sender]
                         self.pending[sender] = []
                         #self.add_new_forwarding_rule(self.id, sender)
+                    self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
                     #for peer in self.forward:
                 if origin in self.forward:
                     self.update_pendings(origin, chunk_number)
