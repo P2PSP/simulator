@@ -167,7 +167,7 @@ class Simulator():
             elif self.set_of_rules == "CIS-SSS":
                 peer = Peer_SSS(id)
                 self.lg.info("simulator: CIS-SSS peer created")
-        self.lg.info("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
+        self.lg.critical("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
         peer.link_failure_prob = self.link_failure_prob
         peer.max_degree = self.max_degree

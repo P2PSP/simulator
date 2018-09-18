@@ -252,6 +252,7 @@ class Splitter_DBS(Simulator_stuff):
         while self.alive:
             # message, sender = self.team_socket.recvfrom()
             packed_msg, sender = self.team_socket.recvfrom(100)
+            print("{}: packet={}".format(self.id, packed_msg))
             if len(packed_msg) == struct.calcsize("iii"):
                 msg = struct.unpack("iii", packed_msg)
                 if msg[0] == Common.GOODBYE:
@@ -262,11 +263,11 @@ class Splitter_DBS(Simulator_stuff):
                         self.lost_chunks_from[sender] = msg[2]
                         self.total_received_chunks += self.received_chunks_from[sender]
                         self.total_lost_chunks += self.lost_chunks_from[sender]
-                    self.lg.debug("{}: received [goodbye {} {}] from {}".format(self.id, msg[1], msg[2], sender))
-                    self.lg.debug("{}: received_chunks_from[{}]={}".format(self.id, sender, self.received_chunks_from[sender]))
-                    self.lg.debug("{}: lost_chunks_from[{}] = {}".format(self.id, sender, self.lost_chunks_from[sender]))
-                    self.lg.debug("{}: total_received_chunks={}".format(self.id, self.total_received_chunks))
-                    self.lg.debug("{}: total_lost_chunks={}".format(self.id, self.total_lost_chunks))
+                    self.lg.critical("{}: received [goodbye {} {}] from {}".format(self.id, msg[1], msg[2], sender))
+                    self.lg.critical("{}: received_chunks_from[{}]={}".format(self.id, sender, self.received_chunks_from[sender]))
+                    self.lg.critical("{}: lost_chunks_from[{}]={}".format(self.id, sender, self.lost_chunks_from[sender]))
+                    self.lg.critical("{}: total_received_chunks={}".format(self.id, self.total_received_chunks))
+                    self.lg.critical("{}: total_lost_chunks={}".format(self.id, self.total_lost_chunks))
             elif len(packed_msg) == struct.calcsize("ii"):
                 msg = struct.unpack("ii", packed_msg)
                 if msg[0] == Common.LOST_CHUNK:
@@ -369,23 +370,23 @@ class Splitter_DBS(Simulator_stuff):
                     #self.lg.info("round = {}".format(self.current_round))
                     self.lg.info("{}: round={:03} chunk_number={:05} number_of_peers={:03}".format(self.id, self.current_round, self.chunk_number, len(self.peer_list)))
                     print("{}: len(peer_list)={}".format(self.id, len(self.peer_list)))
-                    sys.stderr.write(str(self.current_round)+"/"+str(self.max_number_of_rounds)+"\r")
+                    sys.stderr.write(str(self.current_round) + "/" + str(self.max_number_of_rounds) + " " + str(self.chunk_number) + "\r")
 
         self.alive = False
         self.lg.debug("{}: alive = {}".format(self.id, self.alive))
 
-        counter = 0
-        while (len(self.peer_list) > 0) and (counter < 10):
-            self.lg.info("{}: peer_list={}".format(self.id, self.peer_list))
-            time.sleep(0.1)
-            for p in self.peer_list:
-                self.say_goodbye(p)
+        #counter = 0
+        #while (len(self.peer_list) > 0) and (counter < 10):
+        #    self.lg.info("{}: peer_list={}".format(self.id, self.peer_list))
+        #    time.sleep(0.1)
+        #    for p in self.peer_list:
+        #        self.say_goodbye(p)
                 #print("{}: said goodbye to {}".format(self.id, p))
-                self.lg.debug("{}: peer_list={}".format(self.id, self.peer_list))
-            if Simulator_stuff.FEEDBACK:
-                Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-                self.lg.debug("{}: Bye sent to simulator".format(self.id))
-            counter += 1
+        #        self.lg.debug("{}: peer_list={}".format(self.id, self.peer_list))
+        if Simulator_stuff.FEEDBACK:
+            Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
+            self.lg.debug("{}: Bye sent to simulator".format(self.id))
+        #    counter += 1
 
         print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
         #print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks, (float)(self.total_lost_chunks)/(float)(self.total_received_chunks)))

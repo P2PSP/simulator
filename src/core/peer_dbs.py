@@ -200,24 +200,6 @@ class Peer_DBS(sim):
         self.team_socket.sendto(msg, peer)
         self.lg.debug("{}: sent [hello] to {}".format(self.ext_id, peer))
 
-    # To be placed in peer_dbs_sim ?
-    def compose_goodbye_message(self):
-        msg = struct.pack("iii", Common.GOODBYE, self.number_of_chunks_consumed, self.losses)
-        self.lg.debug("{}: played={}".format(self.ext_id, self.number_of_chunks_consumed))
-        self.lg.debug("{}: losses={}".format(self.ext_id, self.losses))
-        return msg
-
-    # To be here
-    # def compose_goodbye_message(self):
-    #    msg = struct.pack("i", Common.GOODBYE)
-    #    return msg
-
-    def say_goodbye(self, peer):
-        # self.team_socket.sendto(Common.GOODBYE, "i", peer)
-        msg = self.compose_goodbye_message()
-        self.team_socket.sendto(msg, peer)
-        self.lg.debug("{}: sent [goodbye] to {}".format(self.ext_id, peer))
-
     def receive_the_list_of_peers(self):
         self.index_of_peer = {}
         peers_pending_of_reception = self.number_of_peers
@@ -232,18 +214,19 @@ class Peer_DBS(sim):
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("li", msg)
             peer = (socket.int2ip(peer[0]),peer[1])
+            self.team.append(peer)
+            self.index_of_peer[peer] = counter
 
             # S I M U L A T O R
-            if counter > self.number_of_monitors: # Monitors never are isolated
+            if counter >= self.number_of_monitors: # Monitors never are isolated
+                self.lg.critical("{}: number_of_monitors={} counter={} isolated".format(self.ext_id, self.number_of_monitors, counter))
                 r = random.random()
-                if r < self.link_failure_prob:
+                if r <= self.link_failure_prob:
                     self.team_socket.isolate(self.id, peer)
                     self.lg.critical("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
                 
             self.say_hello(peer)
-            self.team.append(peer)
             self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
-            self.index_of_peer[peer] = counter
             counter += 1
             peers_pending_of_reception -= 1
 
@@ -491,12 +474,11 @@ class Peer_DBS(sim):
             if sender in self.forward[origin]:
                 try:
                     self.forward[origin].remove(sender)
-                    print("{}: {} removed from forward[origin={}]={}".format(self.ext_id, sender, origin, self.forward[origin]))
+                    self.lg.debug("{}: {} removed from forward[origin={}]={}".format(self.ext_id, sender, origin, self.forward[origin]))
                 except ValueError:
                     self.lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
                 if len(self.forward[origin])==0:
                     del self.forward[origin]
-                    print("{}: removed list ------------------------------------------ forward={}".format(self.ext_id, self.forward))
 
     def process_hello(self, sender):
         self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
@@ -529,10 +511,10 @@ class Peer_DBS(sim):
         self.team.append(sender)
 
     def process_goodbye(self, sender):
-        self.lg.debug("{}: received [goodbye] from {}".format(self.ext_id, sender))
+        self.lg.critical("{}: received [goodbye] from {}".format(self.ext_id, sender))
 
         if sender == self.splitter:
-            self.lg.debug("{}: received [goodbye] from splitter".format(self.ext_id))
+            self.lg.critical("{}: received [goodbye] from splitter".format(self.ext_id))
             self.waiting_for_goodbye = False
             self.player_connected = False
 
@@ -548,10 +530,10 @@ class Peer_DBS(sim):
                         peers_list.remove(sender)
                     except ValueError:
                         self.lg.error("{}: : failed to remove peer {} from {}".format(self.ext_id, sender, peers_list))
-                    try:
-                        del self.debt[sender]
-                    except KeyError:
-                        self.lg.debug("{}: {} is not it {}".format(self.ext_id, sender, self.debt))
+                    #try:
+                    #    del self.debt[sender]
+                    #except KeyError:
+                    #    self.lg.debug("{}: {} is not it {}".format(self.ext_id, sender, self.debt))
                     #print("{}: -----------> {}".format(self.ext_id, len(peers_list)))
                     #if len(peers_list)==0:
                     #    del peers_list
@@ -610,9 +592,9 @@ class Peer_DBS(sim):
                 self.lg.debug("{}: buffer={}".format(self.ext_id, buf))
 
                 # S I M U L A T I O N
-#                self.received_chunks += 1
-#                if (self.received_chunks >= self.chunks_before_leave):
-#                    self.player_connected = False
+                self.received_chunks += 1
+                if (self.received_chunks >= self.chunks_before_leave):
+                    self.player_connected = False
 #                self.sender_of_chunks = []
 #                for i in self.chunks:
 #                    if i[self.CHUNK_NUMBER] != -1:
@@ -758,7 +740,7 @@ class Peer_DBS(sim):
             self.played += 1
         else:
             self.losses += 1
-            print("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
+            self.lg.critical("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
 
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change
@@ -831,7 +813,7 @@ class Peer_DBS(sim):
             except self.team_socket.timeout:
                 self.player_connected = False
                 self.waiting_for_goodbye = False
-                print("{}: timeout!".format(self.ext_id))
+                self.lg.critical("{}: timeout!".format(self.ext_id))
                 break
 #        (last_received_chunk, _) = self.process_message()
 #        while last_received_chunk < 0:
@@ -844,10 +826,27 @@ class Peer_DBS(sim):
     def start(self):
         Thread(target=self.run).start()
 
+    # To be placed in peer_dbs_sim ?
+    def compose_goodbye_message(self):
+        msg = struct.pack("iii", Common.GOODBYE, self.number_of_chunks_consumed, self.losses)
+        self.lg.critical("{}: played={}".format(self.ext_id, self.number_of_chunks_consumed))
+        self.lg.critical("{}: losses={}".format(self.ext_id, self.losses))
+        return msg
+
+    # To be here
+    # def compose_goodbye_message(self):
+    #    msg = struct.pack("i", Common.GOODBYE)
+    #    return msg
+
+    def say_goodbye(self, peer):
+        # self.team_socket.sendto(Common.GOODBYE, "i", peer)
+        msg = self.compose_goodbye_message()
+        self.team_socket.sendto(msg, peer)
+        self.lg.critical("{}: sent [goodbye] to {}".format(self.ext_id, peer))
+
     def say_goodbye_to_the_team(self):
         for origin, peer_list in self.forward.items():
             for peer in peer_list:
-                self.lg.debug("{}: sent goodbye to {}".format(self.ext_id, peer))
                 self.say_goodbye(peer)
 
         # Next commented lines freeze the peer (in a receive() call)
@@ -873,7 +872,7 @@ class Peer_DBS(sim):
         self.say_goodbye(self.splitter)
         self.say_goodbye_to_the_team()
 
-        self.lg.info("{}: forward={}".format(self.ext_id, self.forward))
+        self.lg.critical("{}: forward={}".format(self.ext_id, self.forward))
         total_lengths = 0
         max_length = 0
         entries = 0
@@ -884,8 +883,7 @@ class Peer_DBS(sim):
                 entries += 1
             if max_length < len(peers_list):
                 max_length = len(peers_list)
-        #print("{}: average degree = {}".format(self.ext_id, total_lengths/entries))
-        print("{}: forward={} max_degree={} avg_degree={:.2f} forward_entries={}".format(self.ext_id, self.forward, max_length, total_lengths/entries, entries))
+        self.lg.debug("{}: forward={} max_degree={} avg_degree={:.2f} forward_entries={}".format(self.ext_id, self.forward, max_length, total_lengths/entries, entries))
         for peer, chunks in self.pending.items():
             for chunk in chunks:
                 self.send_chunk(chunk, peer)
