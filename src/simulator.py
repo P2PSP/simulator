@@ -128,8 +128,7 @@ class Simulator():
 
     def run_a_peer(self, splitter_id, type, id, first_monitor=False):
         total_peers = self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        #chunks_before_leave = np.random.weibull(2) * (total_peers * (self.number_of_rounds - self.current_round))
-        chunks_before_leave = 500
+        chunks_before_leave = np.random.weibull(2) * (total_peers * (self.number_of_rounds - self.current_round))
         self.lg.info("simulator: creating {}".format(type))
         if type == "monitor":
             if first_monitor is True:
