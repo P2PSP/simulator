@@ -774,15 +774,15 @@ class Peer_DBS(sim):
             # We send the request to the neighbor that we have served.
             #self.request_chunk(chunk_number, self.neighbor)
 
-            #self.request_chunk(chunk_number, random.choice(self.team))
+            self.request_chunk(chunk_number, random.choice(self.team))
             
             # Send the request to all neighbors.
             #for neighbor in self.forward[self.id]:
             #    self.request_chunk(chunk_number, neighbor)
 
             # Send the request to all the team.
-            for peer in self.team:
-                self.request_chunk(chunk_number, peer)
+            #for peer in self.team:
+            #    self.request_chunk(chunk_number, peer)
 
             # As an alternative, to selected peer to send to it the
             # request, we run the buffer towards increasing positions
