@@ -32,9 +32,9 @@ import logging
 # import logging as lg
 
 class Simulator():
-    P_IN = 0.4
+    P_IN = 1.0 # 0.4
     P_MoP = 0.2
-    P_WIP = 0.6
+    P_WIP = 1.0 # 0.6
     P_MP = 0.2
     
     def __init__(self, drawing_log="/tmp/drawing_log.txt",
