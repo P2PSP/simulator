@@ -157,7 +157,7 @@ class Peer_DBS(sim):
         self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.team_socket.bind(self.id)
         #self.team_socket.bind(("", self.id[1]))
-        self.team_socket.settimeout(1)
+        #self.team_socket.settimeout(100)
 
     def set_splitter(self, splitter):
         self.splitter = splitter
@@ -725,8 +725,7 @@ class Peer_DBS(sim):
 
         self.lg.debug("{}: position in the buffer of the first chunk to play = {}".format(self.ext_id, self.chunk_to_play))
 
-        while (chunk_number < self.chunk_to_play) or (
-            ((chunk_number - self.chunk_to_play) % self.buffer_size) < (self.buffer_size // 2)):
+        while (chunk_number < self.chunk_to_play) or (((chunk_number - self.chunk_to_play) % self.buffer_size) < (self.buffer_size // 2)):
             (chunk_number, _) = self.process_message()
             if self.player_connected == False:
                 break
@@ -871,7 +870,7 @@ class Peer_DBS(sim):
         start_time = time.time()
         self.buffer_data()
         buffering_time = time.time() - start_time
-        self.lg.info("{}: buffering time (main latency) = {}".format(self.ext_id, buffering_time))
+        print("{}: buffering time (main latency) = {}".format(self.ext_id, buffering_time))
         while (self.player_connected or self.waiting_for_goodbye):
             self.buffer_and_play()
             # The goodbye messages sent to the splitter can be
