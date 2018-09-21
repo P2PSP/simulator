@@ -91,3 +91,6 @@ class Peer_IMS(Peer_DBS):
     def add_new_forwarding_rule(self, peer, neighbor):
         if peer[0] != self.id[0]:
             super().add_new_forwarding_rule(peer, neighbor)
+
+    def request_chunk(self, chunk_number, peer):
+        pass
