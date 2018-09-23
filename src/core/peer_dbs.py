@@ -345,21 +345,13 @@ class Peer_DBS(sim):
 
     def add_new_forwarding_rule(self, peer, neighbor):
         self.lg.debug("{}: {} adding new neighbor {}".format(self.ext_id, peer, neighbor))
-        #print("{}: add_new_forwarding_rule origin={} neighbor={} self.forward[{}]={}".format(self.ext_id, origin, neighbor, self.id, self.forward))
-        #try:
-        self.forward[peer].append(neighbor)
-        #except KeyError:
-        #    self.forward[peer] = [neighbor]
-        #if type(neighbor)!=tuple:
-        #    self.lg.critical("{}: NOTUPLE add_new_forwarding_rule".formar(self.ext_id))
-        self.pending[neighbor] = []
-        #self.lg.debug("{}: add neighbor {} (forward={})".format(self.ext_id, neighbor, self.forward))
-#        if len(self.forward[peer]) > self.max_degree:
-#            try:
-#                remove = max(self.debt, key=self.debt.get)
-#            except ValueError:
-#                remove = self.neighbor
-#            self.process_goodbye(remove)
+        try:
+            if neighbor not in self.forward[peer]:
+                self.forward[peer].append(neighbor)
+                self.pending[neighbor] = []
+        except KeyError:
+            self.forward[peer] = [neighbor]
+            self.pending[neighbor] = []
 
     def send_chunk(self, chunk_number, peer):
         try:
@@ -618,14 +610,14 @@ class Peer_DBS(sim):
                     # Usar mejor técnica de ir dividiendo entre 2 cada round
                     #if self.neighbor is None:  # Quizás se pueda quitar!!!!
                     #self.neighbor = sender
-                    try:
-                        if sender not in self.forward[self.id]:
-                            self.forward[self.id].append(sender)
-                            self.pending[sender] = []
-                    except KeyError:
-                        self.forward[self.id] = [sender]
-                        self.pending[sender] = []
-                        #self.add_new_forwarding_rule(self.id, sender)
+                    #try:
+                    #    if sender not in self.forward[self.id]:
+                    #        self.forward[self.id].append(sender)
+                    #        self.pending[sender] = []
+                    #except KeyError:
+                    #    self.forward[self.id] = [sender]
+                    #    self.pending[sender] = []
+                    self.add_new_forwarding_rule(self.id, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
                     #for peer in self.forward:
                 if origin in self.forward:
@@ -706,35 +698,6 @@ class Peer_DBS(sim):
             raise
         #    return (0, self.id)
         
-    def buffer_data(self):
-        for i in range(self.buffer_size):
-            self.chunks.append((-1, b'L', None))  # L == Lost ??
-
-        # Receive a chunk.
-        (chunk_number, sender) = self.process_message()
-        while chunk_number < 0:
-            (chunk_number, sender) = self.process_message()
-            if self.player_connected == False:
-                break
-        # self.neighbor = sender
-
-        # The first chunk to play is the firstly received chunk (which
-        # probably will not be the received chunk with the smallest
-        # index).
-        self.chunk_to_play = chunk_number
-
-        self.lg.debug("{}: position in the buffer of the first chunk to play = {}".format(self.ext_id, self.chunk_to_play))
-
-        while (chunk_number < self.chunk_to_play) or (((chunk_number - self.chunk_to_play) % self.buffer_size) < (self.buffer_size // 2)):
-            (chunk_number, _) = self.process_message()
-            if self.player_connected == False:
-                break
-            while (chunk_number < self.chunk_to_play):
-                (chunk_number, _) = self.process_message()
-                if self.player_connected == False:
-                    break
-        self.prev_received_chunk = chunk_number
-
     def request_chunk(self, chunk_number, peer):
         msg = struct.pack("ii", Common.REQUEST, chunk_number)
         self.team_socket.sendto(msg, peer)
@@ -833,9 +796,6 @@ class Peer_DBS(sim):
 
         self.play_next_chunks(last_received_chunk)
 
-    def start(self):
-        Thread(target=self.run).start()
-
     # To be placed in peer_dbs_sim ?
     def compose_goodbye_message(self):
         msg = struct.pack("iii", Common.GOODBYE, self.number_of_chunks_consumed, self.losses)
@@ -866,7 +826,36 @@ class Peer_DBS(sim):
         self.ready_to_leave_the_team = True
         self.lg.debug("{}: said goodbye to the team".format(self.ext_id))
 
+    def buffer_data(self):
+        # Receive a chunk.
+        (chunk_number, sender) = self.process_message()
+        while chunk_number < 0:
+            (chunk_number, sender) = self.process_message()
+            if self.player_connected == False:
+                break
+        # self.neighbor = sender
+
+        # The first chunk to play is the firstly received chunk (which
+        # probably will not be the received chunk with the smallest
+        # index).
+        self.chunk_to_play = chunk_number
+
+        self.lg.debug("{}: position in the buffer of the first chunk to play = {}".format(self.ext_id, self.chunk_to_play))
+
+        while (chunk_number < self.chunk_to_play) or (((chunk_number - self.chunk_to_play) % self.buffer_size) < (self.buffer_size // 2)):
+            (chunk_number, _) = self.process_message()
+            if not self.player_connected:
+                break
+            while (chunk_number < self.chunk_to_play):
+                (chunk_number, _) = self.process_message()
+                if not self.player_connected:
+                    break
+        self.prev_received_chunk = chunk_number
+
     def run(self):
+        for i in range(self.buffer_size):
+            self.chunks.append((-1, b'L', None))  # L == Lost ??
+
         start_time = time.time()
         self.buffer_data()
         buffering_time = time.time() - start_time
@@ -906,6 +895,9 @@ class Peer_DBS(sim):
 #                    self.send_chunk(chunk, peer)
 
         self.team_socket.close()
+
+    def start(self):
+        Thread(target=self.run).start()
 
     # Unused
     def am_i_a_monitor(self):
