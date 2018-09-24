@@ -17,7 +17,7 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     if args.set_of_rules == "dbs":
-        peer = Monitor_DBS("M")
+        peer = Monitor_DBS("M", "M")
     # elif self.set_of_rules == "ims":
         # splitter = Splitter_IMS()
 
