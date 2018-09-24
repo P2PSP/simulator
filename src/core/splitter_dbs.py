@@ -79,9 +79,9 @@ class Splitter_DBS(Simulator_stuff):
 
     def send_chunk(self, chunk_msg, peer):
         # self.lg.info("splitter_dbs.send_chunk({}, {})".format(chunk_msg, peer))
-        msg = struct.pack("isli", *chunk_msg)
+        #msg = struct.pack("isli", *chunk_msg)
         # msg = struct.pack("is3s", chunk_msg[0], bytes(chunk_msg[1]), chunk_msg[2])
-        self.team_socket.sendto(msg, peer)
+        self.team_socket.sendto(chunk_msg, peer)
         self.lg.debug("{}: chunk {} sent to {}".format(self.id, chunk_msg[0], peer))
 
     def receive_chunk(self):
@@ -301,6 +301,11 @@ class Splitter_DBS(Simulator_stuff):
     def get_id(self):
         return self.id
 
+    def compose_message(self, chunk, peer):
+        chunk_msg = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
+        msg = struct.pack("isli", *chunk_msg)
+        return msg
+    
     def run(self):
 
         chunk_counter = 0
@@ -347,7 +352,7 @@ class Splitter_DBS(Simulator_stuff):
                 self.lg.warning("{}: the peer with index {} does not exist. peer_list={} peer_number={}".format(self.id, self.peer_number, self.peer_list, self.peer_number))
                 # raise
             
-            message = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
+            message = self.compose_message(chunk, peer)
             self.destination_of_chunk[self.chunk_number % self.buffer_size] = peer
             if __debug__:
                 self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
