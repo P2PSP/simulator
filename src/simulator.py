@@ -1,15 +1,18 @@
 #!/home/vruiz/.pyenv/shims/python -i
 
-from core.splitter_dbs import Splitter_DBS
+from core.splitter_dbs_latency import Splitter_DBS_latency as Splitter_DBS
+#from core.splitter_dbs import Splitter_DBS
 from core.splitter_strpeds import Splitter_STRPEDS
 from core.splitter_sss import Splitter_SSS
-from core.peer_dbs import Peer_DBS
+from core.peer_dbs_latency import Peer_DBS_latency as Peer_DBS
+#from core.peer_dbs import Peer_DBS
 from core.peer_ims import Peer_IMS
 from core.peer_strpeds import Peer_STRPEDS
 from core.peer_sss import Peer_SSS
 from core.peer_malicious import Peer_Malicious
 from core.peer_malicious_sss import Peer_Malicious_SSS
-from core.monitor_dbs import Monitor_DBS
+from core.monitor_dbs_latency import Monitor_DBS_latency as Monitor_DBS
+#from core.monitor_dbs import Monitor_DBS
 from core.monitor_ims import Monitor_IMS
 from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
@@ -21,10 +24,9 @@ from glob import glob
 import time
 import fire
 
-if __debug__:
-    import networkx as nx
-    # import matplotlib.pyplot as plt
-    # import matplotlib.cm as cm
+# import networkx as nx
+# import matplotlib.pyplot as plt
+# import matplotlib.cm as cm
 import numpy as np
 import platform
 import os
@@ -33,10 +35,10 @@ import logging
 # import logging as lg
 
 class Simulator():
-    P_IN = 0.4
-    P_MoP = 0.2
-    P_WIP = 0.6
-    P_MP = 0.2
+    P_IN = 1.0 # 0.4
+    P_MoP = 0.0 # 0.2
+    P_WIP = 1.0 # 0.6
+    P_MP = 0.0 # 0.2
     
     def __init__(self, drawing_log="/tmp/drawing_log.txt",
                  set_of_rules="DBS",
@@ -46,7 +48,7 @@ class Simulator():
                  number_of_malicious=0,
                  buffer_size=32,
                  chunk_cadence=0.01,
-                 link_loss_ratio=0.0,
+                 link_failure_prob=0.0,
                  max_degree=5,
                  log=logging.ERROR,
                  gui=False):
@@ -70,7 +72,7 @@ class Simulator():
         self.number_of_malicious = number_of_malicious
         self.buffer_size = buffer_size
         self.chunk_cadence = chunk_cadence
-        self.link_loss_ratio = link_loss_ratio
+        self.link_failure_prob = link_failure_prob
         self.max_degree = max_degree
         self.current_round = 0
         self.gui = gui
@@ -83,7 +85,7 @@ class Simulator():
         self.lg.debug("number_of_malicious={}".format(self.number_of_malicious))
         self.lg.debug("buffer_size={}".format(self.buffer_size))
         self.lg.debug("chunk_cadence={}".format(self.chunk_cadence))
-        self.lg.debug("link_loss_ratio={}".format(link_loss_ratio))
+        self.lg.debug("link_failure_prob={}".format(link_failure_prob))
         self.lg.debug("max_degree={}".format(max_degree))
 
     def compute_team_size(self, n):
@@ -133,7 +135,8 @@ class Simulator():
         self.lg.info("simulator: creating {}".format(type))
         if type == "monitor":
             if first_monitor is True:
-                chunks_before_leave = 99999999
+                pass
+                #chunks_before_leave = 99999999
             if self.set_of_rules == "DBS":
                 peer = Monitor_DBS(id, "Monitor_DBS")
                 self.lg.info("simulator: DBS monitor created")
@@ -168,9 +171,9 @@ class Simulator():
             elif self.set_of_rules == "CIS-SSS":
                 peer = Peer_SSS(id)
                 self.lg.info("simulator: CIS-SSS peer created")
-        self.lg.info("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
+        self.lg.critical("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
-        peer.link_loss_ratio = self.link_loss_ratio
+        peer.link_failure_prob = self.link_failure_prob
         peer.max_degree = self.max_degree
         peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
@@ -237,9 +240,8 @@ class Simulator():
         sim.FEEDBACK["DRAW"] = Queue()
         Process(target=self.store).start()
 
-        if __debug__:
-            if self.gui is True:
-                Process(target=self.draw).start()
+        if self.gui is True:
+            Process(target=self.draw).start()
 
         # Listen to the team for simulation life
         sim.FEEDBACK["STATUS"] = Queue()

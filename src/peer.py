@@ -12,14 +12,18 @@ if __name__ == "__main__":
                         help="Splitter port")
     parser.add_argument("-l", "--chunks-before-leave", type=int,
                         help="Number of chunk before leave the team")
+    parser.add_argument("--log", default=logging.ERROR, help="Log level")
     args = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     if args.set_of_rules == "dbs":
-        peer = Peer_DBS("P","P")
+        peer = Peer_DBS("P", "Peer_DBS")
     # elif self.set_of_rules == "ims":
         # splitter = Splitter_IMS()
+
+    lg = logging.getLogger("Peer_DBS")
+    lg.setLevel(args.log)
 
     peer.chunks_before_leave = args.chunks_before_leave
     peer.set_splitter((args.splitter_address, args.splitter_port))

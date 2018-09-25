@@ -35,6 +35,7 @@ class Simulator_socket():
     SOCK_STREAM = socket.SOCK_STREAM
     SOL_SOCKET = socket.SOL_SOCKET
     SO_REUSEADDR = socket.SO_REUSEADDR
+    timeout = socket.timeout
     
     def __init__(self, family=None, typ=None, sock=None):
 
@@ -118,11 +119,14 @@ class Simulator_socket():
             self.lg.warning("{} not sent from {} to {} (isolated)".format(msg, self.sock.getsockname(), address))
 
     def recvfrom(self, max_msg_length):
-        msg, sender = self.sock.recvfrom(max_msg_length)
-        self.lg.debug("{} <- [{}] - {}".format(self.sock.getsockname(), \
-                                              msg, \
-                                              sender))
-        return (msg, sender)
+        try:
+            msg, sender = self.sock.recvfrom(max_msg_length)
+            self.lg.debug("{} <- [{}] - {}".format(self.sock.getsockname(), \
+                                                   msg, \
+                                                   sender))
+            return (msg, sender)
+        except socket.timeout:
+            raise
 
     def connect(self, address):
         self.lg.debug("simulator_stuff.connect({}): {}".format(address, self.sock))
