@@ -51,11 +51,11 @@ class Peer_DBS(sim):
         # self.lg.addHandler(handler)
         # self.lg.setLevel(logging.INFO)
         self.lg.setLevel(sim.loglevel)
-        self.lg.critical('Critical messages enabled.')
-        self.lg.error   ('Error messages enabled.')
-        self.lg.warning ('Warning message enabled.')
-        self.lg.info    ('Informative message enabled.')
-        self.lg.debug   ('Low-level debug message enabled.')
+        #self.lg.critical('Critical messages enabled.')
+        #self.lg.error   ('Error messages enabled.')
+        #self.lg.warning ('Warning message enabled.')
+        #self.lg.info    ('Informative message enabled.')
+        #self.lg.debug   ('Low-level debug message enabled.')
 
         # Peer identification. Depending on the simulation degree, it
         # can be a simple string or an endpoint.
@@ -353,24 +353,24 @@ class Peer_DBS(sim):
             self.forward[peer] = [neighbor]
             self.pending[neighbor] = []
 
+    def compose_message(self, chunk_number):
+        chunk_position = chunk_number % self.buffer_size
+        chunk = self.chunks[chunk_position]
+        stored_chunk_number = chunk[self.CHUNK_NUMBER]
+        chunk_data = chunk[self.CHUNK_DATA]
+        chunk_origin_IP = chunk[self.ORIGIN][0]
+        chunk_origin_port = chunk[self.ORIGIN][1]
+        content = (stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
+        packet = struct.pack("isli", *content)
+        return packet
+            
     def send_chunk(self, chunk_number, peer):
         try:
-            # self.team_socket.sendto(self.chunks[chunk_number], "isi", peer)
-            # print("/////////////////// {}".format(self.chunks))
-            chunk_position = chunk_number % self.buffer_size
-            # print(".............. {}".format(type(self.chunks[chunk_position][self.ORIGIN])))
-            # print(".................{}".format(peer))
-            chunk = self.chunks[chunk_position]
-            stored_chunk_number = chunk[self.CHUNK_NUMBER]
-            chunk_data = chunk[self.CHUNK_DATA]
-            #    if chunk[self.ORIGIN] is not None:
-            chunk_origin_IP = chunk[self.ORIGIN][0]
-            chunk_origin_port = chunk[self.ORIGIN][1]
-
-            msg = struct.pack("isli", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
+            msg = self.compose_message(chunk_number)
+            #msg = struct.pack("isli", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
             self.team_socket.sendto(msg, peer)
             self.sendto_counter += 1
-            self.lg.debug("{}: sent chunk {} (with origin {}) to {}".format(self.ext_id, chunk_number, (chunk_origin_IP, chunk_origin_port), peer))
+            #self.lg.debug("{}: sent chunk {} (with origin {}) to {}".format(self.ext_id, chunk_number, (chunk_origin_IP, chunk_origin_port), peer))
         except TypeError:
             self.lg.warning("{}: chunk {} not sent because it was lost".format(self.ext_id, chunk_number))
             pass
@@ -871,20 +871,26 @@ class Peer_DBS(sim):
         self.say_goodbye(self.splitter)
         self.say_goodbye_to_the_team()
 
+        # Send pending chunks
+        for peer, chunks in self.pending.items():
+            for chunk in chunks:
+                self.send_chunk(chunk, peer)
+
+        # Print some statistics
         total_lengths = 0
-        max_length = 0
+        #max_length = 0
         entries = 0
         for origin, peers_list in self.forward.items():
             self.lg.debug("{}: goodbye forward[{}]={} {}".format(self.ext_id, origin, peers_list, len(peers_list)))
             total_lengths += len(peers_list)
-            if(len(peers_list)>0):
+            if(len(peers_list)>0): # This should not be necessary
                 entries += 1
-            if max_length < len(peers_list):
-                max_length = len(peers_list)
-        print("{}: forward={} forward_entries={} max_length={}".format(self.ext_id, self.forward, entries, max_length))
-        for peer, chunks in self.pending.items():
-            for chunk in chunks:
-                self.send_chunk(chunk, peer)
+            #if max_length < len(peers_list):
+            #    max_length = len(peers_list)
+        #print("{}: forward={} forward_entries={} max_length={}".format(self.ext_id, self.forward, entries, max_length))
+        avg = total_lengths/entries
+        print("{}: average_neighborhood_degree={} ({}/{})".format(self.ext_id, avg, total_lengths, entries))
+
 #                print("------------------------------------", peer, "/", chunk)
 #        for peer in self.forward:
 #            print("=================================", self.pending)
