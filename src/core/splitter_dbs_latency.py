@@ -22,10 +22,10 @@ from .splitter_dbs import Splitter_DBS
 class Splitter_DBS_latency(Splitter_DBS):
 
     def send_chunk(self, chunk_msg, peer):
-        msg = struct.pack("islif", *chunk_msg)
+        msg = struct.pack("islid", *chunk_msg)
         self.team_socket.sendto(msg, peer)
         self.lg.debug("{}: chunk {} sent to {}".format(self.id, chunk_msg[0], peer))
 
     def compose_message(self, chunk, peer):
-        return (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1], time.time())
-
+        message = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1], time.time())
+        return message

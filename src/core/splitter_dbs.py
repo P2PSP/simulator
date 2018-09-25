@@ -351,7 +351,7 @@ class Splitter_DBS(Simulator_stuff):
             except IndexError:
                 self.lg.warning("{}: the peer with index {} does not exist. peer_list={} peer_number={}".format(self.id, self.peer_number, self.peer_list, self.peer_number))
                 # raise
-            
+
             message = self.compose_message(chunk, peer)
             self.destination_of_chunk[self.chunk_number % self.buffer_size] = peer
             if __debug__:

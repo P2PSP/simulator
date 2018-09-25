@@ -100,7 +100,7 @@ class Simulator_socket():
 
     def sendto(self, msg, address):
         if (self.sock.getsockname(), address) not in self.isolations:
-            self.lg.debug("{} - [{}] -> {}".format(self.sock.getsockname(), msg, address))
+            self.lg.debug("{} - [{}] --> {}".format(self.sock.getsockname(), msg, address))
             try:
                 return self.sock.sendto(msg, socket.MSG_DONTWAIT, address)
             except ConnectionRefusedError:
@@ -121,7 +121,7 @@ class Simulator_socket():
     def recvfrom(self, max_msg_length):
         try:
             msg, sender = self.sock.recvfrom(max_msg_length)
-            self.lg.debug("{} <- [{}] - {}".format(self.sock.getsockname(), \
+            self.lg.debug("{} <-- [{}] - {}".format(self.sock.getsockname(), \
                                                    msg, \
                                                    sender))
             return (msg, sender)
