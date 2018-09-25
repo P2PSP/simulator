@@ -81,6 +81,9 @@ class Peer_DBS_latency(Peer_DBS):
             chunk_data = message[self.CHUNK_DATA]
             origin = message[self.ORIGIN]
             time_stamp = message[self.CHUNK_TIME]
+            now = time.time()
+            latency = now -  time_stamp
+            print("latency={}".format(latency))
 
             # Compute deltas
             self.chunk_number_delta = chunk_number - self.chunk_number_delta
