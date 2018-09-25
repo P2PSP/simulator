@@ -860,7 +860,7 @@ class Peer_DBS(sim):
         start_time = time.time()
         self.buffer_data()
         buffering_time = time.time() - start_time
-        print("{}: buffering time (main latency) = {}".format(self.ext_id, buffering_time))
+        print("{}: buffering time = {}".format(self.ext_id, buffering_time))
         while (self.player_connected or self.waiting_for_goodbye):
             self.buffer_and_play()
             # The goodbye messages sent to the splitter can be
