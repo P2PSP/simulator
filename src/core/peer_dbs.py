@@ -125,7 +125,7 @@ class Peer_DBS(sim):
         # The longest message expected to be received: chunk_number,
         # chunk, IP address of the origin peer, and port of the origin
         # peer.
-        self.max_msg_length = struct.calcsize("isli")
+        self.max_pkg_length = struct.calcsize("isli")
 
         self.neighbor_index = 0
 
@@ -665,31 +665,32 @@ class Peer_DBS(sim):
         return (chunk_number, sender)
 
     def receive_packet(self):
+        #print("{}".format(self.max_pkg_length))
         try:
-            return self.team_socket.recvfrom(self.max_msg_length)
+            return self.team_socket.recvfrom(self.max_pkg_length)
         except self.team_socket.timeout:
             raise
     
     def process_message(self):
         try:
-            msg, sender = self.receive_packet()
-            # self.lg.debug("{}: received {} from {} with length {}".format(self,id, msg, sender, len(msg)))
-            if len(msg) == self.max_msg_length:
-                message = struct.unpack("isli", msg) # Data message:
+            pkg, sender = self.receive_packet()
+            # self.lg.debug("{}: received {} from {} with length {}".format(self,id, pkg, sender, len(pkg)))
+            if len(pkg) == self.max_pkg_length:
+                message = struct.unpack("isli", pkg) # Data message:
                                                      # [chunk number,
                                                      # chunk, origin
                                                      # (address and port)]
                 message = message[self.CHUNK_NUMBER], \
                           message[self.CHUNK_DATA], \
                           (socket.int2ip(message[self.ORIGIN]),message[self.ORIGIN+1])
-            elif len(msg) == struct.calcsize("iii"):
-                message = struct.unpack("iii", msg)  # Control message:
+            elif len(pkg) == struct.calcsize("iii"):
+                message = struct.unpack("iii", pkg)  # Control message:
                                                      # [control, parameter]
-            elif len(msg) == struct.calcsize("ii"):
-                message = struct.unpack("ii", msg)  # Control message:
+            elif len(pkg) == struct.calcsize("ii"):
+                message = struct.unpack("ii", pkg)  # Control message:
                                                     # [control, parameter]
             else:
-                message = struct.unpack("i", msg)  # Control message:
+                message = struct.unpack("i", pkg)  # Control message:
                                                    # [control]
             return self.process_unpacked_message(message, sender)
         except self.team_socket.timeout:
