@@ -9,6 +9,8 @@ if __name__ == "__main__":
                         help="set of rules")
     parser.add_argument("-b", "--buffer-size", type=int,
                         help="Buffer size")
+    parser.add_argument("-p", "--port", type=int,
+                        help="Splitter port")
     args = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -19,7 +21,7 @@ if __name__ == "__main__":
     # elif self.set_of_rules == "ims":
         # splitter = Splitter_IMS()
 
-    splitter.setup_peer_connection_socket()
+    splitter.setup_peer_connection_socket(args.port)
     splitter.setup_team_socket()
     splitter_address = splitter.get_id()
     print("Splitter Address: {}".format(splitter_address))

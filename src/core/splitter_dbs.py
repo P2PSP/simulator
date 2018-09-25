@@ -24,6 +24,7 @@ import sys
 import struct
 import logging
 
+
 class Splitter_DBS(Simulator_stuff):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
 
@@ -63,11 +64,11 @@ class Splitter_DBS(Simulator_stuff):
 
         self.lg.debug("{}: initialized".format(self.id))
 
-    def setup_peer_connection_socket(self):
+    def setup_peer_connection_socket(self, port=0):
         self.peer_connection_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.peer_connection_socket.set_id(self.id)
         host = socket.gethostbyname(socket.gethostname())
-        self.peer_connection_socket.bind((host,0))
+        self.peer_connection_socket.bind((host, port))
         self.id = self.peer_connection_socket.getsockname()
         self.peer_connection_socket.listen(1)
 
