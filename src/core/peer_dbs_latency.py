@@ -51,6 +51,9 @@ class Peer_DBS_latency(Peer_DBS):
             #self.say_goodbye(self.splitter)
             #self.say_goodbye_to_the_team()
             raise
+        except struct.error:
+            self.lg.error("{}: packet length={}".format(self.ext_id, len(pkg)))
+            raise
         #    return (0, self.id)
 
     def compose_message(self, chunk_number):
@@ -62,7 +65,7 @@ class Peer_DBS_latency(Peer_DBS):
         chunk_origin_port = chunk[self.ORIGIN][1]
         time_stamp = chunk[self.CHUNK_TIME]
         message = (stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port, time_stamp)
-        packet = struct.pack("islif", *message)
+        packet = struct.pack("islid", *message)
         return packet
 
     def buffer_new_chunk(self, chunk_number, chunk_data, origin, time_stamp, sender):
