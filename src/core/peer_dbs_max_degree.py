@@ -47,7 +47,7 @@ class Peer_DBS_max_degree(Peer_DBS):
         self.lg.debug("{}: forward={} pending={}".format(self.ext_id, self.forward, self.pending))
 
     def add_new_forwarding_rule(self, peer, neighbor):
-        if len(self.forward[peer] < self.MAX_DEGREE):
+        if len(self.forward[peer]) < self.MAX_DEGREE:
             self.lg.debug("{}: {} adding new neighbor {}".format(self.ext_id, peer, neighbor))
             try:
                 if neighbor not in self.forward[peer]:
@@ -77,7 +77,7 @@ class Peer_DBS_max_degree(Peer_DBS):
                     self.forward[origin] = [sender]
                     self.pending[sender] = []
                 else:
-                    if len(self.forward[origin] < self.MAX_DEGREE):
+                    if len(self.forward[origin]) < self.MAX_DEGREE:
                         if sender not in self.forward[origin]:
                             self.forward[origin].append(sender)
                             self.pending[sender] = []

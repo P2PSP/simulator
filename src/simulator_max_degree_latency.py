@@ -3,7 +3,7 @@
 from simulator import Simulator
 from core.splitter_dbs_latency import Splitter_DBS_latency as Splitter_DBS
 from core.peer_dbs_max_degree_latency import Peer_DBS_max_degree_latency as Peer_DBS
-from core.monitor_dbs_latency import Monitor_DBS_latency as Monitor_DBS
+from core.monitor_dbs_max_degree_latency import Monitor_DBS_max_degree_latency as Monitor_DBS
 from core.common import Common
 
 import fire
