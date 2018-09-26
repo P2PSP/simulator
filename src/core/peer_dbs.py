@@ -511,8 +511,9 @@ class Peer_DBS(sim):
         else:
             try:
                 self.team.remove(sender)
+                self.lg.debug("{}: removed peer {} from team={}".format(self.ext_id, sender, self.team))
             except ValueError:
-                pass
+                self.lg.error("{}: failed to remove peer {} from team={}".format(self.ext_id, sender, self.team))
             for peers_list in self.forward.values():
                 if sender in peers_list:
                     self.lg.info("{}: {} removing from {}".format(self.ext_id, sender, peers_list))
@@ -603,6 +604,9 @@ class Peer_DBS(sim):
                             buf = len(peer_list)*"#"
                             self.lg.debug("{}: degree({})) {}".format(self.ext_id, peer, buf))
                 else:
+                    if sender not in self.team:
+                        self.team.append(sender)
+                    print("{}: len(team)={}".format(self.ext_id, len(self.team)))
                     #if sender in self.debt:
                     #    self.debt[sender] -= 1
                     #else:

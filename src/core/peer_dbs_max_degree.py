@@ -58,7 +58,6 @@ class Peer_DBS_max_degree(Peer_DBS):
                 self.pending[neighbor] = []
 
     def process_request(self, chunk_number, sender):
-
         # If a peer X receives [request Y] from peer Z, X will
         # append Z to forward[Y.origin].
 
@@ -77,10 +76,14 @@ class Peer_DBS_max_degree(Peer_DBS):
                     self.forward[origin] = [sender]
                     self.pending[sender] = []
                 else:
-                    if len(self.forward[origin]) < self.MAX_DEGREE:
-                        if sender not in self.forward[origin]:
-                            self.forward[origin].append(sender)
-                            self.pending[sender] = []
+                    if len(self.forward[origin]) >= self.MAX_DEGREE:
+                        a_peer = random.choice(self.forward[origin])
+                        self.forward[origin].remove(a_peer)
+                        self.lg.debug("{}: removed peer {} by excess".format(self.ext_id, a_peer))
+
+                    if sender not in self.forward[origin]:
+                        self.forward[origin].append(sender)
+                        self.pending[sender] = []
             else:
                 self.forward[origin] = []
                 self.pending[sender] = []
