@@ -28,11 +28,11 @@ import logging
 class Splitter_DBS(Simulator_stuff):
     MAX_NUMBER_OF_LOST_CHUNKS = 32
 
-    def __init__(self):
+    def __init__(self, name):
 
         #logging.basicConfig(format='%(MYVAR)s - %(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-        self.lg = logging.getLogger(__name__)
+        self.lg = logging.getLogger(name)
         # handler = logging.StreamHandler()
         # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
         # formatter = logging.Formatter(fmt='splitter_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
@@ -40,11 +40,11 @@ class Splitter_DBS(Simulator_stuff):
         # self.lg.addHandler(handler)
         # self.lg.setLevel(logging.DEBUG)
         self.lg.setLevel(Simulator_stuff.loglevel)
-        # self.lg.critical('Critical messages enabled.')
-        # self.lg.error('Error messages enabled.')
-        # self.lg.warning('Warning message enabled.')
-        # self.lg.info('Informative message enabled.')
-        # self.lg.debug('Low-level debug message enabled.')
+        self.lg.critical('Critical messages enabled.')
+        self.lg.error('Error messages enabled.')
+        self.lg.warning('Warning message enabled.')
+        self.lg.info('Informative message enabled.')
+        self.lg.debug('Low-level debug message enabled.')
 
         self.id = "S"
         self.alive = True  # While True, keeps the splitter alive

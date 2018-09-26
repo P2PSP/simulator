@@ -107,7 +107,7 @@ class Simulator():
             Common.BUFFER_SIZE = self.buffer_size
         self.lg.debug("(definitive) buffer_size={}".format(Common.BUFFER_SIZE))
         if self.set_of_rules == "DBS" or self.set_of_rules == "IMS":
-            splitter = Splitter_DBS()
+            splitter = Splitter_DBS("Splitter_DBS")
             self.lg.info("simulator: DBS/IMS splitter created")
         elif self.set_of_rules == "CIS":
             splitter = Splitter_STRPEDS()
