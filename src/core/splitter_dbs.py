@@ -26,7 +26,7 @@ import logging
 
 
 class Splitter_DBS(Simulator_stuff):
-    MAX_NUMBER_OF_LOST_CHUNKS = 32
+    MAX_NUMBER_OF_LOST_CHUNKS = 8
 
     def __init__(self, name):
 
