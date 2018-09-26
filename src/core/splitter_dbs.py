@@ -26,7 +26,6 @@ import logging
 
 
 class Splitter_DBS(Simulator_stuff):
-    MAX_NUMBER_OF_LOST_CHUNKS = 8
 
     def __init__(self, name):
 
@@ -54,7 +53,6 @@ class Splitter_DBS(Simulator_stuff):
         self.buffer_size = Common.BUFFER_SIZE  # Buffer (of chunks) size
         self.destination_of_chunk = self.buffer_size*[0]  # Destination peer of the buffered chunks
         self.peer_number = 0  # First peer to serve in the list of peers
-        self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_LOST_CHUNKS  # More lost, team removing
         self.number_of_monitors = 0  # Monitors report lost chunks
         self.outgoing_peer_list = []  # Peers which requested to leave the team
 
