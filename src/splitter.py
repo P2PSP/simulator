@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     Common.BUFFER_SIZE = args.buffer_size
 
-    if args.set_of_rules == "dbs":
+    if args.set_of_rules == "dbs" or args.set_of_rules == "ims":
         splitter = Splitter_DBS("Splitter_DBS")
     # elif self.set_of_rules == "ims":
         # splitter = Splitter_IMS()
