@@ -24,14 +24,14 @@ import sys
 import struct
 import logging
 
-class Splitter_DBS(Simulator_stuff):
-    MAX_NUMBER_OF_LOST_CHUNKS = 32
 
-    def __init__(self):
+class Splitter_DBS(Simulator_stuff):
+
+    def __init__(self, name):
 
         #logging.basicConfig(format='%(MYVAR)s - %(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-        self.lg = logging.getLogger(__name__)
+        self.lg = logging.getLogger(name)
         # handler = logging.StreamHandler()
         # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
         # formatter = logging.Formatter(fmt='splitter_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
@@ -39,11 +39,11 @@ class Splitter_DBS(Simulator_stuff):
         # self.lg.addHandler(handler)
         # self.lg.setLevel(logging.DEBUG)
         self.lg.setLevel(Simulator_stuff.loglevel)
-        # self.lg.critical('Critical messages enabled.')
-        # self.lg.error('Error messages enabled.')
-        # self.lg.warning('Warning message enabled.')
-        # self.lg.info('Informative message enabled.')
-        # self.lg.debug('Low-level debug message enabled.')
+        self.lg.critical('Critical messages enabled.')
+        self.lg.error('Error messages enabled.')
+        self.lg.warning('Warning message enabled.')
+        self.lg.info('Informative message enabled.')
+        self.lg.debug('Low-level debug message enabled.')
 
         self.id = "S"
         self.alive = True  # While True, keeps the splitter alive
@@ -53,7 +53,6 @@ class Splitter_DBS(Simulator_stuff):
         self.buffer_size = Common.BUFFER_SIZE  # Buffer (of chunks) size
         self.destination_of_chunk = self.buffer_size*[0]  # Destination peer of the buffered chunks
         self.peer_number = 0  # First peer to serve in the list of peers
-        self.max_number_of_chunk_loss = self.MAX_NUMBER_OF_LOST_CHUNKS  # More lost, team removing
         self.number_of_monitors = 0  # Monitors report lost chunks
         self.outgoing_peer_list = []  # Peers which requested to leave the team
 
@@ -63,11 +62,11 @@ class Splitter_DBS(Simulator_stuff):
 
         self.lg.debug("{}: initialized".format(self.id))
 
-    def setup_peer_connection_socket(self):
+    def setup_peer_connection_socket(self, port=0):
         self.peer_connection_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.peer_connection_socket.set_id(self.id)
         host = socket.gethostbyname(socket.gethostname())
-        self.peer_connection_socket.bind((host,0))
+        self.peer_connection_socket.bind((host, port))
         self.id = self.peer_connection_socket.getsockname()
         self.peer_connection_socket.listen(1)
 
