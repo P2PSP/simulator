@@ -1,6 +1,7 @@
 import argparse
 import logging
 from core.monitor_dbs import Monitor_DBS
+from core.monitor_ims import Monitor_IMS
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -20,8 +21,8 @@ if __name__ == "__main__":
 
     if args.set_of_rules == "dbs":
         peer = Monitor_DBS("M", "Monitor_DBS")
-    # elif self.set_of_rules == "ims":
-        # splitter = Splitter_IMS()
+    elif args.set_of_rules == "ims":
+        peer = Monitor_IMS("M", "Monitor_IMS")
 
     lg = logging.getLogger("Monitor_DBS")
     lg.setLevel(args.log)
