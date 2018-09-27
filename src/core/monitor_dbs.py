@@ -46,7 +46,7 @@ class Monitor_DBS(Peer_DBS):
     def listen_to_the_team(self, monitor_port):
         self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.team_socket.bind((self.id[0], monitor_port))
-        self.lg.debug("{}: listening to {}".format(self.ext_id, self.id))
+        self.lg.debug("{}: listening to {}".format(self.ext_id, self.team_socket.getpeername()))
         self.say_hello(self.splitter) # Only works for cone NATs
         #self.team_socket.bind(("", self.id[1]))
         #self.team_socket.settimeout(100)

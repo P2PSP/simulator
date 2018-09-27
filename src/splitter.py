@@ -9,7 +9,7 @@ if __name__ == "__main__":
                         help="set of rules")
     parser.add_argument("-b", "--buffer_size", default=128, type=int,
                         help="Buffer size")
-    parser.add_argument("-p", "--port", default=0, type=int,
+    parser.add_argument("-p", "--port", default=4551, type=int,
                         help="Splitter port")
     parser.add_argument("--log", default=logging.ERROR, help="Log level")
     args = parser.parse_args()
