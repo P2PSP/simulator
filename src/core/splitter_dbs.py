@@ -64,9 +64,10 @@ class Splitter_DBS(Simulator_stuff):
 
     def setup_peer_connection_socket(self, port=0):
         self.peer_connection_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.peer_connection_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # self.peer_connection_socket.set_id(self.id)
         host = socket.gethostbyname(socket.gethostname())
-        self.peer_connection_socket.bind((host, port))
+        self.peer_connection_socket.bind(('', port))
         self.id = self.peer_connection_socket.getsockname()
         self.peer_connection_socket.listen(1)
 
