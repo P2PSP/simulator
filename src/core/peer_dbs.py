@@ -265,11 +265,18 @@ class Peer_DBS(sim):
     def connect_to_the_splitter(self):
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
-        host = socket.gethostbyname(socket.gethostname())
-        self.splitter_socket.bind((host,0))
+        #host = socket.gethostbyname(socket.gethostname())
+        #self.splitter_socket.bind((host,0))
+
+        try:
+            self.splitter_socket.connect(self.splitter)
+        except ConnectionRefusedError as e:
+            self.lg.error("{}: {}".format(self.id, e))
+            raise
 
         # The index for pending[].
         self.id = self.splitter_socket.getsockname()
+        print("{}: I'm a peer".format(self.id))
         #self.neighbor = self.id
         #print("self.neighbor={}".format(self.neighbor))
         #self.pending[self.id] = []
@@ -279,12 +286,6 @@ class Peer_DBS(sim):
             self.map_peer_type(self.id); # Maybe at the end of this
                                          # function to be easely extended
                                          # in the peer_dbs_sim class.
-
-        try:
-            self.splitter_socket.connect(self.splitter)
-        except ConnectionRefusedError as e:
-            self.lg.error("{}: {}".format(self.id, e))
-            raise
 
         self.lg.debug("{}: connected to the splitter".format(self.id))
 

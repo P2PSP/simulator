@@ -69,6 +69,7 @@ class Splitter_DBS(Simulator_stuff):
         host = socket.gethostbyname(socket.gethostname())
         self.peer_connection_socket.bind(('', port))
         self.id = self.peer_connection_socket.getsockname()
+        print("{}: I'm the splitter".format(self.id)) 
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
