@@ -167,8 +167,8 @@ class Peer_DBS(sim):
         msg_length = struct.calcsize("li")
         msg = self.splitter_socket.recv(msg_length)
         pe = struct.unpack("li", msg)
-        self.id = (socket.int2ip(pe[0]), pe[1])
-        self.lg.debug("{}: public endpoint = {}".format(self.id, self.id))
+        self.public_endpoint = (socket.int2ip(pe[0]), pe[1])
+        self.lg.debug("{}: public endpoint = {}".format(self.id, self.public_endpoint))
     
     def receive_buffer_size(self):
         # self.buffer_size = self.splitter_socket.recv("H")
@@ -209,22 +209,22 @@ class Peer_DBS(sim):
 
         # Peer self.id will forward by default all chunks originated
         # at itself.
-        self.forward[self.id] = []
+        self.forward[self.public_endpoint] = []
         
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("li", msg)
             peer = (socket.int2ip(peer[0]),peer[1])
             self.team.append(peer)
-            self.forward[self.id].append(peer)
+            self.forward[self.public_endpoint].append(peer)
             self.index_of_peer[peer] = counter
 
             # S I M U L A T O R
             if counter >= self.number_of_monitors: # Monitors never are isolated
                 r = random.random()
                 if r <= self.link_failure_prob:
-                    self.team_socket.isolate(self.id, peer)
-                    self.lg.critical("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
+                    self.team_socket.isolate(self.public_endpoint, peer)
+                    self.lg.critical("{}: {} isolated of {}".format(self.ext_id, self.public_endpoint, peer))
                 
             self.say_hello(peer)
             self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
@@ -285,11 +285,11 @@ class Peer_DBS(sim):
 
         if __debug__:
             # S I M U L A T I O N
-            self.map_peer_type(self.id); # Maybe at the end of this
+            self.map_peer_type(self.public_endpoint); # Maybe at the end of this
                                          # function to be easely extended
                                          # in the peer_dbs_sim class.
 
-        self.lg.debug("{}: connected to the splitter".format(self.id))
+        self.lg.debug("{}: connected to the splitter".format(self.public_endpoint))
 
     def old_connect_to_the_splitter(self):
         self.lg.debug("{}: connecting to the splitter at {}".format(self.id, self.splitter))
@@ -458,7 +458,7 @@ class Peer_DBS(sim):
                 # S I M U L A T I O N
                 if sim.FEEDBACK:
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.public_endpoint)), ','.join(map(str,sender))))
         else:
             # Otherwise, I can't help.
             if __debug__:
@@ -497,7 +497,7 @@ class Peer_DBS(sim):
                     self.forward[origin].remove(sender)
                     self.lg.debug("{}: {} removed from forward[origin={}]={}".format(self.ext_id, sender, origin, self.forward[origin]))
                 except ValueError:
-                    self.lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.id, sender, self.forward[origin], origin))
+                    self.lg.error("{}: failed to remove peer {} from forward table {} for origin {} ".format(self.public_endpoint, sender, self.forward[origin], origin))
                 if len(self.forward[origin])==0:
                     del self.forward[origin]
 
@@ -518,17 +518,17 @@ class Peer_DBS(sim):
         # If a peer X receives [hello] from peer Z, X will
         # append Z to forward[X].
 
-        if sender not in self.forward[self.id]:
-            self.forward[self.id].append(sender)
+        if sender not in self.forward[self.public_endpoint]:
+            self.forward[self.public_endpoint].append(sender)
             self.pending[sender] = []
-            self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
+            self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.public_endpoint, sender, self.forward))
             self.debt[sender] = 0
 
             if __debug__:
                 # S I M U L A T I O N
                 if sim.FEEDBACK:
                     sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.public_endpoint)), ','.join(map(str,sender))))
         self.team.append(sender)
 
     def process_goodbye(self, sender):
@@ -583,7 +583,7 @@ class Peer_DBS(sim):
                     if self.played > 0 and self.played >= self.number_of_peers:
                         CLR = self.losses / (self.played + self.losses) # Chunk Loss Ratio
                         if sim.FEEDBACK:
-                            sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.id)), CLR))
+                            sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.public_endpoint)), CLR))
                         #self.losses = 0 # Ojo, puesto a 0 para calcular CLR
                         #self.played = 0 # Ojo, puesto a 0 para calcular CLR
 
@@ -648,7 +648,7 @@ class Peer_DBS(sim):
                     #except KeyError:
                     #    self.forward[self.id] = [sender]
                     #    self.pending[sender] = []
-                    self.add_new_forwarding_rule(self.id, sender)
+                    self.add_new_forwarding_rule(self.public_endpoint, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
                     #for peer in self.forward:
                 print("origin={} forward={}".format(origin, self.forward))
