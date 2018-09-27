@@ -42,11 +42,30 @@ class Monitor_DBS(Peer_DBS):
         self.number_of_chunks_consumed += 1
         return self.player_alive
     '''
+    def connect_to_the_splitter(self, monitor_port):
+        self.lg.debug("{}: connecting to the splitter at {}".format(self.id, self.splitter))
+        self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
+        #host = socket.gethostbyname(socket.gethostname())
+        self.splitter_socket.bind(('', monitor_port))
 
-    def listen_to_the_team(self, monitor_port):
-        self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.team_socket.bind((self.id[0], monitor_port))
-        self.lg.debug("{}: listening to {}".format(self.ext_id, self.team_socket.getpeername()))
-        self.say_hello(self.splitter) # Only works for cone NATs
-        #self.team_socket.bind(("", self.id[1]))
-        #self.team_socket.settimeout(100)
+        try:
+            self.splitter_socket.connect(self.splitter)
+        except ConnectionRefusedError as e:
+            self.lg.error("{}: {}".format(self.id, e))
+            raise
+
+        # The index for pending[].
+        self.id = self.splitter_socket.getsockname()
+        print("{}: I'm a peer".format(self.id))
+        #self.neighbor = self.id
+        #print("self.neighbor={}".format(self.neighbor))
+        #self.pending[self.id] = []
+
+        if __debug__:
+            # S I M U L A T I O N
+            self.map_peer_type(self.id); # Maybe at the end of this
+                                         # function to be easely extended
+                                         # in the peer_dbs_sim class.
+
+        self.lg.debug("{}: connected to the splitter".format(self.id))
