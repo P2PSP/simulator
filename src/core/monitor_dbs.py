@@ -3,6 +3,7 @@
 monitor_dbs module
 """
 
+import socket
 import struct
 from .common import Common
 from .peer_dbs import Peer_DBS
