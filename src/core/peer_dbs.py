@@ -149,7 +149,7 @@ class Peer_DBS(sim):
         self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.team_socket.bind(self.id)
         self.lg.debug("{}: listening to {}".format(self.ext_id, self.id))
-        self.say_hello(self.splitter)
+        self.say_hello(self.splitter) # Only works for cone NATs
         #self.team_socket.bind(("", self.id[1]))
         #self.team_socket.settimeout(100)
 
