@@ -21,9 +21,6 @@ from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import hash
 
 class Peer_DBS(sim):
-    # Peers interchange chunks. If a peer A sends MAX_CHUNK_DEBT more
-    # chunks to a peer B than viceversa, A stops sending to B. -> To FCS
-    MAX_CHUNK_DEBT = 16
 
     # In chunks. Number of buffered chunks before starting the
     # playback.
@@ -43,14 +40,14 @@ class Peer_DBS(sim):
     def __init__(self, id, name, loglevel):
         self.lg = logging.getLogger(name)
         self.lg.setLevel(loglevel)
-        self.lg.critical('Critical messages enabled.')
-        self.lg.error   ('Error messages enabled.')
-        self.lg.warning ('Warning message enabled.')
-        self.lg.info    ('Informative message enabled.')
-        self.lg.debug   ('Low-level debug message enabled.')
+#        self.lg.critical('Critical messages enabled.')
+#        self.lg.error   ('Error messages enabled.')
+#        self.lg.warning ('Warning message enabled.')
+#        self.lg.info    ('Informative message enabled.')
+#        self.lg.debug   ('Low-level debug message enabled.')
 
         # Peer identification. Depending on the simulation degree, it
-        # can be a simple string or an endpoint.
+        # can be a simple string or an (local) endpoint.
         self.id = None
 
         # S I M U L A T I O N
@@ -98,14 +95,7 @@ class Peer_DBS(sim):
         # X, in a burst, when a chunk arrives.
         self.pending = {}
 
-        # Counters of sent - recived chunks, by peer. Every time a
-        # peer X sends a chunk to peer Y, X increments debt[Y] and Y
-        # decrements debt[X] (and viceversa). If a X.debt[Y] >
-        # MAX_CHUNK_DEBT, X will stop sending more chunks to Y. It
-        # should be implemented in FCS.
-        self.debt = {}
-        # self.debt[self.id] = 0
-
+        # The list of peers in the team.
         self.team = []
 
         # Sent and received chunks.
@@ -156,13 +146,6 @@ class Peer_DBS(sim):
     def set_splitter(self, splitter):
         self.splitter = splitter
 
-    # def recv(self, fmt):
-    #    msg_length = struct.calcsize(fmt)
-    #    msg = self.splitter_socket.recv(msg_length)
-    #    while len(msg) < msg_length:
-    #        msg += self.splitter_socket.recv(msg_length - len(msg))
-    #    return struct.unpack(fmt)[0]
-
     def receive_public_endpoint(self):
         msg_length = struct.calcsize("li")
         msg = self.splitter_socket.recv(msg_length)
@@ -193,7 +176,7 @@ class Peer_DBS(sim):
         self.lg.debug("{}: number of peers = {}".format(self.id, self.number_of_peers))
 
         self.peer_number = self.number_of_peers
-        self.ext_id = ("%03d" % self.peer_number, self.id[0], "%5d" % self.id[1])
+        self.ext_id = ("%03d" % self.peer_number, self.public_endpoint[0], "%5d" % self.public_endpoint[1])
         self.lg.debug("{}: peer number = {}".format(self.ext_id, self.number_of_peers))
 
     def say_hello(self, peer):
@@ -263,12 +246,12 @@ class Peer_DBS(sim):
                 else:
                     sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"P"))    
 
-    def connect_to_the_splitter(self, monitor_port):
+    def connect_to_the_splitter(self, port):
         self.lg.debug("{}: connecting to the splitter at {}".format(self.id, self.splitter))
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
         #host = socket.gethostbyname(socket.gethostname())
-        self.splitter_socket.bind(('', monitor_port))
+        self.splitter_socket.bind(('', port))
 
         try:
             self.splitter_socket.connect(self.splitter)
@@ -277,7 +260,7 @@ class Peer_DBS(sim):
             raise
 
         # The index for pending[].
-        #self.id = self.splitter_socket.getsockname()
+        self.id = self.splitter_socket.getsockname()
         print("{}: I'm a peer".format(self.id))
         #self.neighbor = self.id
         #print("self.neighbor={}".format(self.neighbor))
@@ -285,11 +268,12 @@ class Peer_DBS(sim):
 
         if __debug__:
             # S I M U L A T I O N
-            self.map_peer_type(self.public_endpoint); # Maybe at the end of this
-                                         # function to be easely extended
-                                         # in the peer_dbs_sim class.
+            if self.id!=None:
+                self.map_peer_type(self.id); # Maybe at the end of this
+                # function to be easely extended
+                # in the peer_dbs_sim class.
 
-        self.lg.debug("{}: connected to the splitter".format(self.public_endpoint))
+        self.lg.debug("{}: connected to the splitter".format(self.id))
 
     def old_connect_to_the_splitter(self):
         self.lg.debug("{}: connecting to the splitter at {}".format(self.id, self.splitter))
@@ -522,7 +506,6 @@ class Peer_DBS(sim):
             self.forward[self.public_endpoint].append(sender)
             self.pending[sender] = []
             self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.public_endpoint, sender, self.forward))
-            self.debt[sender] = 0
 
             if __debug__:
                 # S I M U L A T I O N
@@ -551,13 +534,6 @@ class Peer_DBS(sim):
                         peers_list.remove(sender)
                     except ValueError:
                         self.lg.error("{}: : failed to remove peer {} from {}".format(self.ext_id, sender, peers_list))
-                    #try:
-                    #    del self.debt[sender]
-                    #except KeyError:
-                    #    self.lg.debug("{}: {} is not it {}".format(self.ext_id, sender, self.debt))
-                    #print("{}: -----------> {}".format(self.ext_id, len(peers_list)))
-                    #if len(peers_list)==0:
-                    #    del peers_list
             # sim.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,sender))))     # To remove ghost peer
 
     # DBS peer's logic
@@ -634,20 +610,6 @@ class Peer_DBS(sim):
                             buf = len(peer_list)*"#"
                             self.lg.debug("{}: degree({})) {}".format(self.ext_id, peer, buf))
                 else:
-                    #if sender in self.debt:
-                    #    self.debt[sender] -= 1
-                    #else:
-                    #    self.debt[sender] = -1
-                    # Usar mejor técnica de ir dividiendo entre 2 cada round
-                    #if self.neighbor is None:  # Quizás se pueda quitar!!!!
-                    #self.neighbor = sender
-                    #try:
-                    #    if sender not in self.forward[self.id]:
-                    #        self.forward[self.id].append(sender)
-                    #        self.pending[sender] = []
-                    #except KeyError:
-                    #    self.forward[self.id] = [sender]
-                    #    self.pending[sender] = []
                     self.add_new_forwarding_rule(self.public_endpoint, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
                     #for peer in self.forward:
@@ -678,8 +640,6 @@ class Peer_DBS(sim):
                     self.neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
                     self.send_chunks()
                     self.neighbor_index = list(self.pending.keys()).index(self.neighbor) + 1
-                
-                self.lg.debug("{}: debt={}".format(self.ext_id, self.debt))
 
         else:  # message[CHUNK_NUMBER] < 0
 
