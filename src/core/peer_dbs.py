@@ -613,7 +613,7 @@ class Peer_DBS(sim):
                     self.add_new_forwarding_rule(self.public_endpoint, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
                     #for peer in self.forward:
-                print("origin={} forward={}".format(origin, self.forward))
+                #print("origin={} forward={}".format(origin, self.forward))
                 if origin in self.forward:
                     self.update_pendings(origin, chunk_number)
                 # When a peer X receives a chunk (number) C with origin O,
