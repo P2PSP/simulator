@@ -3,8 +3,8 @@
 monitor_dbs module
 """
 
-import socket
 import struct
+from .simulator_stuff import Simulator_socket as socket
 from .common import Common
 from .peer_dbs import Peer_DBS
 
