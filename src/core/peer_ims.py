@@ -20,8 +20,8 @@ from core.peer_dbs import Peer_DBS
 
 class Peer_IMS(Peer_DBS):
 
-    def __init__(self, id, name):
-        super().__init__(id, name)
+    def __init__(self, id, name, loglevel):
+        super().__init__(id, name, loglevel)
 
     def listen_to_the_team(self):
         Peer_DBS.listen_to_the_team(self)
@@ -44,7 +44,9 @@ class Peer_IMS(Peer_DBS):
             peer = (socket.int2ip(peer[0]),peer[1])
 
             # Check for peers running in the same subnet
+            print("{} {}".format(self.id, peer))
             if self.id[0] == peer[0]:
+                self.lg.debug("{}: peer {} running in the same local network".format(self.ext_id, peer))
                 if ("224.0.0.1", 1234) not in self.forward[self.id]:
                     self.forward[self.id].append(("224.0.0.1", 1234))
                 self.pending[("224.0.0.1", 1234)] = []
@@ -70,7 +72,7 @@ class Peer_IMS(Peer_DBS):
         ready_socks, _, _ = select.select([self.team_socket,
                                            self.mcast_socket], [], [])
         for sock in ready_socks:
-            return sock.recvfrom(self.max_msg_length)
+            return sock.recvfrom(self.max_pkg_length)
         
     def process_hello(self, sender):
         self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
