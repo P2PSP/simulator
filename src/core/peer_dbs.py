@@ -166,7 +166,8 @@ class Peer_DBS(sim):
     def receive_public_endpoint(self):
         msg_length = struct.calcsize("li")
         msg = self.splitter_socket.recv(msg_length)
-        self.public_endpoint = struct.unpack("li", msg)[0]
+        pe = struct.unpack("li", msg)
+        self.public_endpoint = (socket.int2ip(pe[0]), pe[1])
         self.lg.debug("{}: public endpoint = {}".format(self.id, self.public_endpoint))
     
     def receive_buffer_size(self):
