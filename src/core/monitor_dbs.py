@@ -4,13 +4,14 @@ monitor_dbs module
 """
 
 import struct
+from .simulator_stuff import Simulator_socket as socket
 from .common import Common
 from .peer_dbs import Peer_DBS
 
 class Monitor_DBS(Peer_DBS):
-    def __init__(self, id, name):
+    def __init__(self, id, name, loglevel):
         #self.losses = 0
-        super().__init__(id, name)
+        super().__init__(id, name, loglevel)
 
     def receive_buffer_size(self):
         Peer_DBS.receive_buffer_size(self)
