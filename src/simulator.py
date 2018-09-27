@@ -50,14 +50,14 @@ class Simulator():
                  chunk_cadence=0.01,
                  link_failure_prob=0.0,
                  max_degree=5,
-                 log=logging.ERROR,
+                 loglevel=logging.ERROR,
                  gui=False):
         
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         logging.basicConfig(format="%(message)s - %(asctime)s - %(name)s - %(levelname)s")
         self.lg = logging.getLogger(__name__)
-        sim.loglevel = log
-        self.lg.setLevel(log)
+        self.loglevel = loglevel
+        self.lg.setLevel(loglevel)
         # self.lg.critical('Critical messages enabled.')
         # self.lg.error('Error messages enabled.')
         # self.lg.warning('Warning message enabled.')
@@ -138,10 +138,10 @@ class Simulator():
                 pass
                 #chunks_before_leave = 99999999
             if self.set_of_rules == "DBS":
-                peer = Monitor_DBS(id, "Monitor_DBS")
+                peer = Monitor_DBS(id, "Monitor_DBS", self.loglevel)
                 self.lg.info("simulator: DBS monitor created")
             elif self.set_of_rules == "IMS":
-                peer = Monitor_IMS(id, "Monitor_IMS")
+                peer = Monitor_IMS(id, "Monitor_IMS", self.loglevel)
                 self.lg.info("simulator: IMS monitor created")
             elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
@@ -160,10 +160,10 @@ class Simulator():
                 self.lg.info("simulator: Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "DBS":
-                peer = Peer_DBS(id, "Peer_DBS")
+                peer = Peer_DBS(id, "Peer_DBS", self.loglevel)
                 self.lg.info("simulator: DBS peer created")
             if self.set_of_rules == "IMS":
-                peer = Peer_IMS(id, "Peer_IMS")
+                peer = Peer_IMS(id, "Peer_IMS", self.loglevel)
                 self.lg.info("simulator: IMS peer created")
             elif self.set_of_rules == "CIS":
                 peer = Peer_STRPEDS(id)

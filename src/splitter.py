@@ -5,9 +5,9 @@ from core.common import Common
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--set-of-rules", default="dbs",
+    parser.add_argument("-s", "--set_of_rules", default="dbs",
                         help="set of rules")
-    parser.add_argument("-b", "--buffer-size", default=128, type=int,
+    parser.add_argument("-b", "--buffer_size", default=128, type=int,
                         help="Buffer size")
     parser.add_argument("-p", "--port", default=0, type=int,
                         help="Splitter port")
@@ -28,5 +28,4 @@ if __name__ == "__main__":
     splitter.setup_peer_connection_socket(args.port)
     splitter.setup_team_socket()
     splitter_address = splitter.get_id()
-    print("Splitter Address: {}".format(splitter_address))
     splitter.run()

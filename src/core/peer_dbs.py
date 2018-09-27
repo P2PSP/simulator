@@ -40,22 +40,14 @@ class Peer_DBS(sim):
     # S I M U L A T I O N
     #                  |
     #                  v
-    def __init__(self, id, name):
-
-        # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    def __init__(self, id, name, loglevel):
         self.lg = logging.getLogger(name)
-        # handler = logging.StreamHandler()
-        # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
-        # formatter = logging.Formatter(fmt='peer_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
-        # handler.setFormatter(formatter)
-        # self.lg.addHandler(handler)
-        # self.lg.setLevel(logging.INFO)
-        self.lg.setLevel(sim.loglevel)
-        #self.lg.critical('Critical messages enabled.')
-        #self.lg.error   ('Error messages enabled.')
-        #self.lg.warning ('Warning message enabled.')
-        #self.lg.info    ('Informative message enabled.')
-        #self.lg.debug   ('Low-level debug message enabled.')
+        self.lg.setLevel(loglevel)
+        self.lg.critical('Critical messages enabled.')
+        self.lg.error   ('Error messages enabled.')
+        self.lg.warning ('Warning message enabled.')
+        self.lg.info    ('Informative message enabled.')
+        self.lg.debug   ('Low-level debug message enabled.')
 
         # Peer identification. Depending on the simulation degree, it
         # can be a simple string or an endpoint.
@@ -156,6 +148,8 @@ class Peer_DBS(sim):
     def listen_to_the_team(self):
         self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.team_socket.bind(self.id)
+        self.lg.debug("{}: listening to {}".format(self.ext_id, self.id))
+        self.say_hello(self.splitter)
         #self.team_socket.bind(("", self.id[1]))
         #self.team_socket.settimeout(100)
 
@@ -263,6 +257,7 @@ class Peer_DBS(sim):
                     sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"P"))    
 
     def connect_to_the_splitter(self):
+        self.lg.debug("{}: connecting to the splitter at {}".format(self.id, self.splitter))
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
         #host = socket.gethostbyname(socket.gethostname())
