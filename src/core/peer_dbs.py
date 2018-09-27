@@ -167,8 +167,8 @@ class Peer_DBS(sim):
         msg_length = struct.calcsize("li")
         msg = self.splitter_socket.recv(msg_length)
         pe = struct.unpack("li", msg)
-        self.public_endpoint = (socket.int2ip(pe[0]), pe[1])
-        self.lg.debug("{}: public endpoint = {}".format(self.id, self.public_endpoint))
+        self.id = (socket.int2ip(pe[0]), pe[1])
+        self.lg.debug("{}: public endpoint = {}".format(self.id, self.id))
     
     def receive_buffer_size(self):
         # self.buffer_size = self.splitter_socket.recv("H")
@@ -277,7 +277,7 @@ class Peer_DBS(sim):
             raise
 
         # The index for pending[].
-        self.id = self.splitter_socket.getsockname()
+        #self.id = self.splitter_socket.getsockname()
         print("{}: I'm a peer".format(self.id))
         #self.neighbor = self.id
         #print("self.neighbor={}".format(self.neighbor))
@@ -651,7 +651,7 @@ class Peer_DBS(sim):
                     self.add_new_forwarding_rule(self.id, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
                     #for peer in self.forward:
-                #print("origin={} forward={}".format(origin, self.forward))
+                print("origin={} forward={}".format(origin, self.forward))
                 if origin in self.forward:
                     self.update_pendings(origin, chunk_number)
                 # When a peer X receives a chunk (number) C with origin O,
