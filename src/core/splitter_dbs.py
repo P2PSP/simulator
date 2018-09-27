@@ -106,6 +106,7 @@ class Splitter_DBS(Simulator_stuff):
 
         self.lg.debug("{}: accepted connection from peer {}".format(self.id, incoming_peer))
 
+        self.send_public_endpoint(incoming_peer, serve_socket)
         self.send_buffer_size(serve_socket)
         self.send_the_number_of_peers(serve_socket)
         self.send_the_list_of_peers(serve_socket)
@@ -137,6 +138,12 @@ class Splitter_DBS(Simulator_stuff):
             self.lg.debug("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
 
         serve_socket.close()
+
+    def send_public_endpoint(self, endpoint, peer_serve_socket):
+        self.lg.debug("{}: peer public endpint={}".format(self.id, endpoint))
+        # peer_serve_socket.sendall(self.buffer_size, "H")
+        msg = struct.pack("li",socket.ip2int(endpoint[0]),endpoint[1])
+        peer_serve_socket.sendall(msg)
 
     def send_buffer_size(self, peer_serve_socket):
         self.lg.debug("{}: buffer_size={}".format(self.id, self.buffer_size))

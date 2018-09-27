@@ -163,6 +163,12 @@ class Peer_DBS(sim):
     #        msg += self.splitter_socket.recv(msg_length - len(msg))
     #    return struct.unpack(fmt)[0]
 
+    def receive_public_endpoint(self):
+        msg_length = struct.calcsize("li")
+        msg = self.splitter_socket.recv(msg_length)
+        self.public_endpoint = struct.unpack("li", msg)[0]
+        self.lg.debug("{}: public endpoint = {}".format(self.id, self.public_endpoint))
+    
     def receive_buffer_size(self):
         # self.buffer_size = self.splitter_socket.recv("H")
         # self.buffer_size = self.recv("H")
@@ -256,7 +262,35 @@ class Peer_DBS(sim):
                 else:
                     sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"P"))    
 
-    def connect_to_the_splitter(self):
+    def connect_to_the_splitter(self, monitor_port):
+        self.lg.debug("{}: connecting to the splitter at {}".format(self.id, self.splitter))
+        self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
+        #host = socket.gethostbyname(socket.gethostname())
+        self.splitter_socket.bind(('', monitor_port))
+
+        try:
+            self.splitter_socket.connect(self.splitter)
+        except ConnectionRefusedError as e:
+            self.lg.error("{}: {}".format(self.id, e))
+            raise
+
+        # The index for pending[].
+        self.id = self.splitter_socket.getsockname()
+        print("{}: I'm a peer".format(self.id))
+        #self.neighbor = self.id
+        #print("self.neighbor={}".format(self.neighbor))
+        #self.pending[self.id] = []
+
+        if __debug__:
+            # S I M U L A T I O N
+            self.map_peer_type(self.id); # Maybe at the end of this
+                                         # function to be easely extended
+                                         # in the peer_dbs_sim class.
+
+        self.lg.debug("{}: connected to the splitter".format(self.id))
+
+    def old_connect_to_the_splitter(self):
         self.lg.debug("{}: connecting to the splitter at {}".format(self.id, self.splitter))
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
@@ -340,9 +374,9 @@ class Peer_DBS(sim):
         #self.lg.debug("{}: forward[{}]={}".format(self.ext_id, origin, self.forward[origin]))
 
     def add_new_forwarding_rule(self, peer, neighbor):
-        self.lg.debug("{}: {} adding new neighbor {}".format(self.ext_id, peer, neighbor))
         try:
             if neighbor not in self.forward[peer]:
+                self.lg.debug("{}: {} adding new neighbor {}".format(self.ext_id, peer, neighbor))
                 self.forward[peer].append(neighbor)
                 self.pending[neighbor] = []
         except KeyError:
@@ -616,6 +650,7 @@ class Peer_DBS(sim):
                     self.add_new_forwarding_rule(self.id, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
                     #for peer in self.forward:
+                #print("origin={} forward={}".format(origin, self.forward))
                 if origin in self.forward:
                     self.update_pendings(origin, chunk_number)
                 # When a peer X receives a chunk (number) C with origin O,
