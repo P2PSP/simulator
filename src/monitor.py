@@ -28,6 +28,7 @@ if __name__ == "__main__":
     peer.chunks_before_leave = args.chunks_before_leave
     peer.set_splitter((args.splitter_address, args.splitter_port))
     peer.connect_to_the_splitter(args.monitor_port)
+    peer.receive_public_endpoint()
     peer.receive_buffer_size()
     peer.receive_the_number_of_peers()
     peer.listen_to_the_team()
