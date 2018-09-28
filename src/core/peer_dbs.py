@@ -107,7 +107,7 @@ class Peer_DBS(sim):
         # The longest message expected to be received: chunk_number,
         # chunk, IP address of the origin peer, and port of the origin
         # peer.
-        self.max_pkg_length = struct.calcsize("isli")
+        self.max_pkg_length = struct.calcsize("!isIi")
 
         self.neighbor_index = 0
 
@@ -147,32 +147,32 @@ class Peer_DBS(sim):
         self.splitter = splitter
 
     def receive_public_endpoint(self):
-        msg_length = struct.calcsize("li")
+        msg_length = struct.calcsize("!Ii")
         msg = self.splitter_socket.recv(msg_length)
-        pe = struct.unpack("li", msg)
+        pe = struct.unpack("!Ii", msg)
         self.public_endpoint = (socket.int2ip(pe[0]), pe[1])
         self.lg.debug("{}: public endpoint = {}".format(self.id, self.public_endpoint))
     
     def receive_buffer_size(self):
         # self.buffer_size = self.splitter_socket.recv("H")
         # self.buffer_size = self.recv("H")
-        msg_length = struct.calcsize("H")
+        msg_length = struct.calcsize("!H")
         msg = self.splitter_socket.recv(msg_length)
-        self.buffer_size = struct.unpack("H", msg)[0]
+        self.buffer_size = struct.unpack("!H", msg)[0]
         self.lg.debug("{}: buffer size = {}".format(self.id, self.buffer_size))
 
         # S I M U L A T I O N
         self.sender_of_chunks = [""] * self.buffer_size
 
     def receive_the_number_of_peers(self):
-        msg_length = struct.calcsize("H")
+        msg_length = struct.calcsize("!H")
         msg = self.splitter_socket.recv(msg_length)
-        self.number_of_monitors = struct.unpack("H", msg)[0]
+        self.number_of_monitors = struct.unpack("!H", msg)[0]
         self.lg.debug("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
 
-        msg_length = struct.calcsize("H")
+        msg_length = struct.calcsize("!H")
         msg = self.splitter_socket.recv(msg_length)
-        self.number_of_peers = struct.unpack("H", msg)[0]
+        self.number_of_peers = struct.unpack("!H", msg)[0]
         self.lg.debug("{}: number of peers = {}".format(self.id, self.number_of_peers))
 
         self.peer_number = self.number_of_peers
@@ -180,14 +180,14 @@ class Peer_DBS(sim):
         self.lg.debug("{}: peer number = {}".format(self.ext_id, self.number_of_peers))
 
     def say_hello(self, peer):
-        msg = struct.pack("i", Common.HELLO)
+        msg = struct.pack("!i", Common.HELLO)
         self.team_socket.sendto(msg, peer)
         self.lg.debug("{}: sent [hello] to {}".format(self.ext_id, peer))
 
     def receive_the_list_of_peers(self):
         self.index_of_peer = {}
         peers_pending_of_reception = self.number_of_peers
-        msg_length = struct.calcsize("li")
+        msg_length = struct.calcsize("!Ii")
         counter = 0
 
         # Peer self.id will forward by default all chunks originated
@@ -196,7 +196,7 @@ class Peer_DBS(sim):
         
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
-            peer = struct.unpack("li", msg)
+            peer = struct.unpack("!Ii", msg)
             peer = (socket.int2ip(peer[0]),peer[1])
             self.team.append(peer)
             self.forward[self.public_endpoint].append(peer)
@@ -227,11 +227,11 @@ class Peer_DBS(sim):
     # S I M U L A T I O N
     def send_peer_type(self):
         if(self._id[0:2]=='MP'):
-            msg = struct.pack('H',2)    # Malicious Peer
+            msg = struct.pack('!H',2)    # Malicious Peer
         elif(self._id[0]=='M'):
-            msg = struct.pack('H',0)    # Monitor Peer
+            msg = struct.pack('!H',0)    # Monitor Peer
         else:
-            msg = struct.pack('H',1)    # Regular Peer
+            msg = struct.pack('!H',1)    # Regular Peer
         self.splitter_socket.send(msg)
 
     if __debug__:
@@ -317,7 +317,7 @@ class Peer_DBS(sim):
             return False
 
     def prune_origin(self, chunk_number, peer):
-        msg = struct.pack("ii", Common.PRUNE, chunk_number)
+        msg = struct.pack("!ii", Common.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
         self.lg.info("{}: sent [prune {}] to {}".format(self.ext_id, chunk_number, peer))
 
@@ -376,13 +376,13 @@ class Peer_DBS(sim):
         chunk_origin_IP = chunk[self.ORIGIN][0]
         chunk_origin_port = chunk[self.ORIGIN][1]
         content = (stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
-        packet = struct.pack("isli", *content)
+        packet = struct.pack("!isIi", *content)
         return packet
             
     def send_chunk(self, chunk_number, peer):
         try:
             msg = self.compose_message(chunk_number)
-            #msg = struct.pack("isli", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
+            #msg = struct.pack("isIi", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
             self.team_socket.sendto(msg, peer)
             self.sendto_counter += 1
             #self.lg.debug("{}: sent chunk {} (with origin {}) to {}".format(self.ext_id, chunk_number, (chunk_origin_IP, chunk_origin_port), peer))
@@ -669,21 +669,21 @@ class Peer_DBS(sim):
             pkg, sender = self.receive_packet()
             # self.lg.debug("{}: received {} from {} with length {}".format(self,id, pkg, sender, len(pkg)))
             if len(pkg) == self.max_pkg_length:
-                message = struct.unpack("isli", pkg) # Data message:
+                message = struct.unpack("!isIi", pkg) # Data message:
                                                      # [chunk number,
                                                      # chunk, origin
                                                      # (address and port)]
                 message = message[self.CHUNK_NUMBER], \
                           message[self.CHUNK_DATA], \
                           (socket.int2ip(message[self.ORIGIN]),message[self.ORIGIN+1])
-            elif len(pkg) == struct.calcsize("iii"):
-                message = struct.unpack("iii", pkg)  # Control message:
+            elif len(pkg) == struct.calcsize("!iii"):
+                message = struct.unpack("!iii", pkg)  # Control message:
                                                      # [control, parameter]
             elif len(pkg) == struct.calcsize("ii"):
-                message = struct.unpack("ii", pkg)  # Control message:
+                message = struct.unpack("!ii", pkg)  # Control message:
                                                     # [control, parameter]
             else:
-                message = struct.unpack("i", pkg)  # Control message:
+                message = struct.unpack("!i", pkg)  # Control message:
                                                    # [control]
             return self.process_unpacked_message(message, sender)
         except self.team_socket.timeout:
@@ -693,7 +693,7 @@ class Peer_DBS(sim):
         #    return (0, self.id)
         
     def request_chunk(self, chunk_number, peer):
-        msg = struct.pack("ii", Common.REQUEST, chunk_number)
+        msg = struct.pack("!ii", Common.REQUEST, chunk_number)
         self.team_socket.sendto(msg, peer)
         self.lg.info("{}: [request {}] sent to {}".format(self.ext_id, chunk_number, peer))
 
@@ -792,7 +792,7 @@ class Peer_DBS(sim):
 
     # To be placed in peer_dbs_sim ?
     def compose_goodbye_message(self):
-        msg = struct.pack("iii", Common.GOODBYE, self.number_of_chunks_consumed, self.losses)
+        msg = struct.pack("!iii", Common.GOODBYE, self.number_of_chunks_consumed, self.losses)
         self.lg.debug("{}: played={}".format(self.ext_id, self.number_of_chunks_consumed))
         self.lg.debug("{}: losses={}".format(self.ext_id, self.losses))
         return msg

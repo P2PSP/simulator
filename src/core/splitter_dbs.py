@@ -124,8 +124,8 @@ class Splitter_DBS(Simulator_stuff):
             # ---- Only for simulation purposes. Unknown in real implementation -----
             self.lost_chunks_from[incoming_peer] = 0
             self.received_chunks_from[incoming_peer] = 0
-            msg = serve_socket.recv(struct.calcsize('H'))
-            ptype = struct.unpack('H', msg)
+            msg = serve_socket.recv(struct.calcsize('!H'))
+            ptype = struct.unpack('!H', msg)
             ptype = ptype[0]
             if (ptype == 0):
                 self.number_of_monitors += 1
@@ -142,30 +142,30 @@ class Splitter_DBS(Simulator_stuff):
     def send_public_endpoint(self, endpoint, peer_serve_socket):
         self.lg.debug("{}: peer public endpint={}".format(self.id, endpoint))
         # peer_serve_socket.sendall(self.buffer_size, "H")
-        msg = struct.pack("li",socket.ip2int(endpoint[0]),endpoint[1])
+        msg = struct.pack("!Ii",socket.ip2int(endpoint[0]),endpoint[1])
         peer_serve_socket.sendall(msg)
 
     def send_buffer_size(self, peer_serve_socket):
         self.lg.debug("{}: buffer_size={}".format(self.id, self.buffer_size))
         # peer_serve_socket.sendall(self.buffer_size, "H")
-        msg = struct.pack("H", self.buffer_size)
+        msg = struct.pack("!H", self.buffer_size)
         peer_serve_socket.sendall(msg)
 
     def send_the_number_of_peers(self, peer_serve_socket):
         self.lg.debug("{}: sending number_of_monitors={}".format(self.id, self.number_of_monitors))
         # peer_serve_socket.sendall(self.number_of_monitors, "H")
-        msg = struct.pack("H", self.number_of_monitors)
+        msg = struct.pack("!H", self.number_of_monitors)
         peer_serve_socket.sendall(msg)
         self.lg.debug("{}: sending list of peers of length = {}".format(self.id, len(self.peer_list)))
         # peer_serve_socket.sendall(len(self.peer_list), "H")
-        msg = struct.pack("H", len(self.peer_list))
+        msg = struct.pack("!H", len(self.peer_list))
         peer_serve_socket.sendall(msg)
 
     def send_the_list_of_peers(self, peer_serve_socket):
         self.lg.debug("{}: sending peer_list={}".format(self.id, self.peer_list))
         for p in self.peer_list:
             # peer_serve_socket.sendall(p, "6s")
-            msg = struct.pack("li",socket.ip2int(p[0]),p[1])
+            msg = struct.pack("!Ii",socket.ip2int(p[0]),p[1])
             peer_serve_socket.sendall(msg)
 
     def insert_peer(self, peer):
@@ -243,7 +243,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def say_goodbye(self, peer):
         # self.team_socket.sendto(Common.GOODBYE, "i" , peer)
-        msg = struct.pack("i", Common.GOODBYE)
+        msg = struct.pack("!i", Common.GOODBYE)
         self.team_socket.sendto(msg, peer)
         self.lg.debug("{}: sent [goodbye] to {}".format(self.id, peer))
 
@@ -262,8 +262,8 @@ class Splitter_DBS(Simulator_stuff):
             # message, sender = self.team_socket.recvfrom()
             packed_msg, sender = self.team_socket.recvfrom(100)
             #print("{}: packet={}".format(self.id, packed_msg))
-            if len(packed_msg) == struct.calcsize("iii"):
-                msg = struct.unpack("iii", packed_msg)
+            if len(packed_msg) == struct.calcsize("!iii"):
+                msg = struct.unpack("!iii", packed_msg)
                 if msg[0] == Common.GOODBYE:
                     # Message sent by all peers when they leave the team
                     self.process_goodbye(sender)
@@ -277,8 +277,8 @@ class Splitter_DBS(Simulator_stuff):
                     self.lg.debug("{}: lost_chunks_from[{}]={}".format(self.id, sender, self.lost_chunks_from[sender]))
                     self.lg.debug("{}: total_received_chunks={}".format(self.id, self.total_received_chunks))
                     self.lg.debug("{}: total_lost_chunks={}".format(self.id, self.total_lost_chunks))
-            elif len(packed_msg) == struct.calcsize("ii"):
-                msg = struct.unpack("ii", packed_msg)
+            elif len(packed_msg) == struct.calcsize("!ii"):
+                msg = struct.unpack("!ii", packed_msg)
                 if msg[0] == Common.LOST_CHUNK:
                     # Message sent only by monitors when they lost a chunk
                     lost_chunk_number = msg[1]
@@ -311,7 +311,7 @@ class Splitter_DBS(Simulator_stuff):
 
     def compose_message(self, chunk, peer):
         chunk_msg = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
-        msg = struct.pack("isli", *chunk_msg)
+        msg = struct.pack("!isIi", *chunk_msg)
         return msg
     
     def run(self):
