@@ -8,7 +8,7 @@ class Common:
     COUNTERS_TIMING = 1  # In seconds.
     BUFFER_SIZE = 128  # In chunks.
     MAX_CHUNK_LOSS = 8  # In chunks.
-    CHUNK_CADENCE = 0.01 # In seconds
+    CHUNK_CADENCE = 0.1 # In seconds
 
     # Control messages transmitted between peers (the messages
     # interchanged with the slitter are excluded of this list):

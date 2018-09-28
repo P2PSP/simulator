@@ -11,7 +11,7 @@ if __name__ == "__main__":
                         help="Buffer size")
     parser.add_argument("-p", "--port", default=4551, type=int,
                         help="Splitter port")
-    parser.add_argument("--log", default=logging.ERROR, help="Log level")
+    parser.add_argument("--loglevel", default=logging.ERROR, help="Log level")
     args = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # elif self.set_of_rules == "ims":
         # splitter = Splitter_IMS()
     lg = logging.getLogger("Splitter_DBS")
-    lg.setLevel(args.log)
+    lg.setLevel(args.loglevel)
     
     splitter.setup_peer_connection_socket(args.port)
     splitter.setup_team_socket()
