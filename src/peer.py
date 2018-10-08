@@ -19,9 +19,9 @@ if __name__ == "__main__":
 
     logging.basicConfig(format="%(message)s - %(asctime)s - %(name)s - %(levelname)s")
 
-    if args.set_of_rules == "dbs":
+    if args.set_of_rules == "DBS":
         peer = Peer_DBS("P", "Peer_DBS", args.loglevel)
-    elif args.set_of_rules == "ims":
+    elif args.set_of_rules == "IMS":
         peer = Peer_IMS("P", "Peer_IMS", args.loglevel)
 
     #lg = logging.getLogger("Peer_DBS")

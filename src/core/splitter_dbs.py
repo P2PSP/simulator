@@ -55,6 +55,8 @@ class Splitter_DBS(Simulator_stuff):
         self.number_of_monitors = 0  # Monitors report lost chunks
         self.outgoing_peer_list = []  # Peers which requested to leave the team
 
+        self.chunk_packet_format = "!isIi"
+        
         # S I M U L A T I O N 
         self.current_round = 0  # Number of round (maybe not here).
         self.max_number_of_rounds = 10
@@ -294,9 +296,9 @@ class Splitter_DBS(Simulator_stuff):
     def get_id(self):
         return self.id
 
-    def compose_message(self, chunk, peer):
+    def compose_chunk_packet(self, chunk, peer):
         chunk_msg = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
-        msg = struct.pack("!isIi", *chunk_msg)
+        msg = struct.pack(self.chunk_packet_format, *chunk_msg)
         return msg
 
     def receive_the_header(self):
@@ -350,7 +352,7 @@ class Splitter_DBS(Simulator_stuff):
                 self.lg.warning("{}: the peer with index {} does not exist. peer_list={} peer_number={}".format(self.id, self.peer_number, self.peer_list, self.peer_number))
                 # raise
 
-            message = self.compose_message(chunk, peer)
+            message = self.compose_chunk_packet(chunk, peer)
             self.destination_of_chunk[self.chunk_number % self.buffer_size] = peer
             if __debug__:
                 self.lg.debug("{}: showing destination_of_chunk:".format(self.id))

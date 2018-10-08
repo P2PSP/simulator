@@ -20,9 +20,9 @@ if __name__ == "__main__":
 
     logging.basicConfig(format="%(message)s - %(asctime)s - %(name)s - %(levelname)s")
 
-    if args.set_of_rules == "dbs":
+    if args.set_of_rules == "DBS":
         peer = Monitor_DBS("M", "Monitor_DBS", args.loglevel)
-    elif args.set_of_rules == "ims":
+    elif args.set_of_rules == "IMS":
         peer = Monitor_IMS("M", "Monitor_IMS", args.loglevel)
 
     peer.chunks_before_leave = args.chunks_before_leave

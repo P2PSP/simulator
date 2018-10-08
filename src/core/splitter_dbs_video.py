@@ -1,17 +1,9 @@
 """
 @package p2psp-simulator
-splitter_dbs module
+splitter_dbs_video module
 """
 
-# DBS (Data Broadcasting Set) layer
-
-# DBS is the most basic layer to provide communication among splitter
-# (source of the stream) and peers (destination of the stream), using
-# unicast transmissions. The splitter sends a different chunk of
-# stream to each peer, using a random round-robin scheduler.
-
-# TODO: In each round peers are selected at random, but all peers are
-# sent a chunk, in a round).
+# Implements video transmissions.
 
 import os
 import time
@@ -25,20 +17,58 @@ class Splitter_DBS_video(Splitter_DBS):
     def __init__(self, name):
         supper().__init__(id, name)
 
+        self.CHUNK_SIZE = 1024 # In bytes
+        self.HEADER_SIZE = 30 # In chunks
+        
         self.SOURCE_ADDR = "localhost"
         self.SOURCE_PORT = 8000
         
         self.source = (self.SOURCE_ADDR, self.SOURCE_PORT)
         self.GET_message = 'GET /' + self.CHANNEL + ' HTTP/1.1\r\n'
         self.GET_message += '\r\n'
-        
+
+        self.header_load_counter = 0
+        self.chunk_packet_format = "!i1024sIi"
+
         self.lg.debug("{}: initialized".format(self.id))
 
+def receive_next_chunk(self):
+        # {{{
+
+        chunk = self.source_socket.recv(self.CHUNK_SIZE)
+        prev_size = 0
+        while len(chunk) < self.CHUNK_SIZE:
+            if len(chunk) == prev_size:
+                # This section of code is reached when the streaming
+                # server (Icecast) finishes a stream and starts with
+                # the following one.
+                self.lg.debug("{}: No data in the server!".format(self.id))
+                sys.stdout.flush()
+                self.source_socket.close()
+                time.sleep(1)
+                self.source_socket = socket.socket(socket.AF_INET,
+                                                   socket.SOCK_STREAM)
+                self.source_socket.connect(self.source)
+                self.source_socket.sendall(self.GET_message.encode())
+                self.header = b""
+                self.header_load_counter = self.HEADER_SIZE
+                #_print_("1: header_load_counter =", self.header_load_counter)
+                chunk = b""
+            prev_size = len(chunk)
+            chunk += self.source_socket.recv(self.CHUNK_SIZE - len(chunk))
+        return chunk
+
+        # }}}
+
     def receive_chunk(self):
-        # Simulator_stuff.LOCK.acquire(True,0.1)
-        time.sleep(Common.CHUNK_CADENCE)  # Simulates bit-rate control
-        # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
-        return b'C'
+        chunk = self.receive_next_chunk()
+        if self.header_load_counter > 0:
+            self.header += chunk
+            self.header_load_counter -= 1
+            self.lg.debug("{}: Loaded {} bytes of header"
+                          .format(self.id, len(self.header))
+        self.chunk_counter += 1
+        return chunk
 
     def compose_message(self, chunk, peer):
         chunk_msg = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
