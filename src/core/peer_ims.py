@@ -11,6 +11,7 @@ peer_ims module
 # chunk from the splitter, it will forward it to this multicast
 # channel (all hosts multicast group). The rest of the logic is identical?
 
+import netifaces
 from selectors import select
 import struct
 import random
@@ -32,20 +33,32 @@ class Peer_IMS(Peer_DBS):
         self.lg.debug("{}: port 1234 bound to 0.0.0.0".format(self.ext_id))
     
     def receive_the_list_of_peers(self):
+        iface = netifaces.interfaces()[1]      # Name of the second interface
+        stuff = netifaces.ifaddresses(iface)   # Configuration data
+        IP_stuff = stuff[netifaces.AF_INET][0] # Only the IP stuff
+        netmask = IP_stuff['netmask']          # Get netmask
+        address = IP_stuff['addr']             # Get local IP addr
+        int32_netmask = socket.ip2int(netmask) # Netmask as an integer
+        int32_address = socket.ip2int(address) # IP address as an integer
+        int32_network_address = int32_address & int32_netmask
+        if __debug__:
+            network_address = socket.int2ip(int32_network_address)
+            self.lg.info("{}: network address = {}".format(self.ext_id, network_address))
         self.index_of_peer = {}
         peers_pending_of_reception = self.number_of_peers
-        msg_length = struct.calcsize("li")
+        msg_length = struct.calcsize("!Ii")
         counter = 0
         #isolations = 0
         self.forward[self.id] = []
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
-            peer = struct.unpack("li", msg)
+            peer = struct.unpack("!Ii", msg)
             peer = (socket.int2ip(peer[0]),peer[1])
-
+            int32_peer_address = socket.ip2int(peer[0])
+            int32_peer_network_address = int32_peer_address & int32_netmask
             # Check for peers running in the same subnet
             print("{} {}".format(self.id, peer))
-            if self.id[0] == peer[0]:
+            if int32_network_address == int32_peer_network_address:
                 self.lg.debug("{}: peer {} running in the same local network".format(self.ext_id, peer))
                 if ("224.0.0.1", 1234) not in self.forward[self.id]:
                     self.forward[self.id].append(("224.0.0.1", 1234))
