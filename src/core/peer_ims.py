@@ -56,8 +56,8 @@ class Peer_IMS(Peer_DBS):
             peer = (socket.int2ip(peer[0]),peer[1])
             int32_peer_address = socket.ip2int(peer[0])
             int32_peer_network_address = int32_peer_address & int32_netmask
+            print("--------------", socket.int2ip(int32_network_address), socket.int2ip(int32_peer_network_address))
             # Check for peers running in the same subnet
-            print("{} {}".format(self.id, peer))
             if int32_network_address == int32_peer_network_address:
                 self.lg.debug("{}: peer {} running in the same local network".format(self.ext_id, peer))
                 if ("224.0.0.1", 1234) not in self.forward[self.id]:
@@ -66,7 +66,7 @@ class Peer_IMS(Peer_DBS):
             else:
                 if counter >= self.number_of_monitors: # Monitors never are isolated
                     r = random.random()
-                    if r <= self.link_loss_ratio:
+                    if r <= self.link_failure_prob:
                         self.team_socket.isolate(self.id, peer)
                         self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
                 #print("{}: peer={}".format(self.ext_id, peer))

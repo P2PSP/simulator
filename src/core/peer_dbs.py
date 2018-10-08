@@ -14,6 +14,7 @@ import time
 import struct
 import logging
 import random
+import netifaces
 from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
@@ -251,7 +252,12 @@ class Peer_DBS(sim):
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
         #host = socket.gethostbyname(socket.gethostname())
-        self.splitter_socket.bind(('', port))
+        iface = netifaces.interfaces()[1]      # Name of the second interface
+        stuff = netifaces.ifaddresses(iface)   # Configuration data
+        IP_stuff = stuff[netifaces.AF_INET][0] # Only the IP stuff
+        address = IP_stuff['addr']             # Get local IP addr
+        
+        self.splitter_socket.bind((address, port))
 
         try:
             self.splitter_socket.connect(self.splitter)
