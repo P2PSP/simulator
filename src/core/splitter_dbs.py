@@ -298,9 +298,14 @@ class Splitter_DBS(Simulator_stuff):
         chunk_msg = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
         msg = struct.pack("!isIi", *chunk_msg)
         return msg
-        
+
+    def receive_the_header(self):
+        pass
+    
     def run(self):
 
+        self.receive_the_header()
+        
         chunk_counter = 0
         self.received_chunks_from = {}
         self.lost_chunks_from = {}
