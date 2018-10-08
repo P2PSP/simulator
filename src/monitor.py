@@ -5,14 +5,14 @@ from core.monitor_ims import Monitor_IMS
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("-l", "--chunks_before_leave", default=9999, type=int,
+                        help="Number of chunk before leave the team")
     parser.add_argument("-s", "--set_of_rules", default="dbs",
                         help="set of rules")
     parser.add_argument("-a", "--splitter_address", default="127.0.1.1",
                         help="Splitter address")
     parser.add_argument("-p", "--splitter_port", default=4551, type=int,
                         help="Splitter port")
-    parser.add_argument("-l", "--chunks_before_leave", default=9999, type=int,
-                        help="Number of chunk before leave the team")
     parser.add_argument("-m", "--monitor_port", default=4552, type=int,
                         help="Monitor port")
     parser.add_argument("--loglevel", default=logging.ERROR, help="Log level")
