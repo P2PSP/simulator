@@ -58,6 +58,13 @@ class Splitter_DBS(Simulator_stuff):
         # S I M U L A T I O N 
         self.current_round = 0  # Number of round (maybe not here).
         self.max_number_of_rounds = 10
+
+        self.SOURCE_ADDR = "localhost"
+        self.SOURCE_PORT = 8000
+        
+        self.source = (self.SOURCE_ADDR, self.SOURCE_PORT)
+        self.GET_message = 'GET /' + self.CHANNEL + ' HTTP/1.1\r\n'
+        self.GET_message += '\r\n'
         
         self.lg.debug("{}: initialized".format(self.id))
 
@@ -298,9 +305,36 @@ class Splitter_DBS(Simulator_stuff):
         chunk_msg = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
         msg = struct.pack("!isIi", *chunk_msg)
         return msg
+
+    def request_the_video_from_the_source(self):
+        self.source_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.source_socket.connect(self.source)
+        except socket.error as e:
+            self.lg.error("{}: Exception: {}".format(self.id, e))
+            self.source_socket.close()
+            os._exit(1)
+        self.lg.debug("{}: connected to {}".format(self.id, self.source))
+        self.source_socket.sendall(self.GET_message.encode())
+        self.lg.debug("{}: GET_message={}".format(self.id, self.GET_message))
+
+    def load_the_video_header(self):
+        self.header = b''
+        for i in range(self.HEADER_SIZE):
+            self.header += self.receive_next_chunk()
+
+    def receive_the_header(self):
+        self.lg.debug("{}: Requesting the stream header ...".format(self.id))
+
+        self.request_the_video_from_the_source()
+        self.load_the_video_header()
+
+        self.lg.debug("{}: Stream header received!".format(self.id))
         
     def run(self):
 
+        self.received_the_header()
+        
         chunk_counter = 0
         self.received_chunks_from = {}
         self.lost_chunks_from = {}
