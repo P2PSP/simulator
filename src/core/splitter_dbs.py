@@ -47,7 +47,7 @@ class Splitter_DBS(Simulator_stuff):
         self.chunk_number = 0  # First chunk (number) to send
         self.peer_list = []  # Current peers in the team
         self.losses = {}  # (Detected) lost chunks per peer
-        self.buffer_size = Common.BUFFER_SIZE  # Buffer (of chunks) size
+        self.buffer_size = Splitter_DBS.buffer_size  # Buffer (of chunks) size
         self.destination_of_chunk = self.buffer_size*[0]  # Destination peer of the buffered chunks
         self.peer_number = 0  # First peer to serve in the list of peers
         self.number_of_monitors = 0  # Monitors report lost chunks
@@ -98,6 +98,12 @@ class Splitter_DBS(Simulator_stuff):
             self.lg.info("{}: connection from {}".format(self.id, peer))
             Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()
 
+    def send_the_header(self):
+        pass
+
+    def send_the_chunk_size(self):
+        pass
+    
     def handle_a_peer_arrival(self, connection):
 
         serve_socket = connection[0]
@@ -105,6 +111,8 @@ class Splitter_DBS(Simulator_stuff):
 
         self.lg.debug("{}: accepted connection from peer {}".format(self.id, incoming_peer))
 
+        self.send_the_header()
+        self.send_the_chunk_size()
         self.send_public_endpoint(incoming_peer, serve_socket)
         self.send_buffer_size(serve_socket)
         self.send_the_number_of_peers(serve_socket)

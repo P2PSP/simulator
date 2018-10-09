@@ -23,6 +23,8 @@ class Peer_video(Peer):
         peer.set_splitter((args.splitter_address, args.splitter_port))
         peer.wait_for_the_player()
         peer.connect_to_the_splitter(peer_port=args.peer_port)
+        peer.receive_the_header()
+        peer.receive_the_chunk_size()
         peer.receive_public_endpoint()
         peer.receive_buffer_size()
         peer.receive_the_number_of_peers()
