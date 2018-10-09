@@ -20,11 +20,11 @@ class Splitter():
                             .format(Splitter_DBS.splitter_port))
         parser.add_argument("-l", "--max_chunk_loss",
                             default=Splitter_DBS.max_chunk_loss,
-                            help="Channel (default={})"
+                            help="Maximum number of lost chunks per round (default={})"
                             .format(Splitter_DBS.max_chunk_loss))
         parser.add_argument("-n", "--number_of_monitors",
                             default=Splitter_DBS.number_of_monitors,
-                            help="Channel (default={})"
+                            help="Number of monitors (default={})"
                             .format(Splitter_DBS.number_of_monitors))
 
         if __debug__:
@@ -36,12 +36,11 @@ class Splitter():
 
     def instance(self, args):
         if args.set_of_rules == "DBS" or args.set_of_rules == "IMS":
-            splitter = Splitter_DBS("Splitter_DBS",
-                                    splitter_port = args.splitter_port,
-                                    max_chunk_losss = args.max_chunk_loss,
-                                    number_of_monitors = args.number_of_monitors,
-                                    buffer_size = args.buffer_size
-            )
+            Splitter_DBS.splitter_port = args.splitter_port
+            Splitter_DBS.max_chunk_loss = args.max_chunk_loss
+            Splitter_DBS.number_of_monitors = args.number_of_monitors
+            Splitter_DBS.buffer_size = args.buffer_size
+            splitter = Splitter_DBS("Splitter_DBS")
         if __debug__:
             lg = logging.getLogger("Splitter_DBS")
             lg.setLevel(args.loglevel)
