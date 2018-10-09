@@ -4,6 +4,7 @@ from core.peer_dbs import Peer_DBS
 from core.peer_ims import Peer_IMS
 
 class Peer():
+    
     def __init__(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("-l", "--chunks_before_leave", default=9999, type=int,
@@ -14,6 +15,8 @@ class Peer():
                             help="Splitter address")
         parser.add_argument("-p", "--splitter_port", default=4550, type=int,
                             help="Splitter port")
+        parser.add_argument("-m", "--peer_port", default=0, type=int,
+                            help="Peer port (default={})".format(Peer_DBS.peer_port))
         parser.add_argument("--loglevel", default=logging.ERROR, help="Log level")
         args = parser.parse_args()
         print(args)        
@@ -39,7 +42,9 @@ class Peer():
         peer.run()
 
 if __name__ == "__main__":
-    
+    peer = Peer()
+    peer.instance()
+    peer.run()
 
 
  

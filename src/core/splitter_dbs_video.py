@@ -14,6 +14,8 @@ from .splitter_dbs import Splitter_DBS
 
 class Splitter_DBS_video(Splitter_DBS):
 
+    channel = "BBB-144.ogv"
+
     def __init__(self, name):
         supper().__init__(id, name)
 
@@ -33,32 +35,28 @@ class Splitter_DBS_video(Splitter_DBS):
         self.lg.debug("{}: initialized".format(self.id))
 
 def receive_next_chunk(self):
-        # {{{
-
-        chunk = self.source_socket.recv(self.CHUNK_SIZE)
-        prev_size = 0
-        while len(chunk) < self.CHUNK_SIZE:
-            if len(chunk) == prev_size:
-                # This section of code is reached when the streaming
-                # server (Icecast) finishes a stream and starts with
-                # the following one.
-                self.lg.debug("{}: No data in the server!".format(self.id))
-                sys.stdout.flush()
-                self.source_socket.close()
-                time.sleep(1)
-                self.source_socket = socket.socket(socket.AF_INET,
-                                                   socket.SOCK_STREAM)
-                self.source_socket.connect(self.source)
-                self.source_socket.sendall(self.GET_message.encode())
-                self.header = b""
-                self.header_load_counter = self.HEADER_SIZE
-                #_print_("1: header_load_counter =", self.header_load_counter)
-                chunk = b""
-            prev_size = len(chunk)
-            chunk += self.source_socket.recv(self.CHUNK_SIZE - len(chunk))
-        return chunk
-
-        # }}}
+    chunk = self.source_socket.recv(self.CHUNK_SIZE)
+    prev_size = 0
+    while len(chunk) < self.CHUNK_SIZE:
+        if len(chunk) == prev_size:
+            # This section of code is reached when the streaming
+            # server (Icecast) finishes a stream and starts with
+            # the following one.
+            self.lg.debug("{}: No data in the server!".format(self.id))
+            sys.stdout.flush()
+            self.source_socket.close()
+            time.sleep(1)
+            self.source_socket = socket.socket(socket.AF_INET,
+                                               socket.SOCK_STREAM)
+            self.source_socket.connect(self.source)
+            self.source_socket.sendall(self.GET_message.encode())
+            self.header = b""
+            self.header_load_counter = self.HEADER_SIZE
+            #_print_("1: header_load_counter =", self.header_load_counter)
+            chunk = b""
+        prev_size = len(chunk)
+        chunk += self.source_socket.recv(self.CHUNK_SIZE - len(chunk))
+    return chunk
 
     def receive_chunk(self):
         chunk = self.receive_next_chunk()
@@ -66,7 +64,7 @@ def receive_next_chunk(self):
             self.header += chunk
             self.header_load_counter -= 1
             self.lg.debug("{}: Loaded {} bytes of header"
-                          .format(self.id, len(self.header))
+                          .format(self.id, len(self.header)))
         self.chunk_counter += 1
         return chunk
 

@@ -26,6 +26,9 @@ import logging
 
 class Splitter_DBS(Simulator_stuff):
 
+    splitter_port = 0
+    buffer_size = 128
+    
     def __init__(self, name):
 
         #logging.basicConfig(format='%(MYVAR)s - %(asctime)s - %(name)s - %(levelname)s - %(message)s')

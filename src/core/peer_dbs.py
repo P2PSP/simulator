@@ -21,19 +21,18 @@ from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import hash
 
+# Positions of each field (chunk, chunk_number, origin) in a
+# buffer's message.
+CHUNK_NUMBER = 0
+CHUNK_DATA = 1
+ORIGIN = 2
+
+# quitar
+MAX_DEGREE = 5
+
 class Peer_DBS(sim):
 
-    # In chunks. Number of buffered chunks before starting the
-    # playback.
-    BUFFER_SIZE = 32
-
-    # Positions of each field (chunk, chunk_number, origin) in a
-    # buffer's message.
-    CHUNK_NUMBER = 0
-    CHUNK_DATA = 1
-    ORIGIN = 2
-
-    MAX_DEGREE = 5
+    peer_port = 0
 
     # S I M U L A T I O N
     #                  |
@@ -41,11 +40,12 @@ class Peer_DBS(sim):
     def __init__(self, id, name, loglevel):
         self.lg = logging.getLogger(name)
         self.lg.setLevel(loglevel)
-#        self.lg.critical('Critical messages enabled.')
-#        self.lg.error   ('Error messages enabled.')
-#        self.lg.warning ('Warning message enabled.')
-#        self.lg.info    ('Informative message enabled.')
-#        self.lg.debug   ('Low-level debug message enabled.')
+        if __debug__:
+            self.lg.critical('Critical messages enabled.')
+            self.lg.error   ('Error messages enabled.')
+            self.lg.warning ('Warning message enabled.')
+            self.lg.info    ('Informative message enabled.')
+            self.lg.debug   ('Low-level debug message enabled.')
 
         # Peer identification. Depending on the simulation degree, it
         # can be a simple string or an (local) endpoint.
@@ -128,7 +128,7 @@ class Peer_DBS(sim):
         self.link_failure_prob = 0.0
 
         # S I M U L A T I O N
-        self.max_degree = self.MAX_DEGREE
+        self.max_degree = MAX_DEGREE
         
         self.rounds_counter = 0
 
@@ -377,10 +377,10 @@ class Peer_DBS(sim):
     def compose_message(self, chunk_number):
         chunk_position = chunk_number % self.buffer_size
         chunk = self.chunks[chunk_position]
-        stored_chunk_number = chunk[self.CHUNK_NUMBER]
-        chunk_data = chunk[self.CHUNK_DATA]
-        chunk_origin_IP = chunk[self.ORIGIN][0]
-        chunk_origin_port = chunk[self.ORIGIN][1]
+        stored_chunk_number = chunk[CHUNK_NUMBER]
+        chunk_data = chunk[CHUNK_DATA]
+        chunk_origin_IP = chunk[ORIGIN][0]
+        chunk_origin_port = chunk[ORIGIN][1]
         content = (stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
         packet = struct.pack("!isIi", *content)
         return packet
@@ -420,7 +420,7 @@ class Peer_DBS(sim):
         # If a peer X receives [request Y] from peer Z, X will
         # append Z to forward[Y.origin].
 
-        origin = self.chunks[chunk_number % self.buffer_size][self.ORIGIN]
+        origin = self.chunks[chunk_number % self.buffer_size][ORIGIN]
 
         self.lg.debug("{}: received [request {}] from {} (origin={}, forward={})".format(self.ext_id, chunk_number, sender, origin, self.forward))
 
@@ -480,7 +480,7 @@ class Peer_DBS(sim):
         chunk = self.chunks[chunk_number % self.buffer_size]
         # Notice that chunk_number must be stored in the buffer
         # because it has been sent to a neighbor.
-        origin = chunk[self.ORIGIN]
+        origin = chunk[ORIGIN]
         if origin in self.forward:
             if sender in self.forward[origin]:
                 try:
@@ -546,13 +546,13 @@ class Peer_DBS(sim):
     # DBS peer's logic
     def process_unpacked_message(self, message, sender):
 
-        chunk_number = message[self.CHUNK_NUMBER]
+        chunk_number = message[CHUNK_NUMBER]
 
         if chunk_number >= 0:
 
             # We have received a chunk.
-            chunk_data = message[self.CHUNK_DATA]
-            origin = message[self.ORIGIN]
+            chunk_data = message[CHUNK_DATA]
+            origin = message[ORIGIN]
 
             # Compute deltas
             self.chunk_number_delta = chunk_number - self.chunk_number_delta
@@ -571,11 +571,11 @@ class Peer_DBS(sim):
                         #self.played = 0 # Ojo, puesto a 0 para calcular CLR
 
             # 1. Store or report duplicates
-            if self.chunks[chunk_number % self.buffer_size][self.CHUNK_NUMBER] == chunk_number:
+            if self.chunks[chunk_number % self.buffer_size][CHUNK_NUMBER] == chunk_number:
                 # Duplicate chunk. Ignore it and warn the sender to
                 # stop sending more chunks from the origin of the received
                 # chunk "chunk_number".
-                self.lg.debug("{}: duplicate chunk {} from {} (the first one was sent by {}) BUFFER={}".format(self.ext_id, chunk_number, sender, self.chunks[chunk_number % self.buffer_size][self.ORIGIN], self.chunks))
+                self.lg.debug("{}: duplicate chunk {} from {} (the first one was sent by {}) BUFFER={}".format(self.ext_id, chunk_number, sender, self.chunks[chunk_number % self.buffer_size][ORIGIN], self.chunks))
                 self.prune_origin(chunk_number, sender)
             else:
                 self.buffer_new_chunk(chunk_number, chunk_data, origin, sender)
@@ -583,11 +583,11 @@ class Peer_DBS(sim):
                 # Showing buffer
                 buf = ""
                 for i in self.chunks:
-                    if i[self.CHUNK_NUMBER] != -1:
+                    if i[CHUNK_NUMBER] != -1:
                         try:
-                            peer_number = self.index_of_peer[i[self.ORIGIN]]
+                            peer_number = self.index_of_peer[i[ORIGIN]]
                         except KeyError:
-                            self.index_of_peer[i[self.ORIGIN]] = self.number_of_peers
+                            self.index_of_peer[i[ORIGIN]] = self.number_of_peers
                             peer_number = self.number_of_peers
                             self.number_of_peers += 1
                         buf += hash(peer_number)
@@ -602,7 +602,7 @@ class Peer_DBS(sim):
 #                self.sender_of_chunks = []
 #                for i in self.chunks:
 #                    if i[self.CHUNK_NUMBER] != -1:
-#                        self.sender_of_chunks.append(','.join(map(str,i[self.ORIGIN])))
+#                        self.sender_of_chunks.append(','.join(map(str,i[ORIGIN])))
 #                    else:
 #                        self.sender_of_chunks.append("")
 #                if sim.FEEDBACK:
@@ -679,9 +679,9 @@ class Peer_DBS(sim):
                                                      # [chunk number,
                                                      # chunk, origin
                                                      # (address and port)]
-                message = message[self.CHUNK_NUMBER], \
-                          message[self.CHUNK_DATA], \
-                          (socket.int2ip(message[self.ORIGIN]),message[self.ORIGIN+1])
+                message = message[CHUNK_NUMBER], \
+                          message[CHUNK_DATA], \
+                          (socket.int2ip(message[ORIGIN]),message[ORIGIN+1])
             elif len(pkg) == struct.calcsize("!iii"):
                 message = struct.unpack("!iii", pkg)  # Control message:
                                                      # [control, parameter]
@@ -704,7 +704,7 @@ class Peer_DBS(sim):
         self.lg.info("{}: [request {}] sent to {}".format(self.ext_id, chunk_number, peer))
 
     def play_chunk(self, chunk_number):
-        if self.chunks[chunk_number % self.buffer_size][self.CHUNK_DATA] == b'C':
+        if self.chunks[chunk_number % self.buffer_size][CHUNK_DATA] == b'C':
             self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
         else:
@@ -721,10 +721,10 @@ class Peer_DBS(sim):
 
             # Request the chunk to the origin peer of the last received chunk.
             #i = self.prev_received_chunk
-            #destination = self.chunks[i % self.BUFFER_SIZE][self.ORIGIN]
+            #destination = self.chunks[i % self.buffer_size][ORIGIN]
             #while destination == None:
             #    i += 1
-            #    destination = self.chunks[i % self.BUFFER_SIZE][self.ORIGIN]
+            #    destination = self.chunks[i % self.buffer_size][ORIGIN]
             #self.request_chunk(chunk_number, destination)
             # And remove the peer in forward with higher debt.
             #print("{}: ------------> {}".format(self.ext_id, self.debt))
