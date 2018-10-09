@@ -99,7 +99,7 @@ class Simulator():
         else:
             return team_size
 
-    def run_a_splitter(self,splitter_id):
+    def run_a_splitter(self, splitter_id):
         Common.CHUNK_CADENCE = self.chunk_cadence
         if self.buffer_size == 0:
             Common.BUFFER_SIZE = self.compute_buffer_size()
@@ -107,6 +107,10 @@ class Simulator():
             Common.BUFFER_SIZE = self.buffer_size
         self.lg.debug("(definitive) buffer_size={}".format(Common.BUFFER_SIZE))
         if self.set_of_rules == "DBS" or self.set_of_rules == "IMS":
+            Splitter_DBS.splitter_port = 0
+            Splitter_DBS.max_chunk_loss = 8
+            Splitter_DBS.number_of_monitors = 1
+            Splitter_DBS.buffer_size = 128
             splitter = Splitter_DBS("Splitter_DBS")
             self.lg.info("simulator: DBS/IMS splitter created")
         elif self.set_of_rules == "CIS":

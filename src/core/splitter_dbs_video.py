@@ -15,15 +15,14 @@ from .splitter_dbs import Splitter_DBS
 class Splitter_DBS_video(Splitter_DBS):
 
     channel = "BBB-144.ogv"
+    buffer_size = 128
+    chunk_size = 1024
+    header_size = 30
+    source_address = "localhost"
+    source_port = 8000
 
     def __init__(self, name):
-        supper().__init__(id, name)
-
-        self.CHUNK_SIZE = 1024 # In bytes
-        self.HEADER_SIZE = 30 # In chunks
-        
-        self.SOURCE_ADDR = "localhost"
-        self.SOURCE_PORT = 8000
+        super().__init__(id, name)
         
         self.source = (self.SOURCE_ADDR, self.SOURCE_PORT)
         self.GET_message = 'GET /' + self.CHANNEL + ' HTTP/1.1\r\n'

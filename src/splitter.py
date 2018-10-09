@@ -18,13 +18,30 @@ class Splitter():
                             type=int,
                             help="Splitter port (default={})"
                             .format(Splitter_DBS.splitter_port))
+        parser.add_argument("-l", "--max_chunk_loss",
+                            default=Splitter_DBS.max_chunk_loss,
+                            help="Channel (default={})"
+                            .format(Splitter_DBS.max_chunk_loss))
+        parser.add_argument("-n", "--number_of_monitors",
+                            default=Splitter_DBS.number_of_monitors,
+                            help="Channel (default={})"
+                            .format(Splitter_DBS.number_of_monitors))
+
         if __debug__:
-            parser.add_argument("--loglevel", default=logging.ERROR, help="Log level")
+            parser.add_argument("--loglevel",
+                                default=logging.ERROR,
+                                help="Log level (default={})"
+                                .format(logging.getLevelName(logging.ERROR)))
             logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     def instance(self, args):
         if args.set_of_rules == "DBS" or args.set_of_rules == "IMS":
-            splitter = Splitter_DBS("Splitter_DBS")
+            splitter = Splitter_DBS("Splitter_DBS",
+                                    splitter_port = args.splitter_port,
+                                    max_chunk_losss = args.max_chunk_loss,
+                                    number_of_monitors = args.number_of_monitors,
+                                    buffer_size = args.buffer_size
+            )
         if __debug__:
             lg = logging.getLogger("Splitter_DBS")
             lg.setLevel(args.loglevel)

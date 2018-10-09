@@ -12,6 +12,22 @@ class Splitter_video(Splitter):
                             default=Splitter_DBS_video.channel,
                             help="Channel (default={})"
                             .format(Splitter_DBS_video.channel))
+        parser.add_argument("-z", "--chunk_size",
+                            default=Splitter_DBS_video.chunk_size,
+                            help="Channel (default={})"
+                            .format(Splitter_DBS_video.chunk_size))
+        parser.add_argument("-e", "--header_size",
+                            default=Splitter_DBS_video.header_size,
+                            help="Channel (default={})"
+                            .format(Splitter_DBS_video.header_size))
+        parser.add_argument("-a", "--source_address",
+                            default=Splitter_DBS_video.source_address,
+                            help="Channel (default={})"
+                            .format(Splitter_DBS_video.source_address))
+        parser.add_argument("-t", "--source_port",
+                            default=Splitter_DBS_video.source_port,
+                            help="Channel (default={})"
+                            .format(Splitter_DBS_video.source_port))
 
     def instance(self, args):
         if args.set_of_rules == "DBS" or args.set_of_rules == "IMS":

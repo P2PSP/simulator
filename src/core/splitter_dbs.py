@@ -27,26 +27,38 @@ import logging
 class Splitter_DBS(Simulator_stuff):
 
     splitter_port = 0
+    max_chunk_loss = 8
+    number_of_monitors = 1
     buffer_size = 128
     
     def __init__(self, name):
+                 #splitter_port,
+                 #max_chunk_loss,
+                 #number_of_monitors,
+                 #buffer_size
+        
+        if __debug__:
+            #logging.basicConfig(format='%(MYVAR)s - %(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+            self.lg = logging.getLogger(name)
+            # handler = logging.StreamHandler()
+            # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
+            # formatter = logging.Formatter(fmt='splitter_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
+            # handler.setFormatter(formatter)
+            # self.lg.addHandler(handler)
+            # self.lg.setLevel(logging.DEBUG)
+            self.lg.setLevel(Simulator_stuff.loglevel)
+            self.lg.critical('Critical messages enabled.')
+            self.lg.error('Error messages enabled.')
+            self.lg.warning('Warning message enabled.')
+            self.lg.info('Informative message enabled.')
+            self.lg.debug('Low-level debug message enabled.')
 
-        #logging.basicConfig(format='%(MYVAR)s - %(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-        self.lg = logging.getLogger(name)
-        # handler = logging.StreamHandler()
-        # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
-        # formatter = logging.Formatter(fmt='splitter_dbs.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
-        # handler.setFormatter(formatter)
-        # self.lg.addHandler(handler)
-        # self.lg.setLevel(logging.DEBUG)
-        self.lg.setLevel(Simulator_stuff.loglevel)
-        self.lg.critical('Critical messages enabled.')
-        self.lg.error('Error messages enabled.')
-        self.lg.warning('Warning message enabled.')
-        self.lg.info('Informative message enabled.')
-        self.lg.debug('Low-level debug message enabled.')
-
+        #Splitter_DBS.splitter_port = splitter_port
+        #Splitter_DBS.max_chunk_loss = max_chunk_loss
+        #Splitter_DBS.number_of_monitors = number_of_monitors
+        #Splitter_DBS.buffer_size = buffer_size
+            
         self.id = "S"
         self.alive = True  # While True, keeps the splitter alive
         self.chunk_number = 0  # First chunk (number) to send

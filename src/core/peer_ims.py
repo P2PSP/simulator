@@ -16,6 +16,7 @@ from selectors import select
 import struct
 import random
 import logging
+from .common import Common
 from .simulator_stuff import Simulator_socket as socket
 from core.peer_dbs import Peer_DBS
 
@@ -108,7 +109,7 @@ class Peer_IMS(Peer_DBS):
             super().add_new_forwarding_rule(peer, neighbor)
 
     def play_chunk(self, chunk_number):
-        if self.chunks[chunk_number % self.buffer_size][self.CHUNK_DATA] == b'C':
+        if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_DATA] == b'C':
             self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
         else:

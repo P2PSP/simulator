@@ -16,3 +16,9 @@ class Common:
     REQUEST = -3  # Send to me the chunks originated at ...
     PRUNE = -4  # Don't send to me chunks originated at ...
     LOST_CHUNK = -5 # I have lost the chunk number ...
+
+    # Positions of each field (chunk, chunk_number, origin) in a
+    # buffer's message.
+    CHUNK_NUMBER = 0
+    CHUNK_DATA = 1
+    ORIGIN = 2
