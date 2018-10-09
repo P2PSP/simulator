@@ -27,11 +27,14 @@ MAX_DEGREE = 5
 class Peer_DBS(sim):
 
     peer_port = 0
+    splitter_address = "localhost"
+    splitter_port = 8001
 
     # S I M U L A T I O N
     #                  |
     #                  v
     def __init__(self, id, name, loglevel):
+
         self.lg = logging.getLogger(name)
         self.lg.setLevel(loglevel)
         if __debug__:
@@ -241,7 +244,7 @@ class Peer_DBS(sim):
                 else:
                     sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"P"))    
 
-    def connect_to_the_splitter(self, port):
+    def connect_to_the_splitter(self, peer_port):
         self.lg.debug("{}: connecting to the splitter at {}".format(self.id, self.splitter))
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
@@ -251,7 +254,7 @@ class Peer_DBS(sim):
         IP_stuff = stuff[netifaces.AF_INET][0] # Only the IP stuff
         address = IP_stuff['addr']             # Get local IP addr
         
-        self.splitter_socket.bind((address, port))
+        self.splitter_socket.bind((address, peer_port))
 
         try:
             self.splitter_socket.connect(self.splitter)
@@ -691,16 +694,20 @@ class Peer_DBS(sim):
             #self.say_goodbye_to_the_team()
             raise
         #    return (0, self.id)
-        
+
     def request_chunk(self, chunk_number, peer):
         msg = struct.pack("!ii", Common.REQUEST, chunk_number)
         self.team_socket.sendto(msg, peer)
         self.lg.info("{}: [request {}] sent to {}".format(self.ext_id, chunk_number, peer))
 
+    def send_chunk_to_player(self):
+        pass
+
     def play_chunk(self, chunk_number):
         if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_DATA] == b'C':
             self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
+            self.send_chunk_to_player()
         else:
             self.losses += 1
             self.lg.critical("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))

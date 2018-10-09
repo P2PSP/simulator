@@ -24,19 +24,22 @@ class Splitter_DBS_video(Splitter_DBS):
     def __init__(self, name):
         super().__init__(id, name)
         
-        self.source = (self.SOURCE_ADDR, self.SOURCE_PORT)
-        self.GET_message = 'GET /' + self.CHANNEL + ' HTTP/1.1\r\n'
+        self.source = (Splitter_DBS_video.source_address,
+                       Splitter_DBS_video.source_port)
+        self.GET_message = 'GET /' + Splitter_DBS_video.channel + ' HTTP/1.1\r\n'
         self.GET_message += '\r\n'
 
         self.header_load_counter = 0
-        self.chunk_packet_format = "!i1024sIi"
+        self.chunk_packet_format = "!i" \
+            + str(Splitter_DBS_video.chunk_size) \
+            + "sIi"
 
         self.lg.debug("{}: initialized".format(self.id))
 
 def receive_next_chunk(self):
-    chunk = self.source_socket.recv(self.CHUNK_SIZE)
+    chunk = self.source_socket.recv(Splitter_DBD_video.chunk_size)
     prev_size = 0
-    while len(chunk) < self.CHUNK_SIZE:
+    while len(chunk) < Splitter_DBD_video.chunk_size:
         if len(chunk) == prev_size:
             # This section of code is reached when the streaming
             # server (Icecast) finishes a stream and starts with
@@ -50,11 +53,11 @@ def receive_next_chunk(self):
             self.source_socket.connect(self.source)
             self.source_socket.sendall(self.GET_message.encode())
             self.header = b""
-            self.header_load_counter = self.HEADER_SIZE
+            self.header_load_counter = Splitter_DBS_video.header_size
             #_print_("1: header_load_counter =", self.header_load_counter)
             chunk = b""
         prev_size = len(chunk)
-        chunk += self.source_socket.recv(self.CHUNK_SIZE - len(chunk))
+        chunk += self.source_socket.recv( - len(chunk))
     return chunk
 
     def receive_chunk(self):

@@ -22,11 +22,11 @@ class Splitter_video(Splitter):
                             .format(Splitter_DBS_video.header_size))
         parser.add_argument("-a", "--source_address",
                             default=Splitter_DBS_video.source_address,
-                            help="Source address (default={})"
+                            help="Address of the source (default={})"
                             .format(Splitter_DBS_video.source_address))
         parser.add_argument("-t", "--source_port",
                             default=Splitter_DBS_video.source_port,
-                            help="Source port (default={})"
+                            help="Listening port of the source (default={})"
                             .format(Splitter_DBS_video.source_port))
 
     def instance(self, args):

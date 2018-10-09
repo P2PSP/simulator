@@ -6,8 +6,7 @@ from core.peer_ims import Peer_IMS
 class Peer():
     
     def __init__(self):
-        parser = argparse.ArgumentParser()
-        parser.add_argument("-l", "--chunks_before_leave", default=9999, type=int,
+        parser.add_argument("-l", "--chunks_before_leave", default=2000, type=int,
                             help="Number of chunk before leave the team")
         parser.add_argument("-s", "--set_of_rules", default="dbs",
                             help="set of rules")
@@ -18,11 +17,13 @@ class Peer():
         parser.add_argument("-m", "--peer_port", default=0, type=int,
                             help="Peer port (default={})".format(Peer_DBS.peer_port))
         parser.add_argument("--loglevel", default=logging.ERROR, help="Log level")
-        args = parser.parse_args()
         print(args)        
         logging.basicConfig(format="%(message)s - %(asctime)s - %(name)s - %(levelname)s")
 
-    def instance(self):
+    def instance(self, args):
+        Peer_DBS.peer_port = args.peer_port
+        Peer_DBS.splitter_address = args.splitter_address
+        Peer_DBS.splitter_port = args.splitter_port
         if args.set_of_rules == "DBS":
             peer = Peer_DBS("P", "Peer_DBS", args.loglevel)
         elif args.set_of_rules == "IMS":
@@ -42,9 +43,11 @@ class Peer():
         peer.run()
 
 if __name__ == "__main__":
-    peer = Peer()
-    peer.instance()
-    peer.run()
+    parser = argparse.ArgumentParser()
+    peer = Peer(parser)
+    args = parser.parse_args()
+    peer.instance(args)
+    peer.run(args)
 
 
  
