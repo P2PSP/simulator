@@ -6,15 +6,14 @@ from splitter import Splitter
 
 class Splitter_video(Splitter):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parser):
+        super().__init__(parser)
         parser.add_argument("-c", "--channel",
-                            defalut=Splitter_DBS_video.channel,
+                            default=Splitter_DBS_video.channel,
                             help="Channel (default={})"
-                            .format(Splitter_DBS_video))
-        #args = parser.parse_args()
+                            .format(Splitter_DBS_video.channel))
 
-    def instance(self):
+    def instance(self, args):
         if args.set_of_rules == "DBS" or args.set_of_rules == "IMS":
             splitter = Splitter_DBS_video("Splitter_DBS")
         if __debug__:
@@ -22,6 +21,8 @@ class Splitter_video(Splitter):
             lg.setLevel(args.loglevel)
 
 if __name__ == "__main__":
-    splitter = Splitter_video()
-    splitter.instance()
-    splitter.run()
+    parser = argparse.ArgumentParser()
+    splitter = Splitter_video(parser)
+    args = parser.parse_args()
+    splitter.instance(args)
+    splitter.run(args)

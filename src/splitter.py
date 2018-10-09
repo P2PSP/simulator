@@ -4,8 +4,7 @@ from core.splitter_dbs import Splitter_DBS
 
 class Splitter():
 
-    def __init__(self):
-        parser = argparse.ArgumentParser()
+    def __init__(self, parser):
         parser.add_argument("-s", "--set_of_rules",
                             default="IMS",
                             help="Set of rules (default=\"IMS\")")
@@ -21,25 +20,24 @@ class Splitter():
                             .format(Splitter_DBS.splitter_port))
         if __debug__:
             parser.add_argument("--loglevel", default=logging.ERROR, help="Log level")
-        args = parser.parse_args()
-
-        if __debug__:
             logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    def instance(self):
+    def instance(self, args):
         if args.set_of_rules == "DBS" or args.set_of_rules == "IMS":
             splitter = Splitter_DBS("Splitter_DBS")
         if __debug__:
             lg = logging.getLogger("Splitter_DBS")
             lg.setLevel(args.loglevel)
 
-    def run(self):    
+    def run(self, args):
         splitter.setup_peer_connection_socket(args.splitter_port)
         splitter.setup_team_socket()
         splitter_address = splitter.get_id()
         splitter.run()
 
 if __name__ == "__main__":
-    splitter = Splitter()
-    splitter.instance()
-    splitter.run()
+    parser = argparse.ArgumentParser()
+    splitter = Splitter(parser)
+    args = parser.parse_args()
+    splitter.instance(args)
+    splitter.run(args)
