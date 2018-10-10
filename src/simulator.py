@@ -181,8 +181,6 @@ class Simulator():
         peer.max_degree = self.max_degree
         peer.chunks_before_leave = chunks_before_leave
         peer.splitter = splitter_id
-        #peer.set_splitter(splitter_id)
-        # peer.set_id()
         peer.connect_to_the_splitter(peer_port=0)
         peer.receive_public_endpoint()
         peer.receive_buffer_size()
