@@ -354,7 +354,7 @@ class Peer_DBS(sim):
         packet = struct.pack(self.chunk_packet_format, *content)
         return packet
             
-    def send_chunk(self, chunk_number, peer):
+    def send_chunk_to_peer(self, chunk_number, peer):
         try:
             msg = self.compose_message(chunk_number)
             #msg = struct.pack("isIi", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
@@ -378,7 +378,7 @@ class Peer_DBS(sim):
         self.lg.debug("{}: send_chunks (begin) neighbor={} pending[{}]={}".format(self.ext_id, self.neighbor, self.neighbor, self.pending[self.neighbor]))
         for chunk_number in self.pending[self.neighbor]:
             self.lg.debug("{}: send_chunks sel_chunk={} to neighbor={}".format(self.ext_id, chunk_number, self.neighbor))
-            self.send_chunk(chunk_number, self.neighbor)
+            self.send_chunk_to_peer(chunk_number, self.neighbor)
         self.pending[self.neighbor] = []
         #for chunk_number in self.pending[self.neighbor]:
         #    self.pending[self.neighbor].remove(chunk_number)
@@ -536,8 +536,6 @@ class Peer_DBS(sim):
                         CLR = self.losses / (self.played + self.losses) # Chunk Loss Ratio
                         if sim.FEEDBACK:
                             sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.public_endpoint)), CLR))
-                        #self.losses = 0 # Ojo, puesto a 0 para calcular CLR
-                        #self.played = 0 # Ojo, puesto a 0 para calcular CLR
 
             # 1. Store or report duplicates
             if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_NUMBER] == chunk_number:
@@ -568,18 +566,8 @@ class Peer_DBS(sim):
                 self.received_chunks += 1
                 if (self.received_chunks >= self.chunks_before_leave):
                     self.player_connected = False
-#                self.sender_of_chunks = []
-#                for i in self.chunks:
-#                    if i[self.Common.CHUNK_NUMBER] != -1:
-#                        self.sender_of_chunks.append(','.join(map(str,i[Common.ORIGIN])))
-#                    else:
-#                        self.sender_of_chunks.append("")
-#                if sim.FEEDBACK:
-#                    sim.FEEDBACK["DRAW"].put(("B", ','.join(map(str,self.id)), ":".join(self.sender_of_chunks)))
 
                 if sender == self.splitter:
-                    # if len(self.forward[self.id]) > 0:
-                    #self.update_pendings(self.id, chunk_number)
                     self.rounds_counter += 1
                     for peer, peer_list in self.forward.items():
                         if len(peer_list) > 0:
@@ -588,29 +576,8 @@ class Peer_DBS(sim):
                 else:
                     self.add_new_forwarding_rule(self.public_endpoint, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
-                    #for peer in self.forward:
-                #print("origin={} forward={}".format(origin, self.forward))
                 if origin in self.forward:
                     self.update_pendings(origin, chunk_number)
-                # When a peer X receives a chunk (number) C with origin O,
-                # for each peer P in forward[O], X performs
-                # pending[P].append(C).
-                #if origin in self.forward:  # True: #len(self.forward[origin]) > 0: #True: #origin != self.id:
-                #    for P in self.forward[origin]:
-                        #if P in self.pending:
-                #        self.pending[P].append(chunk_number)
-                        #else:
-                        #    self.pending[P] = []
-                        #    self.pending[P].append(chunk_number)
-
-                    #                        if P in self.pending:
-                    #                            self.lg.debug("{}: oooooooo {}".format(self.id, P))
-                    #                            self.pending[P].append(chunk_number)
-                    #                        elif len(self.pending) == 0:
-                    #                            self.pending[P] = []
-                    #                            self.pending[P].append(chunk_number)
-
-                #self.lg.debug("{}: origin={} forward={} pending={}".format(self.ext_id, origin, self.forward, self.pending))
 
                 if len(self.pending) > 0:
                     self.neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
@@ -644,10 +611,7 @@ class Peer_DBS(sim):
             pkg, sender = self.receive_packet()
             # self.lg.debug("{}: received {} from {} with length {}".format(self,id, pkg, sender, len(pkg)))
             if len(pkg) == self.max_pkg_length:
-                message = struct.unpack("!isIi", pkg) # Data message:
-                                                     # [chunk number,
-                                                     # chunk, origin
-                                                     # (address and port)]
+                message = struct.unpack(self.chunk_packet_format, pkg)
                 message = message[Common.CHUNK_NUMBER], \
                           message[Common.CHUNK_DATA], \
                           (socket.int2ip(message[Common.ORIGIN]),message[Common.ORIGIN+1])
@@ -772,7 +736,7 @@ class Peer_DBS(sim):
         self.lg.debug("{}: losses={}".format(self.ext_id, self.losses))
         return msg
 
-    # To be here
+    # To be here (the above function if only for the simulator)
     # def compose_goodbye_message(self):
     #    msg = struct.pack("i", Common.GOODBYE)
     #    return msg
@@ -843,7 +807,7 @@ class Peer_DBS(sim):
         # Send pending chunks
         for peer, chunks in self.pending.items():
             for chunk in chunks:
-                self.send_chunk(chunk, peer)
+                self.send_chunk_to_peer(chunk, peer)
 
         # Print some statistics
         total_lengths = 0

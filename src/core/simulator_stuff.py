@@ -36,6 +36,7 @@ class Simulator_socket():
     SOL_SOCKET = socket.SOL_SOCKET
     SO_REUSEADDR = socket.SO_REUSEADDR
     timeout = socket.timeout
+    error = socket.error
     
     def __init__(self, family=None, typ=None, sock=None):
 
