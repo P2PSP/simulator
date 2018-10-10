@@ -6,8 +6,8 @@ from splitter import Splitter
 
 class Splitter_video(Splitter):
 
-    def __init__(self, parser):
-        super().__init__(parser)
+    def add_args(self, parser):
+        super().add_args(parser)
         parser.add_argument("-c", "--channel",
                             default=Splitter_DBS_video.channel,
                             help="Channel (default={})"
@@ -39,14 +39,15 @@ class Splitter_video(Splitter):
             Splitter_DBS_video.header_size = args.header_size
             Splitter_DBS_video.source_address = args.source_address
             Splitter_DBS_video.source_port = args.source_port
-            splitter = Splitter_DBS_video("Splitter_DBS")
+            self.splitter = Splitter_DBS_video("Splitter_DBS_video")
         if __debug__:
-            lg = logging.getLogger("Splitter_DBS")
+            lg = logging.getLogger("Splitter_DBS_video")
             lg.setLevel(args.loglevel)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    splitter = Splitter_video(parser)
+    splitter = Splitter_video()
+    splitter.add_args(parser)
     args = parser.parse_args()
     splitter.instance(args)
     splitter.run(args)

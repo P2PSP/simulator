@@ -22,7 +22,7 @@ class Splitter_DBS_video(Splitter_DBS):
     source_port = 8000
 
     def __init__(self, name):
-        super().__init__(id, name)
+        super().__init__(name)
         
         self.source = (Splitter_DBS_video.source_address,
                        Splitter_DBS_video.source_port)

@@ -6,20 +6,17 @@ from peer import Peer
 
 class Peer_video(Peer):
 
-    def __init__(self, parser):
+    def add_args(self, parser):
+        super().add_args(parser)
         parser.add_argument("-v", "--player_port",
                             default=9999, type=int,
                             help="Port to listen to the player")
 
     def instance(self, args):
         Peer_DBS_video.player_port = args.player_port
-        if args.set_of_rules == "DBS":
-            peer = Peer_DBS("P", "Peer_DBS", args.loglevel)
-        elif args.set_of_rules == "IMS":
-            peer = Peer_IMS("P", "Peer_IMS", args.loglevel)
+        super().instance(args)
         
     def run(self, args):
-        peer.chunks_before_leave = args.chunks_before_leave
         peer.set_splitter((args.splitter_address, args.splitter_port))
         peer.wait_for_the_player()
         peer.connect_to_the_splitter(peer_port=args.peer_port)
@@ -34,7 +31,8 @@ class Peer_video(Peer):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    peer = Peer(parser)
+    peer = Peer_video()
+    peer.add_args(parser)
     args = parser.parse_args()
     peer.instance(args)
     peer.run(args)
