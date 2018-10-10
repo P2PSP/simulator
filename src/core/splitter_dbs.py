@@ -47,8 +47,7 @@ class Splitter_DBS(Simulator_stuff):
         self.chunk_number = 0  # First chunk (number) to send
         self.peer_list = []  # Current peers in the team
         self.losses = {}  # (Detected) lost chunks per peer
-        self.buffer_size = Splitter_DBS.buffer_size  # Buffer (of chunks) size
-        self.destination_of_chunk = self.buffer_size*[0]  # Destination peer of the buffered chunks
+        self.destination_of_chunk = Splitter_DBS.buffer_size*[0]  # Destination peer of the buffered chunks
         self.peer_number = 0  # First peer to serve in the list of peers
         self.number_of_monitors = 0  # Monitors report lost chunks
         self.outgoing_peer_list = []  # Peers which requested to leave the team
@@ -148,14 +147,14 @@ class Splitter_DBS(Simulator_stuff):
 
     def send_public_endpoint(self, endpoint, peer_serve_socket):
         self.lg.debug("{}: peer public endpint={}".format(self.id, endpoint))
-        # peer_serve_socket.sendall(self.buffer_size, "H")
+        # peer_serve_socket.sendall(Splitter_DBS.buffer_size, "H")
         msg = struct.pack("!Ii",socket.ip2int(endpoint[0]),endpoint[1])
         peer_serve_socket.sendall(msg)
 
     def send_buffer_size(self, peer_serve_socket):
-        self.lg.debug("{}: buffer_size={}".format(self.id, self.buffer_size))
-        # peer_serve_socket.sendall(self.buffer_size, "H")
-        msg = struct.pack("!H", self.buffer_size)
+        self.lg.debug("{}: Splitter_DBS.buffer_size={}".format(self.id, Splitter_DBS.buffer_size))
+        # peer_serve_socket.sendall(Splitter_DBS.buffer_size, "H")
+        msg = struct.pack("!H", Splitter_DBS.buffer_size)
         peer_serve_socket.sendall(msg)
 
     def send_the_number_of_peers(self, peer_serve_socket):
@@ -203,7 +202,7 @@ class Splitter_DBS(Simulator_stuff):
     #    return message[1]
 
     def get_losser(self, lost_chunk_number):
-        return self.destination_of_chunk[lost_chunk_number % self.buffer_size]
+        return self.destination_of_chunk[lost_chunk_number % Splitter_DBS.buffer_size]
 
     def remove_peer(self, peer):
         self.lg.debug("{}: peer {} removed".format(self.id, peer))
@@ -359,7 +358,7 @@ class Splitter_DBS(Simulator_stuff):
                 # raise
 
             message = self.compose_chunk_packet(chunk, peer)
-            self.destination_of_chunk[self.chunk_number % self.buffer_size] = peer
+            self.destination_of_chunk[self.chunk_number % Splitter_DBS.buffer_size] = peer
             if __debug__:
                 self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
                 counter = 0

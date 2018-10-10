@@ -4,7 +4,7 @@ from core.splitter_dbs import Splitter_DBS
 
 class Splitter():
 
-    def __init__(self, parser):
+    def add_args(self, parser):
         parser.add_argument("-s", "--set_of_rules",
                             default="IMS",
                             help="Set of rules (default=\"IMS\")")
@@ -40,20 +40,28 @@ class Splitter():
             Splitter_DBS.max_chunk_loss = args.max_chunk_loss
             Splitter_DBS.number_of_monitors = args.number_of_monitors
             Splitter_DBS.buffer_size = args.buffer_size
-            splitter = Splitter_DBS("Splitter_DBS")
+            self.splitter = Splitter_DBS("Splitter_DBS")
         if __debug__:
             lg = logging.getLogger("Splitter_DBS")
             lg.setLevel(args.loglevel)
 
     def run(self, args):
+<<<<<<< HEAD
         self.splitter.setup_peer_connection_socket(args.splitter_port)
         self.splitter.setup_team_socket()
         #splitter_address = splitter.get_id()
         splitter.run()
+=======
+        self.splitter.setup_peer_connection_socket(port=args.splitter_port)
+        self.splitter.setup_team_socket()
+        self.splitter_address = self.splitter.get_id()
+        self.splitter.run()
+>>>>>>> a72ede3585b173dec523083d3b7215eabb839f11
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    splitter = Splitter(parser)
+    splitter = Splitter()
+    splitter.add_args(parser)
     args = parser.parse_args()
     splitter.instance(args)
     splitter.run(args)

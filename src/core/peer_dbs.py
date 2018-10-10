@@ -27,8 +27,7 @@ MAX_DEGREE = 5
 class Peer_DBS(sim):
 
     peer_port = 0
-    splitter_address = "localhost"
-    splitter_port = 8001
+    splitter = ("localhost", 8001)
 
     # S I M U L A T I O N
     #                  |
@@ -141,8 +140,8 @@ class Peer_DBS(sim):
         #self.team_socket.bind(("", self.id[1]))
         #self.team_socket.settimeout(100)
 
-    def set_splitter(self, splitter):
-        self.splitter = splitter
+    #def set_splitter(self, splitter):
+    #    self.splitter = splitter
 
     def receive_public_endpoint(self):
         msg_length = struct.calcsize("!Ii")
