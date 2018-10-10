@@ -37,7 +37,10 @@ class Splitter_DBS_video(Splitter_DBS):
         self.lg.debug("{}: initialized".format(self.id))
 
     def send_the_chunk_size(self):
-        pass
+        self.lg.debug("{}: Sending chunk_size={}"
+                      .format(sefl.id, Splitter_DBS.chunk_size))
+        message = struct.pack("!H", socket.htons(self.CHUNK_SIZE))
+        peer_serve_socket.sendall(message)
 
     def receive_next_chunk(self):
     chunk = self.source_socket.recv(Splitter_DBD_video.chunk_size)
@@ -72,11 +75,6 @@ class Splitter_DBS_video(Splitter_DBS):
                           .format(self.id, len(self.header)))
         self.chunk_counter += 1
         return chunk
-
-    def compose_message(self, chunk, peer):
-        chunk_msg = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
-        msg = struct.pack("!isIi", *chunk_msg)
-        return msg
 
     def request_the_video_from_the_source(self):
         self.source_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -368,7 +368,12 @@ class Splitter_DBS(Simulator_stuff):
             #            try:
             self.send_chunk(message, peer)
             self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
-            self.compute_next_peer_number(peer)
+            try:
+                self.peer_number = (self.peer_number + 1) % len(self.peer_list)
+            except ZeroDivisionError:
+                pass
+            
+#            self.compute_next_peer_number(peer)
 
             #            except IndexError:
             #                self.lg.error("{}: the monitor peer has died!".format(self.id))
