@@ -36,7 +36,10 @@ class Splitter_DBS_video(Splitter_DBS):
 
         self.lg.debug("{}: initialized".format(self.id))
 
-def receive_next_chunk(self):
+    def send_the_chunk_size(self):
+        pass
+
+    def receive_next_chunk(self):
     chunk = self.source_socket.recv(Splitter_DBD_video.chunk_size)
     prev_size = 0
     while len(chunk) < Splitter_DBD_video.chunk_size:

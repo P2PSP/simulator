@@ -104,7 +104,8 @@ class Peer_DBS(sim):
         # The longest message expected to be received: chunk_number,
         # chunk, IP address of the origin peer, and port of the origin
         # peer.
-        self.max_pkg_length = struct.calcsize("!isIi")
+        self.chunk_packet_format = "!isIi"
+        self.max_pkg_length = struct.calcsize(self.chunk_packet_format)
 
         self.neighbor_index = 0
 
@@ -277,34 +278,6 @@ class Peer_DBS(sim):
 
         self.lg.debug("{}: connected to the splitter".format(self.id))
 
-    def old_connect_to_the_splitter(self):
-        self.lg.debug("{}: connecting to the splitter at {}".format(self.id, self.splitter))
-        self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
-        #host = socket.gethostbyname(socket.gethostname())
-        #self.splitter_socket.bind((host,0))
-
-        try:
-            self.splitter_socket.connect(self.splitter)
-        except ConnectionRefusedError as e:
-            self.lg.error("{}: {}".format(self.id, e))
-            raise
-
-        # The index for pending[].
-        self.id = self.splitter_socket.getsockname()
-        print("{}: I'm a peer".format(self.id))
-        #self.neighbor = self.id
-        #print("self.neighbor={}".format(self.neighbor))
-        #self.pending[self.id] = []
-
-        if __debug__:
-            # S I M U L A T I O N
-            self.map_peer_type(self.id); # Maybe at the end of this
-                                         # function to be easely extended
-                                         # in the peer_dbs_sim class.
-
-        self.lg.debug("{}: connected to the splitter".format(self.id))
-
     # Why?
     def send_ready_for_receiving_chunks(self):
         # self.splitter_socket.send(b"R", "s") # R = Ready
@@ -378,7 +351,7 @@ class Peer_DBS(sim):
         chunk_origin_IP = chunk[Common.ORIGIN][0]
         chunk_origin_port = chunk[Common.ORIGIN][1]
         content = (stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
-        packet = struct.pack("!isIi", *content)
+        packet = struct.pack(self.chunk_packet_format, *content)
         return packet
             
     def send_chunk(self, chunk_number, peer):
@@ -699,14 +672,10 @@ class Peer_DBS(sim):
         self.team_socket.sendto(msg, peer)
         self.lg.info("{}: [request {}] sent to {}".format(self.ext_id, chunk_number, peer))
 
-    def send_chunk_to_player(self):
-        pass
-
     def play_chunk(self, chunk_number):
         if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_DATA] == b'C':
             self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
-            self.send_chunk_to_player()
         else:
             self.losses += 1
             self.lg.critical("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))

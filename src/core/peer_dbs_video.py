@@ -52,9 +52,7 @@ class Peer_DBS_video(Peer_DBS):
 
     def receive_the_chunk_size(self):
         message = self.splitter_socket.recv(struct.calcsize("H"))
-        chunk_size = struct.unpack("H", message)[0]
+        chunk_size = struct.unpack("!H", message)[0]
         self.chunk_size = socket.ntohs(chunk_size)
         self.lg.debug("{}: chunk_size={}".format(self.ext_id, self.chunk_size))
-        self.message_format = "H" + str(self.chunk_size) + "s"
-
-
+        self.chunk_packet_format = "!i" + str(self.chunk_size) + "sIi"
