@@ -3,16 +3,8 @@
 peer_dbs module
 """
 
-import time
 import struct
-import logging
-import random
-import netifaces
-from threading import Thread
-from .common import Common
-from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Simulator_socket as socket
-from .simulator_stuff import hash
 from .peer_dbs import Peer_DBS
 
 class Peer_DBS_video(Peer_DBS):
@@ -30,16 +22,16 @@ class Peer_DBS_video(Peer_DBS):
             self.player_alive = False
 
     def wait_for_the_player(self):
-        self.player_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.player_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         self.player_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.player_socket.bind(('', self.PLAYER_PORT))
+        self.player_socket.bind(('', Peer_DBS_video.player_port))
         self.player_socket.listen(0)
         self.lg.debug("{}: waiting for the player at {}"
-                      .format(self.ext_id, self.player_socket.getsockname()))
+                      .format(self.id, self.player_socket.getsockname()))
         self.player_socket = self.player_socket.accept()[0]
         #self.player_socket.setblocking(0)
         self.lg.debug("{}: the player is"
-                      .format(self.ext_id, self.player_socket.getpeername()))
+                      .format(self.id, self.player_socket.getpeername()))
 
     def receive_the_header(self):
         message = self.splitter_socket.recv(struct.calcsize("H"))

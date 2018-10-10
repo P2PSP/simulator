@@ -25,7 +25,6 @@ class Peer():
 
     def instance(self, args):
         Peer_DBS.peer_port = args.peer_port
-
         Peer_DBS.splitter = (args.splitter_address, args.splitter_port)
         Peer_DBS.chunks_before_leave = args.chunks_before_leave
         if args.set_of_rules == "DBS":
