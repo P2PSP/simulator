@@ -1,6 +1,6 @@
 """
 @package simulator
-peer_dbs module
+peer_dbs_video module
 """
 
 import struct

@@ -1,10 +1,10 @@
 import argparse
-from core.peer_dbs import Peer_DBS
-from core.peer_dbs_video import Peer_DBS_video
-from core.peer_ims_video import Peer_IMS_video
-from peer import Peer
+from core.monitor_dbs import Monitor_DBS
+from core.monitor_dbs_video import Monitor_DBS_video
+from core.monitor_ims_video import Monitor_IMS_video
+from monitor import Monitor
 
-class Peer_video(Peer):
+class Monitor_video(Monitor):
 
     def add_args(self, parser):
         super().add_args(parser)
@@ -13,14 +13,14 @@ class Peer_video(Peer):
                             help="Port to listen to the player")
 
     def instance(self, args):
-        Peer_DBS.peer_port = args.peer_port
-        Peer_DBS.splitter = (args.splitter_address, args.splitter_port)
-        Peer_DBS.chunks_before_leave = args.chunks_before_leave
-        Peer_DBS_video.player_port = args.player_port
+        Monitor_DBS.peer_port = args.peer_port
+        Monitor_DBS.splitter = (args.splitter_address, args.splitter_port)
+        Monitor_DBS.chunks_before_leave = args.chunks_before_leave
+        Monitor_DBS_video.player_port = args.player_port
         if args.set_of_rules == "DBS":
-            self.peer = Peer_DBS_video("P", "Peer_DBS", args.loglevel)
+            self.peer = Monitor_DBS_video("P", "Monitor_DBS", args.loglevel)
         else:
-            self.peer = Peer_IMS_video("P", "Peer_IMS", args.loglevel)
+            self.peer = Monitor_IMS_video("P", "Monitor_IMS", args.loglevel)
         
     def run(self, args):
         self.peer.wait_for_the_player()
@@ -38,7 +38,7 @@ class Peer_video(Peer):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    peer = Peer_video()
+    peer = Monitor_video()
     peer.add_args(parser)
     args = parser.parse_args()
     peer.instance(args)
