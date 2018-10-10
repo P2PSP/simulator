@@ -46,10 +46,17 @@ class Splitter():
             lg.setLevel(args.loglevel)
 
     def run(self, args):
+<<<<<<< HEAD
+        self.splitter.setup_peer_connection_socket(args.splitter_port)
+        self.splitter.setup_team_socket()
+        #splitter_address = splitter.get_id()
+        splitter.run()
+=======
         self.splitter.setup_peer_connection_socket(port=args.splitter_port)
         self.splitter.setup_team_socket()
         self.splitter_address = self.splitter.get_id()
         self.splitter.run()
+>>>>>>> a72ede3585b173dec523083d3b7215eabb839f11
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

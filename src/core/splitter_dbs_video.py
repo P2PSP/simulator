@@ -14,7 +14,7 @@ from .splitter_dbs import Splitter_DBS
 
 class Splitter_DBS_video(Splitter_DBS):
 
-    channel = "BBB-144.ogv"
+    channel = "LBBB.ogv"
     buffer_size = 128
     chunk_size = 1024
     header_size = 30
