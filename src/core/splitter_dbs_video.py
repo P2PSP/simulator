@@ -17,7 +17,7 @@ class Splitter_DBS_video(Splitter_DBS):
     channel = "LBBB.ogv"
     buffer_size = 128
     chunk_size = 1024
-    header_size = 30
+    #header_size = 30
     source_address = "localhost"
     source_port = 8000
 
@@ -29,7 +29,7 @@ class Splitter_DBS_video(Splitter_DBS):
         self.GET_message = 'GET /' + Splitter_DBS_video.channel + ' HTTP/1.1\r\n'
         self.GET_message += '\r\n'
 
-        self.header_load_counter = 0
+        #self.header_load_counter = 0
         self.chunk_packet_format = "!i" \
             + str(Splitter_DBS_video.chunk_size) \
             + "sIi"
@@ -38,14 +38,14 @@ class Splitter_DBS_video(Splitter_DBS):
 
     def send_the_chunk_size(self):
         self.lg.debug("{}: Sending chunk_size={}"
-                      .format(sefl.id, Splitter_DBS.chunk_size))
+                      .format(self.id, Splitter_DBS.chunk_size))
         message = struct.pack("!H", socket.htons(self.CHUNK_SIZE))
         peer_serve_socket.sendall(message)
 
     def receive_next_chunk(self):
-        chunk = self.source_socket.recv(Splitter_DBD_video.chunk_size)
+        chunk = self.source_socket.recv(Splitter_DBS_video.chunk_size)
         prev_size = 0
-        while len(chunk) < Splitter_DBD_video.chunk_size:
+        while len(chunk) < Splitter_DBS_video.chunk_size:
             if len(chunk) == prev_size:
                 # This section of code is reached when the streaming
                 # server (Icecast) finishes a stream and starts with
@@ -58,8 +58,8 @@ class Splitter_DBS_video(Splitter_DBS):
                                                    socket.SOCK_STREAM)
                 self.source_socket.connect(self.source)
                 self.source_socket.sendall(self.GET_message.encode())
-                self.header = b""
-                self.header_load_counter = Splitter_DBS_video.header_size
+                #self.header = b""
+                #self.header_load_counter = Splitter_DBS_video.header_size
                 #_print_("1: header_load_counter =", self.header_load_counter)
                 chunk = b""
             prev_size = len(chunk)
@@ -68,36 +68,11 @@ class Splitter_DBS_video(Splitter_DBS):
 
     def receive_chunk(self):
         chunk = self.receive_next_chunk()
-        if self.header_load_counter > 0:
-            self.header += chunk
-            self.header_load_counter -= 1
-            self.lg.debug("{}: Loaded {} bytes of header"
-                          .format(self.id, len(self.header)))
+        #if self.header_load_counter > 0:
+        #    self.header += chunk
+        #    self.header_load_counter -= 1
+        #    self.lg.debug("{}: Loaded {} bytes of header"
+        #                  .format(self.id, len(self.header)))
         self.chunk_counter += 1
         return chunk
-
-    def request_the_video_from_the_source(self):
-        self.source_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.source_socket.connect(self.source)
-        except socket.error as e:
-            self.lg.error("{}: Exception: {}".format(self.id, e))
-            self.source_socket.close()
-            os._exit(1)
-        self.lg.debug("{}: connected to {}".format(self.id, self.source))
-        self.source_socket.sendall(self.GET_message.encode())
-        self.lg.debug("{}: GET_message={}".format(self.id, self.GET_message))
-
-    def load_the_video_header(self):
-        self.header = b''
-        for i in range(self.HEADER_SIZE):
-            self.header += self.receive_next_chunk()
-
-    def receive_the_header(self):
-        self.lg.debug("{}: Requesting the stream header ...".format(self.id))
-
-        self.request_the_video_from_the_source()
-        self.load_the_video_header()
-
-        self.lg.debug("{}: Stream header received!".format(self.id))
 

@@ -325,8 +325,9 @@ class Splitter_DBS(Simulator_stuff):
         Thread(target=self.reset_counters_thread).start()
 
         while len(self.peer_list) == 0:
-            print(".", end=' ')
-            time.sleep(0.1)
+            print("{}: waiting for a monitor at {}"
+                  .format(self.id, self.id))
+            time.sleep(1)
         print()
 
         #while self.alive:

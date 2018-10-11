@@ -259,7 +259,8 @@ class Peer_DBS(sim):
         try:
             self.splitter_socket.connect(self.splitter)
         except ConnectionRefusedError as e:
-            self.lg.error("{}: {}".format(self.id, e))
+            self.lg.error("{}: {} when connecting to {}"
+                          .format(self.id, e, self.splitter))
             raise
 
         # The index for pending[].
