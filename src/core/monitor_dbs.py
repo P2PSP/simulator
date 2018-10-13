@@ -30,15 +30,3 @@ class Monitor_DBS(Peer_DBS):
     def request_chunk(self, chunk_number, peer):
         Peer_DBS.request_chunk(self, chunk_number, peer)
         self.complain(chunk_number)
-
-    '''
-    def play_chunk(self, chunk_number):
-        if self.chunks[chunk_number % self.buffer_size][self.CHUNK] == b"C":
-            self.played += 1
-        else:
-            self.losses += 1
-            self.lg.info("{}: lost chunk {}".format(self.id, chunk_number))
-            self.complain(chunk_number)
-        self.number_of_chunks_consumed += 1
-        return self.player_alive
-    '''
