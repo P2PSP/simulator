@@ -8,8 +8,8 @@ from core.monitor_ims import Monitor_IMS
 class Monitor(Peer):
 
     def add_args(self, parser):
-        parser.add_argument("-s", "--set_of_rules", default="ims",
-                            help="set of rules")
+        parser.add_argument("-s", "--set_of_rules", default="IMS",
+                            help="set of rules (defaul=\"IMS\"")
         parser.add_argument("-a", "--splitter_address", default="127.0.1.1",
                             help="Splitter address")
         parser.add_argument("-p", "--splitter_port",

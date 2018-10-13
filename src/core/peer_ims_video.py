@@ -19,6 +19,7 @@ class Peer_IMS_video(Peer_DBS_video):
             self.player_socket.sendall(self.chunks[chunk_number % self.buffer_size][Common.CHUNK_DATA])
             self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
+            print('o', end=''); sys.stdout.flush()
         else:
             self.losses += 1
             self.lg.critical("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))

@@ -76,12 +76,6 @@ class Splitter_DBS():
         self.team_socket.sendto(chunk_msg, peer)
         self.lg.debug("{}: chunk {} sent to {}".format(self.id, chunk_msg[0], peer))
 
-    def receive_chunk(self):
-        # Simulator_stuff.LOCK.acquire(True,0.1)
-        time.sleep(Common.CHUNK_CADENCE)  # Simulates bit-rate control
-        # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
-        return b'C'
-
     def handle_arrivals(self):
         while self.alive:
             peer_serve_socket, peer = self.peer_connection_socket.accept()

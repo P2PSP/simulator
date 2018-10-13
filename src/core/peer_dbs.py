@@ -10,21 +10,20 @@ peer_dbs module
 # peers. In a nutshell, if a peer X wants to receive from peer Y
 # the chunks from origin Z, X must request it to Y, explicitally.
 
+import sys
 import time
 import struct
 import logging
-import random
 import netifaces
 from threading import Thread
 from .common import Common
-from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import hash
 
 # quitar
 MAX_DEGREE = 5
 
-class Peer_DBS(sim):
+class Peer_DBS():
 
     peer_port = 4553
     splitter = ("localhost", 4552)
@@ -114,9 +113,6 @@ class Peer_DBS(sim):
 
         # S I M U L A T I O N
         self.played = 0
-
-        # S I M U L A T I O N
-        self.chunks_before_leave = 999999
 
         # S I M U L A T I O N
         self.link_failure_prob = 0.0
@@ -614,6 +610,7 @@ class Peer_DBS(sim):
 
         while (chunk_number < self.chunk_to_play) or (((chunk_number - self.chunk_to_play) % self.buffer_size) < (self.buffer_size // 2)):
             (chunk_number, _) = self.process_message()
+            print('.', end=''); sys.stdout.flush()
             if not self.player_connected:
                 break
             while (chunk_number < self.chunk_to_play):

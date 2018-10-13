@@ -5,12 +5,9 @@ peer_dbs_simulator module
 
 # Specific simulator behavior.
 
-import time
+import sys
 import struct
-import logging
 import random
-import netifaces
-from threading import Thread
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import Simulator_socket as socket
@@ -21,6 +18,8 @@ from .peer_dbs import Peer_DBS
 MAX_DEGREE = 5
 
 class Peer_DBS_simulator(Peer_DBS):
+    chunks_before_leave = 999999
+
     def receive_buffer_size(self):
         super().receive_buffer_size()
         self.sender_of_chunks = [""] * self.buffer_size
@@ -204,7 +203,7 @@ class Peer_DBS_simulator(Peer_DBS):
 
                 # S I M U L A T I O N
                 self.received_chunks += 1
-                if (self.received_chunks >= self.chunks_before_leave):
+                if (self.received_chunks >= Peer_DBS_simulator.chunks_before_leave):
                     self.player_connected = False
 
                 if sender == self.splitter:
@@ -243,6 +242,7 @@ class Peer_DBS_simulator(Peer_DBS):
         if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_NUMBER] > -1:
             self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
+            print('O', end=''); sys.stdout.flush()
         else:
             self.losses += 1
             self.lg.critical("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))

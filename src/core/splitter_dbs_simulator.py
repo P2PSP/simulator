@@ -81,6 +81,13 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         finally:
             pass
 
+    def receive_chunk(self):
+        # Simulator_stuff.LOCK.acquire(True,0.1)
+        time.sleep(Common.CHUNK_CADENCE)  # Simulates bit-rate control
+        # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
+        print('o', end=''); sys.stdout.flush()
+        return b'C'
+
     def run(self):
         self.received_chunks_from = {}
         self.lost_chunks_from = {}
@@ -153,7 +160,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
                     #self.lg.info("round = {}".format(self.current_round))
                     self.lg.info("{}: round={:03} chunk_number={:05} number_of_peers={:03}".format(self.id, self.current_round, self.chunk_number, len(self.peer_list)))
                     #print("{}: len(peer_list)={}".format(self.id, len(self.peer_list)))
-                    sys.stderr.write(str(self.current_round) + "/" + str(self.max_number_of_rounds) + " " + str(self.chunk_number) + " " + str(len(self.peer_list)) + "\r")
+                    #sys.stderr.write(str(self.current_round) + "/" + str(self.max_number_of_rounds) + " " + str(self.chunk_number) + " " + str(len(self.peer_list)) + "\r")
 
         self.alive = False
         self.lg.debug("{}: alive = {}".format(self.id, self.alive))

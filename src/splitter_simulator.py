@@ -1,6 +1,7 @@
 import argparse
 import logging
 from core.splitter_dbs import Splitter_DBS
+from core.splitter_dbs_simulator import Splitter_DBS_simulator
 from splitter import Splitter
 
 class Splitter_simulator(Splitter):
