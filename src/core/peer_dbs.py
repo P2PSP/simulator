@@ -29,9 +29,6 @@ class Peer_DBS(sim):
     peer_port = 4553
     splitter = ("localhost", 4552)
 
-    # S I M U L A T I O N
-    #                  |
-    #                  v
     def __init__(self, id, name, loglevel):
 
         self.lg = logging.getLogger(name)
@@ -119,7 +116,7 @@ class Peer_DBS(sim):
         self.played = 0
 
         # S I M U L A T I O N
-        self.chunks_before_leave = 0
+        self.chunks_before_leave = 999999
 
         # S I M U L A T I O N
         self.link_failure_prob = 0.0
@@ -639,7 +636,7 @@ class Peer_DBS(sim):
         self.lg.info("{}: [request {}] sent to {}".format(self.ext_id, chunk_number, peer))
 
     def play_chunk(self, chunk_number):
-        if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_DATA] == b'C':
+        if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_NUMBER] > -1:
             self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
         else:
@@ -824,7 +821,10 @@ class Peer_DBS(sim):
             #if max_length < len(peers_list):
             #    max_length = len(peers_list)
         #print("{}: forward={} forward_entries={} max_length={}".format(self.ext_id, self.forward, entries, max_length))
-        avg = total_lengths/entries
+        try:
+            avg = total_lengths/entries
+        except:
+            avg = 0
         print("{}: average_neighborhood_degree={} ({}/{})".format(self.ext_id, avg, total_lengths, entries))
 
 #                print("------------------------------------", peer, "/", chunk)

@@ -9,6 +9,7 @@ import struct
 import sys
 from datetime import datetime
 import os
+from .common import Common
 
 # import logging as lg
 import logging
@@ -26,7 +27,7 @@ class Simulator_stuff:
     RECV_LIST = None
     # LOCK = ""
 
-    loglevel = logging.ERROR
+    #loglevel = logging.ERROR
     
 class Simulator_socket():
     AF_INET = socket.AF_INET
@@ -48,7 +49,7 @@ class Simulator_socket():
         # handler.setFormatter(formatter)
         # self.lg.addHandler(handler)
         #self.lg.setLevel(logging.ERROR)
-        self.lg.setLevel(Simulator_stuff.loglevel)
+        self.lg.setLevel(Common.loglevel)
         # self.lg.critical('Critical messages enabled.')
         # self.lg.error('Error messages enabled.')
         # self.lg.warning('Warning message enabled.')

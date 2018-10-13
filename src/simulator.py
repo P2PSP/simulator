@@ -2,6 +2,7 @@
 
 #from core.splitter_dbs_latency import Splitter_DBS_latency as Splitter_DBS
 from core.splitter_dbs import Splitter_DBS
+from core.splitter_dbs_simulator import Splitter_DBS_simulator
 from core.splitter_strpeds import Splitter_STRPEDS
 from core.splitter_sss import Splitter_SSS
 #from core.peer_dbs_latency import Peer_DBS_latency as Peer_DBS
@@ -111,7 +112,7 @@ class Simulator():
             Splitter_DBS.max_chunk_loss = 8
             Splitter_DBS.number_of_monitors = 1
             Splitter_DBS.buffer_size = 128
-            splitter = Splitter_DBS("Splitter_DBS")
+            splitter = Splitter_DBS_simulator("Splitter_DBS_simulator")
             self.lg.info("simulator: DBS/IMS splitter created")
         elif self.set_of_rules == "CIS":
             splitter = Splitter_STRPEDS()

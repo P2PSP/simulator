@@ -8,8 +8,11 @@ from core.monitor_ims import Monitor_IMS
 class Monitor(Peer):
     
     def add_args(self, parser):
-        parser.add_argument("-l", "--chunks_before_leave", default=2000, type=int,
-                            help="Number of chunk before leave the team")
+        parser.add_argument("-l", "--chunks_before_leave",
+                            default=Peer_DBS.chunks_before_leave,
+                            type=int,
+                            help="Number of chunk before leave the team  (default={})"
+                            .format(Peer_DBS.chunks_before_leave))
         parser.add_argument("-s", "--set_of_rules", default="ims",
                             help="set of rules")
         parser.add_argument("-a", "--splitter_address", default="127.0.1.1",

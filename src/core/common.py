@@ -3,7 +3,11 @@
 common module
 """
 
+import logging
+
 class Common:
+    loglevel = logging.ERROR
+
     MAX_CHUNK_NUMBER = 65536  # 65535? 32767?.
     COUNTERS_TIMING = 1  # In seconds.
     MAX_CHUNK_LOSS = 8  # In chunks.

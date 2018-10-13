@@ -132,3 +132,4 @@ class Peer_DBS_video(Peer_DBS):
         #self.chunk_size = socket.ntohs(chunk_size)
         self.lg.debug("{}: chunk_size={}".format(self.id, self.chunk_size))
         self.chunk_packet_format = "!i" + str(self.chunk_size) + "sIi"
+        self.max_pkg_length = struct.calcsize(self.chunk_packet_format)

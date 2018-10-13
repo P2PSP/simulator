@@ -144,10 +144,14 @@ class Splitter_DBS_video(Splitter_DBS):
                 self.peer_number = (self.peer_number + 1) % len(self.peer_list)
             except ZeroDivisionError:
                 pass
-            
+
+        if __debug__:
+            if self.peer_number == 0:
+                self.current_round += 1
 
         self.alive = False
         self.lg.debug("{}: alive = {}".format(self.id, self.alive))
 
-        print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
-        print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks))
+        if __debug__:
+            print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
+            print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks))

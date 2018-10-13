@@ -6,9 +6,7 @@ from core.peer_ims import Peer_IMS
 class Peer():
     
     def add_args(self, parser):
-        parser.add_argument("-l", "--chunks_before_leave", default=2000, type=int,
-                            help="Number of chunk before leave the team")
-        parser.add_argument("-s", "--set_of_rules", default="dbs",
+        parser.add_argument("-s", "--set_of_rules", default="ims",
                             help="set of rules")
         parser.add_argument("-a", "--splitter_address", default="127.0.1.1",
                             help="Splitter address")
@@ -26,12 +24,11 @@ class Peer():
     def instance(self, args):
         Peer_DBS.peer_port = args.peer_port
         Peer_DBS.splitter = (args.splitter_address, args.splitter_port)
-        Peer_DBS.chunks_before_leave = args.chunks_before_leave
         if args.set_of_rules == "DBS":
             self.peer = Peer_DBS("P", "Peer_DBS", args.loglevel)
         else:
             self.peer = Peer_IMS("P", "Peer_IMS", args.loglevel)
-        
+xo
     def run(self, args):
         self.peer.connect_to_the_splitter(0)
         self.peer.receive_public_endpoint()
@@ -39,8 +36,6 @@ class Peer():
         self.peer.receive_the_number_of_peers()
         self.peer.listen_to_the_team()
         self.peer.receive_the_list_of_peers()
-        #self.peer.send_ready_for_receiving_chunks()
-        self.peer.send_peer_type()   # Only for simulation purpose
         self.peer.run()
 
 if __name__ == "__main__":
