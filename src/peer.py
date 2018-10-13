@@ -30,7 +30,7 @@ class Peer():
             self.peer = Peer_IMS("P", "Peer_IMS", args.loglevel)
 xo
     def run(self, args):
-        self.peer.connect_to_the_splitter(0)
+        self.peer.connect_to_the_splitter(peer_port=args.peer_port)
         self.peer.receive_public_endpoint()
         self.peer.receive_buffer_size()
         self.peer.receive_the_number_of_peers()
