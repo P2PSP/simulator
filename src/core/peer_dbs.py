@@ -535,6 +535,9 @@ class Peer_DBS():
         self.team_socket.sendto(msg, peer)
         self.lg.info("{}: [request {}] sent to {}".format(self.ext_id, chunk_number, peer))
 
+    def play_chunk(self, chunk_to_play):
+        pass
+        
     def play_next_chunks(self, last_received_chunk):
         for i in range(last_received_chunk - self.prev_received_chunk):
             #self.player_connected = self.play_chunk(self.chunk_to_play)
@@ -610,7 +613,7 @@ class Peer_DBS():
 
         while (chunk_number < self.chunk_to_play) or (((chunk_number - self.chunk_to_play) % self.buffer_size) < (self.buffer_size // 2)):
             (chunk_number, _) = self.process_message()
-            print('.', end=''); sys.stdout.flush()
+            #sys.stdout.write('.'); sys.stdout.flush()
             if not self.player_connected:
                 break
             while (chunk_number < self.chunk_to_play):

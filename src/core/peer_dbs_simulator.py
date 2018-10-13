@@ -242,7 +242,7 @@ class Peer_DBS_simulator(Peer_DBS):
         if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_NUMBER] > -1:
             self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
-            print('O', end=''); sys.stdout.flush()
+            #sys.stdout.write('o'); sys.stdout.flush()
         else:
             self.losses += 1
             self.lg.critical("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
@@ -304,3 +304,4 @@ class Peer_DBS_simulator(Peer_DBS):
 
         self.number_of_chunks_consumed += 1
         #return self.player_connected
+

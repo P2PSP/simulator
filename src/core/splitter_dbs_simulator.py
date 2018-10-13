@@ -85,7 +85,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         # Simulator_stuff.LOCK.acquire(True,0.1)
         time.sleep(Common.CHUNK_CADENCE)  # Simulates bit-rate control
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
-        print('o', end=''); sys.stdout.flush()
+        sys.stderr.write('O'); sys.stderr.flush()
         return b'C'
 
     def run(self):
