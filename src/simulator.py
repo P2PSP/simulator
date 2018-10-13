@@ -8,6 +8,8 @@ from core.splitter_sss import Splitter_SSS
 #from core.peer_dbs_latency import Peer_DBS_latency as Peer_DBS
 from core.peer_dbs import Peer_DBS
 from core.peer_ims import Peer_IMS
+from core.peer_dbs_simulator import Peer_DBS_simulator
+from core.peer_ims_simulator import Peer_IMS_simulator
 from core.peer_strpeds import Peer_STRPEDS
 from core.peer_sss import Peer_SSS
 from core.peer_malicious import Peer_Malicious
@@ -15,6 +17,8 @@ from core.peer_malicious_sss import Peer_Malicious_SSS
 #from core.monitor_dbs_latency import Monitor_DBS_latency as Monitor_DBS
 from core.monitor_dbs import Monitor_DBS
 from core.monitor_ims import Monitor_IMS
+from core.monitor_dbs_simulator import Monitor_DBS_simulator
+from core.monitor_ims_simulator import Monitor_IMS_simulator
 from core.monitor_strpeds import Monitor_STRPEDS
 from core.monitor_sss import Monitor_SSS
 from core.common import Common
@@ -143,10 +147,10 @@ class Simulator():
                 pass
                 #chunks_before_leave = 99999999
             if self.set_of_rules == "DBS":
-                peer = Monitor_DBS(id, "Monitor_DBS", self.loglevel)
+                peer = Monitor_DBS_simulator(id, "Monitor_DBS_simulator", self.loglevel)
                 self.lg.info("simulator: DBS monitor created")
             elif self.set_of_rules == "IMS":
-                peer = Monitor_IMS(id, "Monitor_IMS", self.loglevel)
+                peer = Monitor_IMS_simulator(id, "Monitor_IMS_simulator", self.loglevel)
                 self.lg.info("simulator: IMS monitor created")
             elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
@@ -165,10 +169,10 @@ class Simulator():
                 self.lg.info("simulator: Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "DBS":
-                peer = Peer_DBS(id, "Peer_DBS", self.loglevel)
+                peer = Peer_DBS_simulator(id, "Peer_DBS_simulator", self.loglevel)
                 self.lg.info("simulator: DBS peer created")
             if self.set_of_rules == "IMS":
-                peer = Peer_IMS(id, "Peer_IMS", self.loglevel)
+                peer = Peer_IMS_simulator(id, "Peer_IMS_simulator", self.loglevel)
                 self.lg.info("simulator: IMS peer created")
             elif self.set_of_rules == "CIS":
                 peer = Peer_STRPEDS(id)

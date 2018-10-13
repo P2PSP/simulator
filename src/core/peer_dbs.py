@@ -138,9 +138,6 @@ class Peer_DBS(sim):
         #self.team_socket.bind(("", self.id[1]))
         #self.team_socket.settimeout(100)
 
-    #def set_splitter(self, splitter):
-    #    self.splitter = splitter
-
     def receive_public_endpoint(self):
         msg_length = struct.calcsize("!Ii")
         msg = self.splitter_socket.recv(msg_length)
@@ -155,9 +152,6 @@ class Peer_DBS(sim):
         msg = self.splitter_socket.recv(msg_length)
         self.buffer_size = struct.unpack("!H", msg)[0]
         self.lg.debug("{}: buffer size = {}".format(self.id, self.buffer_size))
-
-        # S I M U L A T I O N
-        self.sender_of_chunks = [""] * self.buffer_size
 
     def receive_the_number_of_peers(self):
         msg_length = struct.calcsize("!H")
@@ -197,49 +191,12 @@ class Peer_DBS(sim):
             self.forward[self.public_endpoint].append(peer)
             self.index_of_peer[peer] = counter
 
-            # S I M U L A T O R
-            if counter >= self.number_of_monitors: # Monitors never are isolated
-                r = random.random()
-                if r <= self.link_failure_prob:
-                    self.team_socket.isolate(self.public_endpoint, peer)
-                    self.lg.critical("{}: {} isolated of {}".format(self.ext_id, self.public_endpoint, peer))
-                
             self.say_hello(peer)
             self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
             counter += 1
             peers_pending_of_reception -= 1
 
         self.lg.debug("{}: forward={} pending={}".format(self.ext_id, self.forward, self.pending))
-        
-            # self.lg.debug("{}: sent [hello] to {} peers".format(self.id, self.number_of_peers))
-
-            # Incoming peers populate their forwarding tables when chunks
-            # are received from other peers. The rest of peers populate
-            # their forwarding tables with received [hello]
-            # messages. Randomization could be produced at this instant in
-            # the splitter, if necessary.
-
-    # S I M U L A T I O N
-    def send_peer_type(self):
-        if(self._id[0:2]=='MP'):
-            msg = struct.pack('!H',2)    # Malicious Peer
-        elif(self._id[0]=='M'):
-            msg = struct.pack('!H',0)    # Monitor Peer
-        else:
-            msg = struct.pack('!H',1)    # Regular Peer
-        self.splitter_socket.send(msg)
-
-    if __debug__:
-        # S I M U L A T I O N
-        def map_peer_type(self,real_id):
-            if sim.FEEDBACK:
-                if self._id[0] == 'M':
-                    if self._id[1] == 'P':
-                        sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"MP"))
-                    else:
-                        sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"M"))
-                else:
-                    sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"P"))    
 
     def connect_to_the_splitter(self, peer_port):
         print("{}: connecting to the splitter at {}".format(self.id,
@@ -267,13 +224,6 @@ class Peer_DBS(sim):
         #self.neighbor = self.id
         #print("self.neighbor={}".format(self.neighbor))
         #self.pending[self.id] = []
-
-        if __debug__:
-            # S I M U L A T I O N
-            if self.id!=None:
-                self.map_peer_type(self.id); # Maybe at the end of this
-                # function to be easely extended
-                # in the peer_dbs_sim class.
 
         print("{}: connected to the splitter at {}".format(self.id, self.splitter))
 
@@ -394,7 +344,6 @@ class Peer_DBS(sim):
 
         if origin != None:
             # In this case, I can start forwarding chunks from origin.
-
             # Ojo, funciona con:
             #self.forward[origin] = [sender]
             # pero yo creo que debiera ser:
@@ -409,37 +358,11 @@ class Peer_DBS(sim):
             else:
                 self.forward[origin] = []
                 self.pending[sender] = []
-            
             self.lg.debug("{}: chunks from {} will be sent to {}".format(self.ext_id, origin, sender))
-
-            if __debug__:
-                # S I M U L A T I O N
-                if sim.FEEDBACK:
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.public_endpoint)), ','.join(map(str,sender))))
         else:
             # Otherwise, I can't help.
-            if __debug__:
-                self.lg.debug("{}: request received from {}, but I haven't the requested chunk {}".format(self.ext_id, sender, chunk_number))
-            #continue
-        
-        # if origin in self.forward:
-        #     #self.lg.debug("{}: aqui (sender={} forward={})".format(self.id, sender, self.forward))
-        #     if sender not in self.forward[origin]:
-        #         # Insert sender in the forwarding table.
-        #         self.forward[origin].append(sender)
-        #         self.lg.debug("{}: chunks from {} will be sent to {}".format(self.ext_id, origin, sender))
-
-        #         # S I M U L A T I O N
-        #         if sim.FEEDBACK:
-        #             sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
-        #             sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
-                    
-        # else:
-        #     if origin != None:
-        #         self.forward[origin] = [sender]
-        #         self.lg.debug("{}: chunks from {} will be sent (2) to {}".format(self.ext_id, origin, sender))
-
+            self.lg.debug("{}: request received from {}, but I haven't the requested chunk {}".format(self.ext_id, sender, chunk_number))
+            
         self.lg.debug("{}: chunk={} origin={} forward={}".format(self.ext_id, self.chunks[chunk_number % self.buffer_size], origin, self.forward))
         self.lg.debug("{}: length_forward={} forward={}".format(self.ext_id, len(self.forward), self.forward))
         
@@ -480,12 +403,6 @@ class Peer_DBS(sim):
             self.forward[self.public_endpoint].append(sender)
             self.pending[sender] = []
             self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.public_endpoint, sender, self.forward))
-
-            if __debug__:
-                # S I M U L A T I O N
-                if sim.FEEDBACK:
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.public_endpoint)), ','.join(map(str,sender))))
         self.team.append(sender)
 
     def process_goodbye(self, sender):
@@ -528,14 +445,6 @@ class Peer_DBS(sim):
             self.lg.info("{}: delta of chunk {} is {}".format(self.ext_id, chunk_number, self.chunk_number_delta))
             self.chunk_number_delta = chunk_number
 
-            if __debug__:
-                # S I M U L A T I O N
-                if sender == self.splitter:
-                    if self.played > 0 and self.played >= self.number_of_peers:
-                        CLR = self.losses / (self.played + self.losses) # Chunk Loss Ratio
-                        if sim.FEEDBACK:
-                            sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.public_endpoint)), CLR))
-
             # 1. Store or report duplicates
             if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_NUMBER] == chunk_number:
                 # Duplicate chunk. Ignore it and warn the sender to
@@ -560,11 +469,6 @@ class Peer_DBS(sim):
                     else:
                         buf += " "
                 self.lg.debug("{}: buffer={}".format(self.ext_id, buf))
-
-                # S I M U L A T I O N
-                self.received_chunks += 1
-                if (self.received_chunks >= self.chunks_before_leave):
-                    self.player_connected = False
 
                 if sender == self.splitter:
                     self.rounds_counter += 1
