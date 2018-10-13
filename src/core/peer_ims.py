@@ -108,12 +108,3 @@ class Peer_IMS(Peer_DBS):
         if peer[0] != self.id[0]:
             super().add_new_forwarding_rule(peer, neighbor)
 
-    def play_chunk(self, chunk_number):
-        if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_NUMBER] > -1:
-            self.player_socket.sendall(self.chunks[chunk_number % self.buffer_size][Common.CHUNK_DATA])
-            self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
-            self.played += 1
-        else:
-            self.losses += 1
-            self.lg.critical("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
-        self.number_of_chunks_consumed += 1
