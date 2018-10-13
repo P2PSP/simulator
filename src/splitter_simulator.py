@@ -18,7 +18,7 @@ class Splitter_simulator(Splitter):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    splitter = Splitter()
+    splitter = Splitter_simulator()
     splitter.add_args(parser)
     args = parser.parse_args()
     splitter.instance(args)

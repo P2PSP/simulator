@@ -36,7 +36,7 @@ class Splitter_DBS_video(Splitter_DBS):
             + str(Splitter_DBS_video.chunk_size) \
             + "sIi"
 
-        self.lg.debug("{}: initialized".format(self.id))
+        self.lg.debug("Splitter_DBS_video: initialized")
 
     def request_the_video_from_the_source(self):
         self.source_socket = socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -6,19 +6,12 @@ from core.peer_ims import Peer_IMS
 class Peer():
     
     def add_args(self, parser):
-        parser.add_argument("-s", "--set_of_rules", default="ims",
-                            help="set of rules")
-        parser.add_argument("-a", "--splitter_address", default="127.0.1.1",
-                            help="Splitter address")
-        parser.add_argument("-p", "--splitter_port", default=4550, type=int,
-                            help="Splitter port")
-        parser.add_argument("-m", "--peer_port", default=0, type=int,
-                            help="Peer port (default={})".format(Peer_DBS.peer_port))
+        parser.add_argument("-s", "--set_of_rules", default="ims", help="set of rules")
+        parser.add_argument("-a", "--splitter_address", default="127.0.1.1", help="Splitter address")
+        parser.add_argument("-p", "--splitter_port", default=Peer_DBS.splitter[1], type=int, help="Splitter port")
+        parser.add_argument("-m", "--peer_port", default=0, type=int, help="Peer port (default={})".format(Peer_DBS.peer_port))
         if __debug__:
-            parser.add_argument("--loglevel",
-                                default=logging.ERROR,
-                                help="Log level (default={})"
-                                .format(logging.getLevelName(logging.ERROR)))
+            parser.add_argument("--loglevel", default=logging.ERROR, help="Log level (default={})".format(logging.getLevelName(logging.ERROR)))
             logging.basicConfig(format="%(message)s - %(asctime)s - %(name)s - %(levelname)s")
 
     def instance(self, args):
@@ -28,7 +21,7 @@ class Peer():
             self.peer = Peer_DBS("P", "Peer_DBS", args.loglevel)
         else:
             self.peer = Peer_IMS("P", "Peer_IMS", args.loglevel)
-xo
+
     def run(self, args):
         self.peer.connect_to_the_splitter(peer_port=args.peer_port)
         self.peer.receive_public_endpoint()

@@ -7,15 +7,17 @@ from peer_video import Peer_video
 
 class Monitor_video(Monitor, Peer_video):
 
+    def add_args(self, parser):
+        Peer_video().add_args(parser)
+        
     def instance(self, args):
         Monitor_DBS.peer_port = args.peer_port
         Monitor_DBS.splitter = (args.splitter_address, args.splitter_port)
-        Monitor_DBS.chunks_before_leave = args.chunks_before_leave
-        Monitor_DBS_video.player_port = args.player_port
+        Monitor_DBS.player_port = args.player_port
         if args.set_of_rules == "DBS":
-            self.peer = Monitor_DBS_video("P", "Monitor_DBS", args.loglevel)
+            self.peer = Monitor_DBS_video("P", "Monitor_DBS_video", args.loglevel)
         else:
-            self.peer = Monitor_IMS_video("P", "Monitor_IMS", args.loglevel)
+            self.peer = Monitor_IMS_video("P", "Monitor_IMS_video", args.loglevel)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

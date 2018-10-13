@@ -20,7 +20,7 @@ class Peer_video(Peer):
             self.peer = Peer_DBS_video("P", "Peer_DBS_video", args.loglevel)
         else:
             self.peer = Peer_IMS_video("P", "Peer_IMS_video", args.loglevel)
-        
+
     def run(self, args):
         self.peer.wait_for_the_player()
         self.peer.connect_to_the_splitter(peer_port=args.peer_port)
@@ -39,6 +39,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     peer.instance(args)
     peer.run(args)
-
-
- 
