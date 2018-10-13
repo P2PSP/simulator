@@ -10,7 +10,7 @@ class Monitor(Peer):
     def add_args(self, parser):
         parser.add_argument("-l", "--chunks_before_leave", default=2000, type=int,
                             help="Number of chunk before leave the team")
-        parser.add_argument("-s", "--set_of_rules", default="dbs",
+        parser.add_argument("-s", "--set_of_rules", default="ims",
                             help="set of rules")
         parser.add_argument("-a", "--splitter_address", default="127.0.1.1",
                             help="Splitter address")

@@ -245,7 +245,8 @@ class Peer_DBS(sim):
                     sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"P"))    
 
     def connect_to_the_splitter(self, peer_port):
-        self.lg.debug("{}: connecting to the splitter at {}".format(self.id, self.splitter))
+        print("{}: connecting to the splitter at {}".format(self.id,
+                                                            self.splitter))
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
         #host = socket.gethostbyname(socket.gethostname())
@@ -277,7 +278,7 @@ class Peer_DBS(sim):
                 # function to be easely extended
                 # in the peer_dbs_sim class.
 
-        self.lg.debug("{}: connected to the splitter".format(self.id))
+        print("{}: connected to the splitter at {}".format(self.id, self.splitter))
 
     # Why?
     def send_ready_for_receiving_chunks(self):
@@ -787,6 +788,7 @@ class Peer_DBS(sim):
         self.prev_received_chunk = chunk_number
 
     def run(self):
+        print("{}: waiting stream chunks ...".format(self.ext_id))
         for i in range(self.buffer_size):
             self.chunks.append((-1, b'L', None))  # L == Lost ??
 

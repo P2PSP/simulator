@@ -187,7 +187,7 @@ class Simulator():
         peer.receive_the_number_of_peers()
         peer.listen_to_the_team()
         peer.receive_the_list_of_peers()
-        peer.send_ready_for_receiving_chunks()
+        #peer.send_ready_for_receiving_chunks()
         peer.send_peer_type()   #Only for simulation purpose
         # peer.buffer_data()
         # peer.start()

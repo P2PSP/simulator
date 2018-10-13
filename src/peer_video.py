@@ -32,7 +32,7 @@ class Peer_video(Peer):
         self.peer.receive_the_number_of_peers()
         self.peer.listen_to_the_team()
         self.peer.receive_the_list_of_peers()
-        self.peer.send_ready_for_receiving_chunks()
+        #self.peer.send_ready_for_receiving_chunks()
         self.peer.send_peer_type()   # Only for simulation purpose
         self.peer.run()
 

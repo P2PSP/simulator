@@ -5,16 +5,18 @@ splitter_dbs_video module
 
 # Implements video transmissions.
 
+import sys
 import os
 import time
 import struct
-import logging
+from threading import Thread
 from .simulator_stuff import Simulator_socket as socket
 from .splitter_dbs import Splitter_DBS
+from .common import Common
 
 class Splitter_DBS_video(Splitter_DBS):
 
-    channel = "LBBB-134.ogv"
+    channel = "LBBB.ogv"
     buffer_size = 128
     chunk_size = 1024
     #header_size = 30
@@ -52,11 +54,12 @@ class Splitter_DBS_video(Splitter_DBS):
     def send_the_chunk_size(self, peer_serve_socket):
         self.lg.debug("{}: Sending chunk_size={}"
                       .format(self.id, Splitter_DBS_video.chunk_size))
-        message = struct.pack("!H",(Splitter_DBS_video.chunk_size))
+        message = struct.pack("!H", (Splitter_DBS_video.chunk_size))
         peer_serve_socket.sendall(message)
 
     def receive_next_chunk(self):
         chunk = self.source_socket.recv(Splitter_DBS_video.chunk_size)
+        print("R", end=""); sys.stdout.flush()
         prev_size = 0
         while len(chunk) < Splitter_DBS_video.chunk_size:
             if len(chunk) == prev_size:
@@ -76,7 +79,7 @@ class Splitter_DBS_video(Splitter_DBS):
                 #_print_("1: header_load_counter =", self.header_load_counter)
                 chunk = b""
             prev_size = len(chunk)
-            chunk += self.source_socket.recv( - len(chunk))
+            chunk += self.source_socket.recv(Splitter_DBS_video.chunk_size - len(chunk))
         return chunk
 
     def receive_chunk(self):
@@ -86,6 +89,65 @@ class Splitter_DBS_video(Splitter_DBS):
         #    self.header_load_counter -= 1
         #    self.lg.debug("{}: Loaded {} bytes of header"
         #                  .format(self.id, len(self.header)))
-        self.chunk_counter += 1
         return chunk
 
+    def run(self):
+
+        chunk_counter = 0
+        self.received_chunks_from = {}
+        self.lost_chunks_from = {}
+        self.total_received_chunks = 0
+        self.total_lost_chunks = 0
+        total_peers = 0
+
+        Thread(target=self.handle_arrivals).start()
+        Thread(target=self.moderate_the_team).start()
+        Thread(target=self.reset_counters_thread).start()
+
+        while len(self.peer_list) == 0:
+            print("{}: waiting for a monitor at {}"
+                  .format(self.id, self.id))
+            time.sleep(1)
+        print()
+        self.request_the_video_from_the_source()
+
+        while len(self.peer_list) > 0:
+
+            chunk = self.receive_chunk()
+            chunk_counter += 1
+
+            # ????
+            #self.lg.info("peer_number = {}".format(self.peer_number))
+            #print("peer_number = {}".format(self.peer_number))
+            if self.peer_number == 0:
+                total_peers += len(self.peer_list)
+                self.on_round_beginning()  # Remove outgoing peers
+
+            try:
+                peer = self.peer_list[self.peer_number]
+            except IndexError:
+                self.lg.warning("{}: the peer with index {} does not exist. peer_list={} peer_number={}".format(self.id, self.peer_number, self.peer_list, self.peer_number))
+                # raise
+
+            message = self.compose_chunk_packet(chunk, peer)
+            self.destination_of_chunk[self.chunk_number % Splitter_DBS.buffer_size] = peer
+            if __debug__:
+                self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
+                counter = 0
+                for i in self.destination_of_chunk:
+                    self.lg.debug("{} -> {}".format(counter, i))
+                    counter += 1
+            #            try:
+            self.send_chunk(message, peer)
+            self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
+            try:
+                self.peer_number = (self.peer_number + 1) % len(self.peer_list)
+            except ZeroDivisionError:
+                pass
+            
+
+        self.alive = False
+        self.lg.debug("{}: alive = {}".format(self.id, self.alive))
+
+        print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
+        print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks))

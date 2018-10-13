@@ -108,7 +108,7 @@ class Splitter_DBS(Simulator_stuff):
         serve_socket = connection[0]
         incoming_peer = connection[1]
 
-        self.lg.debug("{}: accepted connection from peer {}".format(self.id, incoming_peer))
+        print("{}: accepted connection from peer {}" .format(self.id, incoming_peer))
 
         #self.send_the_header()
         self.send_the_chunk_size(serve_socket)
@@ -117,14 +117,13 @@ class Splitter_DBS(Simulator_stuff):
         self.send_the_number_of_peers(serve_socket)
         self.send_the_list_of_peers(serve_socket)
 
-        self.lg.debug("{}: waiting for incoming peer".format(self.id))
-
-        msg_length = struct.calcsize("s")
-        msg = serve_socket.recv(msg_length)
-        message = struct.unpack("s", msg)[0]
-        self.lg.debug("{}: received {} from {}".format(self.id, message, incoming_peer))
+        # ??????????????????????????????
+        #msg_length = struct.calcsize("s")
+        #msg = serve_socket.recv(msg_length)
+        #message = struct.unpack("s", msg)[0]
 
         self.insert_peer(incoming_peer)
+        
         if __debug__:
             # ------------------
             # ---- Only for simulation purposes. Unknown in real implementation -----
@@ -278,7 +277,7 @@ class Splitter_DBS(Simulator_stuff):
                     self.process_lost_chunk(lost_chunk_number, sender)
                     self.lg.debug("{}: received [lost chunk {}] from {}".format(self.id, msg[1], sender))
             else:
-                self.lg.warning("{}: received unexpected message".format(self.id))
+                self.lg.warning("{}: received unexpected message {} from {}".format(self.id, packed_msg, sender))
 
     def reset_counters(self):
         for i in self.losses:
@@ -306,16 +305,16 @@ class Splitter_DBS(Simulator_stuff):
         msg = struct.pack(self.chunk_packet_format, *chunk_msg)
         return msg
 
-    def request_the_video_from_the_source(self):
-        pass
+#    def request_the_video_from_the_source(self):
+#        pass
     
-    def receive_the_header(self):
-        pass
+#    def receive_the_header(self):
+#        pass
     
     def run(self):
 
-        self.request_the_video_from_the_source()
-        self.receive_the_header()
+#        self.request_the_video_from_the_source()
+#        self.receive_the_header()
         
         chunk_counter = 0
         self.received_chunks_from = {}
@@ -411,18 +410,3 @@ class Splitter_DBS(Simulator_stuff):
         print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
         #print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks, (float)(self.total_lost_chunks)/(float)(self.total_received_chunks)))
         print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks))
-
-#    def remove_peer_old(self, peer):
-#        if peer in self.peer_list:
-#            self.peer_list.remove(peer)
-#        # self.peer_number -= 1
-#        if __debug__:
-#            # S I M U L A T I O N
-#            if Simulator_stuff.FEEDBACK:
-#                Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,peer))))
-#            if peer[0] == "M" and peer[1] != "P":
-#                self.number_of_monitors -= 1
-
-#        if peer in self.losses:
-#            del self.losses[peer]
-
