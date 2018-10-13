@@ -25,8 +25,8 @@ class Peer_video(Peer):
     def run(self, args):
         self.peer.wait_for_the_player()
         self.peer.connect_to_the_splitter(peer_port=args.peer_port)
-        self.peer.receive_the_header()
-        self.peer.receive_the_chunk_size()
+        #self.peer.receive_the_header()
+        self.peer.receive_chunk_size()
         self.peer.receive_public_endpoint()
         self.peer.receive_buffer_size()
         self.peer.receive_the_number_of_peers()

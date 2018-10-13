@@ -26,7 +26,7 @@ import logging
 
 class Splitter_DBS(Simulator_stuff):
 
-    splitter_port = 0
+    splitter_port = 4552
     max_chunk_loss = 8
     number_of_monitors = 1
     buffer_size = 128
@@ -97,10 +97,10 @@ class Splitter_DBS(Simulator_stuff):
             self.lg.info("{}: connection from {}".format(self.id, peer))
             Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()
 
-    def send_the_header(self):
-        pass
+    #def send_the_header(self):
+    #    pass
 
-    def send_the_chunk_size(self):
+    def send_the_chunk_size(self, peer_serve_socket):
         pass
     
     def handle_a_peer_arrival(self, connection):
@@ -110,8 +110,8 @@ class Splitter_DBS(Simulator_stuff):
 
         self.lg.debug("{}: accepted connection from peer {}".format(self.id, incoming_peer))
 
-        self.send_the_header()
-        self.send_the_chunk_size()
+        #self.send_the_header()
+        self.send_the_chunk_size(serve_socket)
         self.send_public_endpoint(incoming_peer, serve_socket)
         self.send_buffer_size(serve_socket)
         self.send_the_number_of_peers(serve_socket)
@@ -306,11 +306,15 @@ class Splitter_DBS(Simulator_stuff):
         msg = struct.pack(self.chunk_packet_format, *chunk_msg)
         return msg
 
+    def request_the_video_from_the_source(self):
+        pass
+    
     def receive_the_header(self):
         pass
     
     def run(self):
 
+        self.request_the_video_from_the_source()
         self.receive_the_header()
         
         chunk_counter = 0

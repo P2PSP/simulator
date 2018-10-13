@@ -14,8 +14,10 @@ class Monitor(Peer):
                             help="set of rules")
         parser.add_argument("-a", "--splitter_address", default="127.0.1.1",
                             help="Splitter address")
-        parser.add_argument("-p", "--splitter_port", default=4550, type=int,
-                            help="Splitter port")
+        parser.add_argument("-p", "--splitter_port",
+                            default=Peer_DBS.splitter[1], type=int,
+                            help="Splitter port (default={})"
+                            .format(Peer_DBS.splitter[1]))
         parser.add_argument("-m", "--peer_port", default=0, type=int,
                             help="Monitor port (default={})".format(Peer_DBS.peer_port))
         if __debug__:

@@ -14,7 +14,7 @@ from .splitter_dbs import Splitter_DBS
 
 class Splitter_DBS_video(Splitter_DBS):
 
-    channel = "LBBB.ogv"
+    channel = "LBBB-134.ogv"
     buffer_size = 128
     chunk_size = 1024
     #header_size = 30
@@ -36,10 +36,23 @@ class Splitter_DBS_video(Splitter_DBS):
 
         self.lg.debug("{}: initialized".format(self.id))
 
-    def send_the_chunk_size(self):
+    def request_the_video_from_the_source(self):
+        self.source_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.source_socket.connect(self.source)
+        except socket.error as e:
+            self.lg.error("{}: Exception: {} from {}".format(self.id,
+                                                             e, self.source))
+            self.source_socket.close()
+            os._exit(1)
+        self.lg.debug("{}: connected to {}".format(self.id, self.source))
+        self.source_socket.sendall(self.GET_message.encode())
+        self.lg.debug("{}: GET_message={}".format(self.id, self.GET_message))
+
+    def send_the_chunk_size(self, peer_serve_socket):
         self.lg.debug("{}: Sending chunk_size={}"
-                      .format(self.id, Splitter_DBS.chunk_size))
-        message = struct.pack("!H", socket.htons(self.CHUNK_SIZE))
+                      .format(self.id, Splitter_DBS_video.chunk_size))
+        message = struct.pack("!H",(Splitter_DBS_video.chunk_size))
         peer_serve_socket.sendall(message)
 
     def receive_next_chunk(self):

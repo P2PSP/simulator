@@ -26,8 +26,8 @@ MAX_DEGREE = 5
 
 class Peer_DBS(sim):
 
-    peer_port = 0
-    splitter = ("localhost", 8001)
+    peer_port = 4553
+    splitter = ("localhost", 4552)
 
     # S I M U L A T I O N
     #                  |
