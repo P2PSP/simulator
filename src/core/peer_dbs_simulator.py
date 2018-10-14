@@ -39,9 +39,12 @@ class Peer_DBS_simulator(Peer_DBS):
             peer = struct.unpack("!Ii", msg)
             peer = (socket.int2ip(peer[0]),peer[1])
             self.team.append(peer)
+            self.lg.debug("{}: team={}".format(self.ext_id, self.team))
             self.forward[self.public_endpoint].append(peer)
             self.index_of_peer[peer] = counter
-
+            self.debts[peer] = 0
+            self.lg.debug("{}: debs={}".format(self.ext_id, self.debts))
+            
             # S I M U L A T O R
             if counter >= self.number_of_monitors: # Monitors never are isolated
                 r = random.random()
@@ -150,6 +153,9 @@ class Peer_DBS_simulator(Peer_DBS):
                 sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
                 sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.public_endpoint)), ','.join(map(str,sender))))
         self.team.append(sender)
+        self.debts[sender] = 0
+        self.lg.debug("{}: inserted {} in {}".format(self.ext_id, sender, self.team))
+        self.lg.debug("{}: inserted {} in {}".format(self.ext_id, sender, self.debts))
 
     # DBS peer's logic
     def process_unpacked_message(self, message, sender):
@@ -207,12 +213,17 @@ class Peer_DBS_simulator(Peer_DBS):
                     self.player_connected = False
 
                 if sender == self.splitter:
+                    for peer, debt in self.debts:
+                        debt //= 2
                     self.rounds_counter += 1
                     for peer, peer_list in self.forward.items():
                         if len(peer_list) > 0:
                             buf = len(peer_list)*"#"
                             self.lg.debug("{}: degree({})) {}".format(self.ext_id, peer, buf))
                 else:
+                    self.lg.debug("--------- sender={} splitter={}".format(sender, self.splitter))
+                    self.debts[sender] -= 1
+                    self.lg.debug("{}: debts={}".format(self.ext_id, self.debts))
                     self.add_new_forwarding_rule(self.public_endpoint, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
                 if origin in self.forward:
@@ -273,7 +284,8 @@ class Peer_DBS_simulator(Peer_DBS):
             # We send the request to the neighbor that we have served.
             #self.request_chunk(chunk_number, self.neighbor)
 
-            self.request_chunk(chunk_number, random.choice(self.team))
+            if len(self.team)>1:
+                self.request_chunk(chunk_number, random.choice(self.team))
             
             # Send the request to all neighbors.
             #for neighbor in self.forward[self.id]:

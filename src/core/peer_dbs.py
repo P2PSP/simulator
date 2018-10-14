@@ -123,7 +123,9 @@ class Peer_DBS():
         self.rounds_counter = 0
 
         self.chunk_number_delta = 0
-        
+
+        self.debts = {}
+        self.max_debt = 8
         self.lg.debug("{}: DBS initialized".format(self.id))
 
     def listen_to_the_team(self):
@@ -186,7 +188,7 @@ class Peer_DBS():
             self.team.append(peer)
             self.forward[self.public_endpoint].append(peer)
             self.index_of_peer[peer] = counter
-
+            self.debts[peer] = 0
             self.say_hello(peer)
             self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
             counter += 1
@@ -215,6 +217,7 @@ class Peer_DBS():
             raise
 
         # The index for pending[].
+        self.splitter = self.splitter_socket.getpeername()
         self.id = self.splitter_socket.getsockname()
         print("{}: I'm a peer".format(self.id))
         #self.neighbor = self.id
@@ -298,8 +301,18 @@ class Peer_DBS():
         content = (stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
         packet = struct.pack(self.chunk_packet_format, *content)
         return packet
-            
+    
     def send_chunk_to_peer(self, chunk_number, peer):
+        self.lg.debug("{}: removing {} from debts={}".format(self.ext_id, peer, self.debts))
+        try:
+            self.debts[peer] += 1
+            if self.debts[peer] > self.max_debt:
+                #self.lg.debug("{}: team={} peer={}".format(self.ext_id, self.team, peer))
+                #self.lg.debug("{}: debts={}".format(self.ext_id, self.debts))
+                self.team.remove(peer)
+                del self.debts[peer]
+        except KeyError:
+            pass
         try:
             msg = self.compose_message(chunk_number)
             #msg = struct.pack("isIi", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
@@ -400,6 +413,9 @@ class Peer_DBS():
             self.pending[sender] = []
             self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.public_endpoint, sender, self.forward))
         self.team.append(sender)
+        self.debts[sender] = 0
+        self.lg.debug("{}: inserted {} in {}".format(self.ext_id, sender, self.team))
+        self.lg.debug("{}: inserted {} in {}".format(self.ext_id, sender, self.debts))
 
     def process_goodbye(self, sender):
         self.lg.debug("{}: received [goodbye] from {}".format(self.ext_id, sender))
@@ -468,12 +484,16 @@ class Peer_DBS():
                 self.lg.debug("{}: buffer={}".format(self.ext_id, buf))
 
                 if sender == self.splitter:
+                    for peer, debt in self.debts:
+                        debt //= 2
                     self.rounds_counter += 1
                     for peer, peer_list in self.forward.items():
                         if len(peer_list) > 0:
                             buf = len(peer_list)*"#"
                             self.lg.debug("{}: degree({})) {}".format(self.ext_id, peer, buf))
                 else:
+                    self.debts[sender] -= 1
+                    self.lg.debug("--------- splitter={}".format(self.splitter))
                     self.add_new_forwarding_rule(self.public_endpoint, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
                 if origin in self.forward:
@@ -505,8 +525,8 @@ class Peer_DBS():
             return self.team_socket.recvfrom(self.max_pkg_length)
         except self.team_socket.timeout:
             raise
-    
-    def process_message(self):
+
+    def process_message_old(self):
         try:
             pkg, sender = self.receive_packet()
             # self.lg.debug("{}: received {} from {} with length {}".format(self,id, pkg, sender, len(pkg)))
@@ -530,6 +550,29 @@ class Peer_DBS():
             #self.say_goodbye_to_the_team()
             raise
         #    return (0, self.id)
+
+    def process_message(self):
+        pkg, sender = self.receive_packet()
+        # self.lg.debug("{}: received {} from {} with length {}".format(self,id, pkg, sender, len(pkg)))
+        if len(pkg) == self.max_pkg_length:
+            message = struct.unpack(self.chunk_packet_format, pkg)
+            message = message[Common.CHUNK_NUMBER], \
+                      message[Common.CHUNK_DATA], \
+                      (socket.int2ip(message[Common.ORIGIN]),message[Common.ORIGIN+1])
+        elif len(pkg) == struct.calcsize("!iii"):
+            message = struct.unpack("!iii", pkg)  # Control message:
+                                                 # [control, parameter]
+        elif len(pkg) == struct.calcsize("ii"):
+            message = struct.unpack("!ii", pkg)  # Control message:
+                                                # [control, parameter]
+        else:
+            message = struct.unpack("!i", pkg)  # Control message:
+                                               # [control]
+        x = self.process_unpacked_message(message, sender)
+        return x
+
+    #def process_message(self):
+    #    return ((-1, b'L', None), ('127.0.1.1', 4552))
 
     def request_chunk(self, chunk_number, peer):
         msg = struct.pack("!ii", Common.REQUEST, chunk_number)

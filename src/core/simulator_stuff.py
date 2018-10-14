@@ -179,6 +179,9 @@ class Simulator_socket():
     def getsockname(self):
         return self.sock.getsockname()
 
+    def getpeername(self):
+        return self.sock.getpeername()
+
     def fileno(self):
         return self.sock.fileno()
 
