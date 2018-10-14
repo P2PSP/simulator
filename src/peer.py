@@ -4,7 +4,7 @@ from core.peer_dbs import Peer_DBS
 from core.peer_ims import Peer_IMS
 
 class Peer():
-    
+
     def add_args(self, parser):
         parser.add_argument("-s", "--set_of_rules", default="ims", help="set of rules")
         parser.add_argument("-a", "--splitter_address", default="127.0.1.1", help="Splitter address")

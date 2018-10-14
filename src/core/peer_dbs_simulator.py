@@ -56,7 +56,6 @@ class Peer_DBS_simulator(Peer_DBS):
 
         self.lg.debug("{}: forward={} pending={}".format(self.ext_id, self.forward, self.pending))
 
-
     # S I M U L A T I O N
     def send_peer_type(self):
         if(self._id[0:2]=='MP'):
@@ -189,7 +188,7 @@ class Peer_DBS_simulator(Peer_DBS):
                 # Showing buffer
                 buf = ""
                 for i in self.chunks:
-                    if i[Common.CHUNK_NUMBER] != -1:
+                    if i[Common.CHUNK_NUMBER] > -1:
                         try:
                             peer_number = self.index_of_peer[i[Common.ORIGIN]]
                         except KeyError:
@@ -197,6 +196,7 @@ class Peer_DBS_simulator(Peer_DBS):
                             peer_number = self.number_of_peers
                             self.number_of_peers += 1
                         buf += hash(peer_number)
+                        #buf += '-'
                     else:
                         buf += " "
                 self.lg.debug("{}: buffer={}".format(self.ext_id, buf))

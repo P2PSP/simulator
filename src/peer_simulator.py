@@ -3,16 +3,18 @@ import logging
 from core.peer_dbs import Peer_DBS
 from core.peer_ims import Peer_IMS
 from peer import Peer
+from core.peer_dbs_simulator import Peer_DBS_simulator
+from core.peer_ims_simulator import Peer_IMS_simulator
 
 class Peer_simulator(Peer):
     
     def add_args(self, parser):
         super().add_args(parser)
         parser.add_argument("-l", "--chunks_before_leave",
-                            default=Peer_DBS.chunks_before_leave,
+                            default=Peer_DBS_simulator.chunks_before_leave,
                             type=int,
                             help="Number of chunk before leave the team (default={})"
-                            .format(Peer_DBS.chunks_before_leave))
+                            .format(Peer_DBS_simulator.chunks_before_leave))
 
     def instance(self, args):
         Peer_DBS.peer_port = args.peer_port
@@ -35,7 +37,7 @@ class Peer_simulator(Peer):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    peer = Peer()
+    peer = Peer_simulator()
     peer.add_args(parser)
     args = parser.parse_args()
     peer.instance(args)

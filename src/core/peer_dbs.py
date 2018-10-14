@@ -454,7 +454,7 @@ class Peer_DBS():
                 # Showing buffer
                 buf = ""
                 for i in self.chunks:
-                    if i[Common.CHUNK_NUMBER] != -1:
+                    if i[Common.CHUNK_NUMBER] > -1:
                         try:
                             peer_number = self.index_of_peer[i[Common.ORIGIN]]
                         except KeyError:
@@ -462,6 +462,7 @@ class Peer_DBS():
                             peer_number = self.number_of_peers
                             self.number_of_peers += 1
                         buf += hash(peer_number)
+                        #buf += '+'
                     else:
                         buf += " "
                 self.lg.debug("{}: buffer={}".format(self.ext_id, buf))

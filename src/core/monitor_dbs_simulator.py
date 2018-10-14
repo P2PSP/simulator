@@ -1,6 +1,6 @@
 """
 @package simulator
-monitor_dbs module
+monitor_dbs_simulator module
 """
 
 from .monitor_dbs import Monitor_DBS
