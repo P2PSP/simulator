@@ -154,6 +154,7 @@ class Peer_DBS_simulator(Peer_DBS):
                 sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.public_endpoint)), ','.join(map(str,sender))))
         self.team.append(sender)
         self.debts[sender] = 0
+        self.number_of_peers += 1
         self.lg.debug("{}: inserted {} in {}".format(self.ext_id, sender, self.team))
         self.lg.debug("{}: inserted {} in {}".format(self.ext_id, sender, self.debts))
 
@@ -196,12 +197,15 @@ class Peer_DBS_simulator(Peer_DBS):
                 for i in self.chunks:
                     if i[Common.CHUNK_NUMBER] > -1:
                         try:
-                            peer_number = self.index_of_peer[i[Common.ORIGIN]]
-                        except KeyError:
-                            self.index_of_peer[i[Common.ORIGIN]] = self.number_of_peers
-                            peer_number = self.number_of_peers
+                            #peer_number = self.index_of_peer[i[Common.ORIGIN]]
+                            peer_number = self.team.index(i[Common.ORIGIN])
+                            buf += hash(peer_number)
+                        except ValueError:
+                            buf += '-'
+                            #self.index_of_peer[i[Common.ORIGIN]] = self.number_of_peers
+                            #peer_number = self.number_of_peers
                             self.number_of_peers += 1
-                        buf += hash(peer_number)
+                        #buf += hash(peer_number)
                         #buf += '-'
                     else:
                         buf += " "

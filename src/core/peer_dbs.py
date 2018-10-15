@@ -311,6 +311,8 @@ class Peer_DBS():
                 #self.lg.debug("{}: debts={}".format(self.ext_id, self.debts))
                 self.team.remove(peer)
                 del self.debts[peer]
+                del self.index_of_peer[peer]
+                self.number_of_peers -= 1
         except KeyError:
             pass
         try:
@@ -414,6 +416,7 @@ class Peer_DBS():
             self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.public_endpoint, sender, self.forward))
         self.team.append(sender)
         self.debts[sender] = 0
+        self.number_of_peers += 1
         self.lg.debug("{}: inserted {} in {}".format(self.ext_id, sender, self.team))
         self.lg.debug("{}: inserted {} in {}".format(self.ext_id, sender, self.debts))
 
@@ -428,9 +431,11 @@ class Peer_DBS():
         else:
             try:
                 self.team.remove(sender)
+                self.number_of_peers -= 1
                 self.lg.debug("{}: removed peer {} from team={}".format(self.ext_id, sender, self.team))
             except ValueError:
                 self.lg.error("{}: failed to remove peer {} from team={}".format(self.ext_id, sender, self.team))
+            del self.index_of_peer[sender]
             for peers_list in self.forward.values():
                 if sender in peers_list:
                     self.lg.info("{}: {} removing from {}".format(self.ext_id, sender, peers_list))
@@ -472,12 +477,15 @@ class Peer_DBS():
                 for i in self.chunks:
                     if i[Common.CHUNK_NUMBER] > -1:
                         try:
-                            peer_number = self.index_of_peer[i[Common.ORIGIN]]
-                        except KeyError:
-                            self.index_of_peer[i[Common.ORIGIN]] = self.number_of_peers
-                            peer_number = self.number_of_peers
+                            #peer_number = self.index_of_peer[i[Common.ORIGIN]]
+                            peer_number = self.team.index(i[Common.ORIGIN])
+                            buf += hash(peer_number)
+                        except ValueError:
+                            buf += '-'
+                            #self.index_of_peer[i[Common.ORIGIN]] = self.number_of_peers
+                            #peer_number = self.number_of_peers
                             self.number_of_peers += 1
-                        buf += hash(peer_number)
+                        #buf += hash(peer_number)
                         #buf += '+'
                     else:
                         buf += " "
