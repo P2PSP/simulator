@@ -39,9 +39,9 @@ class Peer_IMS(Peer_DBS):
         IP_stuff = stuff[netifaces.AF_INET][0] # Only the IP stuff
         netmask = IP_stuff['netmask']          # Get netmask
         address = IP_stuff['addr']             # Get local IP addr
-        int32_netmask = socket.ip2int(netmask) # Netmask as an integer
+        self.int32_netmask = socket.ip2int(netmask) # Netmask as an integer
         int32_address = socket.ip2int(address) # IP address as an integer
-        int32_network_address = int32_address & int32_netmask
+        int32_network_address = int32_address & self.int32_netmask
         if __debug__:
             network_address = socket.int2ip(int32_network_address)
             self.lg.info("{}: network address = {}".format(self.ext_id, network_address))
@@ -55,9 +55,10 @@ class Peer_IMS(Peer_DBS):
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("!Ii", msg)
             peer = (socket.int2ip(peer[0]),peer[1])
+            self.team.append(peer)
             int32_peer_address = socket.ip2int(peer[0])
-            int32_peer_network_address = int32_peer_address & int32_netmask
-            print("--------------", socket.int2ip(int32_network_address), socket.int2ip(int32_peer_network_address))
+            int32_peer_network_address = int32_peer_address & self.int32_netmask
+            #print("--------------", socket.int2ip(int32_network_address), socket.int2ip(int32_peer_network_address))
             # Check for peers running in the same subnet
             if int32_network_address == int32_peer_network_address:
                 self.lg.debug("{}: peer {} running in the same local network".format(self.ext_id, peer))
@@ -89,8 +90,8 @@ class Peer_IMS(Peer_DBS):
             return sock.recvfrom(self.max_pkg_length)
         
     def process_hello(self, sender):
-        self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
-        if sender[0] == self.id[0]:
+        if (socket.ip2int(sender[0]) & self.int32_netmask) == (socket.ip2int(self.id[0]) & self.int32_netmask):
+            self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
             if ('224.0.0.1', 1234) not in self.forward[self.id]:
                 self.forward[self.id].append(('224.0.0.1', 1234))
                 self.pending[('224.0.0.1', 1234)] = []
@@ -98,9 +99,8 @@ class Peer_IMS(Peer_DBS):
             super().process_hello(sender)            
 
     def process_goodbye(self, sender):
-        self.lg.debug("{}: received [goodbye] from {}".format(self.ext_id, sender))
-        if sender[0] == self.id[0]:
-            pass
+        if (socket.ip2int(sender[0]) & self.int32_netmask) == (socket.ip2int(self.id[0]) & self.int32_netmask):
+            self.lg.debug("{}: received [goodbye] from {}".format(self.ext_id, sender))
         else:
             super().process_goodbye(sender)
 

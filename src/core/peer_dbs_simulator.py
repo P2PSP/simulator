@@ -226,7 +226,10 @@ class Peer_DBS_simulator(Peer_DBS):
                             self.lg.debug("{}: degree({})) {}".format(self.ext_id, peer, buf))
                 else:
                     self.lg.debug("--------- sender={} splitter={}".format(sender, self.splitter))
-                    self.debts[sender] -= 1
+                    try:
+                        self.debts[sender] -= 1
+                    except KeyError:
+                        pass
                     self.lg.debug("{}: debts={}".format(self.ext_id, self.debts))
                     self.add_new_forwarding_rule(self.public_endpoint, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
