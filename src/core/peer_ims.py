@@ -84,8 +84,8 @@ class Peer_IMS(Peer_DBS):
         self.lg.debug("{}: forward={} pending={}".format(self.ext_id, self.forward, self.pending))
 
     def receive_packet(self):
-        ready_socks, _, _ = select.select([self.team_socket,
-                                           self.mcast_socket], [], [])
+        self.lg.debug("{}: waiting for a packet ...".format(self.ext_id))
+        ready_socks, _, _ = select.select([self.team_socket, self.mcast_socket], [], [])
         for sock in ready_socks:
             return sock.recvfrom(self.max_pkg_length)
         
@@ -107,4 +107,3 @@ class Peer_IMS(Peer_DBS):
     def add_new_forwarding_rule(self, peer, neighbor):
         if peer[0] != self.id[0]:
             super().add_new_forwarding_rule(peer, neighbor)
-

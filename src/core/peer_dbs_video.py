@@ -171,6 +171,9 @@ class Peer_DBS_video(Peer_DBS):
         self.chunk_packet_format = "!i" + str(self.chunk_size) + "sIi"
         self.max_pkg_length = struct.calcsize(self.chunk_packet_format)
 
+    #def complain(self, chunk_number):
+    #    pass
+
     def play_chunk(self, chunk_number):
         if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_NUMBER] > -1:
             self.player_socket.sendall(self.chunks[chunk_number % self.buffer_size][Common.CHUNK_DATA])
@@ -178,6 +181,7 @@ class Peer_DBS_video(Peer_DBS):
             self.played += 1
             #print('o', end=''); sys.stdout.flush()
         else:
+            self.complain(chunk_number)
             self.losses += 1
             self.lg.critical("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
             self.request_chunk(chunk_number, random.choice(self.team))
