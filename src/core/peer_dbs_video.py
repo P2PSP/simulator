@@ -8,6 +8,7 @@ peer_dbs_video module
 # a header. The channel name is provided by the player that performs a
 # HTTP GET request (possiblely after an HTTP 302 redirection).
 
+import random
 import struct
 from .common import Common
 from .simulator_stuff import Simulator_socket as socket
@@ -184,5 +185,6 @@ class Peer_DBS_video(Peer_DBS):
             self.complain(chunk_number)
             self.losses += 1
             self.lg.critical("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
-            self.request_chunk(chunk_number, random.choice(self.team))
+            if len(self.team) > 1:
+                self.request_chunk(chunk_number, random.choice(self.team))
         self.number_of_chunks_consumed += 1

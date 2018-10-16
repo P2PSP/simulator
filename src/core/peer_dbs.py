@@ -484,7 +484,7 @@ class Peer_DBS():
             self.chunk_number_delta = chunk_number
 
             self.process_unpacked_message__simulation_1(sender)
-            
+
             # 1. Store or report duplicates
             if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_NUMBER] == chunk_number:
                 # Duplicate chunk. Ignore it and warn the sender to
