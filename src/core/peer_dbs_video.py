@@ -10,13 +10,15 @@ peer_dbs_video module
 
 import sys
 import struct
+from .common import Common
 from .simulator_stuff import Simulator_socket as socket
 from .peer_dbs import Peer_DBS
 
 class Peer_DBS_video(Peer_DBS):
 
     player_port = 9999
-    header_size = 30 # chunks
+    #header_chunks = 30 # chunks
+    #source = ("localhost", 8000)
 
     #def __init__(self, id, name, loglevel):
     #    super().__init_(id, name, loglevel)
@@ -32,50 +34,71 @@ class Peer_DBS_video(Peer_DBS):
         #self.player_socket.setblocking(0)
         self.lg.debug("{}: the player is"
                       .format(self.id, self.player_socket.getpeername()))
-        GET_bytes = self.player_socket.recv(1024)
-        GET = GET_bytes.decode("ascii")
-        channel = GET.split('/')[1]
-        self.GET_message = 'GET /' + channel + ' HTTP/1.1\r\n'
-        self.GET_message += '\r\n'
+        #GET_bytes = self.player_socket.recv(1024)
+        #GET = GET_bytes.decode("ascii")
+        #GET_channel = GET.split('\r\n')[0]
+        #source = GET.split(': ')[1].split("\r\n")[0]
+        #print("GET_channel={} /// source={} /// {}".format(GET_channel, source, source.split(':')[0]))
+        #self.source = (source.split(':')[0], int(source.split(':')[1]))
+        #print("source={}".format(source))
+        ##self.GET_message = 'GET /' + channel + ' HTTP/1.1\r\n'
+        ##self.GET_message += '\r\n'
+        #self.GET_message = GET_channel + "\r\n"
 
     # Same function as splitter_dbs_video's one
-    def request_the_video_from_the_source(self):
-        self.source_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.source_socket.connect(self.source)
-        except socket.error as e:
-            self.lg.error("{}: Exception: {} from {}".format(self.id,
-                                                             e, self.source))
-            self.source_socket.close()
-            os._exit(1)
-        self.lg.debug("{}: connected to {}".format(self.id, self.source))
-        self.source_socket.sendall(self.GET_message.encode())
-        self.lg.debug("{}: GET_message={}".format(self.id, self.GET_message))
+    #def request_the_video_from_the_source(self):
+    #    self.source_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
+    #    try:
+    #        self.source_socket.connect(self.source)
+    #    except socket.error as e:
+    #        self.lg.error("{}: Exception: {} from {}".format(self.id,
+    #                                                         e, self.source))
+    #        self.source_socket.close()
+    #        os._exit(1)
+    #    self.lg.debug("{}: connected to {}".format(self.id, self.source))
+    #    self.source_socket.sendall(self.GET_message.encode())
+    #    self.lg.debug("{}: GET_message={}".format(self.id, self.GET_message))
 
     # Same function as splitter_dbs_video's one
-    def receive_header_chunk(self):
-        chunk = self.source_socket.recv(self.chunk_size)
-        prev_size = 0
-        while len(chunk) < self.chunk_size:
-            if len(chunk) == prev_size:
-                # This section of code is reached when the streaming
-                # server (Icecast) finishes a stream and starts with
-                # the following one.
-                self.lg.debug("{}: No data in the server!".format(self.id))
-                sys.stdout.flush()
-                self.source_socket.close()
-                time.sleep(1)
-                self.source_socket = socket.socket(socket.AF_INET,
-                                                   socket.SOCK_STREAM)
-                self.source_socket.connect(self.source)
-                self.source_socket.sendall(self.GET_message.encode())
-                #self.header = b""
-                #self.header_load_counter = Splitter_DBS_video.header_size
-                #_print_("1: header_load_counter =", self.header_load_counter)
-                chunk = b""
-            prev_size = len(chunk)
-            chunk += self.source_socket.recv( - len(chunk))
-        return chunk
+    #def receive_header_chunk(self):
+    #    chunk = self.source_socket.recv(self.chunk_size)
+    #    prev_size = 0
+    #    while len(chunk) < self.chunk_size:
+    #        if len(chunk) == prev_size:
+    #            # This section of code is reached when the streaming
+    #            # server (Icecast) finishes a stream and starts with
+    #            # the following one.
+    #            self.lg.debug("{}: No data in the server!".format(self.id))
+    #            sys.stdout.flush()
+    #            self.source_socket.close()
+    #            time.sleep(1)
+    #            self.source_socket = socket.socket(socket.AF_INET,
+    #                                               socket.SOCK_STREAM)
+    #            self.source_socket.connect(self.source)
+    #            self.source_socket.sendall(self.GET_message.encode())
+    #            #self.header = b""
+    #            #self.header_load_counter = Splitter_DBS_video.header_size
+    #            #_print_("1: header_load_counter =", self.header_load_counter)
+    #            chunk = b""
+    #        prev_size = len(chunk)
+    #        chunk += self.source_socket.recv( - len(chunk))
+    #    return chunk
+
+    def receive_the_header_size(self):
+        message = self.splitter_socket.recv(struct.calcsize("!H"))
+        value = struct.unpack("!H", message)[0]
+        self.header_chunks = socket.ntohs(value)
+        self.lg.debug("header_chunks={}".format(self.header_chunks))
+
+    def relay_header_to_player(self):
+        self.lg.debug("{}: Relaying the stream header from {} to {}".format(self.id, self.source, self.player))
+        for i in range(Peer_DBS_video.header_chunks):
+            header_chunk = self.receive_header_chunk()
+            #self.send_chunk_to_player(header_chunk)
+            self.player_socket.sendall(header_chunk)
+            print('.')
+            sys.stdout.flush()
+        print("{}: header relayed".format(self.id))
 
     def send_chunk_to_player(self):
         try:
@@ -83,17 +106,6 @@ class Peer_DBS_video(Peer_DBS):
         except socket.error:
             self.lg.debug("Player disconnected!")
             self.player_alive = False
-
-    def relay_header_to_player(self):
-        print("{}: Relaying the stream header from {} to {}"
-              .format(self.id, self.source, self.player))
-        for i in range(Peer_DBS_video.header_size*self.chunk_size):
-            header_chunk = self.receive_header_chunk()
-            #self.send_chunk_to_player(header_chunk)
-            self.player_socket.sendall(header_chunk)
-            print('.')
-            sys.stdout.flush()
-        print("{}: header relayed".format(self.id))
 
     #def load_the_video_header(self):
     #    self.header = b''

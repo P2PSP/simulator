@@ -10,11 +10,7 @@ class Peer_simulator(Peer):
     
     def add_args(self, parser):
         super().add_args(parser)
-        parser.add_argument("-l", "--chunks_before_leave",
-                            default=Peer_DBS_simulator.chunks_before_leave,
-                            type=int,
-                            help="Number of chunk before leave the team (default={})"
-                            .format(Peer_DBS_simulator.chunks_before_leave))
+        parser.add_argument("-l", "--chunks_before_leave", default=Peer_DBS_simulator.chunks_before_leave, type=int, help="Number of chunk before leave the team (default={})".format(Peer_DBS_simulator.chunks_before_leave))
 
     def instance(self, args):
         Peer_DBS.peer_port = args.peer_port

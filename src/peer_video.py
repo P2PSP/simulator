@@ -8,9 +8,7 @@ class Peer_video(Peer):
 
     def add_args(self, parser):
         super().add_args(parser)
-        parser.add_argument("-v", "--player_port",
-                            default=9999, type=int,
-                            help="Port to listen to the player")
+        parser.add_argument("-v", "--player_port", default=9999, type=int, help="Port to listen to the player")
 
     def instance(self, args):
         Peer_DBS.peer_port = args.peer_port
@@ -23,11 +21,14 @@ class Peer_video(Peer):
 
     def run(self, args):
         self.peer.wait_for_the_player()
+        #self.peer.request_the_video_from_the_source()
         self.peer.connect_to_the_splitter(peer_port=args.peer_port)
         self.peer.receive_chunk_size()
         self.peer.receive_public_endpoint()
         self.peer.receive_buffer_size()
         self.peer.receive_the_number_of_peers()
+        self.peer.receive_header_size()
+        self.peer.relay_header_to_player()
         self.peer.listen_to_the_team()
         self.peer.receive_the_list_of_peers()
         self.peer.run()

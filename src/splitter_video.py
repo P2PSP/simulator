@@ -10,16 +10,16 @@ class Splitter_video(Splitter):
         super().add_args(parser)
         parser.add_argument("-c", "--channel",
                             default=Splitter_DBS_video.channel,
-                            help="Channel (default={})"
+                            help="Mount point of the channel in the (Icecast) server (default={})"
                             .format(Splitter_DBS_video.channel))
         parser.add_argument("-z", "--chunk_size",
                             default=Splitter_DBS_video.chunk_size,
                             help="Chunk size in bytes (default={})"
                             .format(Splitter_DBS_video.chunk_size))
-        #parser.add_argument("-e", "--header_size",
-        #                    default=Splitter_DBS_video.header_size,
-        #                    help="Header size in chunks (default={})"
-        #                    .format(Splitter_DBS_video.header_size))
+        parser.add_argument("-e", "--header_chunks",
+                            default=Splitter_DBS_video.header_chunks,
+                            help="Header size in chunks (default={})"
+                            .format(Splitter_DBS_video.header_chunks))
         parser.add_argument("-a", "--source_address",
                             default=Splitter_DBS_video.source_address,
                             help="Address of the source (default={})"
@@ -36,7 +36,7 @@ class Splitter_video(Splitter):
             Splitter_DBS_video.number_of_monitors = args.number_of_monitors
             Splitter_DBS_video.buffer_size = args.buffer_size
             Splitter_DBS_video.channel = args.channel
-            #Splitter_DBS_video.header_size = args.header_size
+            Splitter_DBS_video.header_chunks = args.header_chunks
             Splitter_DBS_video.source_address = args.source_address
             Splitter_DBS_video.source_port = args.source_port
             self.splitter = Splitter_DBS_video("Splitter_DBS_video")

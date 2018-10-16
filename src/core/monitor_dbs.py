@@ -68,7 +68,7 @@ class Monitor_DBS(Peer_DBS):
             # We send the request to the neighbor that we have served.
             #self.request_chunk(chunk_number, self.neighbor)
 
-            if len(self.team)>1:
+            if len(self.team) > 1:
                 self.request_chunk(chunk_number, random.choice(self.team))
             
             # Send the request to all neighbors.
@@ -96,7 +96,6 @@ class Monitor_DBS(Peer_DBS):
             #     self.lg.debug("{}: debt={}".format(self.ext_id, self.debt))
             #     if self.neighbor is not None:  # Este if no debería existir
             #        self.request_chunk(chunk_number, self.neighbor)
-
 
         self.number_of_chunks_consumed += 1
         #return self.player_connected

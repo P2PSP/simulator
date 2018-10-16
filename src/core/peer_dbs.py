@@ -500,8 +500,11 @@ class Peer_DBS():
                             buf = len(peer_list)*"#"
                             self.lg.debug("{}: degree({})) {}".format(self.ext_id, peer, buf))
                 else:
-                    self.debts[sender] -= 1
-                    self.lg.debug("--------- splitter={}".format(self.splitter))
+                    try:
+                        self.debts[sender] -= 1
+                    except KeyError:
+                        pass
+                    self.lg.debug("splitter={}".format(self.splitter))
                     self.add_new_forwarding_rule(self.public_endpoint, sender)
                     self.lg.debug("{}: forward={}".format(self.ext_id, self.forward))
                 if origin in self.forward:
