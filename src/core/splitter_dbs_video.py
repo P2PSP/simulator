@@ -34,8 +34,8 @@ class Splitter_DBS_video(Splitter_DBS):
             + str(Splitter_DBS_video.chunk_size) \
             + "sIi"
 
-        sefl.header = b''
-        self.header_load_counter = = Splitter_DBS_video.header_chunks
+        self.header = b''
+        self.header_load_counter = Splitter_DBS_video.header_chunks
         
         self.lg.debug("Splitter_DBS_video: initialized")
 
@@ -52,8 +52,7 @@ class Splitter_DBS_video(Splitter_DBS):
         self.lg.debug("{}: GET_message={}".format(self.id, self.GET_message))
 
     def send_the_chunk_size(self, peer_serve_socket):
-        self.lg.debug("{}: Sending chunk_size={}"
-                      .format(self.id, Splitter_DBS_video.chunk_size))
+        self.lg.debug("{}: Sending chunk_size={}".format(self.id, Splitter_DBS_video.chunk_size))
         message = struct.pack("!H", (Splitter_DBS_video.chunk_size))
         peer_serve_socket.sendall(message)
 
@@ -94,13 +93,24 @@ class Splitter_DBS_video(Splitter_DBS):
             self.lg.debug("{}: Loaded {} bytes of header".format(self.id, len(self.header)))
         return chunk
 
-    def send_the_header(self):
-        peer_serve_socket.sendall(self.header)
+    #def send_header_chunks(self, serve_socket):
+    #    self.lg.debug("{}: Sending header_chunks={}".format(self.id, Splitter_DBS_video.header_chunks))
+    #    message = struct.pack("!H", Splitter_DBS_video.header_chunks)
+    #    serve_socket.sendall(message)
+    def send_header_bytes(self, serve_socket):
+        self.lg.debug("{}: sending header of size {} bytes".format(self.id, len(self.header)))
+        message = struct.pack("!H", len(self.header))
+        serve_socket.sendall(message)
     
-    def handle_a_peer_arrival(self, connection):
-        self.send_the_header()
-        Splitter_DBS.handle_a_peer_arrival(self, connection)
-    
+    def send_header(self, serve_socket):
+        self.lg.debug("{}: sending header of {} bytes".format(self.id, len(self.header)))
+        #peer_serve_socket = connection[0]
+        serve_socket.sendall(self.header)
+
+    #def handle_a_peer_arrival(self, connection):
+    #    self.send_the_header(connection)
+    #    Splitter_DBS.handle_a_peer_arrival(self, connection)
+
     def run(self):
 
         chunk_counter = 0
@@ -141,12 +151,12 @@ class Splitter_DBS_video(Splitter_DBS):
 
             message = self.compose_chunk_packet(chunk, peer)
             self.destination_of_chunk[self.chunk_number % Splitter_DBS.buffer_size] = peer
-            if __debug__:
-                self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
-                counter = 0
-                for i in self.destination_of_chunk:
-                    self.lg.debug("{} -> {}".format(counter, i))
-                    counter += 1
+            #if __debug__:
+            #    self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
+            #    counter = 0
+            #    for i in self.destination_of_chunk:
+            #        self.lg.debug("{} -> {}".format(counter, i))
+            #        counter += 1
             #            try:
             self.send_chunk(message, peer)
             self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER

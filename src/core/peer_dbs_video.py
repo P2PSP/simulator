@@ -8,7 +8,6 @@ peer_dbs_video module
 # a header. The channel name is provided by the player that performs a
 # HTTP GET request (possiblely after an HTTP 302 redirection).
 
-import sys
 import struct
 from .common import Common
 from .simulator_stuff import Simulator_socket as socket
@@ -84,21 +83,47 @@ class Peer_DBS_video(Peer_DBS):
     #        chunk += self.source_socket.recv( - len(chunk))
     #    return chunk
 
-    def receive_the_header_size(self):
+    #def receive_header_chunks(self):
+    #    message = self.splitter_socket.recv(struct.calcsize("!H"))
+    #    self.header_chunks = struct.unpack("!H", message)[0]
+    #    #self.header_chunks = socket.ntohs(value)
+    #    self.lg.debug("header_chunks={}".format(self.header_chunks))
+
+    def receive_header_bytes(self):
         message = self.splitter_socket.recv(struct.calcsize("!H"))
-        value = struct.unpack("!H", message)[0]
-        self.header_chunks = socket.ntohs(value)
-        self.lg.debug("header_chunks={}".format(self.header_chunks))
+        self.header_bytes = struct.unpack("!H", message)[0]
+        self.lg.debug("header_bytes={}".format(self.header_bytes))
 
     def relay_header_to_player(self):
-        self.lg.debug("{}: Relaying the stream header from {} to {}".format(self.id, self.source, self.player))
-        for i in range(Peer_DBS_video.header_chunks):
-            header_chunk = self.receive_header_chunk()
-            #self.send_chunk_to_player(header_chunk)
-            self.player_socket.sendall(header_chunk)
-            print('.')
-            sys.stdout.flush()
-        print("{}: header relayed".format(self.id))
+        #header_size_in_bytes = self.header_chunks * self.chunk_size
+        header_size_in_bytes = self.header_bytes
+        self.lg.debug("{}: header_size_in_bytes={}".format(self.id, header_size_in_bytes))
+        received = 0
+        data = ""
+        while received < header_size_in_bytes:
+            self.lg.debug("{}: Percentage of header received = {:.2%}".format(self.id, (1.0*received)/header_size_in_bytes))
+            data = self.splitter_socket.recv(header_size_in_bytes - received)
+            received += len(data)
+            try:
+                self.player_socket.sendall(data)
+            except Exception as e:
+                self.lg.debug(e)
+                self.lg.debug("{}: error sending data to the player".format(self.id))
+                self.lg.debug("{}: len(data)={}".format(self.id, len(data)))
+                time.sleep(1)
+            self.lg.debug("{}: received {} bytes".format(self.id, received))
+
+        self.lg.debug("{}: received {} bytes of header".format(self.id, received))
+
+    #def relay_header_to_player(self):
+    #    self.lg.debug("{}: Relaying the stream header from {} to {}".format(self.id, self.source, self.player))
+    #    for i in range(Peer_DBS_video.header_chunks):
+    #        header_chunk = self.receive_header_chunk()
+    #        #self.send_chunk_to_player(header_chunk)
+    #        self.player_socket.sendall(header_chunk)
+    #        print('.')
+    #        sys.stdout.flush()
+    #    print("{}: header relayed".format(self.id))
 
     def send_chunk_to_player(self):
         try:

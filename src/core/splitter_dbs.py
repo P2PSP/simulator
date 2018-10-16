@@ -89,6 +89,9 @@ class Splitter_DBS():
 
     def send_the_chunk_size(self, peer_serve_socket):
         pass
+
+    def send_header_bytes(self, peer_serve_socket):
+        pass
     
     def handle_a_peer_arrival(self, connection):
 
@@ -97,10 +100,11 @@ class Splitter_DBS():
 
         print("{}: accepted connection from peer {}" .format(self.id, incoming_peer))
 
-        #self.send_the_header()
         self.send_the_chunk_size(serve_socket)
         self.send_public_endpoint(incoming_peer, serve_socket)
         self.send_buffer_size(serve_socket)
+        self.send_header_bytes(serve_socket)
+        self.send_header(serve_socket)
         self.send_the_number_of_peers(serve_socket)
         self.send_the_list_of_peers(serve_socket)
 
@@ -298,12 +302,12 @@ class Splitter_DBS():
 
             message = self.compose_chunk_packet(chunk, peer)
             self.destination_of_chunk[self.chunk_number % Splitter_DBS.buffer_size] = peer
-            if __debug__:
-                self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
-                counter = 0
-                for i in self.destination_of_chunk:
-                    self.lg.debug("{} -> {}".format(counter, i))
-                    counter += 1
+            #if __debug__:
+            #    self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
+            #    counter = 0
+            #    for i in self.destination_of_chunk:
+            #        self.lg.debug("{} -> {}".format(counter, i))
+            #        counter += 1
             #            try:
             self.send_chunk(message, peer)
             self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER

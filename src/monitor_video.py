@@ -9,7 +9,7 @@ class Monitor_video(Monitor, Peer_video):
 
     def add_args(self, parser):
         Peer_video().add_args(parser)
-        
+
     def instance(self, args):
         Monitor_DBS.peer_port = args.peer_port
         Monitor_DBS.splitter = (args.splitter_address, args.splitter_port)
