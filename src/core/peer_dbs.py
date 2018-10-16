@@ -10,6 +10,7 @@ peer_dbs module
 # peers. In a nutshell, if a peer X wants to receive from peer Y
 # the chunks from origin Z, X must request it to Y, explicitally.
 
+import sys
 import time
 import struct
 import logging
@@ -474,6 +475,7 @@ class Peer_DBS():
             # We have received a chunk.
             chunk_data = message[Common.CHUNK_DATA]
             origin = message[Common.ORIGIN]
+            sys.stdout.write(str(origin)); sys.stdout.flush()
 
             # Compute deltas
             self.chunk_number_delta = chunk_number - self.chunk_number_delta
@@ -617,10 +619,10 @@ class Peer_DBS():
         pass
 
     def play_chunk(self, chunk_number):
-        if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_NUMBER] > -1:
+        buffer_box = self.chunks[chunk_number % self.buffer_size]
+        if buffer_box[Common.CHUNK_NUMBER] > -1:
             self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
-            #sys.stdout.write('o'); sys.stdout.flush()
         else:
             self.complain(chunk_number)
             self.losses += 1
