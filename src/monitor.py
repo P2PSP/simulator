@@ -26,9 +26,9 @@ class Monitor(Peer):
             logging.basicConfig(format="%(message)s - %(asctime)s - %(name)s - %(levelname)s")
 
     def instance(self, args):
-        Peer_DBS.peer_port = args.peer_port
-        Peer_DBS.splitter = (args.splitter_address, args.splitter_port)
-        Peer_DBS.chunks_before_leave = args.chunks_before_leave
+        Peer_DBS.peer_port = int(args.peer_port)
+        Peer_DBS.splitter = (args.splitter_address, int(args.splitter_port))
+        Peer_DBS.chunks_before_leave = int(args.chunks_before_leave)
         if args.set_of_rules == "DBS":
             self.peer = Monitor_DBS("P", "Monitor_DBS", args.loglevel)
         else:

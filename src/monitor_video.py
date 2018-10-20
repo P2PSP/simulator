@@ -11,9 +11,9 @@ class Monitor_video(Monitor, Peer_video):
         Peer_video().add_args(parser)
 
     def instance(self, args):
-        Monitor_DBS.peer_port = args.peer_port
-        Monitor_DBS.splitter = (args.splitter_address, args.splitter_port)
-        Monitor_DBS.player_port = args.player_port
+        Monitor_DBS.peer_port = int(args.peer_port)
+        Monitor_DBS.splitter = (args.splitter_address, int(args.splitter_port))
+        Monitor_DBS.player_port = int(args.player_port)
         if args.set_of_rules == "DBS":
             self.peer = Monitor_DBS_video("P", "Monitor_DBS_video", args.loglevel)
         else:

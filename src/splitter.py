@@ -38,10 +38,10 @@ class Splitter():
 
     def instance(self, args):
         if args.set_of_rules == "DBS" or args.set_of_rules == "IMS":
-            Splitter_DBS.splitter_port = args.splitter_port
-            Splitter_DBS.max_chunk_loss = args.max_chunk_loss
-            Splitter_DBS.number_of_monitors = args.number_of_monitors
-            Splitter_DBS.buffer_size = args.buffer_size
+            Splitter_DBS.splitter_port = int(args.splitter_port)
+            Splitter_DBS.max_chunk_loss = int(args.max_chunk_loss)
+            Splitter_DBS.number_of_monitors = int(args.number_of_monitors)
+            Splitter_DBS.buffer_size = int(args.buffer_size)
             self.splitter = Splitter_DBS("Splitter_DBS")
         if __debug__:
             lg = logging.getLogger("Splitter_DBS")

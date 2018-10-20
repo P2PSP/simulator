@@ -11,9 +11,9 @@ class Peer_video(Peer):
         parser.add_argument("-v", "--player_port", default=9999, type=int, help="Port to listen to the player")
 
     def instance(self, args):
-        Peer_DBS.peer_port = args.peer_port
-        Peer_DBS.splitter = (args.splitter_address, args.splitter_port)
-        Peer_DBS_video.player_port = args.player_port
+        Peer_DBS.peer_port = int(args.peer_port)
+        Peer_DBS.splitter = (args.splitter_address, int(args.splitter_port))
+        Peer_DBS_video.player_port = int(args.player_port)
         if args.set_of_rules == "DBS":
             self.peer = Peer_DBS_video("P", "Peer_DBS_video", args.loglevel)
         else:
