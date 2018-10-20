@@ -130,9 +130,9 @@ class Simulator_socket():
         except socket.timeout:
             raise
 
-    def connect(self, address):
-        self.lg.debug("simulator_stuff.connect({}): {}".format(address, self.sock))
-        return self.sock.connect(address)
+    def connect(self, endpoint):
+        self.lg.debug("simulator_stuff.connect({}): {}".format(endpoint, self.sock))
+        return self.sock.connect(endpoint)
 
     def accept(self):
         self.lg.debug("simulator_stuff.accept(): {}".format(self.sock))

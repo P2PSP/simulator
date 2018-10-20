@@ -31,14 +31,14 @@ class Splitter_video(Splitter):
 
     def instance(self, args):
         if args.set_of_rules == "DBS" or args.set_of_rules == "IMS":
-            Splitter_DBS_video.splitter_port = args.splitter_port
-            Splitter_DBS_video.max_chunk_loss = args.max_chunk_loss
-            Splitter_DBS_video.number_of_monitors = args.number_of_monitors
-            Splitter_DBS_video.buffer_size = args.buffer_size
+            Splitter_DBS_video.splitter_port = int(args.splitter_port)
+            Splitter_DBS_video.max_chunk_loss = int(args.max_chunk_loss)
+            Splitter_DBS_video.number_of_monitors = int(args.number_of_monitors)
+            Splitter_DBS_video.buffer_size = int(args.buffer_size)
             Splitter_DBS_video.channel = args.channel
-            Splitter_DBS_video.header_chunks = args.header_chunks
+            Splitter_DBS_video.header_chunks = int(args.header_chunks)
             Splitter_DBS_video.source_address = args.source_address
-            Splitter_DBS_video.source_port = args.source_port
+            Splitter_DBS_video.source_port = int(args.source_port)
             self.splitter = Splitter_DBS_video("Splitter_DBS_video")
         if __debug__:
             lg = logging.getLogger("Splitter_DBS_video")

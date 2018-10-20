@@ -27,6 +27,7 @@ class Splitter_DBS_video(Splitter_DBS):
         super().__init__(name)
         
         self.source = (Splitter_DBS_video.source_address, Splitter_DBS_video.source_port)
+        self.lg.debug("{}: source={}".format(name, self.source))
         self.GET_message = 'GET /' + Splitter_DBS_video.channel + ' HTTP/1.1\r\n'
         self.GET_message += '\r\n'
 
@@ -40,6 +41,7 @@ class Splitter_DBS_video(Splitter_DBS):
         self.lg.debug("Splitter_DBS_video: initialized")
 
     def request_the_video_from_the_source(self):
+        self.lg.debug("{}: connecting to {}".format(self.id, self.source))
         self.source_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.source_socket.connect(self.source)
