@@ -15,8 +15,8 @@ import netifaces
 from selectors import select
 import struct
 import random
-import logging
-from .common import Common
+#import logging
+#from .common import Common
 from .simulator_stuff import Simulator_socket as socket
 from core.peer_dbs import Peer_DBS
 
@@ -51,6 +51,7 @@ class Peer_IMS(Peer_DBS):
         counter = 0
         #isolations = 0
         self.forward[self.id] = []
+        self.lg.debug("{}: peers_pending_of_reception={}".format(self.ext_id, peers_pending_of_reception))
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("!Ii", msg)

@@ -308,23 +308,24 @@ class Peer_DBS():
         packet = struct.pack(self.chunk_packet_format, *content)
         return packet
     
-    def send_chunk_to_peer(self, chunk_number, peer):
-        self.lg.debug("{}: removing {} from debts={}".format(self.ext_id, peer, self.debts))
+    def send_chunk_to_peer(self, chunk_number, destination):
+        self.lg.debug("{}: [{}] --> {}".format(self.ext_id, chunk_number, destination))
+        self.lg.debug("{}: removing {} from debts={}".format(self.ext_id, destination, self.debts))
         try:
-            self.debts[peer] += 1
-            if self.debts[peer] > self.max_debt:
+            self.debts[destination] += 1
+            if self.debts[destination] > self.max_debt:
                 #self.lg.debug("{}: team={} peer={}".format(self.ext_id, self.team, peer))
                 #self.lg.debug("{}: debts={}".format(self.ext_id, self.debts))
-                self.team.remove(peer)
-                del self.debts[peer]
-                del self.index_of_peer[peer]
+                self.team.remove(destination)
+                del self.debts[destination]
+                del self.index_of_peer[destination]
                 self.number_of_peers -= 1
         except KeyError:
             pass
         try:
             msg = self.compose_message(chunk_number)
             #msg = struct.pack("isIi", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
-            self.team_socket.sendto(msg, peer)
+            self.team_socket.sendto(msg, destination)
             self.sendto_counter += 1
             #self.lg.debug("{}: sent chunk {} (with origin {}) to {}".format(self.ext_id, chunk_number, (chunk_origin_IP, chunk_origin_port), peer))
         except TypeError:
@@ -469,6 +470,7 @@ class Peer_DBS():
     def process_unpacked_message(self, message, sender):
 
         chunk_number = message[Common.CHUNK_NUMBER]
+        self.lg.debug("{}: [{}] <-- {}".format(self.ext_id, chunk_number, sender))
 
         if chunk_number >= 0:
 
