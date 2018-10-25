@@ -32,7 +32,7 @@ class Peer_DBS_video(Peer_DBS):
               .format(self.id, self.player_socket.getsockname()))
         self.player_socket = self.player_socket.accept()[0]
         #self.player_socket.setblocking(0)
-        self.lg.info("{}: the player is".format(self.id, self.player_socket.getpeername()))
+        print("{}: Player connected. The player is".format(self.id, self.player_socket.getpeername()))
         #GET_bytes = self.player_socket.recv(1024)
         #GET = GET_bytes.decode("ascii")
         #GET_channel = GET.split('\r\n')[0]
