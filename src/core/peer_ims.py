@@ -11,14 +11,15 @@ peer_ims module
 # chunk from the splitter, it will forward it to this multicast
 # channel (all hosts multicast group). The rest of the logic is identical?
 
-import netifaces
-from selectors import select
-import struct
 import random
-#import logging
-#from .common import Common
-from .simulator_stuff import Simulator_socket as socket
+import struct
+from selectors import select
+
+import netifaces
 from core.peer_dbs import Peer_DBS
+
+from .simulator_stuff import Simulator_socket as socket
+
 
 class Peer_IMS(Peer_DBS):
 
@@ -29,18 +30,18 @@ class Peer_IMS(Peer_DBS):
         Peer_DBS.listen_to_the_team(self)
         self.mcast_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.mcast_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.mcast_socket.bind(('', 1234)) # Listen any interface,
-                                           # including 224.0.0.1
+        self.mcast_socket.bind(('', 1234))  # Listen any interface,
+        # including 224.0.0.1
         self.lg.debug("{}: port 1234 bound to 0.0.0.0".format(self.ext_id))
-    
+
     def receive_the_list_of_peers(self):
         iface = netifaces.interfaces()[1]      # Name of the second interface
         stuff = netifaces.ifaddresses(iface)   # Configuration data
-        IP_stuff = stuff[netifaces.AF_INET][0] # Only the IP stuff
+        IP_stuff = stuff[netifaces.AF_INET][0]  # Only the IP stuff
         netmask = IP_stuff['netmask']          # Get netmask
         address = IP_stuff['addr']             # Get local IP addr
-        self.int32_netmask = socket.ip2int(netmask) # Netmask as an integer
-        int32_address = socket.ip2int(address) # IP address as an integer
+        self.int32_netmask = socket.ip2int(netmask)  # Netmask as an integer
+        int32_address = socket.ip2int(address)  # IP address as an integer
         int32_network_address = int32_address & self.int32_netmask
         if __debug__:
             network_address = socket.int2ip(int32_network_address)
@@ -55,7 +56,7 @@ class Peer_IMS(Peer_DBS):
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("!Ii", msg)
-            peer = (socket.int2ip(peer[0]),peer[1])
+            peer = (socket.int2ip(peer[0]), peer[1])
             self.team.append(peer)
             int32_peer_address = socket.ip2int(peer[0])
             int32_peer_network_address = int32_peer_address & self.int32_netmask
@@ -67,13 +68,13 @@ class Peer_IMS(Peer_DBS):
                     self.forward[self.id].append(("224.0.0.1", 1234))
                 self.pending[("224.0.0.1", 1234)] = []
             else:
-                if counter >= self.number_of_monitors: # Monitors never are isolated
+                if counter >= self.number_of_monitors:  # Monitors never are isolated
                     r = random.random()
                     if r <= self.link_failure_prob:
                         self.team_socket.isolate(self.id, peer)
                         self.lg.info("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
                 #print("{}: peer={}".format(self.ext_id, peer))
-                #self.forward[self.id].append(peer)
+                # self.forward[self.id].append(peer)
                 #self.pending[peer] = []
 
             self.say_hello(peer)
@@ -89,7 +90,7 @@ class Peer_IMS(Peer_DBS):
         ready_socks, _, _ = select.select([self.team_socket, self.mcast_socket], [], [])
         for sock in ready_socks:
             return sock.recvfrom(self.max_pkg_length)
-        
+
     def process_hello(self, sender):
         if (socket.ip2int(sender[0]) & self.int32_netmask) == (socket.ip2int(self.id[0]) & self.int32_netmask):
             self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
@@ -97,7 +98,7 @@ class Peer_IMS(Peer_DBS):
                 self.forward[self.id].append(('224.0.0.1', 1234))
                 self.pending[('224.0.0.1', 1234)] = []
         else:
-            super().process_hello(sender)            
+            super().process_hello(sender)
 
     def process_goodbye(self, sender):
         if (socket.ip2int(sender[0]) & self.int32_netmask) == (socket.ip2int(self.id[0]) & self.int32_netmask):

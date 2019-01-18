@@ -1,16 +1,19 @@
 import argparse
-import logging
+
 from core.peer_dbs import Peer_DBS
-from core.peer_ims import Peer_IMS
-from peer import Peer
 from core.peer_dbs_simulator import Peer_DBS_simulator
+from core.peer_ims import Peer_IMS
 from core.peer_ims_simulator import Peer_IMS_simulator
+from peer import Peer
+
 
 class Peer_simulator(Peer):
-    
+
     def add_args(self, parser):
         super().add_args(parser)
-        parser.add_argument("-l", "--chunks_before_leave", default=Peer_DBS_simulator.chunks_before_leave, type=int, help="Number of chunk before leave the team (default={})".format(Peer_DBS_simulator.chunks_before_leave))
+        parser.add_argument("-l", "--chunks_before_leave", default=Peer_DBS_simulator.chunks_before_leave, type=int,
+                            help="Number of chunk before leave the team (default={})"
+                            .format(Peer_DBS_simulator.chunks_before_leave))
 
     def instance(self, args):
         Peer_DBS.peer_port = int(args.peer_port)
@@ -31,6 +34,7 @@ class Peer_simulator(Peer):
         self.peer.send_peer_type()   # Only for simulation purpose
         self.peer.run()
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     peer = Peer_simulator()
@@ -38,6 +42,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     peer.instance(args)
     peer.run(args)
-
-
- 

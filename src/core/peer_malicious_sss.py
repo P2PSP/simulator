@@ -2,9 +2,10 @@
 @package simulator
 peer_malicious_sss module
 """
-from .simulator_stuff import Simulator_stuff as sim
-from .peer_sss import Peer_SSS
 import random
+
+from .peer_sss import Peer_SSS
+from .simulator_stuff import Simulator_stuff as sim
 
 
 class Peer_Malicious_SSS(Peer_SSS):
@@ -66,7 +67,8 @@ class Peer_Malicious_SSS(Peer_SSS):
 
     def send_chunk(self, peer):
         encrypted_chunk = (
-        self.receive_and_feed_previous[0], "B", self.receive_and_feed_previous[2], self.receive_and_feed_previous[3])
+            self.receive_and_feed_previous[0], "B",
+            self.receive_and_feed_previous[2], self.receive_and_feed_previous[3])
         current_round = self.receive_and_feed_previous[2]
         if ((current_round - 1) in self.t) and (self.first_round != (current_round - 1)):
             if self.t[(current_round - 1)] >= self.splitter_t[(current_round - 1)]:

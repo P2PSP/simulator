@@ -3,10 +3,12 @@
 monitor_strpeds module
 """
 
+import struct
+
+from .common import Common
 from .peer_strpeds import Peer_STRPEDS
 from .simulator_stuff import Simulator_socket as socket
-from .common import Common
-import struct
+
 
 class Monitor_STRPEDS(Peer_STRPEDS):
     def __init__(self, id):
@@ -31,6 +33,7 @@ class Monitor_STRPEDS(Peer_STRPEDS):
     def request_chunk(self, chunk_number, peer):
         Peer_STRPEDS.request_chunk(self, chunk_number, peer)
         self.complain(chunk_number)
+
 
 '''    def play_chunk(self, chunk_number):
         if self.chunks[chunk_number % self.buffer_size][1] == "C":

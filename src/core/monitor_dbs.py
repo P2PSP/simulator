@@ -3,11 +3,12 @@
 monitor_dbs module
 """
 
-import random
 import struct
-from .simulator_stuff import Simulator_socket as socket
+
 from .common import Common
 from .peer_dbs import Peer_DBS
+from .simulator_stuff import Simulator_socket as socket
+
 
 class Monitor_DBS(Peer_DBS):
     def __init__(self, id, name, loglevel):
@@ -19,7 +20,6 @@ class Monitor_DBS(Peer_DBS):
         self.team_socket.sendto(msg, self.splitter)
         self.lg.info("{}: [lost chunk {}] sent to {}".format(self.id, chunk_number, self.splitter))
 
-    #def request_chunk(self, chunk_number, peer):
+    # def request_chunk(self, chunk_number, peer):
     #    Peer_DBS.request_chunk(self, chunk_number, peer) # super()?
     #    self.complain(chunk_number)
-

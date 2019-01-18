@@ -5,13 +5,16 @@ splitter_dbs_simulator module
 
 # Simulator specific behavior.
 
+import struct
 import sys
 import time
-import struct
 from threading import Thread
+
 from core.splitter_dbs import Splitter_DBS
-from .simulator_stuff import Simulator_stuff
+
 from .common import Common
+from .simulator_stuff import Simulator_stuff
+
 
 class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
     def __init__(self, name):
@@ -25,7 +28,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
         print("{}: accepted connection from peer {}" .format(self.id, incoming_peer))
 
-        #self.send_the_header()
+        # self.send_the_header()
         self.send_the_chunk_size(serve_socket)
         self.send_public_endpoint(incoming_peer, serve_socket)
         self.send_buffer_size(serve_socket)
@@ -38,7 +41,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         #message = struct.unpack("s", msg)[0]
 
         self.insert_peer(incoming_peer)
-        
+
         if __debug__:
             # ------------------
             # ---- Only for simulation purposes. Unknown in real implementation -----
@@ -50,11 +53,11 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
             if (ptype == 0):
                 self.number_of_monitors += 1
                 # if Simulator_stuff.FEEDBACK:
-                    # Simulator_stuff.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
+                # Simulator_stuff.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,incoming_peer)),"M"))
 
             # S I M U L A T I O N
             if Simulator_stuff.FEEDBACK:
-                Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,incoming_peer))))
+                Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str, incoming_peer))))
             self.lg.debug("{}: number of monitors = {}".format(self.id, self.number_of_monitors))
 
         serve_socket.close()
@@ -70,7 +73,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
             if __debug__:
                 # S I M U L A T I O N
                 if Simulator_stuff.FEEDBACK:
-                    Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str,peer))))
+                    Simulator_stuff.FEEDBACK["DRAW"].put(("O", "Node", "OUT", ','.join(map(str, peer))))
                 if peer[0] == "M" and peer[1] != "P":
                     self.number_of_monitors -= 1
 
@@ -85,7 +88,8 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         # Simulator_stuff.LOCK.acquire(True,0.1)
         time.sleep(Common.CHUNK_CADENCE)  # Simulates bit-rate control
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
-        sys.stderr.write(str(len(self.peer_list))); sys.stderr.flush()
+        sys.stderr.write(str(len(self.peer_list)))
+        sys.stderr.flush()
         return b'C'
 
     def run(self):
@@ -105,7 +109,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
             time.sleep(1)
         print()
 
-        #while self.alive:
+        # while self.alive:
         while len(self.peer_list) > 0:
 
             chunk = self.receive_chunk()
@@ -123,12 +127,14 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
                         Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
                         Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
                         Simulator_stuff.FEEDBACK["DRAW"].put(("T", "M", self.number_of_monitors, self.current_round))
-                        Simulator_stuff.FEEDBACK["DRAW"].put(("T", "P", (len(self.peer_list) - self.number_of_monitors), self.current_round))
+                        Simulator_stuff.FEEDBACK["DRAW"].put(
+                            ("T", "P", (len(self.peer_list) - self.number_of_monitors), self.current_round))
 
             try:
                 peer = self.peer_list[self.peer_number]
             except IndexError:
-                self.lg.warning("{}: the peer with index {} does not exist. peer_list={} peer_number={}".format(self.id, self.peer_number, self.peer_list, self.peer_number))
+                self.lg.warning("{}: the peer with index {} does not exist. peer_list={} peer_number={}".format(
+                    self.id, self.peer_number, self.peer_list, self.peer_number))
                 # raise
 
             message = self.compose_chunk_packet(chunk, peer)
@@ -138,14 +144,14 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
             for i in self.destination_of_chunk:
                 self.lg.debug("{} -> {}".format(counter, i))
                 counter += 1
-            
+
             self.send_chunk(message, peer)
             self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
             try:
                 self.peer_number = (self.peer_number + 1) % len(self.peer_list)
             except ZeroDivisionError:
                 pass
-            
+
 #            self.compute_next_peer_number(peer)
 
             #            except IndexError:
@@ -158,7 +164,8 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
                 if self.peer_number == 0:
                     self.current_round += 1
                     #self.lg.info("round = {}".format(self.current_round))
-                    self.lg.info("{}: round={:03} chunk_number={:05} number_of_peers={:03}".format(self.id, self.current_round, self.chunk_number, len(self.peer_list)))
+                    self.lg.info("{}: round={:03} chunk_number={:05} number_of_peers={:03}".format(
+                        self.id, self.current_round, self.chunk_number, len(self.peer_list)))
                     #print("{}: len(peer_list)={}".format(self.id, len(self.peer_list)))
                     #sys.stderr.write(str(self.current_round) + "/" + str(self.max_number_of_rounds) + " " + str(self.chunk_number) + " " + str(len(self.peer_list)) + "\r")
 
@@ -166,7 +173,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         self.lg.debug("{}: alive = {}".format(self.id, self.alive))
 
         #counter = 0
-        #while (len(self.peer_list) > 0) and (counter < 10):
+        # while (len(self.peer_list) > 0) and (counter < 10):
         #    self.lg.info("{}: peer_list={}".format(self.id, self.peer_list))
         #    time.sleep(0.1)
         #    for p in self.peer_list:
@@ -176,6 +183,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
             Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
             self.lg.debug("{}: Bye sent to simulator".format(self.id))
 
-        print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
+        print("{}: total peers {} in {} rounds, {} peers/round"
+              .format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
         #print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks, (float)(self.total_lost_chunks)/(float)(self.total_received_chunks)))
         print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks))

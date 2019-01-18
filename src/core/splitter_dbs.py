@@ -10,18 +10,20 @@ splitter_dbs module
 # unicast transmissions. The splitter sends a different chunk of
 # stream to each peer, using a random round-robin scheduler.
 
-from .common import Common
-from threading import Thread
+import logging
+# from .simulator_stuff import lg
+import struct
 # from threading import Lock
 import time
-from .simulator_stuff import Simulator_stuff
-from .simulator_stuff import Simulator_socket as socket
-# from .simulator_stuff import lg
-import sys
-import struct
-import logging
+from threading import Thread
 
-#class Splitter_DBS(Simulator_stuff):
+from .common import Common
+from .simulator_stuff import Simulator_socket as socket
+from .simulator_stuff import Simulator_stuff
+
+# class Splitter_DBS(Simulator_stuff):
+
+
 class Splitter_DBS():
     splitter_port = 4552
     max_chunk_loss = 8
@@ -48,9 +50,9 @@ class Splitter_DBS():
         self.outgoing_peer_list = []  # Peers which requested to leave the team
 
         self.chunk_packet_format = "!isIi"
-        
+
         self.current_round = 0  # Number of round (maybe not here).
-        
+
         self.lg.debug("Splitter_DBS: initialized")
 
     def setup_peer_connection_socket(self, port=0):
@@ -60,7 +62,7 @@ class Splitter_DBS():
         host = socket.gethostbyname(socket.gethostname())
         self.peer_connection_socket.bind(('', port))
         self.id = self.peer_connection_socket.getsockname()
-        print("{}: I'm the splitter".format(self.id)) 
+        print("{}: I'm the splitter".format(self.id))
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
@@ -84,7 +86,7 @@ class Splitter_DBS():
             self.lg.info("{}: connection from {}".format(self.id, peer))
             Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()
 
-    #def send_the_header(self):
+    # def send_the_header(self):
     #    pass
 
     def send_the_chunk_size(self, peer_serve_socket):
@@ -92,7 +94,7 @@ class Splitter_DBS():
 
     def send_header_bytes(self, peer_serve_socket):
         pass
-    
+
     def handle_a_peer_arrival(self, connection):
 
         serve_socket = connection[0]
@@ -119,7 +121,7 @@ class Splitter_DBS():
     def send_public_endpoint(self, endpoint, peer_serve_socket):
         self.lg.debug("{}: peer public endpint={}".format(self.id, endpoint))
         # peer_serve_socket.sendall(Splitter_DBS.buffer_size, "H")
-        msg = struct.pack("!Ii",socket.ip2int(endpoint[0]),endpoint[1])
+        msg = struct.pack("!Ii", socket.ip2int(endpoint[0]), endpoint[1])
         peer_serve_socket.sendall(msg)
 
     def send_buffer_size(self, peer_serve_socket):
@@ -142,7 +144,7 @@ class Splitter_DBS():
         self.lg.debug("{}: sending peer_list={}".format(self.id, self.peer_list))
         for p in self.peer_list:
             # peer_serve_socket.sendall(p, "6s")
-            msg = struct.pack("!Ii",socket.ip2int(p[0]),p[1])
+            msg = struct.pack("!Ii", socket.ip2int(p[0]), p[1])
             peer_serve_socket.sendall(msg)
 
     def insert_peer(self, peer):
@@ -165,7 +167,8 @@ class Splitter_DBS():
 
     def process_lost_chunk(self, lost_chunk_number, sender):
         destination = self.get_losser(lost_chunk_number)
-        self.lg.debug("{}: sender {} complains about lost chunk {} with destination {}".format(self.id, sender, lost_chunk_number, destination))
+        self.lg.debug("{}: sender {} complains about lost chunk {} with destination {}".format(
+            self.id, sender, lost_chunk_number, destination))
         #self.total_lost_chunks += 1
         self.increment_unsupportivity_of_peer(destination)
 
@@ -228,7 +231,8 @@ class Splitter_DBS():
                         self.total_received_chunks += self.received_chunks_from[sender]
                         self.total_lost_chunks += self.lost_chunks_from[sender]
                     self.lg.debug("{}: received [goodbye {} {}] from {}".format(self.id, msg[1], msg[2], sender))
-                    self.lg.debug("{}: received_chunks_from[{}]={}".format(self.id, sender, self.received_chunks_from[sender]))
+                    self.lg.debug("{}: received_chunks_from[{}]={}".format(
+                        self.id, sender, self.received_chunks_from[sender]))
                     self.lg.debug("{}: lost_chunks_from[{}]={}".format(self.id, sender, self.lost_chunks_from[sender]))
                     self.lg.debug("{}: total_received_chunks={}".format(self.id, self.total_received_chunks))
                     self.lg.debug("{}: total_lost_chunks={}".format(self.id, self.total_lost_chunks))
@@ -265,7 +269,7 @@ class Splitter_DBS():
         return self.id
 
     def compose_chunk_packet(self, chunk, peer):
-        chunk_msg = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1])
+        chunk_msg = (self.chunk_number, chunk, socket.ip2int(peer[0]), peer[1])
         msg = struct.pack(self.chunk_packet_format, *chunk_msg)
         return msg
 
@@ -297,12 +301,13 @@ class Splitter_DBS():
             try:
                 peer = self.peer_list[self.peer_number]
             except IndexError:
-                self.lg.warning("{}: the peer with index {} does not exist. peer_list={} peer_number={}".format(self.id, self.peer_number, self.peer_list, self.peer_number))
+                self.lg.warning("{}: the peer with index {} does not exist. peer_list={} peer_number={}".format(
+                    self.id, self.peer_number, self.peer_list, self.peer_number))
                 # raise
 
             message = self.compose_chunk_packet(chunk, peer)
             self.destination_of_chunk[self.chunk_number % Splitter_DBS.buffer_size] = peer
-            #if __debug__:
+            # if __debug__:
             #    self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
             #    counter = 0
             #    for i in self.destination_of_chunk:
@@ -319,6 +324,7 @@ class Splitter_DBS():
         self.alive = False
         self.lg.debug("{}: alive = {}".format(self.id, self.alive))
 
-        print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
+        print("{}: total peers {} in {} rounds, {} peers/round"
+              .format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
         #print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks, (float)(self.total_lost_chunks)/(float)(self.total_received_chunks)))
         print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks))

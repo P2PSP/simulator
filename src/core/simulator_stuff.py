@@ -3,19 +3,19 @@
 simulator module
 """
 
+# import logging as lg
+import logging
 # import time
 import socket
 import struct
 import sys
 from datetime import datetime
-import os
-from .common import Common
 
-# import logging as lg
-import logging
+from .common import Common
 
 # import coloredlogs
 # coloredlogs.install()
+
 
 class Simulator_stuff:
     # Shared lists between malicious peers.
@@ -28,7 +28,8 @@ class Simulator_stuff:
     # LOCK = ""
 
     #loglevel = logging.ERROR
-    
+
+
 class Simulator_socket():
     AF_INET = socket.AF_INET
     AF_UNIX = socket.AF_UNIX
@@ -38,7 +39,7 @@ class Simulator_socket():
     SO_REUSEADDR = socket.SO_REUSEADDR
     timeout = socket.timeout
     error = socket.error
-    
+
     def __init__(self, family=None, typ=None, sock=None):
 
         # lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -48,7 +49,7 @@ class Simulator_socket():
         # formatter = logging.Formatter(fmt='simulator_stuff.py - %(asctime)s.%(msecs)03d - %(levelname)s - %(message)s',datefmt='%H:%M:%S')
         # handler.setFormatter(formatter)
         # self.lg.addHandler(handler)
-        #self.lg.setLevel(logging.ERROR)
+        # self.lg.setLevel(logging.ERROR)
         self.lg.setLevel(Common.loglevel)
         # self.lg.critical('Critical messages enabled.')
         # self.lg.error('Error messages enabled.')
@@ -74,31 +75,33 @@ class Simulator_socket():
 
     def isolate(self, endpoint1, endpoint2):
         self.isolations.add((endpoint1, endpoint2))
-    
+
     def send(self, msg):
         if (self.sock.getsockname(), self.sock.getpeername()) not in self.isolations:
             self.lg.debug("{} - [{}] => {}".format(self.sock.getsockname(), msg, self.sock.getpeername()))
             return self.sock.send(msg)
         else:
-            self.lg.warning("{} not sent from {} to {} (isolated)".format(msg, self.sock.getsockname(), self.sock.getpeername()))
+            self.lg.warning("{} not sent from {} to {} (isolated)".format(
+                msg, self.sock.getsockname(), self.sock.getpeername()))
 
     def recv(self, msg_length):
         msg = self.sock.recv(msg_length)
         while len(msg) < msg_length:
             msg += self.sock.recv(msg_length - len(msg))
-        self.lg.debug("{} <= [{}] - {}".format(self.sock.getsockname(), \
-                                              msg, \
-                                              self.sock.getpeername()))
+        self.lg.debug("{} <= [{}] - {}".format(self.sock.getsockname(),
+                                               msg,
+                                               self.sock.getpeername()))
         return msg
 
     def sendall(self, msg):
         if (self.sock.getsockname(), self.sock.getpeername()) not in self.isolations:
-            self.lg.debug("{} - [{}] => {}".format(self.sock.getsockname(), \
-                                                  msg, \
-                                                  self.sock.getpeername()))
+            self.lg.debug("{} - [{}] => {}".format(self.sock.getsockname(),
+                                                   msg,
+                                                   self.sock.getpeername()))
             return self.sock.sendall(msg)
         else:
-            self.lg.warning("{} not sent from {} to {} (isolated)".format(msg, self.sock.getsockname(), self.sock.getpeername()))
+            self.lg.warning("{} not sent from {} to {} (isolated)".format(
+                msg, self.sock.getsockname(), self.sock.getpeername()))
 
     def sendto(self, msg, address):
         if (self.sock.getsockname(), address) not in self.isolations:
@@ -107,7 +110,8 @@ class Simulator_socket():
                 return self.sock.sendto(msg, socket.MSG_DONTWAIT, address)
             except ConnectionRefusedError:
                 self.lg.warning(
-                    "simulator_stuff.sendto: the message {} has not been delivered because the destination {} left the team".format(
+                    "simulator_stuff.sendto: the message {} has not been \
+                     delivered because the destination {} left the team".format(
                         msg, address))
             except KeyboardInterrupt:
                 self.lg.warning("simulator_stuff.sendto: send_packet {} to {}".format(msg, address))
@@ -123,9 +127,9 @@ class Simulator_socket():
     def recvfrom(self, max_msg_length):
         try:
             msg, sender = self.sock.recvfrom(max_msg_length)
-            self.lg.debug("{} <-- [{}] - {}".format(self.sock.getsockname(), \
-                                                   msg, \
-                                                   sender))
+            self.lg.debug("{} <-- [{}] - {}".format(self.sock.getsockname(),
+                                                    msg,
+                                                    sender))
             return (msg, sender)
         except socket.timeout:
             raise
@@ -141,13 +145,13 @@ class Simulator_socket():
 
     def bind(self, address):
         self.lg.debug("simulator_stuff.bind({}): {}".format(address, self.sock))
-        #if self.type == self.SOCK_STREAM:
+        # if self.type == self.SOCK_STREAM:
         try:
             return self.sock.bind(address)
         except:
             self.lg.error("{}: when binding address \"{}\"".format(sys.exc_info()[0], address))
             raise
-        #else:
+        # else:
         #    try:
         #        return self.sock.bind(address)
         #    except:
@@ -166,7 +170,7 @@ class Simulator_socket():
         self.lg.debug("simulator_stuff.settimeout({}): {}".format(value, self.sock))
         return self.sock.settimeout(value)
 
-    #def timeout(self):
+    # def timeout(self):
     #    self.lg.debug("simulator_stuff: timeout on".format(self.sock))
     #    return self.sock.timeout
 
@@ -196,16 +200,17 @@ class Simulator_socket():
     def int2ip(addr):
         return socket.inet_ntoa(struct.pack("!I", addr))
 
+
 def hash(addr):
     return chr(0x30+addr)
 
-#def f(x):
+# def f(x):
 #    return (x*x)
 
-#def g(x):
+# def g(x):
 #    return (x*x*x)
 
-#def hash(addr):
+# def hash(addr):
 #    if addr is None or len(addr)<2:
 #        return '[]'
 #    blk = addr[0].split('.')
@@ -215,4 +220,3 @@ def hash(addr):
 #    sh = (sh + f(bk[3]))
 #    sh = (sh + g(addr[1]))
 #    return chr(33+sh%94)
-

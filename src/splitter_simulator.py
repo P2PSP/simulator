@@ -1,8 +1,10 @@
 import argparse
 import logging
+
 from core.splitter_dbs import Splitter_DBS
 from core.splitter_dbs_simulator import Splitter_DBS_simulator
 from splitter import Splitter
+
 
 class Splitter_simulator(Splitter):
 
@@ -16,6 +18,7 @@ class Splitter_simulator(Splitter):
         if __debug__:
             lg = logging.getLogger("Splitter_DBS_simulator")
             lg.setLevel(args.loglevel)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

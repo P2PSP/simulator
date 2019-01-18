@@ -13,11 +13,12 @@ splitter_dbs module
 # TODO: In each round peers are selected at random, but all peers are
 # sent a chunk, in a round).
 
-import time
 import struct
-import logging
+import time
+
 from .simulator_stuff import Simulator_socket as socket
 from .splitter_dbs import Splitter_DBS
+
 
 class Splitter_DBS_latency(Splitter_DBS):
 
@@ -27,5 +28,5 @@ class Splitter_DBS_latency(Splitter_DBS):
         self.lg.debug("{}: chunk {} sent to {}".format(self.id, chunk_msg[0], peer))
 
     def compose_message(self, chunk, peer):
-        message = (self.chunk_number, chunk, socket.ip2int(peer[0]),peer[1], time.time())
+        message = (self.chunk_number, chunk, socket.ip2int(peer[0]), peer[1], time.time())
         return message
