@@ -2,12 +2,13 @@
 @package p2psp-simulator
 splitter_sss module
 """
+import sys
+import time
 from threading import Thread
-from .splitter_strpeds import Splitter_STRPEDS
+
 from .common import Common
 from .simulator_stuff import Simulator_stuff as sim
-import time
-import sys
+from .splitter_strpeds import Splitter_STRPEDS
 
 
 class Splitter_SSS(Splitter_STRPEDS):

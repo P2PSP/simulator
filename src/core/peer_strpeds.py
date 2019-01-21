@@ -2,12 +2,12 @@
 @package simulator
 peer_strpeds module
 """
-from .common import Common
-from .simulator_stuff import Simulator_stuff as sim
-from .simulator_stuff import Simulator_socket as socket
-from .peer_dbs import Peer_DBS
 import struct
 
+from .common import Common
+from .peer_dbs import Peer_DBS
+from .simulator_stuff import Simulator_socket as socket
+from .simulator_stuff import Simulator_stuff as sim
 
 
 class Peer_STRPEDS(Peer_DBS):

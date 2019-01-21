@@ -1,5 +1,6 @@
-import socket
 import queue
+import socket
+
 
 class Peer_STS():
 
@@ -7,7 +8,7 @@ class Peer_STS():
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect(server)
-            print("Conncted to " +  str(server))
+            print("Conncted to " + str(server))
             if queue.empty:
                 queue.put(server)
             s.close()
@@ -17,10 +18,9 @@ class Peer_STS():
     def connect_closest_splitter(self, splitters):
         q = queue.Queue()
         for s in splitters:
-            
+            pass
 
-
-    def salute_the_load_balancer(self, balancer, channel)
+    def salute_the_load_balancer(self, balancer, channel):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(balancer)
         s.send("NEW " + channel)
@@ -37,4 +37,3 @@ class Peer_STS():
         salute_the_load_balancer(balancer, channel)
         splitters = get_splitters_list(tracker, channel)
         self.connected_splitter = connect_closest_splitter(splitters)
-        

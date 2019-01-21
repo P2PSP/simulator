@@ -3,11 +3,13 @@
 peer_dbs_max_degree module
 """
 
-import struct
 import random
-from .simulator_stuff import Simulator_stuff as sim
-from .simulator_stuff import Simulator_socket as socket
+import struct
+
 from .peer_dbs import Peer_DBS
+from .simulator_stuff import Simulator_socket as socket
+from .simulator_stuff import Simulator_stuff as sim
+
 
 class Peer_DBS_max_degree(Peer_DBS):
 
@@ -22,23 +24,23 @@ class Peer_DBS_max_degree(Peer_DBS):
         # Peer self.id will forward by default all chunks originated
         # at itself.
         self.forward[self.id] = []
-        
+
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("li", msg)
-            peer = (socket.int2ip(peer[0]),peer[1])
+            peer = (socket.int2ip(peer[0]), peer[1])
             self.team.append(peer)
             if counter < self.MAX_DEGREE:
                 self.forward[self.id].append(peer)
             self.index_of_peer[peer] = counter
 
             # S I M U L A T O R
-            if counter >= self.number_of_monitors: # Monitors never are isolated
+            if counter >= self.number_of_monitors:  # Monitors never are isolated
                 r = random.random()
                 if r <= self.link_failure_prob:
                     self.team_socket.isolate(self.id, peer)
                     self.lg.critical("{}: {} isolated of {}".format(self.ext_id, self.id, peer))
-                
+
             self.say_hello(peer)
             self.lg.debug("{}: peer {} is in the team".format(self.ext_id, peer))
             counter += 1
@@ -63,7 +65,8 @@ class Peer_DBS_max_degree(Peer_DBS):
 
         origin = self.chunks[chunk_number % self.buffer_size][self.ORIGIN]
 
-        self.lg.debug("{}: received [request {}] from {} (origin={}, forward={})".format(self.ext_id, chunk_number, sender, origin, self.forward))
+        self.lg.debug("{}: received [request {}] from {} (origin={}, forward={})".format(
+            self.ext_id, chunk_number, sender, origin, self.forward))
 
         if origin != None:
             # In this case, I can start forwarding chunks from origin.
@@ -87,20 +90,23 @@ class Peer_DBS_max_degree(Peer_DBS):
             else:
                 self.forward[origin] = []
                 self.pending[sender] = []
-            
+
             self.lg.debug("{}: chunks from {} will be sent to {}".format(self.ext_id, origin, sender))
 
             if __debug__:
                 # S I M U L A T I O N
                 if sim.FEEDBACK:
-                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
-                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
+                    sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str, sender))))
+                    sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(
+                        map(str, self.id)), ','.join(map(str, sender))))
         else:
             # Otherwise, I can't help.
             if __debug__:
-                self.lg.debug("{}: request received from {}, but I haven't the requested chunk {}".format(self.ext_id, sender, chunk_number))
+                self.lg.debug("{}: request received from {}, but I haven't the requested chunk {}".format(
+                    self.ext_id, sender, chunk_number))
 
-        self.lg.debug("{}: chunk={} origin={} forward={}".format(self.ext_id, self.chunks[chunk_number % self.buffer_size], origin, self.forward))
+        self.lg.debug("{}: chunk={} origin={} forward={}".format(
+            self.ext_id, self.chunks[chunk_number % self.buffer_size], origin, self.forward))
         self.lg.debug("{}: length_forward={} forward={}".format(self.ext_id, len(self.forward), self.forward))
 
     def process_hello(self, sender):
@@ -124,12 +130,14 @@ class Peer_DBS_max_degree(Peer_DBS):
             if sender not in self.forward[self.id]:
                 self.forward[self.id].append(sender)
                 self.pending[sender] = []
-                self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(self.ext_id, sender, self.id, sender, self.forward))
+                self.lg.info("{}: inserted {} in forward[{}] by [hello] from {} (forward={})".format(
+                    self.ext_id, sender, self.id, sender, self.forward))
                 self.debt[sender] = 0
 
                 if __debug__:
                     # S I M U L A T I O N
                     if sim.FEEDBACK:
-                        sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
-                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.id)), ','.join(map(str,sender))))
+                        sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str, sender))))
+                        sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(
+                            map(str, self.id)), ','.join(map(str, sender))))
         self.team.append(sender)

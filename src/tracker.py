@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 
-from threading import Thread
 import socket
 import struct
+from threading import Thread
+
 
 class Tracker:
 
     def run(self):
         IM_NEW_SPLITTER = 0
         SEND_SPLITTERS = 1
-        channel_to_splitters={}
+        channel_to_splitters = {}
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(("0.0.0.0", 8888))
@@ -33,10 +34,11 @@ class Tracker:
             else:
                 print("Unexpexted message format")
             connection.close()
-                
+
     def main(self):
         Thread(target=self.run).start()
-            
+
+
 if __name__ == "__main__":
     t = Tracker()
     t.main()

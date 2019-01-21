@@ -1,50 +1,52 @@
 #!/home/vruiz/.pyenv/shims/python -i
 
-#from core.splitter_dbs_latency import Splitter_DBS_latency as Splitter_DBS
-from core.splitter_dbs import Splitter_DBS
-from core.splitter_dbs_simulator import Splitter_DBS_simulator
-from core.splitter_strpeds import Splitter_STRPEDS
-from core.splitter_sss import Splitter_SSS
-#from core.peer_dbs_latency import Peer_DBS_latency as Peer_DBS
-from core.peer_dbs import Peer_DBS
-from core.peer_ims import Peer_IMS
-from core.peer_dbs_simulator import Peer_DBS_simulator
-from core.peer_ims_simulator import Peer_IMS_simulator
-from core.peer_strpeds import Peer_STRPEDS
-from core.peer_sss import Peer_SSS
-from core.peer_malicious import Peer_Malicious
-from core.peer_malicious_sss import Peer_Malicious_SSS
-#from core.monitor_dbs_latency import Monitor_DBS_latency as Monitor_DBS
-from core.monitor_dbs import Monitor_DBS
-from core.monitor_ims import Monitor_IMS
-from core.monitor_dbs_simulator import Monitor_DBS_simulator
-from core.monitor_ims_simulator import Monitor_IMS_simulator
-from core.monitor_strpeds import Monitor_STRPEDS
-from core.monitor_sss import Monitor_SSS
-from core.common import Common
-from core.simulator_stuff import Simulator_stuff as sim
-# from core.simulator_stuff import lg
-from multiprocessing import Process, Queue, Manager
-from glob import glob
+import logging
+import os
+import platform
 import time
-import fire
+from glob import glob
+# from core.simulator_stuff import lg
+from multiprocessing import Manager, Process, Queue
 
+import fire
 # import networkx as nx
 # import matplotlib.pyplot as plt
 # import matplotlib.cm as cm
 import numpy as np
-import platform
-import os
-import logging
+
+from core.common import Common
+#from core.monitor_dbs_latency import Monitor_DBS_latency as Monitor_DBS
+from core.monitor_dbs import Monitor_DBS
+from core.monitor_dbs_simulator import Monitor_DBS_simulator
+from core.monitor_ims import Monitor_IMS
+from core.monitor_ims_simulator import Monitor_IMS_simulator
+from core.monitor_sss import Monitor_SSS
+from core.monitor_strpeds import Monitor_STRPEDS
+#from core.peer_dbs_latency import Peer_DBS_latency as Peer_DBS
+from core.peer_dbs import Peer_DBS
+from core.peer_dbs_simulator import Peer_DBS_simulator
+from core.peer_ims import Peer_IMS
+from core.peer_ims_simulator import Peer_IMS_simulator
+from core.peer_malicious import Peer_Malicious
+from core.peer_malicious_sss import Peer_Malicious_SSS
+from core.peer_sss import Peer_SSS
+from core.peer_strpeds import Peer_STRPEDS
+from core.simulator_stuff import Simulator_stuff as sim
+#from core.splitter_dbs_latency import Splitter_DBS_latency as Splitter_DBS
+from core.splitter_dbs import Splitter_DBS
+from core.splitter_dbs_simulator import Splitter_DBS_simulator
+from core.splitter_sss import Splitter_SSS
+from core.splitter_strpeds import Splitter_STRPEDS
 
 # import logging as lg
 
+
 class Simulator():
-    P_IN = 1.0 # 0.4
-    P_MoP = 0.0 # 0.2
-    P_WIP = 1.0 # 0.6
-    P_MP = 0.0 # 0.2
-    
+    P_IN = 1.0  # 0.4
+    P_MoP = 0.0  # 0.2
+    P_WIP = 1.0  # 0.6
+    P_MP = 0.0  # 0.2
+
     def __init__(self, drawing_log="/tmp/drawing_log.txt",
                  set_of_rules="DBS",
                  number_of_monitors=1,
@@ -57,7 +59,7 @@ class Simulator():
                  max_degree=5,
                  loglevel=logging.ERROR,
                  gui=False):
-        
+
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         logging.basicConfig(format="%(message)s - %(asctime)s - %(name)s - %(levelname)s")
         self.lg = logging.getLogger(__name__)
@@ -98,13 +100,16 @@ class Simulator():
 
     def compute_buffer_size(self):
         # return self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        team_size = self.compute_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious) * 8)
+        team_size = self.compute_team_size(
+            (self.number_of_monitors + self.number_of_peers + self.number_of_malicious) * 8)
         if (team_size < 32):
             return 32
         else:
             return team_size
 
     def run_a_splitter(self, splitter_id):
+        """ Start a splitter
+        """
         Common.CHUNK_CADENCE = self.chunk_cadence
         if self.buffer_size == 0:
             Common.BUFFER_SIZE = self.compute_buffer_size()
@@ -131,7 +136,7 @@ class Simulator():
         splitter_id['address'] = splitter.get_id()
         splitter.max_number_of_rounds = self.number_of_rounds
         splitter.run()
-        #while splitter.current_round < self.number_of_rounds:
+        # while splitter.current_round < self.number_of_rounds:
         #    self.lg.info("{}: splitter.current_round = {}".format(self.id, splitter.current_round))
         #    time.sleep(1)
         #splitter.alive = False
@@ -154,7 +159,7 @@ class Simulator():
                 self.lg.info("simulator: IMS monitor created")
             elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
-                self.lg.info("simulator: STRPEDS monitor created")                
+                self.lg.info("simulator: STRPEDS monitor created")
             elif self.set_of_rules == "CIS-SSS":
                 peer = Monitor_SSS(id)
                 self.lg.info("simulator: SSS monitor created")
@@ -192,8 +197,8 @@ class Simulator():
         peer.receive_the_number_of_peers()
         peer.listen_to_the_team()
         peer.receive_the_list_of_peers()
-        #peer.send_ready_for_receiving_chunks()
-        peer.send_peer_type()   #Only for simulation purpose
+        # peer.send_ready_for_receiving_chunks()
+        peer.send_peer_type()  # Only for simulation purpose
         # peer.buffer_data()
         # peer.start()
         peer.run()
@@ -208,6 +213,8 @@ class Simulator():
         self.lg.info("simulator: {}: left the team".format(id))
 
     def store(self):
+        """Create a log file for drawing
+        """
         drawing_log_file = open(self.drawing_log, "w", 1)
 
         # Configuration in the first line
@@ -223,8 +230,8 @@ class Simulator():
             # Sometimes the queue doesn't receive Bye message.
             # try:
             m = queue.get()
-                # except:
-                #    break
+            # except:
+            #    break
 
         drawing_log_file.write("Bye")
         self.lg.debug("CLOSING STORE")
@@ -255,7 +262,7 @@ class Simulator():
         # Listen to the team for simulation life
         sim.FEEDBACK["STATUS"] = Queue()
 
-        # Create shared list for CIS set of rules (only when cis is choosen?)
+        # Create shared list for CIS set of rules (only when cis is chosen?)
         manager = Manager()
         sim.SHARED_LIST["malicious"] = manager.list()
         sim.SHARED_LIST["regular"] = manager.list()
@@ -269,16 +276,17 @@ class Simulator():
         self.splitter_id = manager.dict()
 
         # Run splitter
-        p = Process(target=self.run_a_splitter,args=[self.splitter_id])
+        p = Process(target=self.run_a_splitter, args=[self.splitter_id])
         p.start()
         self.processes["S"] = p.pid
         self.attended_monitors = 0
         self.attended_peers = 0
         self.attended_mps = 0
-        
+
         time.sleep(1)
         # run a monitor
-        p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "monitor", "M" + str(self.attended_monitors + 0), True])
+        p = Process(target=self.run_a_peer, args=[self.splitter_id['address'],
+                                                  "monitor", "M" + str(self.attended_monitors + 0), True])
         p.start()
         self.processes["M" + str(self.attended_monitors + 1)] = p.pid
         self.attended_monitors += 1
@@ -286,7 +294,7 @@ class Simulator():
         queue = sim.FEEDBACK["STATUS"]
         m = queue.get()
         while m[0] != "Bye" and self.current_round < self.number_of_rounds:
-            if (m[0] == "R"):
+            if m[0] == "R":
                 self.current_round = m[1]
                 r = np.random.uniform(0, 1)
                 if r <= Simulator.P_IN:
@@ -316,19 +324,22 @@ class Simulator():
         option = np.where(np.random.multinomial(1, probabilities))[0][0]
         if option == 0:
             if self.attended_monitors < self.number_of_monitors:
-                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "monitor", "M" + str(self.attended_monitors + 0)])
+                p = Process(target=self.run_a_peer, args=[
+                            self.splitter_id['address'], "monitor", "M" + str(self.attended_monitors + 0)])
                 p.start()
                 self.processes["M" + str(self.attended_monitors + 1)] = p.pid
                 self.attended_monitors += 1
         elif option == 1:
             if self.attended_peers < self.number_of_peers:
-                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "peer", "P" + str(self.attended_peers + 1)])
+                p = Process(target=self.run_a_peer, args=[
+                            self.splitter_id['address'], "peer", "P" + str(self.attended_peers + 1)])
                 p.start()
                 self.processes["P" + str(self.attended_peers + 1)] = p.pid
                 self.attended_peers += 1
         elif option == 2:
             if self.attended_mps < self.number_of_malicious:
-                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "malicious", "MP" + str(self.attended_mps + 1)])
+                p = Process(target=self.run_a_peer, args=[
+                            self.splitter_id['address'], "malicious", "MP" + str(self.attended_mps + 1)])
                 p.start()
                 self.processes["MP" + str(self.attended_mps + 1)] = p.pid
                 self.attended_mps += 1

@@ -1,9 +1,12 @@
 import argparse
 import logging
+
 from core.splitter_dbs import Splitter_DBS
 
 # Abstract class created only for minimizing the code of the
 # inheritaged classes (Splitter_simulator and Splitter_video).
+
+
 class Splitter():
 
     def add_args(self, parser):
@@ -52,6 +55,7 @@ class Splitter():
         self.splitter.setup_team_socket()
         self.splitter_address = self.splitter.get_id()
         self.splitter.run()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
