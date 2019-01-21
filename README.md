@@ -30,7 +30,7 @@ $ cd src
 $ python3 -u simulator.py run [options]
 ```
 ### Options
-**--set_of_rules** SET_OF_RULES (currently available: dbs, cis and cis-sss)  
+**--set_of_rules** SET_OF_RULES (currently available: DBS and IMS)  
 **--number-of-monitors** NUMBER_OF_MONITORS  
 **--number-of-peers** NUMBER_OF_PEERS  
 **--number-of-malicious** NUMBER_OF_MALICIOUS (optional)  
@@ -41,7 +41,7 @@ $ python3 -u simulator.py run [options]
 Example:
 ```
 # inside src folder, run
-$ python simulator.py run --set-of-rules dbs --number-of-monitors 1 --number-of-peers 20 --number-of-rounds 20 --drawing-log output_file
+$ python simulator.py run --set-of-rules DBS --number-of-monitors 1 --number-of-peers 20 --number-of-rounds 20 --drawing-log output_file
 ```
 
 ## Drawing the simulation
