@@ -1,16 +1,19 @@
 #!/home/vruiz/.pyenv/shims/python -i
 
-from simulator import Simulator
-from core.splitter_dbs_latency import Splitter_DBS_latency as Splitter_DBS
-from core.peer_dbs_max_degree_latency import Peer_DBS_max_degree_latency as Peer_DBS
-from core.monitor_dbs_max_degree_latency import Monitor_DBS_max_degree_latency as Monitor_DBS
-from core.common import Common
-
 import fire
 import numpy as np
 
+from core.common import Common
+from core.monitor_dbs_max_degree_latency import \
+    Monitor_DBS_max_degree_latency as Monitor_DBS
+from core.peer_dbs_max_degree_latency import \
+    Peer_DBS_max_degree_latency as Peer_DBS
+from core.splitter_dbs_latency import Splitter_DBS_latency as Splitter_DBS
+from simulator import Simulator
+
+
 class Simulator_with_latency(Simulator):
-    def run_a_splitter(self,splitter_id):
+    def run_a_splitter(self, splitter_id):
         Common.CHUNK_CADENCE = self.chunk_cadence
         if self.buffer_size == 0:
             Common.BUFFER_SIZE = self.compute_buffer_size()
@@ -33,7 +36,7 @@ class Simulator_with_latency(Simulator):
         splitter_id['address'] = splitter.get_id()
         splitter.max_number_of_rounds = self.number_of_rounds
         splitter.run()
-        #while splitter.current_round < self.number_of_rounds:
+        # while splitter.current_round < self.number_of_rounds:
         #    self.lg.info("{}: splitter.current_round = {}".format(self.id, splitter.current_round))
         #    time.sleep(1)
         #splitter.alive = False
@@ -56,7 +59,7 @@ class Simulator_with_latency(Simulator):
                 self.lg.info("simulator: IMS monitor created")
             elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
-                self.lg.info("simulator: STRPEDS monitor created")                
+                self.lg.info("simulator: STRPEDS monitor created")
             elif self.set_of_rules == "CIS-SSS":
                 peer = Monitor_SSS(id)
                 self.lg.info("simulator: SSS monitor created")
@@ -95,7 +98,7 @@ class Simulator_with_latency(Simulator):
         peer.listen_to_the_team()
         peer.receive_the_list_of_peers()
         peer.send_ready_for_receiving_chunks()
-        peer.send_peer_type()   #Only for simulation purpose
+        peer.send_peer_type()  # Only for simulation purpose
         # peer.buffer_data()
         # peer.start()
         peer.run()
@@ -108,5 +111,6 @@ class Simulator_with_latency(Simulator):
             time.sleep(1)
         '''
         self.lg.info("simulator: {}: left the team".format(id))
+
 
 fire.Fire(Simulator_with_latency)

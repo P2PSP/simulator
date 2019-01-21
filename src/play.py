@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-import time
-import fire
-import networkx as nx
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import numpy as np
 import logging
+import time
+
+import fire
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
 
 
 class Play():
@@ -142,7 +143,7 @@ class Play():
         buffer_in = [pos for pos, char in enumerate(senders_list) if char != ""]
 
         self.lineIN.set_xdata([self.buffer_order[node]] * len(buffer_in))
-        
+
         for pos in buffer_in:
             sender_node = senders_list[pos]
             if sender_node != "S":
@@ -161,7 +162,8 @@ class Play():
     def plot_clr(self):
         self.clrs_per_round = []
         self.clr_figure, self.clr_ax = plt.subplots()
-        self.lineCLR, = self.clr_ax.plot([1, 2], [10, 10], color='#000000', label="CLR", marker='o', ls='None', markeredgecolor='#000000', animated=True)
+        self.lineCLR, = self.clr_ax.plot([1, 2], [10, 10], color='#000000', label="CLR",
+                                         marker='o', ls='None', markeredgecolor='#000000', animated=True)
         self.clr_figure.suptitle("Chunk Loss Ratio", size=16)
         plt.legend(loc=2, numpoints=1)
         plt.axis([0, self.number_of_rounds, 0, 1])

@@ -1,9 +1,11 @@
 import argparse
+
 from core.monitor_dbs import Monitor_DBS
 from core.monitor_dbs_video import Monitor_DBS_video
 from core.monitor_ims_video import Monitor_IMS_video
 from monitor import Monitor
 from peer_video import Peer_video
+
 
 class Monitor_video(Monitor, Peer_video):
 
@@ -18,6 +20,7 @@ class Monitor_video(Monitor, Peer_video):
             self.peer = Monitor_DBS_video("P", "Monitor_DBS_video", args.loglevel)
         else:
             self.peer = Monitor_IMS_video("P", "Monitor_IMS_video", args.loglevel)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

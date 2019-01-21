@@ -1,8 +1,10 @@
 import argparse
+
 from core.peer_dbs import Peer_DBS
 from core.peer_dbs_video import Peer_DBS_video
 from core.peer_ims_video import Peer_IMS_video
 from peer import Peer
+
 
 class Peer_video(Peer):
 
@@ -21,7 +23,7 @@ class Peer_video(Peer):
 
     def run(self, args):
         self.peer.wait_for_the_player()
-        #self.peer.request_the_video_from_the_source()
+        # self.peer.request_the_video_from_the_source()
         self.peer.connect_to_the_splitter(peer_port=args.peer_port)
         self.peer.receive_chunk_size()
         self.peer.receive_public_endpoint()
@@ -32,6 +34,7 @@ class Peer_video(Peer):
         self.peer.listen_to_the_team()
         self.peer.receive_the_list_of_peers()
         self.peer.run()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

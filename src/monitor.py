@@ -1,9 +1,11 @@
 import argparse
 import logging
-from peer import Peer
-from core.peer_dbs import Peer_DBS
+
 from core.monitor_dbs import Monitor_DBS
 from core.monitor_ims import Monitor_IMS
+from core.peer_dbs import Peer_DBS
+from peer import Peer
+
 
 class Monitor(Peer):
 

@@ -3,16 +3,15 @@
 peer_dbs_minimizing_jitter module
 """
 
-import time
-import struct
-import logging
 import random
 from threading import Thread
+
 from .common import Common
-from .simulator_stuff import Simulator_stuff as sim
-from .simulator_stuff import Simulator_socket as socket
-from .simulator_stuff import hash
 from .peer_dbs import Peer_DBS
+from .simulator_stuff import Simulator_socket as socket
+from .simulator_stuff import Simulator_stuff as sim
+from .simulator_stuff import hash
+
 
 class Peer_DBS_minimizing_jitter(Peer_DBS):
 

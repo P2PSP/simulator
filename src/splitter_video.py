@@ -1,8 +1,10 @@
 import argparse
 import logging
+
 from core.splitter_dbs import Splitter_DBS
 from core.splitter_dbs_video import Splitter_DBS_video
 from splitter import Splitter
+
 
 class Splitter_video(Splitter):
 
@@ -43,6 +45,7 @@ class Splitter_video(Splitter):
         if __debug__:
             lg = logging.getLogger("Splitter_DBS_video")
             lg.setLevel(args.loglevel)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

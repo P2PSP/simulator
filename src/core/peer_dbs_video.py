@@ -10,17 +10,19 @@ peer_dbs_video module
 
 import random
 import struct
+
 from .common import Common
-from .simulator_stuff import Simulator_socket as socket
 from .peer_dbs import Peer_DBS
+from .simulator_stuff import Simulator_socket as socket
+
 
 class Peer_DBS_video(Peer_DBS):
 
     player_port = 9999
-    #header_chunks = 30 # chunks
+    # header_chunks = 30 # chunks
     #source = ("localhost", 8000)
 
-    #def __init__(self, id, name, loglevel):
+    # def __init__(self, id, name, loglevel):
     #    super().__init_(id, name, loglevel)
 
     def wait_for_the_player(self):
@@ -31,7 +33,7 @@ class Peer_DBS_video(Peer_DBS):
         print("{}: waiting for the player at {}"
               .format(self.id, self.player_socket.getsockname()))
         self.player_socket = self.player_socket.accept()[0]
-        #self.player_socket.setblocking(0)
+        # self.player_socket.setblocking(0)
         print("{}: Player connected. The player is {}".format(self.id, self.player_socket.getpeername()))
         #GET_bytes = self.player_socket.recv(1024)
         #GET = GET_bytes.decode("ascii")
@@ -39,13 +41,13 @@ class Peer_DBS_video(Peer_DBS):
         #source = GET.split(': ')[1].split("\r\n")[0]
         #print("GET_channel={} /// source={} /// {}".format(GET_channel, source, source.split(':')[0]))
         #self.source = (source.split(':')[0], int(source.split(':')[1]))
-        #print("source={}".format(source))
+        # print("source={}".format(source))
         ##self.GET_message = 'GET /' + channel + ' HTTP/1.1\r\n'
         ##self.GET_message += '\r\n'
         #self.GET_message = GET_channel + "\r\n"
 
     # Same function as splitter_dbs_video's one
-    #def request_the_video_from_the_source(self):
+    # def request_the_video_from_the_source(self):
     #    self.source_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
     #    try:
     #        self.source_socket.connect(self.source)
@@ -59,7 +61,7 @@ class Peer_DBS_video(Peer_DBS):
     #    self.lg.debug("{}: GET_message={}".format(self.id, self.GET_message))
 
     # Same function as splitter_dbs_video's one
-    #def receive_header_chunk(self):
+    # def receive_header_chunk(self):
     #    chunk = self.source_socket.recv(self.chunk_size)
     #    prev_size = 0
     #    while len(chunk) < self.chunk_size:
@@ -83,7 +85,7 @@ class Peer_DBS_video(Peer_DBS):
     #        chunk += self.source_socket.recv( - len(chunk))
     #    return chunk
 
-    #def receive_header_chunks(self):
+    # def receive_header_chunks(self):
     #    message = self.splitter_socket.recv(struct.calcsize("!H"))
     #    self.header_chunks = struct.unpack("!H", message)[0]
     #    #self.header_chunks = socket.ntohs(value)
@@ -101,7 +103,8 @@ class Peer_DBS_video(Peer_DBS):
         received = 0
         data = ""
         while received < header_size_in_bytes:
-            self.lg.debug("{}: Percentage of header received = {:.2%}".format(self.id, (1.0*received)/header_size_in_bytes))
+            self.lg.debug("{}: Percentage of header received = {:.2%}".format(
+                self.id, (1.0*received)/header_size_in_bytes))
             data = self.splitter_socket.recv(header_size_in_bytes - received)
             received += len(data)
             try:
@@ -115,7 +118,7 @@ class Peer_DBS_video(Peer_DBS):
 
         self.lg.debug("{}: received {} bytes of header".format(self.id, received))
 
-    #def relay_header_to_player(self):
+    # def relay_header_to_player(self):
     #    self.lg.debug("{}: Relaying the stream header from {} to {}".format(self.id, self.source, self.player))
     #    for i in range(Peer_DBS_video.header_chunks):
     #        header_chunk = self.receive_header_chunk()
@@ -132,12 +135,12 @@ class Peer_DBS_video(Peer_DBS):
             self.lg.debug("Player disconnected!")
             self.player_alive = False
 
-    #def load_the_video_header(self):
+    # def load_the_video_header(self):
     #    self.header = b''
     #    for i in range(Splitter_DBS_video.header_size):
     #        self.header += self.receive_next_chunk()
 
-    #def receive_the_header(self):
+    # def receive_the_header(self):
     #    print("{}: Requesting the stream header to {}"
     #          .format(self.id, self.source))
     #   self.request_the_video_from_the_source()
@@ -145,8 +148,7 @@ class Peer_DBS_video(Peer_DBS):
     #   print("{}: Stream header received from {}"
     #         .format(self.id, self.source))
 
-
-    #def receive_the_header(self):
+    # def receive_the_header(self):
     #    message = self.splitter_socket.recv(struct.calcsize("H"))
     #    value = struct.unpack("H", message)[0]
     #    self.header_size = socket.ntohs(value)
@@ -171,7 +173,7 @@ class Peer_DBS_video(Peer_DBS):
         self.chunk_packet_format = "!i" + str(self.chunk_size) + "sIi"
         self.max_pkg_length = struct.calcsize(self.chunk_packet_format)
 
-    #def complain(self, chunk_number):
+    # def complain(self, chunk_number):
     #    pass
 
     def play_chunk(self, chunk_number):

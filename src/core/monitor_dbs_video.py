@@ -7,6 +7,7 @@ from .common import Common
 from .monitor_dbs import Monitor_DBS
 from .peer_dbs_video import Peer_DBS_video
 
+
 class Monitor_DBS_video(Monitor_DBS, Peer_DBS_video):
     pass
     #def play_chunk(self, chunk_number):
