@@ -128,6 +128,7 @@ class Peer_DBS_video(Peer_DBS):
     #        sys.stdout.flush()
     #    print("{}: header relayed".format(self.id))
 
+    # UNUSED!!
     def send_chunk_to_player(self):
         try:
             self.player_socket.sendall(self.chunks[chunk_number % self.buffer_size])
