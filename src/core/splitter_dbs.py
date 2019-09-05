@@ -27,26 +27,24 @@ from .simulator_stuff import Simulator_stuff
 
 
 class Splitter_DBS():
-    splitter_port = 4552
-    max_chunk_loss = 8
-    number_of_monitors = 1
-    buffer_size = 128
 
-    def __init__(self, name):
+    def __init__(self,
+                 buffer_size = 32,
+                 max_chunk_loss = 16,
+                 number_of_rounds = 100,
+                 name="Splitter_DBS",
+                 loglevel = logging.ERROR
+    ):
         self.lg = logging.getLogger(name)
-        self.lg.setLevel(Common.loglevel)
-        if __debug__:
-            self.lg.critical('Critical messages enabled.')
-            self.lg.error('Error messages enabled.')
-            self.lg.warning('Warning message enabled.')
-            self.lg.info('Informative message enabled.')
-            self.lg.debug('Low-level debug message enabled.')
-
+        self.lg.setLevel(loglevel)
+        self.name = name
+        self.buffer_size = buffer_size
+    
         self.alive = True  # While True, keeps the splitter alive
         self.chunk_number = 0  # First chunk (number) to send
         self.peer_list = []  # Current peers in the team
         self.losses = {}  # (Detected) lost chunks per peer
-        self.destination_of_chunk = Splitter_DBS.buffer_size*[0]  # Destination peer of the buffered chunks
+        self.destination_of_chunk = buffer_size*[0]  # Destination peer of the buffered chunks
         self.peer_number = 0  # First peer to serve in the list of peers
         self.number_of_monitors = 0  # Monitors report lost chunks
         self.outgoing_peer_list = []  # Peers which requested to leave the team
@@ -127,9 +125,9 @@ class Splitter_DBS():
         peer_serve_socket.sendall(msg)
 
     def send_buffer_size(self, peer_serve_socket):
-        self.lg.debug("{}: Splitter_DBS.buffer_size={}".format(self.id, Splitter_DBS.buffer_size))
+        self.lg.debug("{}: buffer_size={}".format(self.id, self.buffer_size))
         # peer_serve_socket.sendall(Splitter_DBS.buffer_size, "H")
-        msg = struct.pack("!H", Splitter_DBS.buffer_size)
+        msg = struct.pack("!H", self.buffer_size)
         peer_serve_socket.sendall(msg)
 
     def send_the_number_of_peers(self, peer_serve_socket):
@@ -178,7 +176,7 @@ class Splitter_DBS():
     #    return message[1]
 
     def get_losser(self, lost_chunk_number):
-        return self.destination_of_chunk[lost_chunk_number % Splitter_DBS.buffer_size]
+        return self.destination_of_chunk[lost_chunk_number % self.buffer_size]
 
     def remove_peer(self, peer):
         self.lg.debug("{}: peer {} removed".format(self.id, peer))
@@ -308,7 +306,7 @@ class Splitter_DBS():
                 # raise
 
             message = self.compose_chunk_packet(chunk, peer)
-            self.destination_of_chunk[self.chunk_number % Splitter_DBS.buffer_size] = peer
+            self.destination_of_chunk[self.chunk_number % self.buffer_size] = peer
             # if __debug__:
             #    self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
             #    counter = 0

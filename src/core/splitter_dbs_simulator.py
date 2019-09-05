@@ -14,11 +14,22 @@ from core.splitter_dbs import Splitter_DBS
 
 from .common import Common
 from .simulator_stuff import Simulator_stuff
+import logging
 import psutil
 
 class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self,
+                 buffer_size = 32,
+                 max_chunk_loss = 16,
+                 number_of_rounds = 100,
+                 name = "Splitter_DBS_simulator",
+                 loglevel = logging.ERROR
+    ):
+        super().__init__(buffer_size = buffer_size,
+                         max_chunk_loss = max_chunk_loss,
+                         name = name,
+                         loglevel = loglevel
+        )
         self.lg.debug("Splitter_DBS_simulator: initialized")
 
     def handle_a_peer_arrival(self, connection):
@@ -142,7 +153,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
                 # raise
 
             message = self.compose_chunk_packet(chunk, peer)
-            self.destination_of_chunk[self.chunk_number % Splitter_DBS.buffer_size] = peer
+            self.destination_of_chunk[self.chunk_number % self.buffer_size] = peer
             self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
             counter = 0
             for i in self.destination_of_chunk:
