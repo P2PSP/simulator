@@ -120,7 +120,7 @@ class Simulator():
             Splitter_DBS.splitter_port = 0
             Splitter_DBS.max_chunk_loss = 8
             Splitter_DBS.number_of_monitors = 1
-            Splitter_DBS.buffer_size = 128
+            Splitter_DBS.buffer_size = Common.BUFFER_SIZE
             splitter = Splitter_DBS_simulator("Splitter_DBS_simulator")
             self.lg.info("simulator: DBS/IMS splitter created")
         elif self.set_of_rules == "CIS":
