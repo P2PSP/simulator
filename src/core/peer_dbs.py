@@ -538,10 +538,9 @@ class Peer_DBS():
                     for peer, debt in self.debts:
                         debt //= 2
                     self.rounds_counter += 1
-                    for peer, peer_list in self.forward.items():
-                        if len(peer_list) > 0:
-                            buf = len(peer_list)*"#"
-                            self.lg.debug("{}: degree({})) {}".format(self.ext_id, peer, buf))
+                    for origin, neighbors in self.forward.items():
+                        buf = len(neighbors)*"#"
+                        self.lg.info(f"{self.ext_id}: origin={origin} K={len(neighbors):02} {buf}")
                 else:
                     try:
                         self.debts[sender] -= 1
