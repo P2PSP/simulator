@@ -22,6 +22,8 @@ from .common import Common
 from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import hash
 
+import random
+
 # quitar
 MAX_DEGREE = 5
 
