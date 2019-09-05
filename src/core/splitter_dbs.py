@@ -3,7 +3,9 @@
 splitter_dbs module
 """
 
-# DBS (Data Broadcasting Set) layer
+# Abstract class.
+
+# DBS (Data Broadcasting Set) layer, splitter side.
 
 # DBS is the most basic layer to provide communication among splitter
 # (source of the stream) and peers (destination of the stream), using

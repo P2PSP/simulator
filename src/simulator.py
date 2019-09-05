@@ -37,6 +37,7 @@ from core.splitter_dbs import Splitter_DBS
 from core.splitter_dbs_simulator import Splitter_DBS_simulator
 from core.splitter_sss import Splitter_SSS
 from core.splitter_strpeds import Splitter_STRPEDS
+import sys
 
 # import logging as lg
 
@@ -61,7 +62,8 @@ class Simulator():
                  gui=False):
 
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        logging.basicConfig(format="%(message)s - %(asctime)s - %(name)s - %(levelname)s")
+        logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
+        #self.lg = ColorLog(logging.getLogger(__name__))
         self.lg = logging.getLogger(__name__)
         self.loglevel = loglevel
         self.lg.setLevel(loglevel)
@@ -72,28 +74,43 @@ class Simulator():
         # self.lg.debug('Low-level debug message enabled.')
 
         self.set_of_rules = set_of_rules
-        self.number_of_peers = number_of_peers
-        self.number_of_monitors = number_of_monitors
+        self.number_of_peers = int(number_of_peers)
+        self.number_of_monitors = int(number_of_monitors)
         self.drawing_log = drawing_log
-        self.number_of_rounds = number_of_rounds
+        self.number_of_rounds = int(number_of_rounds)
         self.number_of_malicious = number_of_malicious
-        self.buffer_size = buffer_size
-        self.chunk_cadence = chunk_cadence
-        self.link_failure_prob = link_failure_prob
-        self.max_degree = max_degree
+        self.buffer_size = int(buffer_size)
+#        self.chunk_cadence = float(chunk_cadence)
+#        self.link_failure_prob = link_failure_prob
+#        self.optimization_horizon = int(optimization_horizon)
+#        self.max_chunk_loss_at_peers = int(max_chunk_loss_at_peers)
+#        self.max_chunk_loss_at_splitter = int(max_chunk_loss_at_splitter)
         self.current_round = 0
         self.gui = gui
         self.processes = {}
 
-        self.lg.debug("set_of_rules=\"{}\"".format(self.set_of_rules))
-        self.lg.debug("number_of_peers={}".format(self.number_of_peers))
-        self.lg.debug("number_of_monitors={}".format(self.number_of_monitors))
-        self.lg.debug("number_of_rounds={}".format(self.number_of_rounds))
-        self.lg.debug("number_of_malicious={}".format(self.number_of_malicious))
-        self.lg.debug("buffer_size={}".format(self.buffer_size))
-        self.lg.debug("chunk_cadence={}".format(self.chunk_cadence))
-        self.lg.debug("link_failure_prob={}".format(link_failure_prob))
-        self.lg.debug("max_degree={}".format(max_degree))
+        self.lg.info(f"set_of_rules=\"{self.set_of_rules}\"")
+        sys.stderr.write(f"simulator: set_of_rules=\"{self.set_of_rules}\"\n")
+        self.lg.info(f"number_of_peers={self.number_of_peers}")
+        sys.stderr.write(f"simulator: number_of_peers={self.number_of_peers}\n")
+        self.lg.info(f"number_of_monitors={self.number_of_monitors}")
+        sys.stderr.write(f"simulator: number_of_monitors={self.number_of_monitors}\n")
+        self.lg.info(f"number_of_rounds={self.number_of_rounds}")
+        sys.stderr.write(f"simulator: number_of_rounds={self.number_of_rounds}\n")
+        self.lg.info(f"number_of_malicious={self.number_of_malicious}")
+        sys.stderr.write(f"simulator: number_of_malicious={self.number_of_malicious}\n")
+        self.lg.info(f"buffer_size={self.buffer_size}")
+        sys.stderr.write(f"simulator: buffer_size={self.buffer_size}\n")
+#        self.lg.info(f"chunk_cadence={self.chunk_cadence}")
+#        sys.stderr.write(f"simulator: chunk_cadence={self.chunk_cadence}\n")
+#        self.lg.info(f"optimization_horizon={self.optimization_horizon}")
+#        sys.stderr.write(f"simulator: optimization_horizon={self.optimization_horizon}\n")
+#        self.lg.info(f"max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}")
+#        sys.stderr.write(f"simulator: max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}\n")
+#        self.lg.info(f"max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}")
+#        sys.stderr.write(f"simulator: max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}\n")
+        self.lg.info(f"loglevel={self.loglevel}")
+        sys.stderr.write(f"simulator: loglevel={self.loglevel}\n")
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -110,7 +127,7 @@ class Simulator():
     def run_a_splitter(self, splitter_id):
         """ Start a splitter
         """
-        Common.CHUNK_CADENCE = self.chunk_cadence
+#        Common.CHUNK_CADENCE = self.chunk_cadence
         if self.buffer_size == 0:
             Common.BUFFER_SIZE = self.compute_buffer_size()
         else:
@@ -187,8 +204,8 @@ class Simulator():
                 self.lg.info("simulator: CIS-SSS peer created")
         self.lg.critical("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
-        peer.link_failure_prob = self.link_failure_prob
-        peer.max_degree = self.max_degree
+#        peer.link_failure_prob = self.link_failure_prob
+#        peer.max_degree = self.max_degree
         peer.chunks_before_leave = chunks_before_leave
         peer.splitter = splitter_id
         peer.connect_to_the_splitter(peer_port=0)
@@ -197,8 +214,8 @@ class Simulator():
         peer.receive_the_number_of_peers()
         peer.listen_to_the_team()
         peer.receive_the_list_of_peers()
-        # peer.send_ready_for_receiving_chunks()
-        peer.send_peer_type()  # Only for simulation purpose
+        #peer.send_ready_for_receiving_chunks()
+        #peer.send_peer_type()   #Only for simulation purpose
         # peer.buffer_data()
         # peer.start()
         peer.run()
@@ -234,12 +251,12 @@ class Simulator():
             #    break
 
         drawing_log_file.write("Bye")
-        self.lg.debug("CLOSING STORE")
+        self.lg.info("CLOSING STORE")
         drawing_log_file.close()
 
     def run(self):
         #import pdb; pdb.set_trace()
-        self.lg.debug("simulator: platform.system()={}".format(platform.system()))
+        self.lg.info("simulator: platform.system()={}".format(platform.system()))
         # if __debug__:
         #     if platform.system() == 'Linux':
         #         plt.switch_backend("TkAgg")
@@ -276,7 +293,7 @@ class Simulator():
         self.splitter_id = manager.dict()
 
         # Run splitter
-        p = Process(target=self.run_a_splitter, args=[self.splitter_id])
+        p = Process(target=self.run_a_splitter,args=[self.splitter_id])
         p.start()
         self.processes["S"] = p.pid
         self.attended_monitors = 0
@@ -285,8 +302,7 @@ class Simulator():
 
         time.sleep(1)
         # run a monitor
-        p = Process(target=self.run_a_peer, args=[self.splitter_id['address'],
-                                                  "monitor", "M" + str(self.attended_monitors + 0), True])
+        p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "monitor", "M" + str(self.attended_monitors + 0), True])
         p.start()
         self.processes["M" + str(self.attended_monitors + 1)] = p.pid
         self.attended_monitors += 1
@@ -297,49 +313,46 @@ class Simulator():
             if m[0] == "R":
                 self.current_round = m[1]
                 r = np.random.uniform(0, 1)
-                if r <= Simulator.P_IN:
+                if (r <= Simulator.P_IN) and (self.current_round < self.number_of_rounds):
                     self.addPeer()
             m = queue.get()
             #import pdb; pdb.set_trace()
-            self.lg.info("round = {}/{}".format(self.current_round, self.number_of_rounds))
+            #sys.stderr.write("round = {}/{}\n".format(self.current_round, self.number_of_rounds))
             #print("------------------> round = {}/{} <-----------------------".format(self.current_round, self.number_of_rounds))
 
         sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
         sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-        # for name, pid in self.processes.items():
-        #    self.lg.info("Killing {}, ...".format(name))
-        #    os.system("kill -9 " + str(pid))
-        #    self.lg.info("{} killed".format(name))
+        for name, pid in self.processes.items():
+            self.lg.info("Killing {}, ...".format(name))
+            os.system("kill -9 " + str(pid))
+            self.lg.info("{} killed".format(name))
 
         if self.set_of_rules == "CIS" or self.set_of_rules == "CIS-SSS":
-            self.lg.debug("List of Malicious")
-            self.lg.debug(sim.SHARED_LIST["malicious"])
-            self.lg.debug("List of Regular detected")
-            self.lg.debug(sim.SHARED_LIST["regular"])
-            self.lg.debug("List of peer Attacked")
-            self.lg.debug(sim.SHARED_LIST["attacked"])
+            self.lg.info("List of Malicious")
+            self.lg.info(sim.SHARED_LIST["malicious"])
+            self.lg.info("List of Regular detected")
+            self.lg.info(sim.SHARED_LIST["regular"])
+            self.lg.info("List of peer Attacked")
+            self.lg.info(sim.SHARED_LIST["attacked"])
 
     def addPeer(self):
         probabilities = [Simulator.P_MoP, Simulator.P_WIP, Simulator.P_MP]
         option = np.where(np.random.multinomial(1, probabilities))[0][0]
         if option == 0:
             if self.attended_monitors < self.number_of_monitors:
-                p = Process(target=self.run_a_peer, args=[
-                            self.splitter_id['address'], "monitor", "M" + str(self.attended_monitors + 0)])
+                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "monitor", "M" + str(self.attended_monitors + 0)])
                 p.start()
                 self.processes["M" + str(self.attended_monitors + 1)] = p.pid
                 self.attended_monitors += 1
         elif option == 1:
             if self.attended_peers < self.number_of_peers:
-                p = Process(target=self.run_a_peer, args=[
-                            self.splitter_id['address'], "peer", "P" + str(self.attended_peers + 1)])
+                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "peer", "P" + str(self.attended_peers + 1)])
                 p.start()
                 self.processes["P" + str(self.attended_peers + 1)] = p.pid
                 self.attended_peers += 1
         elif option == 2:
             if self.attended_mps < self.number_of_malicious:
-                p = Process(target=self.run_a_peer, args=[
-                            self.splitter_id['address'], "malicious", "MP" + str(self.attended_mps + 1)])
+                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "malicious", "MP" + str(self.attended_mps + 1)])
                 p.start()
                 self.processes["MP" + str(self.attended_mps + 1)] = p.pid
                 self.attended_mps += 1
