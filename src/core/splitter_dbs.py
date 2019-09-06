@@ -175,7 +175,7 @@ class Splitter_DBS():
             self.lg.warning(f"{self.id}: the unsupportive peer {peer} does not exist in {self.losses}")
         else:
             self.lg.info(f"{self.id}: peer {peer} has lost {self.losses[peer]} chunks")
-            sys.stderr.write(f" {self.losses[peer]}/{self.max_chunk_loss} ")
+#            sys.stderr.write(f" {self.losses[peer]}/{self.max_chunk_loss} ")
             if self.losses[peer] > self.max_chunk_loss:
                 self.remove_peer(peer)
 #        finally:

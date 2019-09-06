@@ -58,7 +58,7 @@ class Simulator():
                  chunk_cadence=0.01,
                  link_failure_prob=0.0,
                  max_degree=5,
-                 max_chunk_loss_at_peers = 3, # chunks/secon
+                 max_chunk_loss_at_peers = 10, # chunks/secon
                  max_chunk_loss_at_splitter = 16,
                  loglevel=logging.WARNING,  # CRITICAL, ERROR, WARNING, INFO, DEBUG
                  gui=False):

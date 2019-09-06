@@ -358,9 +358,6 @@ class Peer_DBS():
         self.lg.debug("{}: send_chunks (end) neighbor={} pending[{}]={}".format(
             self.ext_id, self.neighbor, self.neighbor, self.pending[self.neighbor]))
 
-    def process_request(self, sender):
-        pass
-
     def process_request(self, chunk_number, sender):
 
         # If a peer X receives [request Y] from peer Z, X will
@@ -630,7 +627,7 @@ class Peer_DBS():
     def request_chunk(self, chunk_number, peer):
         msg = struct.pack("!ii", Common.REQUEST, chunk_number)
         self.team_socket.sendto(msg, peer)
-        self.lg.info("{}: [request {}] sent to {}".format(self.ext_id, chunk_number, peer))
+        self.lg.warning(f"{self.ext_id}: request_chunk: [request {chunk_number}] sent to {peer}")
 
     def complain(self, chunk_number):
         pass
@@ -643,7 +640,7 @@ class Peer_DBS():
         else:
             self.complain(chunk_number)
             self.losses += 1
-            self.lg.critical("{}: lost chunk! {} (losses = {})".format(self.ext_id, chunk_number, self.losses))
+            self.lg.warning(f"{self.ext_id}: play_chunk: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.losses})")
 
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change
