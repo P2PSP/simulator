@@ -58,7 +58,7 @@ class Simulator():
                  chunk_cadence=0.01,
                  link_failure_prob=0.0,
                  max_degree=5,
-                 max_chunk_loss_at_peers = 16,
+                 max_chunk_loss_at_peers = 3, # chunks/secon
                  max_chunk_loss_at_splitter = 16,
                  loglevel=logging.WARNING,  # CRITICAL, ERROR, WARNING, INFO, DEBUG
                  gui=False):
@@ -83,7 +83,7 @@ class Simulator():
         self.number_of_malicious = number_of_malicious
         self.buffer_size = int(buffer_size)
         self.max_chunk_loss_at_peers = int(max_chunk_loss_at_peers)
-        self.max_chunk_loss_at_splitter = int(max_chunk_loss_at_splitter)
+        self.max_chunk_loss_at_splitter = float(max_chunk_loss_at_splitter)
         self.current_round = 0
         self.gui = gui
         self.processes = {}

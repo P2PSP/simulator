@@ -12,6 +12,7 @@ splitter_dbs module
 # unicast transmissions. The splitter sends a different chunk of
 # stream to each peer, using a random round-robin scheduler.
 
+import sys
 import logging
 # from .simulator_stuff import lg
 import struct
@@ -155,21 +156,41 @@ class Splitter_DBS():
         self.lg.debug("{}: {} inserted in the team".format(self.id, peer))
 
     def increment_unsupportivity_of_peer(self, peer):
+
+#        try:
+#            peer_index = self.losses.index(peer)
+#        except ValueError:
+#            self.lg.warning(f"{self.id}: the removed peer does not exist in {self.losses}")
+#        else:
+#            self.losses[peer] += 1
+#            self.lg.info(f"{self.id}: peer {peer} has lost {self.losses[peer]} chunks")
+#            sys.stderr.write(f" {self.losses[peer]}/{self.max_chunk_loss} ")
+#            if self.losses[peer] > 1:#self.max_chunk_loss:
+#                self.remove_peer(peer)
+        
         try:
+            #self.losses[peer] += 1/self.max_chunk_loss
             self.losses[peer] += 1
         except KeyError:
-            self.lg.warning("{}: the unsupportive peer {} does not exist".format(self.id, peer))
+            self.lg.warning(f"{self.id}: the unsupportive peer {peer} does not exist in {self.losses}")
         else:
-            self.lg.info("{}: peer {} has lost {} chunks".format(self.id, peer, self.losses[peer]))
+            self.lg.info(f"{self.id}: peer {peer} has lost {self.losses[peer]} chunks")
+            sys.stderr.write(f" {self.losses[peer]}/{self.max_chunk_loss} ")
             if self.losses[peer] > self.max_chunk_loss:
                 self.remove_peer(peer)
-        finally:
-            pass
+#        finally:
+#            pass
+
+    def reset_counters(self):
+        for peer in self.losses.keys():
+            self.losses[peer] /= 2
+#            self.losses[peer] /= self.max_chunk_loss
+#            if self.losses[peer] < 0:
+#                self.losses[peer] = 0
 
     def process_lost_chunk(self, lost_chunk_number, sender):
         destination = self.get_losser(lost_chunk_number)
-        self.lg.debug("{}: sender {} complains about lost chunk {} with destination {}".format(
-            self.id, sender, lost_chunk_number, destination))
+        self.lg.info(f"{self.id}: sender {sender} complains about lost chunk {lost_chunk_number} with destination {destination}")
         #self.total_lost_chunks += 1
         self.increment_unsupportivity_of_peer(destination)
 
@@ -180,16 +201,16 @@ class Splitter_DBS():
         return self.destination_of_chunk[lost_chunk_number % self.buffer_size]
 
     def remove_peer(self, peer):
-        self.lg.debug("{}: peer {} removed".format(self.id, peer))
+        self.lg.info(f"{self.id}: peer {peer} removed")
         try:
             self.peer_list.remove(peer)
         except ValueError:
-            self.lg.warning("{}: the removed peer {} does not exist!".format(self.id, peer))
+            self.lg.warning(f"{self.id}: the removed peer {peer} does not exist in peers_list!")
 
         try:
             del self.losses[peer]
         except KeyError:
-            self.lg.warning("{}: the removed peer {} does not exist in losses".format(self.id, peer))
+            self.lg.warning(f"{self.id}: the removed peer {peer} does not exist in losses!")
         finally:
             pass
 
@@ -215,6 +236,7 @@ class Splitter_DBS():
 
     def on_round_beginning(self):
         self.remove_outgoing_peers()
+        self.reset_counters()
 
     def moderate_the_team(self):
         while self.alive:
@@ -248,14 +270,10 @@ class Splitter_DBS():
             else:
                 self.lg.warning("{}: received unexpected message {} from {}".format(self.id, packed_msg, sender))
 
-    def reset_counters(self):
-        for i in self.losses:
-            self.losses[i] /= 2
-
-    def reset_counters_thread(self):
-        while self.alive:
-            self.reset_counters()
-            time.sleep(Common.COUNTERS_TIMING)
+    #def reset_counters_thread(self):
+    #    while self.alive:
+    #        self.reset_counters()
+    #        time.sleep(Common.COUNTERS_TIMING)
 
     def compute_next_peer_number(self, peer):
         try:
@@ -283,7 +301,7 @@ class Splitter_DBS():
 
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
-        Thread(target=self.reset_counters_thread).start()
+        #Thread(target=self.reset_counters_thread).start()
 
         while len(self.peer_list) == 0:
             print("{}: waiting for a monitor at {}"
