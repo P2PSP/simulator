@@ -32,6 +32,10 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         )
         self.lg.debug("Splitter_DBS_simulator: initialized")
 
+    def process_lost_chunk(self, lost_chunk_number, sender):
+        super().process_lost_chunk(lost_chunk_number = lost_chunk_number, sender = sender)
+        sys.stderr.write(f" L{lost_chunk_number}")
+
     def handle_a_peer_arrival(self, connection):
 
         serve_socket = connection[0]
@@ -78,6 +82,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         self.lg.debug("{}: peer {} removed".format(self.id, peer))
         try:
             self.peer_list.remove(peer)
+            sys.stderr.write(f" R{self.peer_list.index(peer)}({len(self.peer_list)})"); sys.stderr.flush()
         except ValueError:
             self.lg.warning("{}: the removed peer {} does not exist!".format(self.id, peer))
         else:
@@ -95,7 +100,6 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
             self.lg.warning("{}: the removed peer {} does not exist in losses".format(self.id, peer))
         finally:
             pass
-        sys.stderr.write(' P'+str(len(self.peer_list))); sys.stderr.flush()
 
     def receive_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
@@ -132,7 +136,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
             #self.lg.info("peer_number = {}".format(self.peer_number))
             #print("peer_number = {}".format(self.peer_number))
             if self.peer_number == 0:
-                sys.stderr.write(' R'+str(self.current_round)); sys.stderr.flush()
+                sys.stderr.write(f" r{str(self.current_round)}"); sys.stderr.flush()
                 total_peers += len(self.peer_list)
                 self.on_round_beginning()  # Remove outgoing peers
 

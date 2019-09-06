@@ -39,6 +39,7 @@ class Splitter_DBS():
         self.lg.setLevel(loglevel)
         self.name = name
         self.buffer_size = buffer_size
+        self.max_chunk_loss = max_chunk_loss
     
         self.alive = True  # While True, keeps the splitter alive
         self.chunk_number = 0  # First chunk (number) to send
@@ -160,7 +161,7 @@ class Splitter_DBS():
             self.lg.warning("{}: the unsupportive peer {} does not exist".format(self.id, peer))
         else:
             self.lg.info("{}: peer {} has lost {} chunks".format(self.id, peer, self.losses[peer]))
-            if self.losses[peer] > Common.MAX_CHUNK_LOSS:
+            if self.losses[peer] > self.max_chunk_loss:
                 self.remove_peer(peer)
         finally:
             pass
