@@ -22,6 +22,7 @@ from .common import Common
 from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import hash
 from .ip_tools import IP_tools
+from .chunk_structure import ChunkStructure
 
 import random
 
@@ -298,10 +299,10 @@ class Peer_DBS():
     def compose_message(self, chunk_number):
         chunk_position = chunk_number % self.buffer_size
         chunk = self.chunks[chunk_position]
-        stored_chunk_number = chunk[Common.CHUNK_NUMBER]
-        chunk_data = chunk[Common.CHUNK_DATA]
-        chunk_origin_IP = chunk[Common.ORIGIN][0]
-        chunk_origin_port = chunk[Common.ORIGIN][1]
+        stored_chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
+        chunk_data = chunk[ChunkStructure.CHUNK_DATA]
+        chunk_origin_IP = chunk[ChunkStructure.ORIGIN][0]
+        chunk_origin_port = chunk[ChunkStructure.ORIGIN][1]
         content = (stored_chunk_number, chunk_data, IP_tools.ip2int(chunk_origin_IP), chunk_origin_port)
         packet = struct.pack(self.chunk_packet_format, *content)
         return packet
@@ -357,7 +358,7 @@ class Peer_DBS():
         # If a peer X receives [request Y] from peer Z, X will
         # append Z to forward[Y.origin].
 
-        origin = self.chunks[chunk_number % self.buffer_size][Common.ORIGIN]
+        origin = self.chunks[chunk_number % self.buffer_size][ChunkStructure.ORIGIN]
 
         self.lg.debug("{}: received [request {}] from {} (origin={}, forward={})".format(
             self.ext_id, chunk_number, sender, origin, self.forward))
@@ -394,7 +395,7 @@ class Peer_DBS():
         chunk = self.chunks[chunk_number % self.buffer_size]
         # Notice that chunk_number must be stored in the buffer
         # because it has been sent to a neighbor.
-        origin = chunk[Common.ORIGIN]
+        origin = chunk[ChunkStructure.ORIGIN]
         if origin in self.forward:
             if sender in self.forward[origin]:
                 try:
@@ -473,14 +474,14 @@ class Peer_DBS():
     # DBS peer's logic
     def process_unpacked_message(self, message, sender):
 
-        chunk_number = message[Common.CHUNK_NUMBER]
+        chunk_number = message[ChunkStructure.CHUNK_NUMBER]
         self.lg.debug("{}: [{}] <-- {}".format(self.ext_id, chunk_number, sender))
 
         if chunk_number >= 0:
 
             # We have received a chunk.
-            chunk_data = message[Common.CHUNK_DATA]
-            origin = message[Common.ORIGIN]
+            chunk_data = message[ChunkStructure.CHUNK_DATA]
+            origin = message[ChunkStructure.ORIGIN]
             sys.stdout.write(str(origin))
             sys.stdout.flush()
 
@@ -493,13 +494,13 @@ class Peer_DBS():
             self.process_unpacked_message__simulation_1(sender)
 
             # 1. Store or report duplicates
-            if self.chunks[chunk_number % self.buffer_size][Common.CHUNK_NUMBER] == chunk_number:
+            if self.chunks[chunk_number % self.buffer_size][ChunkStructure.CHUNK_NUMBER] == chunk_number:
                 # Duplicate chunk. Ignore it and warn the sender to
                 # stop sending more chunks from the origin of the received
                 # chunk "chunk_number".
                 self.lg.debug("{}: duplicate chunk {} from {} (the first one was sent by {}) BUFFER={}".format(
                     self.ext_id, chunk_number, sender,
-                    self.chunks[chunk_number % self.buffer_size][Common.ORIGIN], self.chunks))
+                    self.chunks[chunk_number % self.buffer_size][ChunkStructure.ORIGIN], self.chunks))
                 self.prune_origin(chunk_number, sender)
             else:
                 self.buffer_new_chunk(chunk_number, chunk_data, origin, sender)
@@ -507,14 +508,14 @@ class Peer_DBS():
                 # Showing buffer
                 buf = ""
                 for i in self.chunks:
-                    if i[Common.CHUNK_NUMBER] > -1:
+                    if i[ChunkStructure.CHUNK_NUMBER] > -1:
                         try:
-                            #peer_number = self.index_of_peer[i[Common.ORIGIN]]
-                            peer_number = self.team.index(i[Common.ORIGIN])
+                            #peer_number = self.index_of_peer[i[ChunkStructure.ORIGIN]]
+                            peer_number = self.team.index(i[ChunkStructure.ORIGIN])
                             buf += hash(peer_number)
                         except ValueError:
                             buf += '-'
-                            #self.index_of_peer[i[Common.ORIGIN]] = self.number_of_peers
+                            #self.index_of_peer[i[ChunkStructure.ORIGIN]] = self.number_of_peers
                             #peer_number = self.number_of_peers
                             self.number_of_peers += 1
                         #buf += hash(peer_number)
@@ -548,7 +549,7 @@ class Peer_DBS():
                     self.send_chunks()
                     self.neighbor_index = list(self.pending.keys()).index(self.neighbor) + 1
 
-        else:  # message[Common.CHUNK_NUMBER] < 0
+        else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
 
             if chunk_number == Common.REQUEST:
                 self.process_request(message[1], sender)
@@ -576,9 +577,9 @@ class Peer_DBS():
             # self.lg.debug("{}: received {} from {} with length {}".format(self,id, pkg, sender, len(pkg)))
             if len(pkg) == self.max_pkg_length:
                 message = struct.unpack(self.chunk_packet_format, pkg)
-                message = message[Common.CHUNK_NUMBER], \
-                    message[Common.CHUNK_DATA], \
-                    (socket.int2ip(message[Common.ORIGIN]), message[Common.ORIGIN+1])
+                message = message[ChunkStructure.CHUNK_NUMBER], \
+                    message[ChunkStructure.CHUNK_DATA], \
+                    (socket.int2ip(message[ChunkStructure.ORIGIN]), message[ChunkStructure.ORIGIN+1])
             elif len(pkg) == struct.calcsize("!iii"):
                 message = struct.unpack("!iii", pkg)  # Control message:
                 # [control, parameter]
@@ -600,9 +601,9 @@ class Peer_DBS():
         # self.lg.debug("{}: received {} from {} with length {}".format(self,id, pkg, sender, len(pkg)))
         if len(pkg) == self.max_pkg_length:
             message = struct.unpack(self.chunk_packet_format, pkg)
-            message = message[Common.CHUNK_NUMBER], \
-                message[Common.CHUNK_DATA], \
-                (socket.int2ip(message[Common.ORIGIN]), message[Common.ORIGIN+1])
+            message = message[ChunkStructure.CHUNK_NUMBER], \
+                message[ChunkStructure.CHUNK_DATA], \
+                (socket.int2ip(message[ChunkStructure.ORIGIN]), message[ChunkStructure.ORIGIN+1])
         elif len(pkg) == struct.calcsize("!iii"):
             message = struct.unpack("!iii", pkg)  # Control message:
             # [control, parameter]
@@ -628,7 +629,7 @@ class Peer_DBS():
 
     def play_chunk(self, chunk_number):
         buffer_box = self.chunks[chunk_number % self.buffer_size]
-        if buffer_box[Common.CHUNK_NUMBER] > -1:
+        if buffer_box[ChunkStructure.CHUNK_NUMBER] > -1:
             self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.played += 1
         else:
@@ -646,10 +647,10 @@ class Peer_DBS():
 
             # Request the chunk to the origin peer of the last received chunk.
             #i = self.prev_received_chunk
-            #destination = self.chunks[i % self.buffer_size][Common.ORIGIN]
+            #destination = self.chunks[i % self.buffer_size][ChunkStructure.ORIGIN]
             # while destination == None:
             #    i += 1
-            #    destination = self.chunks[i % self.buffer_size][Common.ORIGIN]
+            #    destination = self.chunks[i % self.buffer_size][ChunkStructure.ORIGIN]
             #self.request_chunk(chunk_number, destination)
             # And remove the peer in forward with higher debt.
             #print("{}: ------------> {}".format(self.ext_id, self.debt))
