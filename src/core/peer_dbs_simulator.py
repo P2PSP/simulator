@@ -8,7 +8,6 @@ peer_dbs_simulator module
 import random
 import struct
 
-from .common import Common
 from .peer_dbs import Peer_DBS
 from .socket_wrapper import Socket_wrapper as socket
 from .simulator_stuff import Simulator_stuff as sim

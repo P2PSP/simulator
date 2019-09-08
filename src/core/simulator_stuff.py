@@ -11,8 +11,6 @@ import struct
 import sys
 from datetime import datetime
 
-from .common import Common
-
 # import coloredlogs
 # coloredlogs.install()
 
@@ -29,7 +27,7 @@ class Simulator_stuff:
 
     #loglevel = logging.ERROR
 
-
+# Be careful. NOT USED!
 class Simulator_socket():
     AF_INET = socket.AF_INET
     AF_UNIX = socket.AF_UNIX
