@@ -18,7 +18,7 @@ class Monitor_DBS(Peer_DBS):
     def complain(self, chunk_number):
         msg = struct.pack("!ii", Common.LOST_CHUNK, chunk_number)
         self.team_socket.sendto(msg, self.splitter)
-        self.lg.info("{}: [lost chunk {}] sent to {}".format(self.id, chunk_number, self.splitter))
+        self.lg.info("{}: [lost chunk {}] complain sent to splitter {}".format(self.id, chunk_number, self.splitter))
 
     # def request_chunk(self, chunk_number, peer):
     #    Peer_DBS.request_chunk(self, chunk_number, peer) # super()?

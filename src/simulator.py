@@ -121,7 +121,6 @@ class Simulator():
     def run_a_splitter(self, splitter_id):
         if self.buffer_size == 0:
             self.buffer_size = self.compute_buffer_size()
-        self.lg.info("buffer_size={}".format(self.buffer_size))
         if self.set_of_rules == "DBS" or self.set_of_rules == "IMS":
             splitter = Splitter_DBS_simulator(buffer_size = self.buffer_size,
 #                                              optimization_horizon = self.optimization_horizon,

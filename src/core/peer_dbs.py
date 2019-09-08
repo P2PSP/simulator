@@ -21,6 +21,7 @@ import netifaces
 from .common import Common
 from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import hash
+from .ip_tools import IP_tools
 
 import random
 
@@ -37,12 +38,6 @@ class Peer_DBS():
 
         self.lg = logging.getLogger(name)
         self.lg.setLevel(loglevel)
-        if __debug__:
-            self.lg.critical('Critical messages enabled.')
-            self.lg.error('Error messages enabled.')
-            self.lg.warning('Warning message enabled.')
-            self.lg.info('Informative message enabled.')
-            self.lg.debug('Low-level debug message enabled.')
 
         # Peer identification. Depending on the simulation degree, it
         # can be a simple string or an (local) endpoint.
@@ -154,7 +149,7 @@ class Peer_DBS():
         msg_length = struct.calcsize("!H")
         msg = self.splitter_socket.recv(msg_length)
         self.buffer_size = struct.unpack("!H", msg)[0]
-        self.lg.debug("{}: buffer_size={}".format(self.id, self.buffer_size))
+        self.lg.debug("{}: received buffer_size={}".format(self.id, self.buffer_size))
 
     def receive_the_number_of_peers(self):
         msg_length = struct.calcsize("!H")
@@ -229,7 +224,6 @@ class Peer_DBS():
         # The index for pending[].
         self.splitter = self.splitter_socket.getpeername()
         self.id = self.splitter_socket.getsockname()
-        print("{}: I'm a peer".format(self.id))
         #self.neighbor = self.id
         # print("self.neighbor={}".format(self.neighbor))
         #self.pending[self.id] = []
@@ -308,7 +302,7 @@ class Peer_DBS():
         chunk_data = chunk[Common.CHUNK_DATA]
         chunk_origin_IP = chunk[Common.ORIGIN][0]
         chunk_origin_port = chunk[Common.ORIGIN][1]
-        content = (stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
+        content = (stored_chunk_number, chunk_data, IP_tools.ip2int(chunk_origin_IP), chunk_origin_port)
         packet = struct.pack(self.chunk_packet_format, *content)
         return packet
 
