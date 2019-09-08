@@ -19,7 +19,7 @@ from threading import Thread
 import netifaces
 
 from .messages import Messages
-from .common import Common
+from .limits import Limits
 from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import hash
 from .ip_tools import IP_tools
@@ -701,8 +701,8 @@ class Peer_DBS():
             #self.player_connected = self.play_chunk(self.chunk_to_play)
             self.play_chunk(self.chunk_to_play)
             #self.chunks[self.chunk_to_play % self.buffer_size] = (-1, b'L', None)
-            self.chunk_to_play = (self.chunk_to_play + 1) % Common.MAX_CHUNK_NUMBER
-        if ((self.prev_received_chunk % Common.MAX_CHUNK_NUMBER) < last_received_chunk):
+            self.chunk_to_play = (self.chunk_to_play + 1) % Limits.MAX_CHUNK_NUMBER
+        if ((self.prev_received_chunk % Limits.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk
 
     def buffer_and_play(self):

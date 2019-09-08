@@ -21,7 +21,7 @@ import time
 from threading import Thread
 
 from .messages import Messages
-from .common import Common
+from .limits import Limits
 from .simulator_stuff import Simulator_socket as socket
 from .ip_tools import IP_tools
 
@@ -335,7 +335,7 @@ class Splitter_DBS():
             #        counter += 1
             #            try:
             self.send_chunk(message, peer)
-            self.chunk_number = (self.chunk_number + 1) % Common.MAX_CHUNK_NUMBER
+            self.chunk_number = (self.chunk_number + 1) % Limits.MAX_CHUNK_NUMBER
             try:
                 self.peer_number = (self.peer_number + 1) % len(self.peer_list)
             except ZeroDivisionError:
