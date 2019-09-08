@@ -9,17 +9,33 @@ import struct
 import sys
 import time
 from threading import Thread
-
+import colorama
 from core.splitter_dbs import Splitter_DBS
 
 from .common import Common
 from .simulator_stuff import Simulator_stuff
-
+import logging
+import psutil
 
 class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self,
+                 buffer_size = 32,
+                 max_chunk_loss = 16,
+                 number_of_rounds = 100,
+                 name = "Splitter_DBS_simulator",
+                 loglevel = logging.ERROR
+    ):
+        super().__init__(buffer_size = buffer_size,
+                         max_chunk_loss = max_chunk_loss,
+                         name = name,
+                         loglevel = loglevel
+        )
         self.lg.debug("Splitter_DBS_simulator: initialized")
+        colorama.init()
+
+    def process_lost_chunk(self, lost_chunk_number, sender):
+        super().process_lost_chunk(lost_chunk_number = lost_chunk_number, sender = sender)
+        sys.stderr.write(f" {colorama.Fore.RED}L{lost_chunk_number}{colorama.Style.RESET_ALL}")
 
     def handle_a_peer_arrival(self, connection):
 
@@ -41,6 +57,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         #message = struct.unpack("s", msg)[0]
 
         self.insert_peer(incoming_peer)
+        sys.stderr.write(f" {colorama.Fore.GREEN}P{len(self.peer_list)}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
 
         if __debug__:
             # ------------------
@@ -63,13 +80,14 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         serve_socket.close()
 
     def remove_peer(self, peer):
-        self.lg.debug("{}: peer {} removed".format(self.id, peer))
         try:
-            self.peer_list.remove(peer)
+            peer_index = self.peer_list.index(peer)
         except ValueError:
-            self.lg.warning("{}: the removed peer {} does not exist!".format(self.id, peer))
+            self.lg.warning(f"{self.id}: the removed peer {peer} does not exist in {self.peer_list}")
         else:
-            # self.peer_number -= 1
+            del self.peer_list[peer_index]
+            sys.stderr.write(f" {colorama.Fore.BLUE}R{peer_index}({len(self.peer_list)}){colorama.Style.RESET_ALL}"); sys.stderr.flush()
+            
             if __debug__:
                 # S I M U L A T I O N
                 if Simulator_stuff.FEEDBACK:
@@ -86,10 +104,11 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
     def receive_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
-        time.sleep(Common.CHUNK_CADENCE)  # Simulates bit-rate control
+        #time.sleep(Common.CHUNK_CADENCE)  # Simulates bit-rate control
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
-        sys.stderr.write(str(len(self.peer_list)))
-        sys.stderr.flush()
+        #if __debug__:
+            #sys.stderr.write(str(len(self.team))); sys.stderr.flush()
+        time.sleep(psutil.cpu_percent()/4000.0)
         return b'C'
 
     def run(self):
@@ -101,7 +120,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
         Thread(target=self.handle_arrivals).start()
         Thread(target=self.moderate_the_team).start()
-        Thread(target=self.reset_counters_thread).start()
+        #Thread(target=self.reset_counters_thread).start()
 
         while len(self.peer_list) == 0:
             print("{}: waiting for a monitor at {}"
@@ -118,6 +137,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
             #self.lg.info("peer_number = {}".format(self.peer_number))
             #print("peer_number = {}".format(self.peer_number))
             if self.peer_number == 0:
+                sys.stderr.write(f" {colorama.Fore.YELLOW}r{str(self.current_round)}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
                 total_peers += len(self.peer_list)
                 self.on_round_beginning()  # Remove outgoing peers
 
@@ -138,7 +158,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
                 # raise
 
             message = self.compose_chunk_packet(chunk, peer)
-            self.destination_of_chunk[self.chunk_number % Splitter_DBS.buffer_size] = peer
+            self.destination_of_chunk[self.chunk_number % self.buffer_size] = peer
             self.lg.debug("{}: showing destination_of_chunk:".format(self.id))
             counter = 0
             for i in self.destination_of_chunk:

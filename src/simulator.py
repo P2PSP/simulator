@@ -58,7 +58,9 @@ class Simulator():
                  chunk_cadence=0.01,
                  link_failure_prob=0.0,
                  max_degree=5,
-                 loglevel=logging.ERROR,
+                 max_chunk_loss_at_peers = 10, # chunks/secon
+                 max_chunk_loss_at_splitter = 16,
+                 loglevel=logging.WARNING,  # CRITICAL, ERROR, WARNING, INFO, DEBUG
                  gui=False):
 
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -80,11 +82,8 @@ class Simulator():
         self.number_of_rounds = int(number_of_rounds)
         self.number_of_malicious = number_of_malicious
         self.buffer_size = int(buffer_size)
-#        self.chunk_cadence = float(chunk_cadence)
-#        self.link_failure_prob = link_failure_prob
-#        self.optimization_horizon = int(optimization_horizon)
-#        self.max_chunk_loss_at_peers = int(max_chunk_loss_at_peers)
-#        self.max_chunk_loss_at_splitter = int(max_chunk_loss_at_splitter)
+        self.max_chunk_loss_at_peers = int(max_chunk_loss_at_peers)
+        self.max_chunk_loss_at_splitter = float(max_chunk_loss_at_splitter)
         self.current_round = 0
         self.gui = gui
         self.processes = {}
@@ -101,14 +100,10 @@ class Simulator():
         sys.stderr.write(f"simulator: number_of_malicious={self.number_of_malicious}\n")
         self.lg.info(f"buffer_size={self.buffer_size}")
         sys.stderr.write(f"simulator: buffer_size={self.buffer_size}\n")
-#        self.lg.info(f"chunk_cadence={self.chunk_cadence}")
-#        sys.stderr.write(f"simulator: chunk_cadence={self.chunk_cadence}\n")
-#        self.lg.info(f"optimization_horizon={self.optimization_horizon}")
-#        sys.stderr.write(f"simulator: optimization_horizon={self.optimization_horizon}\n")
-#        self.lg.info(f"max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}")
-#        sys.stderr.write(f"simulator: max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}\n")
-#        self.lg.info(f"max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}")
-#        sys.stderr.write(f"simulator: max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}\n")
+        self.lg.info(f"max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}")
+        sys.stderr.write(f"simulator: max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}\n")
+        self.lg.info(f"max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}")
+        sys.stderr.write(f"simulator: max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}\n")
         self.lg.info(f"loglevel={self.loglevel}")
         sys.stderr.write(f"simulator: loglevel={self.loglevel}\n")
 
@@ -117,28 +112,23 @@ class Simulator():
 
     def compute_buffer_size(self):
         # return self.number_of_monitors + self.number_of_peers + self.number_of_malicious
-        team_size = self.compute_team_size(
-            (self.number_of_monitors + self.number_of_peers + self.number_of_malicious) * 8)
+        team_size = self.compute_team_size((self.number_of_monitors + self.number_of_peers + self.number_of_malicious) * 8)
         if (team_size < 32):
             return 32
         else:
             return team_size
 
     def run_a_splitter(self, splitter_id):
-        """ Start a splitter
-        """
-#        Common.CHUNK_CADENCE = self.chunk_cadence
         if self.buffer_size == 0:
-            Common.BUFFER_SIZE = self.compute_buffer_size()
-        else:
-            Common.BUFFER_SIZE = self.buffer_size
-        self.lg.debug("(definitive) buffer_size={}".format(Common.BUFFER_SIZE))
+            self.buffer_size = self.compute_buffer_size()
         if self.set_of_rules == "DBS" or self.set_of_rules == "IMS":
-            Splitter_DBS.splitter_port = 0
-            Splitter_DBS.max_chunk_loss = 8
-            Splitter_DBS.number_of_monitors = 1
-            Splitter_DBS.buffer_size = Common.BUFFER_SIZE
-            splitter = Splitter_DBS_simulator("Splitter_DBS_simulator")
+            splitter = Splitter_DBS_simulator(buffer_size = self.buffer_size,
+#                                              optimization_horizon = self.optimization_horizon,
+#                                              chunk_cadence = self.chunk_cadence,
+                                              max_chunk_loss = self.max_chunk_loss_at_splitter,
+                                              #number_of_monitors = self.number_of_monitors,
+                                              number_of_rounds = self.number_of_rounds,
+                                              loglevel = self.loglevel)
             self.lg.info("simulator: DBS/IMS splitter created")
         elif self.set_of_rules == "CIS":
             splitter = Splitter_STRPEDS()
@@ -279,7 +269,7 @@ class Simulator():
         # Listen to the team for simulation life
         sim.FEEDBACK["STATUS"] = Queue()
 
-        # Create shared list for CIS set of rules (only when cis is chosen?)
+        # Create shared list for CIS set of rules (only when cis is choosen?)
         manager = Manager()
         sim.SHARED_LIST["malicious"] = manager.list()
         sim.SHARED_LIST["regular"] = manager.list()
