@@ -159,10 +159,14 @@ class Simulator():
                 pass
                 #chunks_before_leave = 99999999
             if self.set_of_rules == "DBS":
-                peer = Monitor_DBS_simulator(id, "Monitor_DBS_simulator", self.loglevel)
+                peer = Monitor_DBS_simulator(id = id,
+                                             name = "Monitor_DBS_simulator",
+                                             loglevel = self.loglevel)
                 self.lg.info("simulator: DBS monitor created")
             elif self.set_of_rules == "IMS":
-                peer = Monitor_IMS_simulator(id, "Monitor_IMS_simulator", self.loglevel)
+                peer = Monitor_IMS_simulator(id = id,
+                                             name = "Monitor_IMS_simulator",
+                                             loglevel = self.loglevel)
                 self.lg.info("simulator: IMS monitor created")
             elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
@@ -181,10 +185,16 @@ class Simulator():
                 self.lg.info("simulator: Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "DBS":
-                peer = Peer_DBS_simulator(id, "Peer_DBS_simulator", self.loglevel)
+                peer = Peer_DBS_simulator(
+                    id = id,
+                    name = "Peer_DBS_simulator",
+                    loglevel = self.loglevel)
                 self.lg.info("simulator: DBS peer created")
             if self.set_of_rules == "IMS":
-                peer = Peer_IMS_simulator(id, "Peer_IMS_simulator", self.loglevel)
+                peer = Peer_IMS_simulator(
+                    id = id,
+                    name = "Peer_IMS_simulator",
+                    loglevel = self.loglevel)
                 self.lg.info("simulator: IMS peer created")
             elif self.set_of_rules == "CIS":
                 peer = Peer_STRPEDS(id)

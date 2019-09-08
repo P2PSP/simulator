@@ -7,7 +7,7 @@ simulator module
 # a time.sleep(). However, by default, latency is disabled. In order
 # to simulate it, uncoment the lines L0, L1, L2 and L3.
 
-# Latency HAS BEEN ENABLED
+# Latency HAS BEEN DISABLED
 
 #latency = 0.005  # Seconds (L0)
 #latency = 0.020  
@@ -39,6 +39,10 @@ class Socket_wrapper():
         else:
             self.sock = sock
             self.type = type
+        try:
+            self.lg.info(f"{self.sock.getsockname()}: latency={latency}")
+        except:
+            self.lg.info(f"{self.sock.getsockname()}: latency disabled")
 
     def send(self, msg):
         self.lg.info(f"{self.sock.getsockname()} - [{msg}] => {self.sock.getpeername()}")

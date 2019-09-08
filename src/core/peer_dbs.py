@@ -16,7 +16,7 @@ import sys
 import time
 from threading import Thread
 
-import netifaces
+#import netifaces
 
 from .messages import Messages
 from .limits import Limits
@@ -209,11 +209,12 @@ class Peer_DBS():
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
         #host = socket.gethostbyname(socket.gethostname())
-        iface = netifaces.interfaces()[1]      # Name of the second interface
-        stuff = netifaces.ifaddresses(iface)   # Configuration data
-        IP_stuff = stuff[netifaces.AF_INET][0]  # Only the IP stuff
-        address = IP_stuff['addr']             # Get local IP addr
-
+        #iface = netifaces.interfaces()[1]      # Name of the second interface
+        #stuff = netifaces.ifaddresses(iface)   # Configuration data
+        #IP_stuff = stuff[netifaces.AF_INET][0] # Only the IP stuff
+        #address = IP_stuff['addr']             # Get local IP addr
+        host_name = socket.gethostname()
+        address = socket.gethostbyname(host_name)
         self.splitter_socket.bind((address, peer_port))
 
         try:
