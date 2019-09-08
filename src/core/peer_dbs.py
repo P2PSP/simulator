@@ -20,7 +20,7 @@ import netifaces
 
 from .messages import Messages
 from .limits import Limits
-from .simulator_stuff import Simulator_socket as socket
+from .socket_wrapper import Socket_wrapper as socket
 from .simulator_stuff import hash
 from .ip_tools import IP_tools
 from .chunk_structure import ChunkStructure
@@ -142,7 +142,7 @@ class Peer_DBS():
         msg_length = struct.calcsize("!Ii")
         msg = self.splitter_socket.recv(msg_length)
         pe = struct.unpack("!Ii", msg)
-        self.public_endpoint = (socket.int2ip(pe[0]), pe[1])
+        self.public_endpoint = (IP_tools.int2ip(pe[0]), pe[1])
         self.lg.debug("{}: public_endpoint={}".format(self.id, self.public_endpoint))
 
     def receive_buffer_size(self):
@@ -189,7 +189,7 @@ class Peer_DBS():
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
             peer = struct.unpack("!Ii", msg)
-            peer = (socket.int2ip(peer[0]), peer[1])
+            peer = (IP_tools.int2ip(peer[0]), peer[1])
             self.team.append(peer)
             self.forward[self.public_endpoint].append(peer)
             self.index_of_peer[peer] = counter
@@ -580,7 +580,7 @@ class Peer_DBS():
                 message = struct.unpack(self.chunk_packet_format, pkg)
                 message = message[ChunkStructure.CHUNK_NUMBER], \
                     message[ChunkStructure.CHUNK_DATA], \
-                    (socket.int2ip(message[ChunkStructure.ORIGIN]), message[ChunkStructure.ORIGIN+1])
+                    (IP_tools.int2ip(message[ChunkStructure.ORIGIN]), message[ChunkStructure.ORIGIN+1])
             elif len(pkg) == struct.calcsize("!iii"):
                 message = struct.unpack("!iii", pkg)  # Control message:
                 # [control, parameter]
@@ -604,7 +604,7 @@ class Peer_DBS():
             message = struct.unpack(self.chunk_packet_format, pkg)
             message = message[ChunkStructure.CHUNK_NUMBER], \
                 message[ChunkStructure.CHUNK_DATA], \
-                (socket.int2ip(message[ChunkStructure.ORIGIN]), message[ChunkStructure.ORIGIN+1])
+                (IP_tools.int2ip(message[ChunkStructure.ORIGIN]), message[ChunkStructure.ORIGIN+1])
         elif len(pkg) == struct.calcsize("!iii"):
             message = struct.unpack("!iii", pkg)  # Control message:
             # [control, parameter]

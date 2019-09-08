@@ -10,7 +10,7 @@ import struct
 
 from .common import Common
 from .peer_dbs import Peer_DBS
-from .simulator_stuff import Simulator_socket as socket
+from .socket_wrapper import Socket_wrapper as socket
 from .simulator_stuff import Simulator_stuff as sim
 from .simulator_stuff import hash
 

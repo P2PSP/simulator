@@ -22,7 +22,7 @@ from threading import Thread
 
 from .messages import Messages
 from .limits import Limits
-from .simulator_stuff import Simulator_socket as socket
+from .socket_wrapper import Socket_wrapper as socket
 from .ip_tools import IP_tools
 
 # class Splitter_DBS(Simulator_stuff):

@@ -7,7 +7,7 @@ import struct
 
 from .messages import Messages
 from .peer_dbs import Peer_DBS
-from .simulator_stuff import Simulator_socket as socket
+from .socket_wrapper import Socket_wrapper as socket
 
 class Monitor_DBS(Peer_DBS):
     def __init__(self, id, name, loglevel):
