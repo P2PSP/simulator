@@ -18,6 +18,7 @@ from threading import Thread
 
 import netifaces
 
+from .messages import Messages
 from .common import Common
 from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import hash
@@ -168,7 +169,7 @@ class Peer_DBS():
         self.lg.debug("{}: peer_number={}".format(self.ext_id, self.peer_number))
 
     def say_hello(self, peer):
-        msg = struct.pack("!i", Common.HELLO)
+        msg = struct.pack("!i", Messages.HELLO)
         self.team_socket.sendto(msg, peer)
         self.lg.debug("{}: sent [hello] to {}".format(self.ext_id, peer))
 
@@ -245,7 +246,7 @@ class Peer_DBS():
             return False
 
     def prune_origin(self, chunk_number, peer):
-        msg = struct.pack("!ii", Common.PRUNE, chunk_number)
+        msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
         self.lg.info("{}: sent [prune {}] to {}".format(self.ext_id, chunk_number, peer))
 
@@ -551,14 +552,14 @@ class Peer_DBS():
 
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
 
-            if chunk_number == Common.REQUEST:
+            if chunk_number == Messages.REQUEST:
                 self.process_request(message[1], sender)
-            elif chunk_number == Common.PRUNE:
+            elif chunk_number == Messages.PRUNE:
                 self.process_prune(message[1], sender)
-            elif chunk_number == Common.HELLO:
+            elif chunk_number == Messages.HELLO:
                 # if len(self.forward[self.id]) < self.max_degree:
                 self.process_hello(sender)
-            elif chunk_number == Common.GOODBYE:
+            elif chunk_number == Messages.GOODBYE:
                 self.process_goodbye(sender)
             else:
                 self.lg.info("{}: unexpected control chunk of index={}".format(self.ext_id, chunk_number))
@@ -620,7 +621,7 @@ class Peer_DBS():
     #    return ((-1, b'L', None), ('127.0.1.1', 4552))
 
     def request_chunk(self, chunk_number, peer):
-        msg = struct.pack("!ii", Common.REQUEST, chunk_number)
+        msg = struct.pack("!ii", Messages.REQUEST, chunk_number)
         self.team_socket.sendto(msg, peer)
         self.lg.warning(f"{self.ext_id}: request_chunk: [request {chunk_number}] sent to {peer}")
 
@@ -724,18 +725,18 @@ class Peer_DBS():
 
     # To be placed in peer_dbs_sim ?
     def compose_goodbye_message(self):
-        msg = struct.pack("!iii", Common.GOODBYE, self.number_of_chunks_consumed, self.losses)
+        msg = struct.pack("!iii", Messages.GOODBYE, self.number_of_chunks_consumed, self.losses)
         self.lg.debug("{}: played={}".format(self.ext_id, self.number_of_chunks_consumed))
         self.lg.debug("{}: losses={}".format(self.ext_id, self.losses))
         return msg
 
     # To be here (the above function if only for the simulator)
     # def compose_goodbye_message(self):
-    #    msg = struct.pack("i", Common.GOODBYE)
+    #    msg = struct.pack("i", Messages.GOODBYE)
     #    return msg
 
     def say_goodbye(self, peer):
-        # self.team_socket.sendto(Common.GOODBYE, "i", peer)
+        # self.team_socket.sendto(Messages.GOODBYE, "i", peer)
         msg = self.compose_goodbye_message()
         self.team_socket.sendto(msg, peer)
         self.lg.debug("{}: sent [goodbye] to {}".format(self.ext_id, peer))

@@ -20,6 +20,7 @@ import struct
 import time
 from threading import Thread
 
+from .messages import Messages
 from .common import Common
 from .simulator_stuff import Simulator_socket as socket
 from .ip_tools import IP_tools
@@ -223,8 +224,8 @@ class Splitter_DBS():
                 self.lg.debug("{}: marked for deletion".format(self.id, peer))
 
     def say_goodbye(self, peer):
-        # self.team_socket.sendto(Common.GOODBYE, "i" , peer)
-        msg = struct.pack("!i", Common.GOODBYE)
+        # self.team_socket.sendto(Messages.GOODBYE, "i" , peer)
+        msg = struct.pack("!i", Messages.GOODBYE)
         self.team_socket.sendto(msg, peer)
         self.lg.debug("{}: sent [goodbye] to {}".format(self.id, peer))
 
@@ -246,7 +247,7 @@ class Splitter_DBS():
             #print("{}: packet={}".format(self.id, packed_msg))
             if len(packed_msg) == struct.calcsize("!iii"):
                 msg = struct.unpack("!iii", packed_msg)
-                if msg[0] == Common.GOODBYE:
+                if msg[0] == Messages.GOODBYE:
                     # Message sent by all peers when they leave the team
                     self.process_goodbye(sender)
                     if self.lost_chunks_from[sender] == 0:
@@ -262,7 +263,7 @@ class Splitter_DBS():
                     self.lg.debug("{}: total_lost_chunks={}".format(self.id, self.total_lost_chunks))
             elif len(packed_msg) == struct.calcsize("!ii"):
                 msg = struct.unpack("!ii", packed_msg)
-                if msg[0] == Common.LOST_CHUNK:
+                if msg[0] == Messages.LOST_CHUNK:
                     # Message sent only by monitors when they lost a chunk
                     lost_chunk_number = msg[1]
                     # lost_chunk_number = self.get_lost_chunk_number(message)
