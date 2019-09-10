@@ -205,10 +205,12 @@ class Simulator():
         self.lg.critical("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
 #        peer.link_failure_prob = self.link_failure_prob
-#        peer.max_degree = self.max_degree
-        peer.chunks_before_leave = chunks_before_leave
-        peer.splitter = splitter_id
+#        peer.optimization_horizon = self.optimization_horizon
+        #peer.chunks_before_leave = chunks_before_leave
+        peer.set_splitter(splitter_id)
+#        peer.set_optimization_horizon(self.optimization_horizon)
         peer.connect_to_the_splitter(peer_port=0)
+        peer.receive_peer_index_in_team()
         peer.receive_public_endpoint()
         peer.receive_buffer_size()
         peer.receive_the_number_of_peers()
