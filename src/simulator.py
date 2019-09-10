@@ -159,10 +159,14 @@ class Simulator():
                 pass
                 #chunks_before_leave = 99999999
             if self.set_of_rules == "DBS":
-                peer = Monitor_DBS_simulator(id, "Monitor_DBS_simulator", self.loglevel)
+                peer = Monitor_DBS_simulator(id = id,
+                                             name = "Monitor_DBS_simulator",
+                                             loglevel = self.loglevel)
                 self.lg.info("simulator: DBS monitor created")
             elif self.set_of_rules == "IMS":
-                peer = Monitor_IMS_simulator(id, "Monitor_IMS_simulator", self.loglevel)
+                peer = Monitor_IMS_simulator(id = id,
+                                             name = "Monitor_IMS_simulator",
+                                             loglevel = self.loglevel)
                 self.lg.info("simulator: IMS monitor created")
             elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
@@ -181,10 +185,16 @@ class Simulator():
                 self.lg.info("simulator: Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "DBS":
-                peer = Peer_DBS_simulator(id, "Peer_DBS_simulator", self.loglevel)
+                peer = Peer_DBS_simulator(
+                    id = id,
+                    name = "Peer_DBS_simulator",
+                    loglevel = self.loglevel)
                 self.lg.info("simulator: DBS peer created")
             if self.set_of_rules == "IMS":
-                peer = Peer_IMS_simulator(id, "Peer_IMS_simulator", self.loglevel)
+                peer = Peer_IMS_simulator(
+                    id = id,
+                    name = "Peer_IMS_simulator",
+                    loglevel = self.loglevel)
                 self.lg.info("simulator: IMS peer created")
             elif self.set_of_rules == "CIS":
                 peer = Peer_STRPEDS(id)
@@ -195,10 +205,12 @@ class Simulator():
         self.lg.critical("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
 #        peer.link_failure_prob = self.link_failure_prob
-#        peer.max_degree = self.max_degree
-        peer.chunks_before_leave = chunks_before_leave
-        peer.splitter = splitter_id
+#        peer.optimization_horizon = self.optimization_horizon
+        #peer.chunks_before_leave = chunks_before_leave
+        peer.set_splitter(splitter_id)
+#        peer.set_optimization_horizon(self.optimization_horizon)
         peer.connect_to_the_splitter(peer_port=0)
+        peer.receive_peer_index_in_team()
         peer.receive_public_endpoint()
         peer.receive_buffer_size()
         peer.receive_the_number_of_peers()
@@ -312,10 +324,10 @@ class Simulator():
 
         sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
         sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-        for name, pid in self.processes.items():
-            self.lg.info("Killing {}, ...".format(name))
-            os.system("kill -9 " + str(pid))
-            self.lg.info("{} killed".format(name))
+#        for name, pid in self.processes.items():
+#            self.lg.info("Killing {}, ...".format(name))
+#            os.system("kill -9 " + str(pid))
+#            self.lg.info("{} killed".format(name))
 
         if self.set_of_rules == "CIS" or self.set_of_rules == "CIS-SSS":
             self.lg.info("List of Malicious")
