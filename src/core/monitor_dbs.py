@@ -10,14 +10,14 @@ from .peer_dbs import Peer_DBS
 from .socket_wrapper import Socket_wrapper as socket
 
 class Monitor_DBS(Peer_DBS):
-    def __init__(self, id, name, loglevel):
-        #self.losses = 0
-        super().__init__(id, name, loglevel)
+    #def __init__(self, id, name, loglevel):
+    #    #self.losses = 0
+    #    super().__init__(id, name, loglevel)
 
     def complain(self, chunk_number):
         msg = struct.pack("!ii", Messages.LOST_CHUNK, chunk_number)
         self.team_socket.sendto(msg, self.splitter)
-        self.lg.info("{}: [lost chunk {}] complain sent to splitter {}".format(self.id, chunk_number, self.splitter))
+        self.lg.info(f"{self.public_endpoint}: [lost chunk {chunk_number}] sent to the splitter {self.splitter}")
 
     # def request_chunk(self, chunk_number, peer):
     #    Peer_DBS.request_chunk(self, chunk_number, peer) # super()?

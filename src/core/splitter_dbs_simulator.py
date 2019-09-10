@@ -81,7 +81,8 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
     def run(self):
         super().run()
-        sys.stderr.write(f"\n{self.id}: {self.chunks_lost_by_team} lost chunks of {self.chunks_received_by_team}\n")
+        sys.stderr.write("\n")
+        #sys.stderr.write(f"\n{self.id}: {self.chunks_lost_by_team} lost chunks of {self.chunks_received_by_team}\n")
         if Simulator_stuff.FEEDBACK:
             Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
             self.lg.info(f"{self.id}: Bye sent to simulator")

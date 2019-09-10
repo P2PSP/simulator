@@ -74,7 +74,7 @@ class Splitter_DBS():
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
-        self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM, loglevel=self.lg.level)
         # self.team_socket.set_id(self.id)
         self.team_socket.bind(self.id)
         # self.team_socket.set_max_packet_size(struct.calcsize("is3s")) # Chunck index, chunk, origin
@@ -309,10 +309,11 @@ class Splitter_DBS():
 
     def compose_chunk_packet(self, chunk_number, chunk, peer):
         #now = time.time()
-        chunk_msg = (self.chunk_number,
+        chunk_msg = (chunk_number,
                      chunk,
                      IP_tools.ip2int(peer[0]), # now,
                      peer[1])
+#        sys.stderr.write(f"chunk_msg={chunk_msg}\n")
         msg = struct.pack(self.chunk_packet_format, *chunk_msg)
         return msg
 

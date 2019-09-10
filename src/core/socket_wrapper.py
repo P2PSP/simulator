@@ -31,7 +31,7 @@ class Socket_wrapper():
 
         #self.lg = ColorLog(logging.getLogger(__name__))
         self.lg = logging.getLogger(__name__)
-        #self.lg.setLevel(logging.INFO)
+        self.lg.setLevel(loglevel)
 
         if sock is None:
             self.sock = socket.socket(family, type)
@@ -41,8 +41,10 @@ class Socket_wrapper():
             self.type = type
         try:
             self.lg.info(f"{self.sock.getsockname()}: latency={latency}")
+#            sys.stderr.write(f"{self.sock.getsockname()}: latency={latency}\n")
         except:
             self.lg.info(f"{self.sock.getsockname()}: latency disabled")
+#            sys.stderr.write(f"{self.sock.getsockname()}: latency disabled\n")
 
     def send(self, msg):
         self.lg.info(f"{self.sock.getsockname()} - [{msg}] => {self.sock.getpeername()}")

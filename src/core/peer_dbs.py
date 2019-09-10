@@ -692,9 +692,10 @@ class Peer_DBS():
         return self.team_socket.recvfrom(self.max_packet_length)
 
     def process_next_message(self):
-        pkg, sender = self.receive_packet()
+        packet, sender = self.receive_packet()
         # self.lg.debug("{}: received {} from {} with length {}".format(self,id, pkg, sender, len(pkg)))
-        return self.unpack_message(pkg, sender)
+#        sys.stderr.write(f"packet={packet} from sender={sender}\n")
+        return self.unpack_message(packet, sender)
 
     def unpack_message(self, packet, sender):
         if len(packet) == self.max_packet_length:
@@ -728,9 +729,9 @@ class Peer_DBS():
 
     def play_chunk(self, chunk_number):
         buffer_box = self.chunks[chunk_number % self.buffer_size]
-        if buffer_box[ChunkStructure.CHUNK_NUMBER] > -1:
+        if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
             # Only the data will be empty in order to remember things ...
-            clear_entry_in_buffer = (buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN], 0.0, b'L')
+            clear_entry_in_buffer = (buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN])
 #            self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
             self.chunks[chunk_number % self.buffer_size] = clear_entry_in_buffer
             self.played += 1
@@ -888,10 +889,12 @@ class Peer_DBS():
         # probably will not be the received chunk with the smallest
         # index).
         self.chunk_to_play = chunk_number
+#        sys.stderr.write(f"first_chunk_to_play={chunk_number}\n")
 
         self.lg.info(f"{self.ext_id}: buffer_data: position in the buffer of the first chunk to play={self.chunk_to_play}")
 
         while (chunk_number < self.chunk_to_play) or (((chunk_number - self.chunk_to_play) % self.buffer_size) < (self.buffer_size // 2)):
+#            sys.stderr.write(f"{chunk_number} {self.chunk_to_play} "); sys.stderr.flush()
             (chunk_number, _) = self.process_next_message()
             if self.player_connected == False:
                 break
@@ -902,11 +905,10 @@ class Peer_DBS():
         self.prev_received_chunk = chunk_number
 
     def run(self):
-
         self.lg.info(f"{self.ext_id}: waiting for stream chunks ...")
 
         for i in range(self.buffer_size):
-            self.chunks.append((-1, b'L', None))  # L == Lost
+            self.chunks.append((-1, b'L', None, 0))  # L == Lost
 
         start_time = time.time()
         self.buffer_data()
@@ -923,7 +925,6 @@ class Peer_DBS():
             #    break
             self.lg.debug(f"{self.ext_id}: run: number_of_peers={len(self.team)}")
         self.lg.info(f"{self.ext_id}: run: player_connected={self.player_connected} waiting_for_goodbye={self.waiting_for_goodbye}")
-        sys.stderr.write(f"{self.ext_id}: player_connected={self.player_connected} waiting_for_goodbye={self.waiting_for_goodbye}\n")
         for i in range(10):
             self.say_goodbye(self.splitter)
             self.lg.info(f"{self.ext_id}: sent [goodbye] to the splitter {self.splitter}")
