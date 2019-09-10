@@ -203,6 +203,11 @@ class Peer_DBS():
             peer = struct.unpack("!Ii", msg)
             peer = (IP_tools.int2ip(peer[0]), peer[1])
             self.team.append(peer)
+            if __debug__:
+                if self.public_endpoint == peer:
+                    self.lg.error(f"{self.ext_id}: I'm appending myself as a destination in my forwarding table")
+                    
+            # I'll forward at least the chunks received from the splitter.
             self.forward[self.public_endpoint].append(peer)
             self.pending[peer] = []
             
@@ -215,7 +220,7 @@ class Peer_DBS():
             counter += 1
             peers_pending_of_reception -= 1
 
-        self.lg.info(f"{self.ext_id}: forward={self.forward} pending={self.pending}")
+        self.lg.info(f"{self.ext_id}: receive_the_list_of_peers: forward={self.forward} pending={self.pending}")
 
     def connect_to_the_splitter(self, peer_port):
         #print("{}: connecting to the splitter at {}".format(self.id,

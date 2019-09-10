@@ -202,7 +202,6 @@ class Splitter_DBS():
     def process_lost_chunk(self, lost_chunk_number, sender):
         destination = self.get_losser(lost_chunk_number)
         self.lg.info(f"{self.id}: {sender} complains about lost chunk {lost_chunk_number} with destination {destination}")
-        #self.total_lost_chunks += 1
         self.increment_unsupportivity_of_peer(destination)
 
     # def get_lost_chunk_number(self, message):

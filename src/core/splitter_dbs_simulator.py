@@ -34,6 +34,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         self.number_of_rounds = number_of_rounds
         self.lg.debug("Splitter_DBS_simulator: initialized")
         colorama.init()
+        #self.total_lost_chunks = 0
 
     def retrieve_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
@@ -62,6 +63,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
     def process_lost_chunk(self, lost_chunk_number, sender):
         super().process_lost_chunk(lost_chunk_number = lost_chunk_number, sender = sender)
         sys.stderr.write(f" {colorama.Fore.RED}L{lost_chunk_number}{colorama.Style.RESET_ALL}")
+        #self.total_lost_chunks += 1
 
     def insert_peer(self, peer):
         super().insert_peer(peer)
@@ -79,7 +81,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
     def run(self):
         super().run()
-        #sys.stderr.write(f"{self.id}: {self.chunks_lost_by_team} lost chunks of {self.chunks_received_by_team}\n")
+        sys.stderr.write(f"\n{self.id}: {self.chunks_lost_by_team} lost chunks of {self.chunks_received_by_team}\n")
         if Simulator_stuff.FEEDBACK:
             Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))
             self.lg.info(f"{self.id}: Bye sent to simulator")

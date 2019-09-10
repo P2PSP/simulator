@@ -324,10 +324,10 @@ class Simulator():
 
         sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
         sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-        for name, pid in self.processes.items():
-            self.lg.info("Killing {}, ...".format(name))
-            os.system("kill -9 " + str(pid))
-            self.lg.info("{} killed".format(name))
+#        for name, pid in self.processes.items():
+#            self.lg.info("Killing {}, ...".format(name))
+#            os.system("kill -9 " + str(pid))
+#            self.lg.info("{} killed".format(name))
 
         if self.set_of_rules == "CIS" or self.set_of_rules == "CIS-SSS":
             self.lg.info("List of Malicious")
