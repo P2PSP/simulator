@@ -44,13 +44,14 @@ class Splitter_DBS():
         self.max_chunk_loss = max_chunk_loss
     
         self.alive = True  # While True, keeps the splitter alive
-        self.chunk_number = 0  # First chunk (number) to send
+#        self.chunk_number = 0  # First chunk (number) to send
         self.team = []  # Current peers in the team
-        self.losses = {}  # (Detected) lost chunks per peer
-        self.destination_of_chunk = (buffer_size*2)*[0]
+        self.losses = {}  # Reported (by monitors) lost chunks per peer
+#        self.rounds_lossing = {}  # Number or consecutive rounds lossing the chunk sent from the splitter
+        self.destination_of_chunk = (buffer_size)*[0]
         #self.destination_of_chunk = {}
         self.peer_number = 0  # First peer to serve in the list of peers
-        self.number_of_monitors = 0  # Monitors report lost chunks
+        self.number_of_monitors = 1  # Monitors report lost chunks
         self.outgoing_peers_list = []  # Peers which requested to leave the team
 
         self.chunk_packet_format = "!isIi"
@@ -186,30 +187,57 @@ class Splitter_DBS():
         except KeyError:
             self.lg.warning(f"{self.id}: the unsupportive peer {peer} does not exist in {self.losses}")
         else:
-            self.lg.info(f"{self.id}: peer {peer} has lost {self.losses[peer]} chunks")
-            if self.losses[peer] > self.max_chunk_loss:
-                self.remove_peer(peer)
+#            self.lg.info(f"{self.id}: peer {peer} has lost {self.rounds_lossing[peer]} chunks (rounds)")
+            if self.total_losses > self.max_chunk_loss:
+                peer_to_remove = max(self.losses, key=self.losses.get)
+                self.remove_peer(peer_to_remove)
+
+                # Reset the counters
+                for peer in self.losses.keys():
+                    self.losses[peer] = 0
+                self.total_losses = 0
+        
+
+#            sys.stderr.write(f"{self.rounds_lossing}")
 #        finally:
 #            pass
 
-    def reset_counters(self):
-        for peer in self.losses.keys():
-            self.losses[peer] /= 2
+#    def reset_counters(self):
+#        for peer in self.rounds_lossing.keys():#self.losses.keys():
+#            #self.losses[peer] /= 2
+#            self.rounds_lossing[peer] -= 1
+#            if self.rounds_lossing[peer] < 0:
+#                self.rounds_lossing[peer] = 0
 #            self.losses[peer] /= self.max_chunk_loss
 #            if self.losses[peer] < 0:
 #                self.losses[peer] = 0
 
-    def process_lost_chunk(self, lost_chunk_number, sender):
+    def process_lost_chunk(self, lost_chunk_number):
+        self.total_losses += 1
+#        sys.stderr.write(f"lost_chunk_number={lost_chunk_number}\n")
         destination = self.get_losser(lost_chunk_number)
-        self.lg.info(f"{self.id}: {sender} complains about lost chunk {lost_chunk_number} with destination {destination}")
-        self.increment_unsupportivity_of_peer(destination)
+        #if destination == self.team[0]:
+        #    sys.stderr.write(f"\nlost_chunk_number={lost_chunk_number} {lost_chunk_number % self.buffer_size}")
+        #    sys.stderr.write(f"\ncomplain received for {destination}")
+        #    counter = 0
+        #    for i in self.destination_of_chunk:
+        #        sys.stderr.write(f"\n{counter} -> {i} ")
+        #        counter += 1            
+        #    sys.stderr.write(f"\nteam={self.team}")
+#        sys.stderr.write(f"destination={destination} ")
+        if destination in self.team:
+            #sys.stderr.write(f"position={self.team.index(destination)}\n")
+            #        self.lg.info(f"{self.id}: {sender} complains about lost chunk {lost_chunk_number} with destination {destination}")
+            if self.team.index(destination) > self.number_of_monitors:
+                self.increment_unsupportivity_of_peer(destination)
 
     # def get_lost_chunk_number(self, message):
     #    return message[1]
 
     def get_losser(self, lost_chunk_number):
         #return self.destination_of_chunk[lost_chunk_number % self.buffer_size]
-        return self.destination_of_chunk[lost_chunk_number % (self.buffer_size*2)]
+        #sys.stderr.write(f"\n{self.destination_of_chunk}")
+        return self.destination_of_chunk[lost_chunk_number % (self.buffer_size)]
 
     def del_peer(self, peer_index):
         del self.team[peer_index]
@@ -255,7 +283,7 @@ class Splitter_DBS():
 
     def on_round_beginning(self):
         self.remove_outgoing_peers()
-        self.reset_counters()
+        #self.reset_counters()
 
     def moderate_the_team(self):
         while self.alive:
@@ -282,10 +310,11 @@ class Splitter_DBS():
                 # Message sent only by monitors when they lost a chunk
                 lost_chunk_number = msg[1]
                 # lost_chunk_number = self.get_lost_chunk_number(message)
-                self.process_lost_chunk(lost_chunk_number, sender)
+                self.process_lost_chunk(lost_chunk_number)
                 self.lg.info(f"{self.id}: received [lost chunk {msg[1]}] from {sender}")
             elif msg[0] == Messages.HELLO:
-                # Message sent by peers to create a translation entry in their NATS 
+                # Message sent by peers to create a translation entry
+                # in their NATs. No extra functionality by now.
                 self.lg.info(f"{self.id}: received [hello] from {sender}")
             else:
                 self.lg.warning(f"{self.id}: unexpected message {packed_msg} with length={len(packed_msg)} decoded as {msg} received from {sender}")
@@ -351,7 +380,7 @@ class Splitter_DBS():
                 # raise
 
             #message = self.compose_chunk_packet(chunk, peer)
-            self.destination_of_chunk[self.chunk_number % (self.buffer_size*2)] = peer
+            self.destination_of_chunk[chunk_number % (self.buffer_size)] = peer#self.team.index(peer)
             if __debug__:
                 self.lg.debug(f"{self.id}: showing destination_of_chunk:\n")
                 counter = 0
