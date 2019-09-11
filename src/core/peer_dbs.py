@@ -320,8 +320,25 @@ class Peer_DBS():
                         
                 self.number_of_lost_chunks = 0
 
+                #sys.stderr.write(f"\nAntes: {self.ext_id}: {self.forward}")
+                #sys.stderr.write(f"\n{self.ext_id}: {self.alive}")
+
+                for origin in list(self.alive.keys()):
+                    if self.alive[origin] == False:
+                        del self.alive[origin]
+                        for peers_list in self.forward.values():
+                            if origin in peers_list:
+                                peers_list.remove(origin)
+                        if origin in self.team:
+                            self.team.remove(origin)
+
+                #sys.stderr.write(f"\nDespues: {self.ext_id}: {self.forward}")
+                for origin in self.alive.keys():
+                    self.alive[origin] = False
+                
             else:
 
+                self.alive[origin] = True
                 # Chunk received from a peer
                 
                 #self.add_new_forwarding_rule(self.public_endpoint, sender)
