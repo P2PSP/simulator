@@ -131,7 +131,7 @@ class Peer_DBS():
             self.prev_chunk_number = 0  # Jitter in chunks-time
             self.prev_chunk_number_round = 0
 
-        self.alive = {}  # True if received a chunk in the last round from that origin
+        self.activity = {}  # Incremented if received a chunk in the last round from that origin
 #        self.debts = {}
 #        self.max_debt = 8
         self.name = name
@@ -292,6 +292,20 @@ class Peer_DBS():
             #self.check__player_connected()
             if sender == self.splitter:
 
+                for origin_ in list(self.activity):
+                    if self.activity[origin_] < -5:
+                        del self.activity[origin_]
+                        for peers_list in self.forward.values():
+                            if origin_ in peers_list:
+                                peers_list.remove(origin_)
+                                
+                        if origin_ in self.team:
+                            self.team.remove(origin_)
+
+                for origin in list(self.activity):
+                    self.activity[origin] -= -1
+                #sys.stderr.write(f"{self.ext_id}: {self.alive}\n")
+
                 # New round, all pending chunks are sent
                 self.lg.info(f"{self.ext_id}: buffer_chunk: flushing chunks to {len(self.pending)} neighbors={self.pending.keys()}")
                 for neighbor in self.pending:
@@ -323,24 +337,25 @@ class Peer_DBS():
                 #sys.stderr.write(f"\nAntes: {self.ext_id}: {self.forward}")
                 #sys.stderr.write(f"\n{self.ext_id}: {self.alive}")
 
-                for origin in list(self.alive.keys()):
-                    if self.alive[origin] == False:
-                        del self.alive[origin]
-                        for peers_list in self.forward.values():
-                            if origin in peers_list:
-                                peers_list.remove(origin)
-                        if origin in self.team:
-                            self.team.remove(origin)
+                '''
+                for origin in list(self.forward.keys()):
+                    for neighbors in self.forward[origin]:
+                        sys.stderr.write(f"{neighbors}\n")
+                '''
 
                 #sys.stderr.write(f"\nDespues: {self.ext_id}: {self.forward}")
-                for origin in self.alive.keys():
-                    self.alive[origin] = False
                 
             else:
 
-                self.alive[origin] = True
                 # Chunk received from a peer
                 
+                try:
+                    self.activity[origin] += 1
+                    if self.activity[origin] > 5:
+                        self.activity[origin] = 5
+                except KeyError:
+                    self.activity[origin] = 1
+                    
                 #self.add_new_forwarding_rule(self.public_endpoint, sender)
                 #self.lg.debug(f"{self.ext_id}: forward={self.forward}")
 
