@@ -131,6 +131,7 @@ class Peer_DBS():
             self.prev_chunk_number = 0  # Jitter in chunks-time
             self.prev_chunk_number_round = 0
 
+        self.alive = {}  # True if received a chunk in the last round from that origin
 #        self.debts = {}
 #        self.max_debt = 8
         self.name = name
@@ -291,6 +292,8 @@ class Peer_DBS():
             #self.check__player_connected()
             if sender == self.splitter:
 
+                #sys.stderr.write(f"{self.ext_id}: {self.pending}\n")
+                
                 # New round, all pending chunks are sent
                 self.lg.info(f"{self.ext_id}: buffer_chunk: flushing chunks to {len(self.pending)} neighbors={self.pending.keys()}")
                 for neighbor in self.pending:
@@ -319,8 +322,25 @@ class Peer_DBS():
                         
                 self.number_of_lost_chunks = 0
 
+                #sys.stderr.write(f"\nAntes: {self.ext_id}: {self.forward}")
+                #sys.stderr.write(f"\n{self.ext_id}: {self.alive}")
+
+                for origin in list(self.alive.keys()):
+                    if self.alive[origin] == False:
+                        del self.alive[origin]
+                        for peers_list in self.forward.values():
+                            if origin in peers_list:
+                                peers_list.remove(origin)
+                        if origin in self.team:
+                            self.team.remove(origin)
+
+                #sys.stderr.write(f"\nDespues: {self.ext_id}: {self.forward}")
+                for origin in self.alive.keys():
+                    self.alive[origin] = False
+                
             else:
 
+                self.alive[origin] = True
                 # Chunk received from a peer
                 
                 #self.add_new_forwarding_rule(self.public_endpoint, sender)
@@ -427,9 +447,21 @@ class Peer_DBS():
         # If a peer X receives [request chunk] from peer Z, X will
         # append Z to forward[chunk.origin]. Only if Z is not the
         # origin of the requested chunk. This last thing can happen if
-        # Z is prefetching and request a chunks that will be
-        # originated at itself.
+        # Z requests chunks that will be originated at itself.
 
+        position = chunk_number % self.buffer_size
+        if self.chunks[position][ChunkStructure.CHUNK_DATA] != b'L':
+            origin = self.chunks[position][ChunkStructure.ORIGIN]
+            if origin != sender:
+                if origin in self.forward:
+                    if sender not in self.forward[origin]:
+                        self.forward[origin].append(sender)
+                        self.pending[sender] = []
+                else:
+                    self.forward[origin] = [sender]
+                    self.pending[sender] = []
+
+        '''
         origin = self.chunks[chunk_number % self.buffer_size][ChunkStructure.ORIGIN]
         if origin != sender:
             self.lg.debug(f"{self.ext_id}: process_request: chunks={self.chunks}")
@@ -437,7 +469,7 @@ class Peer_DBS():
             self.lg.info(f"{self.ext_id}: process_request: received [request {chunk_number}] from {sender} (origin={origin})")
 
             # if origin[0] != None:
-            if self.chunks[chunk_number % self.buffer_size][ChunkStructure.CHUNK_NUMBER] != -1:
+            if self.chunks[chunk_number % self.buffer_size][ChunkStructure.CHUNK_DATA] != b'L':
                 # In this case, I can start forwarding chunks from origin.
                 try:
                     self.lg.debug(f"{self.ext_id}: process_request: self.forward[{origin}]={self.forward[origin]} before")
@@ -448,9 +480,9 @@ class Peer_DBS():
                     else:
                         self.lg.debug(f"{self.ext_id}: process_request: {sender} is already in self.forward[{origin}]={self.forward[origin]}")
                 except KeyError:
-                    self.forward[origin] = [sender]
+                    #self.forward[origin] = [sender] # OJOOOOOOOOOOOOOOOOOORRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                     self.pending[sender] = []
-                self.lg.debug(f"{self.ext_id}: process_request: self.forward[{origin}]={self.forward[origin]} after")
+                #self.lg.debug(f"{self.ext_id}: process_request: self.forward[{origin}]={self.forward[origin]} after")
                 self.lg.warning(f"{self.ext_id}: process_request: chunks from {origin} will be sent to {sender}")
                 self.provide_request_feedback(sender)
 
@@ -466,6 +498,7 @@ class Peer_DBS():
 
         else:
             self.lg.warning(f"{self.ext_id}: process_request: origin={origin} == sender={sender}. Request ignored")
+        '''
 
     # When a {peer} receives a [prune {chunk_number}], the {sender} is
     # requesting that {peer} stop sending chunks originated at
@@ -524,6 +557,7 @@ class Peer_DBS():
             #sys.stderr.write(f"{self.ext_id}: chunk_number={chunk_number} is not in buffer ({self.chunks[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})\n")
 
     def process_hello(self, sender):
+
         self.lg.debug("{}: received [hello] from {}".format(self.ext_id, sender))
 
         # Incoming peers request to the rest of peers of the team

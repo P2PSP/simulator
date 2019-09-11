@@ -48,10 +48,10 @@ class Splitter_DBS():
         self.team = []  # Current peers in the team
         self.losses = {}  # Reported (by monitors) lost chunks per peer
 #        self.rounds_lossing = {}  # Number or consecutive rounds lossing the chunk sent from the splitter
-        self.destination_of_chunk = (buffer_size*2)*[0]
+        self.destination_of_chunk = (buffer_size)*[0]
         #self.destination_of_chunk = {}
         self.peer_number = 0  # First peer to serve in the list of peers
-        self.number_of_monitors = 0  # Monitors report lost chunks
+        self.number_of_monitors = 1  # Monitors report lost chunks
         self.outgoing_peers_list = []  # Peers which requested to leave the team
 
         self.chunk_packet_format = "!isIi"
@@ -182,9 +182,12 @@ class Splitter_DBS():
         self.losses[peer] = 0
         #self.rounds_lossing[peer] = 0
         self.lg.info(f"{self.id}: {peer} inserted in the team")
+        #sys.stderr.write(f"\n{self.team[0]}")
 
     def increment_unsupportivity_of_peer(self, peer):
         #sys.stderr.write(f"{self.losses}\n")
+        if self.team.index(peer)==0:
+            sys.stderr.write(f"\n{peer} {self.team}")
         try:
             self.losses[peer] += 1
             #self.rounds_lossing[peer] += 2
@@ -206,12 +209,12 @@ class Splitter_DBS():
 #        finally:
 #            pass
 
-    def reset_counters(self):
-        for peer in self.rounds_lossing.keys():#self.losses.keys():
-            #self.losses[peer] /= 2
-            self.rounds_lossing[peer] -= 1
-            if self.rounds_lossing[peer] < 0:
-                self.rounds_lossing[peer] = 0
+#    def reset_counters(self):
+#        for peer in self.rounds_lossing.keys():#self.losses.keys():
+#            #self.losses[peer] /= 2
+#            self.rounds_lossing[peer] -= 1
+#            if self.rounds_lossing[peer] < 0:
+#                self.rounds_lossing[peer] = 0
 #            self.losses[peer] /= self.max_chunk_loss
 #            if self.losses[peer] < 0:
 #                self.losses[peer] = 0
@@ -220,18 +223,28 @@ class Splitter_DBS():
         self.total_losses += 1
 #        sys.stderr.write(f"lost_chunk_number={lost_chunk_number}\n")
         destination = self.get_losser(lost_chunk_number)
+        #if destination == self.team[0]:
+        #    sys.stderr.write(f"\nlost_chunk_number={lost_chunk_number} {lost_chunk_number % self.buffer_size}")
+        #    sys.stderr.write(f"\ncomplain received for {destination}")
+        #    counter = 0
+        #    for i in self.destination_of_chunk:
+        #        sys.stderr.write(f"\n{counter} -> {i} ")
+        #        counter += 1            
+        #    sys.stderr.write(f"\nteam={self.team}")
 #        sys.stderr.write(f"destination={destination} ")
         if destination in self.team:
-#            sys.stderr.write(f"position={self.team.index(destination)}\n")
+            #sys.stderr.write(f"position={self.team.index(destination)}\n")
             #        self.lg.info(f"{self.id}: {sender} complains about lost chunk {lost_chunk_number} with destination {destination}")
-            self.increment_unsupportivity_of_peer(destination)
+            if self.team.index(destination) > self.number_of_monitors:
+                self.increment_unsupportivity_of_peer(destination)
 
     # def get_lost_chunk_number(self, message):
     #    return message[1]
 
     def get_losser(self, lost_chunk_number):
         #return self.destination_of_chunk[lost_chunk_number % self.buffer_size]
-        return self.destination_of_chunk[lost_chunk_number % (self.buffer_size*2)]
+        #sys.stderr.write(f"\n{self.destination_of_chunk}")
+        return self.destination_of_chunk[lost_chunk_number % (self.buffer_size)]
 
     def del_peer(self, peer_index):
         del self.team[peer_index]
@@ -251,7 +264,6 @@ class Splitter_DBS():
             self.lg.warning(f"{self.id}: the removed peer {peer} does not exist in losses!")
         finally:
             pass
-
 
     def process_goodbye(self, peer):
         self.lg.info(f"{self.id}: received [goodbye] from {peer}")
@@ -376,7 +388,7 @@ class Splitter_DBS():
                 # raise
 
             #message = self.compose_chunk_packet(chunk, peer)
-            self.destination_of_chunk[chunk_number % (self.buffer_size*2)] = peer
+            self.destination_of_chunk[chunk_number % (self.buffer_size)] = peer#self.team.index(peer)
             if __debug__:
                 self.lg.debug(f"{self.id}: showing destination_of_chunk:\n")
                 counter = 0
