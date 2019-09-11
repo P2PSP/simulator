@@ -61,6 +61,7 @@ class Splitter_DBS():
         self.peer_index_in_team = 0
         #self.received_chunks_from = {}
         #self.lost_chunks_from = {}
+        self.total_losses = 0  # Total number of lost chunks (reset when a peer is removed)
 
         self.lg.debug(f"{name}: initialized")
 
