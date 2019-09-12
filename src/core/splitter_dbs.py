@@ -169,6 +169,7 @@ class Splitter_DBS():
         self.lg.info(f"{self.id}: sending peers_list={self.team}")
         counter = 0
         for p in random.sample(self.team, len(self.team)): # Peers are selected at random
+        #for p in self.team:
             # peer_serve_socket.sendall(p, "6s")
             msg = struct.pack("!Ii", IP_tools.ip2int(p[0]), p[1])
             peer_serve_socket.sendall(msg)
@@ -189,10 +190,10 @@ class Splitter_DBS():
             self.lg.warning(f"{self.id}: the unsupportive peer {peer} does not exist in {self.losses}")
         else:
 #            self.lg.info(f"{self.id}: peer {peer} has lost {self.rounds_lossing[peer]} chunks (rounds)")
+            #sys.stderr.write(f"{[i for i in self.losses.values()]}"); sys.stderr.flush()
             if self.total_losses > self.max_chunk_loss:
                 peer_to_remove = max(self.losses, key=self.losses.get)
                 self.remove_peer(peer_to_remove)
-
                 # Reset the counters
                 for peer in self.losses.keys():
                     self.losses[peer] = 0
@@ -229,7 +230,7 @@ class Splitter_DBS():
         if destination in self.team:
             #sys.stderr.write(f"position={self.team.index(destination)}\n")
             #        self.lg.info(f"{self.id}: {sender} complains about lost chunk {lost_chunk_number} with destination {destination}")
-            if self.team.index(destination) > self.number_of_monitors:
+            if self.team.index(destination) >= self.number_of_monitors:
                 self.increment_unsupportivity_of_peer(destination)
 
     # def get_lost_chunk_number(self, message):

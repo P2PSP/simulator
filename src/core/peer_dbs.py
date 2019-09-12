@@ -292,19 +292,31 @@ class Peer_DBS():
             #self.check__player_connected()
             if sender == self.splitter:
 
-                for origin_ in list(self.activity):
-                    if self.activity[origin_] < -5:
-                        del self.activity[origin_]
-                        for peers_list in self.forward.values():
-                            if origin_ in peers_list:
-                                peers_list.remove(origin_)
-                                
+                #if self.ext_id[0] == '000': #!
+                #    sys.stderr.write(f" {[i for i in self.activity.values()]}") #!
+                    
+                for peer in list(self.activity):
+                    #sys.stderr.write(f" {self.activity[peer]}"); sys.stderr.flush()
+                    if self.activity[peer] < -5:
+                        del self.activity[peer]
+                        for neighbors in self.forward.values():
+                            if peer in neighbors:
+                                neighbors.remove(peer)
+                '''
                         if origin_ in self.team:
                             self.team.remove(origin_)
+                '''
 
-                for origin in list(self.activity):
-                    self.activity[origin] -= -1
-                #sys.stderr.write(f"{self.ext_id}: {self.alive}\n")
+                #if self.ext_id[0] == '000': #!
+                #    sys.stderr.write(f" ->{len(self.forward[self.public_endpoint])}"); sys.stderr.flush() #!
+
+                #sys.stderr.write(f" {len(self.forward[self.public_endpoint])}"); sys.stderr.flush()
+                #sys.stderr.write(f" {len(self.team)}"); sys.stderr.flush()
+                #sys.stderr.write(f" {[i for i in self.activity.values()]}"); sys.stderr.flush()
+
+                for origin_ in self.activity.keys():
+                    self.activity[origin_] -= 1
+                    #sys.stderr.write(f"{self.ext_id}: {self.activity[origin_]}\n")
 
                 # New round, all pending chunks are sent
                 self.lg.info(f"{self.ext_id}: buffer_chunk: flushing chunks to {len(self.pending)} neighbors={self.pending.keys()}")
@@ -348,14 +360,13 @@ class Peer_DBS():
             else:
 
                 # Chunk received from a peer
-                
                 try:
                     self.activity[origin] += 1
-                    if self.activity[origin] > 5:
-                        self.activity[origin] = 5
+                    #if self.activity[origin] > 5:
+                    #    self.activity[origin] = 5
                 except KeyError:
                     self.activity[origin] = 1
-                    
+  
                 #self.add_new_forwarding_rule(self.public_endpoint, sender)
                 #self.lg.debug(f"{self.ext_id}: forward={self.forward}")
 
@@ -445,6 +456,11 @@ class Peer_DBS():
         return packet
 
     def send_chunk_to_peer(self, chunk_number, destination):
+        #if (self.ext_id[0] == '001') or (self.ext_id[0] == '002'): #!
+        #if (self.ext_id[0] == '001') : #!
+        #    prob = random.random()  #!
+        #    if prob >= 2:         #!
+        #        return              #!
         self.lg.info(f"{self.ext_id}: send_chunk_to_peer: chunk {chunk_number} sent to {destination}")
         msg = self.compose_message(chunk_number)
         #msg = struct.pack("isIi", stored_chunk_number, chunk_data, socket.ip2int(chunk_origin_IP), chunk_origin_port)
@@ -470,10 +486,19 @@ class Peer_DBS():
                     if sender not in self.forward[origin]:
                         self.forward[origin].append(sender)
                         self.pending[sender] = []
+                    else:
+                        # sender already in self.forward[origin]
+                        pass
                 else:
+                    # origin is not in self.forward
                     self.forward[origin] = [sender]
                     self.pending[sender] = []
-
+            else:
+                # Request ignored
+                pass
+        else:
+            # I haven't the chunk
+            pass
         '''
         origin = self.chunks[chunk_number % self.buffer_size][ChunkStructure.ORIGIN]
         if origin != sender:
