@@ -5,6 +5,7 @@ peer_dbs_simulator module
 
 # Specific simulator behavior.
 
+import time
 import sys
 import struct
 import random
@@ -14,70 +15,160 @@ from .simulator_stuff import Simulator_stuff as sim
 from .socket_wrapper import Socket_wrapper as socket
 from .simulator_stuff import hash
 from .peer_dbs import Peer_DBS
+import logging
+#import colorama
+from .chunk_structure import ChunkStructure
 
 class Peer_DBS_simulator(Peer_DBS):
-#    chunks_before_leave = 999999
 
-#    def receive_buffer_size(self):
-#        super().receive_buffer_size()
-#        self.sender_of_chunks = [""] * self.buffer_size
+    def __init__(self, id,
+                 name = "Peer_DBS_simulator",
+                 loglevel = logging.ERROR):
+        super().__init__()
+        self.lg = logging.getLogger(name)
+        self.lg.setLevel(loglevel)
+        self.name = name
+        #colorama.init()
+        self.lg.info(f"{name}: DBS initialized")
 
-#    def receive_the_list_of_peers__simulation(self, counter, peer):
-#        if counter >= self.number_of_monitors: # Monitors never are isolated
-#            r = random.random()
-#            if r <= self.link_failure_prob:
-#                self.team_socket.isolate(self.public_endpoint, peer)
-#                self.lg.info("f{self.ext_id}: {self.public_endpoint} isolated of {peer}")
+    def listen_to_the_team(self):
+        super().listen_to_the_team()
+        self.lg.info(f"{self.ext_id}: listening to the team")
 
-    def send_peer_type(self):
-        if(self._id[0:2]=='MP'):
-            msg = struct.pack('!H',2)    # Malicious Peer
-        elif(self._id[0]=='M'):
-            msg = struct.pack('!H',0)    # Monitor Peer
-        else:
-            msg = struct.pack('!H',1)    # Regular Peer
-        self.splitter_socket.send(msg)
+    def receive_public_endpoint(self):
+        super().receive_public_endpoint()
+        self.lg.info(f"{self.public_endpoint}: received public_endpoint")
+        self.lg.info(f"{self.ext_id}: peer_index_in_team={self.peer_index_in_team}")
 
-    def map_peer_type(self,real_id):
-        if sim.FEEDBACK:
-            if self._id[0] == 'M':
-                if self._id[1] == 'P':
-                    sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"MP"))
-                else:
-                    sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"M"))
-            else:
-                sim.FEEDBACK["DRAW"].put(("MAP",','.join(map(str,real_id)),"P"))    
+    def receive_buffer_size(self):
+        super().receive_buffer_size()
+        self.lg.info(f"{self.ext_id}: buffer_size={self.buffer_size}")
+
+    def receive_the_number_of_peers(self):
+        super().receive_the_number_of_peers()
+        self.lg.info(f"{self.ext_id}: number_of_peers={self.number_of_peers}")
+
+    def receive_peer_index_in_team(self):
+        super().receive_peer_index_in_team()
+        self.lg.info(f"{self.public_endpoint}: peer_index_in_team={self.peer_index_in_team}")
+
+    def say_hello(self, entity):
+        super().say_hello(entity)
+        self.lg.info(f"{self.ext_id}: sent [hello] to {entity}")
+
+    def receive_the_list_of_peers__peer_feedback(self, peer):
+        self.lg.info(f"{self.ext_id}: peer {peer} is in the team")
+
+    def receive_the_list_of_peers__forward_feedback(self):
+        self.lg.info(f"{self.ext_id}: forward={self.forward}")
+
+    def receive_the_list_of_peers__pending_feedback(self):
+        self.lg.info(f"{self.ext_id}: pending={self.pending}")
+
+    def connect_to_the_splitter__error_feedback(self, error):
+        self.lg.error(f"{self.public_endpoint}: {e} when connecting to the splitter {self.splitter}")
 
     def connect_to_the_splitter(self, peer_port):
+        self.lg.info(f"{self.public_endpoint}: connecting to the splitter at {self.splitter}")
         super().connect_to_the_splitter(peer_port)
-        # S I M U L A T I O N
-        if self.public_endpoint[0] != None:
-            self.map_peer_type(self.public_endpoint); # Maybe at the end of this
-            # function to be easely extended
-            # in the peer_dbs_sim class.
+        self.lg.info(f"{self.public_endpoint}: I am a peer")
+        self.lg.info(f"{self.public_endpoint}: connected to the splitter at {self.splitter}")
 
-    def provide_request_feedback(self, sender):
-        if sim.FEEDBACK:
-            sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender)) ))
-            sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.public_endpoint)), ','.join(map(str,sender))))
+    def buffer_chunk__buffering_feedback(self, chunk_number, chunk_data, origin, sender, position):
+        self.lg.info(f"{self.ext_id}: buffer_chunk: buffering ({chunk_number}, {chunk_data}, {origin}) sent by {sender} in position {position}")
 
-    def provide_hello_feedback(self, sender):
-        if sim.FEEDBACK:
-            sim.FEEDBACK["DRAW"].put(("O", "Node", "IN", ','.join(map(str,sender))))
-            sim.FEEDBACK["DRAW"].put(("O", "Edge", "IN", ','.join(map(str,self.public_endpoint)), ','.join(map(str,sender))))
+    def buffer_chunk__show_buffer(self):
+        self.rounds_counter += 1
+        for origin, neighbors in self.forward.items():
+            buf = ''
+            #for i in neighbors:
+            #    buf += str(i)
+            buf = len(neighbors)*"#"
+            #self.lg.info(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
+            self.lg.debug(f"{self.ext_id}: BUFFER={self.buffer}")
+
+    def buffer_chunk__show_CLR(self, chunk_number):
+        try:
+            CLR = self.number_of_lost_chunks / (chunk_number - self.prev_chunk_number_round)
+            self.lg.info(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_round}")
+        except ZeroDivisionError:
+            pass
+        self.prev_chunk_number_round = chunk_number
+
+    def compose_message__show(self, chunk_position, chunk_number):
+        self.lg.info(f"{self.ext_id}: compose_message: chunk_position={chunk_position} chunk_number={self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]} origin={self.buffer[chunk_position][ChunkStructure.ORIGIN]}")
+
+    def send_chunk_to_peer(self, chunk_number, destination):
+        self.lg.info(f"{self.ext_id}: send_chunk_to_peer: chunk {chunk_number} sent to {destination}")
+        super().send_chunk_to_peer(chunk_number, destination)
+
+    def process_hello(self, sender):
+        self.lg.info("f{self.ext_id}: received [hello] from {sender}")
+        super().process_hello(sender)
+
+    def process_goodbye__warning(self, sender, peers_list):
+        self.lg.warning(f"{self.ext_id}: process_goodbye: failed to remove peer {sender} from {peers_list}")
+
+    def process_goodbye(self, sender):
+        self.lg.info(f"{self.ext_id}: received [goodbye] from {sender}")
+        super().process_goodbye(sender)
+
+    def process_unpacked_message__warning(self, chunk_number):
+        self.lg.warning("{self.ext_id}: unexpected control chunk of index={chunk_number}")
+
+    def send_chunks(self, neighbor):
+        self.lg.info(f"{self.ext_id}: send_chunks: (begin) neighbor={neighbor} pending[{neighbor}]={self.pending[neighbor]}")
+        super().send_chunks(neighbor)
+
+    def play_chunk__show_buffer(self):
+        buf = ""
+        for i in self.buffer:
+            if i[ChunkStructure.CHUNK_DATA] != b'L':
+                try:
+                    _origin = list(self.forward[self.public_endpoint]).index(i[ChunkStructure.ORIGIN])
+                    buf += hash(_origin)
+                except ValueError:
+                    buf += '-' # Peers do not exist in their forwarding table.
+            else:
+                buf += " "
+        self.lg.debug(f"{self.ext_id}: play_chunk: buffer={buf}")
+
+    def play_chunk__lost_chunk_feedback(self):
+        self.lg.warning(f"{self.ext_id}: play_chunk: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
+
+    def say_goodbye_to_the_team(self):
+        super().say_goodbye_to_the_team()
+        self.lg.info(f"{self.ext_id}: sent [goodbye] to the team")
+
+    def buffer_data__show_first_chunk_to_play(self):
+        self.lg.info(f"{self.ext_id}: position in the buffer of the first chunk to play={self.chunk_to_play}")
+
+    def buffer_data(self):
+        start_time = time.time()
+        super().buffer_data()
+        buffering_time = time.time() - start_time
+        self.lg.info(f"{self.ext_id}: buffering time={buffering_time}")
+
+    def run(self):
+        self.lg.info(f"{self.ext_id}: waiting for the chunks ...")
+        super().run()
+        total_lengths = 0
+        #max_length = 0
+        entries = 0
+        for origin, peers_list in self.forward.items():
+            self.lg.debug(f"{self.ext_id}: goodbye forward[{origin}]={peers_list} {len(peers_list)}")
+            total_lengths += len(peers_list)
+            if(len(peers_list) > 0):  # This should not be necessary
+                entries += 1
+        try:
+            avg = total_lengths/entries
+        except:
+            avg = 0
+        self.lg.info(f"{self.ext_id}: average_neighborhood_degree={avg} ({total_lengths}/{entries})") # Wrong!!!!!!!!!!!!!!!!!!!!!
+
+        self.lg.debug(f"{self.ext_id}: forward = {self.forward}")
 
     def provide_CLR_feedback(self, sender):
         if sender == self.splitter:
             if self.played > 0 and self.played >= self.number_of_peers:
                 CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks) # Chunk Loss Ratio
-                if sim.FEEDBACK:
-                    sim.FEEDBACK["DRAW"].put(("CLR", ','.join(map(str,self.public_endpoint)), CLR))
-
-    #def check__player_connected(self):
-    #    #self.received_chunks += 1
-    #    if (self.received_chunks >= Peer_DBS_simulator.chunks_before_leave):
-    #        self.player_connected = False
-
-    #def compose_goodbye_message(self):
-    #    msg = struct.pack("!iii", Message.GOODBYE, self.number_of_chunks_consumed, self.number_of_lost_chunks)
-    #    return msg   
