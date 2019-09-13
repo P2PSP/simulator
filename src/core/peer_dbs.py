@@ -421,7 +421,7 @@ class Peer_DBS():
                         _origin = list(self.forward[self.public_endpoint]).index(i[ChunkStructure.ORIGIN])
                         buf += hash(_origin)
                     except ValueError:
-                        buf += '-' # Peers do not exist in their team.
+                        buf += '-' # Peers do not exist in their forwarding table.
                 else:
                     buf += " "
             self.lg.debug(f"{self.ext_id}: play_chunk: buffer={buf}")
@@ -430,7 +430,7 @@ class Peer_DBS():
         for i in range(last_received_chunk - self.prev_received_chunk):
             #self.player_connected = self.play_chunk(self.chunk_to_play)
             self.play_chunk(self.chunk_to_play)
-            #self.buffer[self.chunk_to_play % self.buffer_size] = (-1, b'L', None)
+            #self.buffer[self.chunk_to_play % self.buffer_size] = (-1, b'L', None, 0)
             self.chunk_to_play = (self.chunk_to_play + 1) % Limits.MAX_CHUNK_NUMBER
         if ((self.prev_received_chunk % Limits.MAX_CHUNK_NUMBER) < last_received_chunk):
             self.prev_received_chunk = last_received_chunk

@@ -97,7 +97,8 @@ class Splitter_DBS():
             peer_serve_socket = socket(sock=peer_serve_socket)
             # peer_serve_socket.set_id(peer)
             self.lg.info(f"{self.id}: new connection from incoming {peer}")
-            Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()
+            #Thread(target=self.handle_a_peer_arrival, args=((peer_serve_socket, peer),)).start()
+            self.handle_a_peer_arrival((peer_serve_socket, peer))
 
     #def send_the_header(self):
     #    pass

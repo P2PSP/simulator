@@ -15,6 +15,7 @@ simulator module
 #import time  # (L1)
 import socket
 import sys
+#from .stderr import stderr as info
 import logging
 
 class Socket_wrapper():
@@ -26,12 +27,14 @@ class Socket_wrapper():
     SO_REUSEADDR = socket.SO_REUSEADDR
     TimeoutException = socket.timeout
     ErrorException = socket.error
-    
+
     def __init__(self, family=None, type=None, sock=None, loglevel=logging.ERROR):
+    #def __init__(self, family=None, type=None, sock=None):
 
         #self.lg = ColorLog(logging.getLogger(__name__))
         self.lg = logging.getLogger(__name__)
         self.lg.setLevel(loglevel)
+        #self.lg.setLevel(logging.INFO)
 
         if sock is None:
             self.sock = socket.socket(family, type)
@@ -40,11 +43,9 @@ class Socket_wrapper():
             self.sock = sock
             self.type = type
         try:
-            self.lg.info(f"{self.sock.getsockname()}: latency={latency}")
-#            sys.stderr.write(f"{self.sock.getsockname()}: latency={latency}\n")
+            self.lg.info(f"{self.sock.getsockname()}: latency={latency}\n")
         except:
-            self.lg.info(f"{self.sock.getsockname()}: latency disabled")
-#            sys.stderr.write(f"{self.sock.getsockname()}: latency disabled\n")
+            self.lg.info(f"{self.sock.getsockname()}: latency disabled\n")
 
     def send(self, msg):
         self.lg.info(f"{self.sock.getsockname()} - [{msg}] => {self.sock.getpeername()}")
