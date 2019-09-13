@@ -393,15 +393,15 @@ class Peer_DBS():
         return x
 
     # Only monitors complain
-#    def complain(self, chunk_number):
-#        pass
+    def complain(self, chunk_number):
+        pass
 
     def play_chunk(self, chunk_number):
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
             # Only the data will be empty in order to remember things ...
             clear_entry_in_buffer = (buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN])
-#            self.buffer[chunk_number % self.buffer_size] = (-1, b'L', None)
+#            self.buffer[chunk_number % self.buffer_size] = (-1, b'L', None, 0)
             self.buffer[chunk_number % self.buffer_size] = clear_entry_in_buffer
             self.played += 1
         else:
