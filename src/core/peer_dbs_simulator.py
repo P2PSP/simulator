@@ -66,7 +66,7 @@ class Peer_DBS_simulator(Peer_DBS):
         self.lg.info(f"{self.ext_id}: pending={self.pending}")
 
     def connect_to_the_splitter__error_feedback(self, error):
-        self.lg.error(f"{self.public_endpoint}: {e} when connecting to the splitter {self.splitter}")
+        self.lg.error(f"{self.public_endpoint}: {error} when connecting to the splitter {self.splitter}")
 
     def connect_to_the_splitter(self, peer_port):
         self.lg.info(f"{self.public_endpoint}: connecting to the splitter at {self.splitter}")

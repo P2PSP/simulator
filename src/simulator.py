@@ -51,13 +51,12 @@ class Simulator():
     def __init__(self, drawing_log="/tmp/drawing_log.txt",
                  set_of_rules="DBS",
                  number_of_monitors=1,
-                 number_of_peers=9,
+                 number_of_peers=7,    # Monitor apart
                  number_of_rounds=100,
                  number_of_malicious=0,
                  buffer_size=32,
                  chunk_cadence=0.01,
                  link_failure_prob=0.0,
-                 max_degree=5,
                  max_chunk_loss_at_peers = 10, # chunks/secon
                  max_chunk_loss_at_splitter = 16,
                  loglevel=logging.WARNING,  # CRITICAL, ERROR, WARNING, INFO, DEBUG
