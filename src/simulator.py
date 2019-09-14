@@ -23,8 +23,10 @@ from core.monitor_ims_simulator import Monitor_IMS_simulator
 from core.monitor_sss import Monitor_SSS
 from core.monitor_strpeds import Monitor_STRPEDS
 #from core.peer_dbs_latency import Peer_DBS_latency as Peer_DBS
-from core.peer_dbs import Peer_DBS
+#from core.peer_dbs import Peer_DBS
 from core.peer_dbs_simulator import Peer_DBS_simulator
+#from core.peer_dbs2 import Peer_DBS2
+from core.peer_dbs2_simulator import Peer_DBS2_simulator
 from core.peer_ims import Peer_IMS
 from core.peer_ims_simulator import Peer_IMS_simulator
 from core.peer_malicious import Peer_Malicious
@@ -56,7 +58,6 @@ class Simulator():
                  number_of_malicious=0,
                  buffer_size=32,
                  chunk_cadence=0.01,
-                 link_failure_prob=0.0,
                  max_chunk_loss_at_peers = 10, # chunks/secon
                  max_chunk_loss_at_splitter = 16,
                  loglevel=logging.WARNING,  # CRITICAL, ERROR, WARNING, INFO, DEBUG
@@ -68,11 +69,6 @@ class Simulator():
         self.lg = logging.getLogger(__name__)
         self.loglevel = loglevel
         self.lg.setLevel(loglevel)
-        # self.lg.critical('Critical messages enabled.')
-        # self.lg.error('Error messages enabled.')
-        # self.lg.warning('Warning message enabled.')
-        # self.lg.info('Informative message enabled.')
-        # self.lg.debug('Low-level debug message enabled.')
 
         self.set_of_rules = set_of_rules
         self.number_of_peers = int(number_of_peers)
@@ -120,14 +116,11 @@ class Simulator():
     def run_a_splitter(self, splitter_id):
         if self.buffer_size == 0:
             self.buffer_size = self.compute_buffer_size()
-        if self.set_of_rules == "DBS" or self.set_of_rules == "IMS":
+        if self.set_of_rules == "DBS" or self.set_of_rules == "DBS2" or self.set_of_rules == "IMS":
             splitter = Splitter_DBS_simulator(buffer_size = self.buffer_size,
-#                                              optimization_horizon = self.optimization_horizon,
-#                                              chunk_cadence = self.chunk_cadence,
-                                              max_chunk_loss = self.max_chunk_loss_at_splitter,
-                                              #number_of_monitors = self.number_of_monitors,
-                                              number_of_rounds = self.number_of_rounds,
-                                              loglevel = self.loglevel)
+                max_chunk_loss = self.max_chunk_loss_at_splitter,
+                number_of_rounds = self.number_of_rounds,
+                loglevel = self.loglevel)
             self.lg.info("simulator: DBS/IMS splitter created")
         elif self.set_of_rules == "CIS":
             splitter = Splitter_STRPEDS()
@@ -167,6 +160,11 @@ class Simulator():
                                              name = "Monitor_IMS_simulator",
                                              loglevel = self.loglevel)
                 self.lg.info("simulator: IMS monitor created")
+            elif self.set_of_rules == "DBS2":
+                peer = Monitor_DBS_simulator(id = id,
+                                             name = "Monitor_DBS2_simulator",
+                                             loglevel = self.loglevel)
+                self.lg.info("simulator: DBS monitor created")
             elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
                 self.lg.info("simulator: STRPEDS monitor created")
@@ -184,16 +182,13 @@ class Simulator():
                 self.lg.info("simulator: Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "DBS":
-                peer = Peer_DBS_simulator(
-                    id = id,
-                    name = "Peer_DBS_simulator",
-                    loglevel = self.loglevel)
+                peer = Peer_DBS_simulator(id = id, name = "Peer_DBS_simulator", loglevel = self.loglevel)
                 self.lg.info("simulator: DBS peer created")
-            if self.set_of_rules == "IMS":
-                peer = Peer_IMS_simulator(
-                    id = id,
-                    name = "Peer_IMS_simulator",
-                    loglevel = self.loglevel)
+            elif self.set_of_rules == "DBS2":
+                peer = Peer_DBS2_simulator(id = id, name = "Peer_DBS2_simulator", loglevel = self.loglevel)
+                self.lg.info("simulator: DBS2 peer created")
+            elif self.set_of_rules == "IMS":
+                peer = Peer_IMS_simulator(id = id, name = "Peer_IMS_simulator", loglevel = self.loglevel)
                 self.lg.info("simulator: IMS peer created")
             elif self.set_of_rules == "CIS":
                 peer = Peer_STRPEDS(id)
@@ -203,8 +198,6 @@ class Simulator():
                 self.lg.info("simulator: CIS-SSS peer created")
         self.lg.critical("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
-#        peer.link_failure_prob = self.link_failure_prob
-#        peer.optimization_horizon = self.optimization_horizon
         #peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
 #        peer.set_optimization_horizon(self.optimization_horizon)

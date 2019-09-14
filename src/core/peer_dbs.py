@@ -212,6 +212,9 @@ class Peer_DBS():
 
         else:
 
+            if sender not in self.forward[self.public_endpoint]:
+                self.forward[self.public_endpoint].append(sender)
+            
             # Chunk received from a peer
             try:
                 self.activity[origin] += 1
@@ -236,7 +239,8 @@ class Peer_DBS():
         # A new chunk has been received, and this chunk has an origin
         # (not necessarily the sender of the chunk). For all peers P_i in
         # forward[origin] the chunk (number) is appended to pending[P_i].
-
+        #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
+        #sys.stderr.write(f" {origin in self.forward}"); sys.stderr.flush()
         for peer in self.forward[origin]:
             try:
                 self.pending[peer].append(chunk_number)

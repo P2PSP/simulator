@@ -28,14 +28,15 @@ import random
 class Peer_DBS2(Peer_DBS):
 
     def __init__(self):
-        super().__init()
+        super().__init__('a')
         
         # Peers (end-points) in the known team, which is formed by
         # those peers that has sent to this peer a chunk, directly or
         # indirectly.
         self.team = []
-        
+
     def send_prune_origin(self, chunk_number, peer):
+        #sys.stderr.write(f" {self.ext_id}{chunk_number}{peer}"); sys.stderr.flush()
         msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
         self.lg.warning(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
@@ -45,8 +46,8 @@ class Peer_DBS2(Peer_DBS):
 
         # Check duplicate
         position = chunk_number % self.buffer_size
-        if self.chunks[position][ChunkStructure.CHUNK_NUMBER] == chunk_number:
-            self.lg.warning(f"{self.ext_id}: buffer_chunk: duplicate chunk {chunk_number} from {sender} (the first one was originated by {self.chunks[position][ChunkStructure.ORIGIN]})")
+        if self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number:
+            self.lg.warning(f"{self.ext_id}: buffer_chunk: duplicate chunk {chunk_number} from {sender} (the first one was originated by {self.buffer[position][ChunkStructure.ORIGIN]})")
             self.send_prune_origin(chunk_number, sender)
 
         # Check if new origin to add it to the known team
@@ -70,9 +71,10 @@ class Peer_DBS2(Peer_DBS):
     # origin of the requested chunk. This last thing can happen if
     # Z requests chunks that will be originated at itself.
     def process_request(self, chunk_number, sender):
+        #sys.stderr.write(f" R{self.ext_id}/{chunk_number}/{sender}"); sys.stderr.flush()
         position = chunk_number % self.buffer_size
-        if self.chunks[position][ChunkStructure.CHUNK_DATA] != b'L':
-            origin = self.chunks[position][ChunkStructure.ORIGIN]
+        if self.buffer[position][ChunkStructure.CHUNK_DATA] != b'L':
+            origin = self.buffer[position][ChunkStructure.ORIGIN]
             if origin != sender:
                 if origin in self.forward:
                     if sender not in self.forward[origin]:
@@ -92,14 +94,14 @@ class Peer_DBS2(Peer_DBS):
             # I haven't the chunk
             pass
         '''
-        origin = self.chunks[chunk_number % self.buffer_size][ChunkStructure.ORIGIN]
+        origin = self.buffer[chunk_number % self.buffer_size][ChunkStructure.ORIGIN]
         if origin != sender:
-            self.lg.debug(f"{self.ext_id}: process_request: chunks={self.chunks}")
+            self.lg.debug(f"{self.ext_id}: process_request: chunks={self.buffer}")
 
             self.lg.info(f"{self.ext_id}: process_request: received [request {chunk_number}] from {sender} (origin={origin})")
 
             # if origin[0] != None:
-            if self.chunks[chunk_number % self.buffer_size][ChunkStructure.CHUNK_DATA] != b'L':
+            if self.buffer[chunk_number % self.buffer_size][ChunkStructure.CHUNK_DATA] != b'L':
                 # In this case, I can start forwarding chunks from origin.
                 try:
                     self.lg.debug(f"{self.ext_id}: process_request: self.forward[{origin}]={self.forward[origin]} before")
@@ -132,7 +134,7 @@ class Peer_DBS2(Peer_DBS):
 
     # When a {peer} receives a [prune {chunk_number}], the {sender} is
     # requesting that {peer} stop sending chunks originated at
-    # {self.chunks[chunk_number % self.buffer_size].origin}.
+    # {self.buffer[chunk_number % self.buffer_size].origin}.
     def process_prune(self, chunk_number, sender):
 
         def remove_sender(origin, sender):
@@ -162,8 +164,8 @@ class Peer_DBS2(Peer_DBS):
         # buffer because it has been sent to the neighbor that is
         # requesting the prune.
         
-        if self.chunks[position][ChunkStructure.CHUNK_NUMBER] == chunk_number:
-            origin = self.chunks[position][ChunkStructure.ORIGIN]
+        if self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number:
+            origin = self.buffer[position][ChunkStructure.ORIGIN]
             self.lg.warning(f"{self.ext_id}: process_prune: [prune {chunk_number}] received from {sender} for pruning origin={origin}")
 
             if origin in self.forward:
@@ -176,8 +178,8 @@ class Peer_DBS2(Peer_DBS):
             else:
                 self.lg.warning(f"{self.ext_id}: process_prune: origin={origin} is not in forward={self.forward}") 
         else:
-            self.lg.warning(f"{self.ext_id}: process_prune: chunk_number={chunk_number} is not in buffer ({self.chunks[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})")
-            #sys.stderr.write(f"{self.ext_id}: chunk_number={chunk_number} is not in buffer ({self.chunks[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})\n")
+            self.lg.warning(f"{self.ext_id}: process_prune: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})")
+            #sys.stderr.write(f"{self.ext_id}: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})\n")
 
     def process_hello(self, sender):
         super().process_hello(sender)
@@ -227,22 +229,22 @@ class Peer_DBS2(Peer_DBS):
         return (chunk_number, sender)
 
     def request_chunk(self, chunk_number, peer):
+        #sys.stderr.write(f" R{self.ext_id}-{chunk_number}-{peer}"); sys.stderr.flush()
         msg = struct.pack("!ii", Messages.REQUEST, chunk_number)
         self.team_socket.sendto(msg, peer)
-        self.lg.warning(f"{self.ext_id}: request_chunk: [request {chunk_number}] sent to {peer}")
 
     def play_chunk(self, chunk_number):
-        buffer_box = self.chunks[chunk_number % self.buffer_size]
+        buffer_box = self.buffer[chunk_number % self.buffer_size]
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
             # Only the data will be empty in order to remember things ...
             clear_entry_in_buffer = (buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN])
-#            self.chunks[chunk_number % self.buffer_size] = (-1, b'L', None)
-            self.chunks[chunk_number % self.buffer_size] = clear_entry_in_buffer
+#            self.buffer[chunk_number % self.buffer_size] = (-1, b'L', None)
+            self.buffer[chunk_number % self.buffer_size] = clear_entry_in_buffer
             self.played += 1
         else:
             # The cell in the buffer is empty.
             self.complain(chunk_number) # Only monitors
-            #self.complain(self.chunks[chunk_position][ChunkStructure.CHUNK_NUMBER]) # If I'm a monitor
+            #self.complain(self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]) # If I'm a monitor
             self.number_of_lost_chunks += 1
             self.lg.warning(f"{self.ext_id}: play_chunk: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
 
@@ -256,10 +258,10 @@ class Peer_DBS2(Peer_DBS):
 
             # Request the chunk to the origin peer of the last received chunk.
             #i = self.prev_received_chunk
-            #destination = self.chunks[i % self.buffer_size][ChunkStructure.ORIGIN]
+            #destination = self.buffer[i % self.buffer_size][ChunkStructure.ORIGIN]
             # while destination == None:
             #    i += 1
-            #    destination = self.chunks[i % self.buffer_size][ChunkStructure.ORIGIN]
+            #    destination = self.buffer[i % self.buffer_size][ChunkStructure.ORIGIN]
             #self.request_chunk(chunk_number, destination)
             # And remove the peer in forward with higher debt.
             #print("{}: ------------> {}".format(self.ext_id, self.debt))
@@ -306,7 +308,7 @@ class Peer_DBS2(Peer_DBS):
         if __debug__:
             # Showing buffer
             buf = ""
-            for i in self.chunks:
+            for i in self.buffer:
                 if i[ChunkStructure.CHUNK_DATA] != b'L':
                     try:
                         _origin = self.team.index(i[ChunkStructure.ORIGIN])

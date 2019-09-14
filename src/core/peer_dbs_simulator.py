@@ -21,9 +21,7 @@ from .chunk_structure import ChunkStructure
 
 class Peer_DBS_simulator(Peer_DBS):
 
-    def __init__(self, id,
-                 name = "Peer_DBS_simulator",
-                 loglevel = logging.ERROR):
+    def __init__(self, id, name = "Peer_DBS_simulator", loglevel = logging.ERROR):
         super().__init__()
         self.lg = logging.getLogger(name)
         self.lg.setLevel(loglevel)
@@ -84,7 +82,7 @@ class Peer_DBS_simulator(Peer_DBS):
             #for i in neighbors:
             #    buf += str(i)
             buf = len(neighbors)*"#"
-            #self.lg.info(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
+            self.lg.info(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
             self.lg.debug(f"{self.ext_id}: BUFFER={self.buffer}")
 
     def buffer_chunk__show_CLR(self, chunk_number):
@@ -119,6 +117,10 @@ class Peer_DBS_simulator(Peer_DBS):
     def send_chunks(self, neighbor):
         self.lg.info(f"{self.ext_id}: send_chunks: (begin) neighbor={neighbor} pending[{neighbor}]={self.pending[neighbor]}")
         super().send_chunks(neighbor)
+
+    def request_chunk(self, chunk_number, peer):
+        super().request_chunk(chunk_number, peer)
+        self.lg.warning(f"{self.ext_id}: request_chunk: [request {chunk_number}] sent to {peer}")
 
     def play_chunk__show_buffer(self):
         buf = ""
