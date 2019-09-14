@@ -175,12 +175,27 @@ class Peer_DBS():
     def buffer_chunk__show_buffer(self):
         pass
 
+    def send_chunks_to_neighbors(self):
+        # Select next entry in pending with chunks to send
+        if len(self.pending) > 0:
+            counter = 0
+            neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
+            self.send_chunks(neighbor)
+            while len(self.pending[neighbor]) == 0:
+                self.neighbor_index = list(self.pending.keys()).index(neighbor) + 1
+                neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
+                counter += 1
+                if counter > len(self.pending):
+                    break
+        
     def buffer_chunk(self, chunk_number, origin, chunk_data, sender):
         position = chunk_number % self.buffer_size
         self.buffer_chunk__buffering_feedback(chunk_number, chunk_data, origin, sender, position)
 
         self.buffer[chunk_number % self.buffer_size] = (chunk_number, chunk_data, origin)
 
+    def process_chunk(self, chunk_number, origin, chunk_data, sender):
+        self.buffer_chunk(chunk_number, origin, chunk_data, sender)
         if sender == self.splitter:
             # New round
 
@@ -201,41 +216,27 @@ class Peer_DBS():
                 self.activity[origin] -= 1
 
             # New round, all pending chunks are sent
-            for neighbor in self.pending:
-                self.send_chunks(neighbor)
+            #for neighbor in self.pending:
+            #    self.send_chunks(neighbor)
 
             #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
 
             self.buffer_chunk__show_buffer()
             self.buffer_chunk__show_CLR(chunk_number)
-            #sys.stderr.write(f" {len([i for i in self.forward.values()])}"); sys.stderr.flush()
-
             self.number_of_lost_chunks = 0 # ?? Simulator
 
         else:
-
-            if sender not in self.forward[self.public_endpoint]:
-                self.forward[self.public_endpoint].append(sender)
-
             # Chunk received from a peer
+
+            if origin not in self.forward[self.public_endpoint]:
+                self.forward[self.public_endpoint].append(origin)
+
             try:
                 self.activity[origin] += 1
             except KeyError:
                 self.activity[origin] = 1
 
         # For all received chunks
-
-        # Select next entry in pending with chunks to send
-        if len(self.pending) > 0:
-            counter = 0
-            neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
-            self.send_chunks(neighbor)
-            while len(self.pending[neighbor]) == 0:
-                self.neighbor_index = list(self.pending.keys()).index(neighbor) + 1
-                neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
-                counter += 1
-                if counter > len(self.pending):
-                    break
 
     def update_pendings(self, origin, chunk_number):
         # A new chunk has been received, and this chunk has an origin
@@ -302,7 +303,8 @@ class Peer_DBS():
             chunk_data = message[ChunkStructure.CHUNK_DATA]
             self.received_chunks += 1
             self.provide_CLR_feedback(sender)
-            self.buffer_chunk(chunk_number = chunk_number, origin = origin, chunk_data = chunk_data, sender = sender)
+            self.process_chunk(chunk_number = chunk_number, origin = origin, chunk_data = chunk_data, sender = sender)
+            self.send_chunks_to_neighbors()
 
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
             if chunk_number == Messages.HELLO:

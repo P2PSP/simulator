@@ -41,13 +41,8 @@ class Peer_DBS2(Peer_DBS):
         self.team_socket.sendto(msg, peer)
         self.lg.warning(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
 
-    def buffer_chunk(self, chunk_number, origin, chunk_data, sender):
-        super().buffer_chunk(chunk_number, origin, chunk_data, sender)
-
-        # Remove empty forwarding tables (note that origin ==
-        # self.public_endpoint in DBS).
-        if len(self.forward[origin]) == 0:
-            del self.forward[origin]
+    def process_chunk(self, chunk_number, origin, chunk_data, sender):
+        super().process_chunk(chunk_number, origin, chunk_data, sender)
 
         # Check duplicate
         position = chunk_number % self.buffer_size
@@ -70,6 +65,11 @@ class Peer_DBS2(Peer_DBS):
                 # should not be added to the team.
                 self.team.append(origin)
                 self.lg.info(f"{self.ext_id}: buffer_chunk: appended {origin} to team={self.team} by chunk from origin={origin}")
+
+        # Remove empty forwarding tables.
+        for _origin in list(self.forward):
+            if len(self.forward[_origin]) == 0:
+                del self.forward[_origin]
 
     # If a peer X receives [request chunk] from peer Z, X will
     # append Z to forward[chunk.origin], but only if Z is not the
