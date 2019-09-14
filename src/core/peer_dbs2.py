@@ -44,6 +44,11 @@ class Peer_DBS2(Peer_DBS):
     def buffer_chunk(self, chunk_number, origin, chunk_data, sender):
         super().buffer_chunk(chunk_number, origin, chunk_data, sender)
 
+        # Remove empty forwarding tables (note that origin ==
+        # self.public_endpoint in DBS).
+        if len(self.forward[origin]) == 0:
+            del self.forward[origin]
+
         # Check duplicate
         position = chunk_number % self.buffer_size
         if self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number:

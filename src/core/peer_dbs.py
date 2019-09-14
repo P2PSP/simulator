@@ -183,15 +183,18 @@ class Peer_DBS():
 
         if sender == self.splitter:
             # New round
+
+            # A new chunk is received from the splitter, so, a new
+            # chunk to forward to the rest of the team.
             self.update_pendings(origin, chunk_number)
 
             # Remove selfish neighbors
-            for origin in list(self.activity):
-                if self.activity[origin] < -5:
-                    del self.activity[origin]
+            for _origin in list(self.activity):
+                if self.activity[_origin] < -5:
+                    del self.activity[_origin]
                     for neighbors in self.forward.values():
-                        if origin in neighbors:
-                            neighbors.remove(origin)
+                        if _origin in neighbors:
+                            neighbors.remove(_origin)
 
             # Increase inactivity
             for origin in self.activity.keys():
@@ -201,20 +204,19 @@ class Peer_DBS():
             for neighbor in self.pending:
                 self.send_chunks(neighbor)
 
-            # Delete the sent chunks of pending
-            #for neighbor in self.pending:
-            #    del self.pending[neighbor][:]  # Delete the content of the list, but no the pointer to the list
+            #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
 
             self.buffer_chunk__show_buffer()
             self.buffer_chunk__show_CLR(chunk_number)
-            
+            #sys.stderr.write(f" {len([i for i in self.forward.values()])}"); sys.stderr.flush()
+
             self.number_of_lost_chunks = 0 # ?? Simulator
 
         else:
 
             if sender not in self.forward[self.public_endpoint]:
                 self.forward[self.public_endpoint].append(sender)
-            
+
             # Chunk received from a peer
             try:
                 self.activity[origin] += 1
