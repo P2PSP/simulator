@@ -18,6 +18,7 @@ from core.common import Common
 #from core.monitor_dbs_latency import Monitor_DBS_latency as Monitor_DBS
 from core.monitor_dbs import Monitor_DBS
 from core.monitor_dbs_simulator import Monitor_DBS_simulator
+from core.monitor_dbs2_simulator import Monitor_DBS2_simulator
 from core.monitor_ims import Monitor_IMS
 from core.monitor_ims_simulator import Monitor_IMS_simulator
 from core.monitor_sss import Monitor_SSS
@@ -161,7 +162,7 @@ class Simulator():
                                              loglevel = self.loglevel)
                 self.lg.info("simulator: IMS monitor created")
             elif self.set_of_rules == "DBS2":
-                peer = Monitor_DBS_simulator(id = id,
+                peer = Monitor_DBS2_simulator(id = id,
                                              name = "Monitor_DBS2_simulator",
                                              loglevel = self.loglevel)
                 self.lg.info("simulator: DBS monitor created")

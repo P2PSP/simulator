@@ -196,14 +196,15 @@ class Peer_DBS():
 
     def process_chunk(self, chunk_number, origin, chunk_data, sender):
         self.buffer_chunk(chunk_number, origin, chunk_data, sender)
+
         if sender == self.splitter:
             # New round
 
             # A new chunk is received from the splitter, so, a new
-            # chunk to forward to the rest of the team.
+            # chunk to forward to the rest of the team. DBS specific.
             self.update_pendings(origin, chunk_number)
 
-            # Remove selfish neighbors
+            # Remove selfish neighbors.
             for _origin in list(self.activity):
                 if self.activity[_origin] < -5:
                     del self.activity[_origin]
@@ -226,8 +227,12 @@ class Peer_DBS():
             self.number_of_lost_chunks = 0 # ?? Simulator
 
         else:
-            # Chunk received from a peer
+            # Chunk received from a peer.
 
+            # Extend the list of known peers checking if the origin of
+            # the received chunk is new. DBS specific because peers
+            # will forward to the <origin> all chunks originated at
+            # themselves (received by the splitter).
             if origin not in self.forward[self.public_endpoint]:
                 self.forward[self.public_endpoint].append(origin)
 

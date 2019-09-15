@@ -42,15 +42,61 @@ class Peer_DBS2(Peer_DBS):
         self.lg.warning(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
 
     def process_chunk(self, chunk_number, origin, chunk_data, sender):
-        super().process_chunk(chunk_number, origin, chunk_data, sender)
+        self.buffer_chunk(chunk_number, origin, chunk_data, sender)
 
-        # Check duplicate
+        # A new chunk is received, so, a new chunk to forward to the
+        # rest of the team. DBS2 specific.
+        self.update_pendings(origin, chunk_number)
+
+        if sender == self.splitter:
+            # New round
+
+            # Remove selfish neighbors.
+            for _origin in list(self.activity):
+                if self.activity[_origin] < -5:
+                    del self.activity[_origin]
+                    for neighbors in self.forward.values():
+                        if _origin in neighbors:
+                            neighbors.remove(_origin)
+
+            # Increase inactivity
+            for origin in self.activity.keys():
+                self.activity[origin] -= 1
+
+            # New round, all pending chunks are sent
+            #for neighbor in self.pending:
+            #    self.send_chunks(neighbor)
+
+            #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
+
+            self.buffer_chunk__show_buffer()
+            self.buffer_chunk__show_CLR(chunk_number)
+            self.number_of_lost_chunks = 0 # ?? Simulator
+
+        else:
+            # Chunk received from a peer.
+
+            # Extend the list of known peers checking if the origin of
+            # the received chunk is new. DBS specific because peers
+            # will forward to the <origin> all chunks originated at
+            # themselves (received by the splitter).
+            if origin not in self.team:
+                self.team.append(origin)
+
+            try:
+                self.activity[origin] += 1
+            except KeyError:
+                self.activity[origin] = 1
+
+        # For all received chunks
+
+        # Check duplicate.
         position = chunk_number % self.buffer_size
         if self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number:
             self.lg.warning(f"{self.ext_id}: buffer_chunk: duplicate chunk {chunk_number} from {sender} (the first one was originated by {self.buffer[position][ChunkStructure.ORIGIN]})")
             self.send_prune_origin(chunk_number, sender)
 
-        # Check if new origin to add it to the known team
+        # Check if new origin to add it to the known team.
         if origin not in self.team:
             if origin != self.public_endpoint:
                 # In the optimization stage, the peer

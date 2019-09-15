@@ -123,6 +123,7 @@ class Peer_DBS_simulator(Peer_DBS):
         self.lg.warning(f"{self.ext_id}: request_chunk: [request {chunk_number}] sent to {peer}")
 
     def play_chunk__show_buffer(self):
+        sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
         buf = ""
         for i in self.buffer:
             if i[ChunkStructure.CHUNK_DATA] != b'L':
