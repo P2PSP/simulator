@@ -28,8 +28,9 @@ import random
 class Peer_DBS2(Peer_DBS):
 
     def __init__(self):
-        super().__init__('a')
-        
+        #super().__init__()
+        Peer_DBS.__init__(self)
+
         # Peers (end-points) in the known team, which is formed by
         # those peers that has sent to this peer a chunk, directly or
         # indirectly.
@@ -297,8 +298,7 @@ class Peer_DBS2(Peer_DBS):
             self.complain(chunk_number) # Only monitors
             #self.complain(self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]) # If I'm a monitor
             self.number_of_lost_chunks += 1
-            self.lg.warning(f"{self.ext_id}: play_chunk: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
-
+            self.play_chunk__lost_chunk_feedback()
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change
             # this in the near future. The action here is to request
@@ -325,6 +325,8 @@ class Peer_DBS2(Peer_DBS):
             # We send the request to the neighbor that we have served.
             #self.request_chunk(chunk_number, self.neighbor)
 
+            if self.ext_id[0] == '000':
+                sys.stderr.write(f" {self.team}"); sys.stderr.flush()
             if len(self.team) > 1:
                 self.request_chunk(chunk_number, random.choice(self.team))
 
@@ -355,23 +357,4 @@ class Peer_DBS2(Peer_DBS):
             #        self.request_chunk(chunk_number, self.neighbor)
 
         self.number_of_chunks_consumed += 1
-
-        if __debug__:
-            # Showing buffer
-            buf = ""
-            for i in self.buffer:
-                if i[ChunkStructure.CHUNK_DATA] != b'L':
-                    try:
-                        _origin = self.team.index(i[ChunkStructure.ORIGIN])
-                        buf += hash(_origin)
-                    except ValueError:
-                        buf += '-' # Peers do not exist in their team.
-                        #peer_number = self.number_of_peers
-                        #self.number_of_peers += 1
-                    #buf += hash(peer_number)
-                    #buf += '+'
-                else:
-                    buf += " "
-            self.lg.debug(f"{self.ext_id}: play_chunk: buffer={buf}")
-
-        #return self.player_connected
+        self.play_chunk__show_buffer()

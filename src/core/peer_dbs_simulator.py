@@ -123,18 +123,19 @@ class Peer_DBS_simulator(Peer_DBS):
         self.lg.warning(f"{self.ext_id}: request_chunk: [request {chunk_number}] sent to {peer}")
 
     def play_chunk__show_buffer(self):
-        sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
-        buf = ""
-        for i in self.buffer:
-            if i[ChunkStructure.CHUNK_DATA] != b'L':
-                try:
-                    _origin = list(self.forward[self.public_endpoint]).index(i[ChunkStructure.ORIGIN])
-                    buf += hash(_origin)
-                except ValueError:
-                    buf += '-' # Peers do not exist in their forwarding table.
-            else:
-                buf += " "
-        self.lg.debug(f"{self.ext_id}: play_chunk: buffer={buf}")
+        #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
+        if __debug__:
+            buf = ""
+            for i in self.buffer:
+                if i[ChunkStructure.CHUNK_DATA] != b'L':
+                    try:
+                        _origin = list(self.forward[self.public_endpoint]).index(i[ChunkStructure.ORIGIN])
+                        buf += hash(_origin)
+                    except ValueError:
+                        buf += '-' # Peers do not exist in their forwarding table.
+                else:
+                    buf += " "
+            self.lg.debug(f"{self.ext_id}: buffer={buf}")
 
     def play_chunk__lost_chunk_feedback(self):
         self.lg.warning(f"{self.ext_id}: play_chunk: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
