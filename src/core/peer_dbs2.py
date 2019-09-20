@@ -30,6 +30,9 @@ class Peer_DBS2(Peer_DBS):
     def __init__(self):
         #super().__init__()
         Peer_DBS.__init__(self)
+        logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
+        self.lg = logging.getLogger(__name__)
+        self.lg.setLevel(logging.ERROR)
 
         # Peers (end-points) in the known team, which is formed by
         # those peers that has sent to this peer a chunk, directly or

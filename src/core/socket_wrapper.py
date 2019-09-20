@@ -31,8 +31,7 @@ class Socket_wrapper():
 
     def __init__(self, family=None, type=None, sock=None):
     #def __init__(self, family=None, type=None, sock=None):
-
-        #self.lg = ColorLog(logging.getLogger(__name__))
+        logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
         self.lg = logging.getLogger(__name__)
         self.lg.setLevel(logging.ERROR)
 

@@ -23,14 +23,14 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
                  buffer_size = 32,
                  max_chunk_loss = 16,
                  number_of_rounds = 100,
-                 name = "Splitter_DBS_simulator",
-                 loglevel = logging.ERROR
+                 name = "Splitter_DBS_simulator"
     ):
         super().__init__(buffer_size = buffer_size,
                          max_chunk_loss = max_chunk_loss
         )
-        self.lg = logging.getLogger(name)
-        self.lg.setLevel(loglevel)
+        logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
+        self.lg = logging.getLogger(__name__)
+        self.lg.setLevel(logging.ERROR)
         self.number_of_rounds = number_of_rounds
         self.lg.debug("{name}: initialized")
         colorama.init()

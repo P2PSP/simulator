@@ -23,8 +23,9 @@ class Peer_DBS2_simulator(Peer_DBS2, Peer_DBS_simulator):
     def __init__(self, id, name = "Peer_DBS2_simulator", loglevel=logging.ERROR):
         Peer_DBS2.__init__(self)
         Peer_DBS_simulator.__init__(self, id, name, loglevel)
-        self.lg = logging.getLogger(name)
-        self.lg.setLevel(loglevel)
+        logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
+        self.lg = logging.getLogger(__name__)
+        self.lg.setLevel(logging.ERROR)
         self.name = name
         #colorama.init()
         self.lg.info(f"{name}: DBS2 initialized")

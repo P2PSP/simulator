@@ -21,10 +21,11 @@ from .chunk_structure import ChunkStructure
 
 class Peer_DBS_simulator(Peer_DBS):
 
-    def __init__(self, id, name = "Peer_DBS_simulator", loglevel = logging.ERROR):
+    def __init__(self, id, name = "Peer_DBS_simulator"):
         super().__init__()
-        self.lg = logging.getLogger(name)
-        self.lg.setLevel(loglevel)
+        logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
+        self.lg = logging.getLogger(__name__)
+        self.lg.setLevel(logging.DEBUG)
         self.name = name
         #colorama.init()
         self.lg.info(f"{name}: DBS initialized")
