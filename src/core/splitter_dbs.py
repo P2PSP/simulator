@@ -95,25 +95,26 @@ class Splitter_DBS():
         pass
 
     # Depends on the application
-    def send_header_bytes(self, peer_serve_socket):
+    def send_the_header_bytes(self, peer_serve_socket):
         pass
 
     # Depends on the application
-    def send_header(self, peer_serve_socket):
+    def send_the_header(self, peer_serve_socket):
         pass
 
     # Depends on the application
     def handle_a_peer_arrival(self, connection):
         serve_socket = connection[0]
         incoming_peer = connection[1]
-        self.send_peer_index_in_team(serve_socket, len(self.team))
-        self.send_the_chunk_size(serve_socket)
-        self.send_public_endpoint(incoming_peer, serve_socket)
-        self.send_buffer_size(serve_socket)
-        self.send_header_bytes(serve_socket)
-        self.send_header(serve_socket)
+        #sys.stderr.write(f" ->{incoming_peer}"); sys.stderr.flush()
+        self.send_the_public_endpoint(incoming_peer, serve_socket)
+        self.send_the_peer_index_in_team(serve_socket, len(self.team))
+        self.send_the_buffer_size(serve_socket)
+        self.send_the_header_bytes(serve_socket)
+        self.send_the_header(serve_socket)
         self.send_the_number_of_peers(serve_socket)
         self.send_the_list_of_peers(serve_socket)
+        self.send_the_chunk_size(serve_socket)
 
         # ??????????????????????????????
         #msg_length = struct.calcsize("s")
@@ -123,11 +124,11 @@ class Splitter_DBS():
         self.insert_peer(incoming_peer)
         serve_socket.close()
 
-    def send_public_endpoint(self, endpoint, peer_serve_socket):
+    def send_the_public_endpoint(self, endpoint, peer_serve_socket):
         msg = struct.pack("!Ii", IP_tools.ip2int(endpoint[0]), endpoint[1])
         peer_serve_socket.sendall(msg)
 
-    def send_buffer_size(self, peer_serve_socket):
+    def send_the_buffer_size(self, peer_serve_socket):
         msg = struct.pack("!H", self.buffer_size)
         peer_serve_socket.sendall(msg)
 
@@ -135,7 +136,7 @@ class Splitter_DBS():
         msg = struct.pack("!H", len(self.team))
         peer_serve_socket.sendall(msg)
 
-    def send_peer_index_in_team(self, peer_serve_socket, peer_index_in_team):
+    def send_the_peer_index_in_team(self, peer_serve_socket, peer_index_in_team):
         msg = struct.pack("!H", peer_index_in_team)
         peer_serve_socket.sendall(msg)
 

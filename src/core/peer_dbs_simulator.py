@@ -34,22 +34,21 @@ class Peer_DBS_simulator(Peer_DBS):
         super().listen_to_the_team()
         self.lg.info(f"{self.ext_id}: listening to the team")
 
-    def receive_public_endpoint(self):
-        super().receive_public_endpoint()
+    def receive_the_public_endpoint(self):
+        super().receive_the_public_endpoint()
         self.lg.info(f"{self.public_endpoint}: received public_endpoint")
-        self.lg.info(f"{self.ext_id}: peer_index_in_team={self.peer_index_in_team}")
 
-    def receive_buffer_size(self):
-        super().receive_buffer_size()
+    def receive_the_buffer_size(self):
+        super().receive_the_buffer_size()
         self.lg.info(f"{self.ext_id}: buffer_size={self.buffer_size}")
 
     def receive_the_number_of_peers(self):
         super().receive_the_number_of_peers()
         self.lg.info(f"{self.ext_id}: number_of_peers={self.number_of_peers}")
 
-    def receive_peer_index_in_team(self):
-        super().receive_peer_index_in_team()
-        self.lg.info(f"{self.public_endpoint}: peer_index_in_team={self.peer_index_in_team}")
+    def receive_the_peer_index_in_team(self):
+        super().receive_the_peer_index_in_team()
+        self.lg.info(f"{self.ext_id}: peer_index_in_team={self.peer_index_in_team}")
 
     def say_hello(self, entity):
         super().say_hello(entity)

@@ -13,9 +13,10 @@ peer_dbs module
 import random
 import sys
 
+import time
 import struct
 from threading import Thread
-#import netifaces
+import netifaces
 from .messages import Messages
 from .limits import Limits
 from .socket_wrapper import Socket_wrapper as socket
@@ -82,14 +83,13 @@ class Peer_DBS():
         #self.team_socket.settimeout(self.timeout) # In seconds
         #self.team_socket.setblocking(0)
 
-    def receive_public_endpoint(self):
+    def receive_the_public_endpoint(self):
         msg_length = struct.calcsize("!Ii")
         msg = self.splitter_socket.recv(msg_length)
         pe = struct.unpack("!Ii", msg)
         self.public_endpoint = (IP_tools.int2ip(pe[0]), pe[1])
-        self.ext_id = ("%03d" % self.peer_index_in_team, self.public_endpoint[0], int("%5d" % self.public_endpoint[1]))
 
-    def receive_buffer_size(self):
+    def receive_the_buffer_size(self):
         msg_length = struct.calcsize("!H")
         msg = self.splitter_socket.recv(msg_length)
         self.buffer_size = struct.unpack("!H", msg)[0]
@@ -99,10 +99,14 @@ class Peer_DBS():
         msg = self.splitter_socket.recv(msg_length)
         self.number_of_peers = struct.unpack("!H", msg)[0]
 
-    def receive_peer_index_in_team(self):
+    def receive_the_peer_index_in_team(self):
         msg_length = struct.calcsize("!H")
         msg = self.splitter_socket.recv(msg_length)
         self.peer_index_in_team = struct.unpack("!H", msg)[0]
+        self.ext_id = ("%03d" % self.peer_index_in_team, self.public_endpoint[0], int("%5d" % self.public_endpoint[1]))
+
+    def receive_the_chunk_size(self):
+        pass
 
     def say_hello(self, entity):
         msg = struct.pack("!i", Messages.HELLO)
@@ -151,8 +155,10 @@ class Peer_DBS():
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
         #host = socket.gethostbyname(socket.gethostname())
-        #iface = netifaces.interfaces()[1]      # Name of the second interface
+        #iface = netifaces.interfaces()[8]      # Name of the second interface
         #stuff = netifaces.ifaddresses(iface)   # Configuration data
+        #sys.stderr.write(f"---------------> {stuff}"); sys.stderr.flush()
+        #time.sleep(1000)
         #IP_stuff = stuff[netifaces.AF_INET][0] # Only the IP stuff
         #address = IP_stuff['addr']             # Get local IP addr
         host_name = socket.gethostname()
@@ -177,6 +183,7 @@ class Peer_DBS():
 
     def send_chunks_to_neighbors(self):
         # Select next entry in pending with chunks to send
+        #sys.stderr.write(f" ==>{self.pending}"); sys.stderr.flush()
         if len(self.pending) > 0:
             counter = 0
             neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
