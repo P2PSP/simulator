@@ -14,9 +14,10 @@ latency = 0.005  # Seconds (L0)
 
 import time  # (L1)
 import socket
-import sys
-#from .stderr import stderr as info
-import logging
+if __debug__:
+    import sys
+    #from .stderr import stderr as info
+    import logging
 
 class Socket_wrapper():
     AF_INET = socket.AF_INET
@@ -28,13 +29,12 @@ class Socket_wrapper():
     TimeoutException = socket.timeout
     ErrorException = socket.error
 
-    def __init__(self, family=None, type=None, sock=None, loglevel=logging.ERROR):
+    def __init__(self, family=None, type=None, sock=None):
     #def __init__(self, family=None, type=None, sock=None):
 
         #self.lg = ColorLog(logging.getLogger(__name__))
         self.lg = logging.getLogger(__name__)
-        self.lg.setLevel(loglevel)
-        #self.lg.setLevel(logging.INFO)
+        self.lg.setLevel(logging.ERROR)
 
         if sock is None:
             self.sock = socket.socket(family, type)

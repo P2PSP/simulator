@@ -62,7 +62,7 @@ class Splitter_DBS():
         self.total_losses = 0  # Total number of lost chunks (reset when a peer is removed)
 
     def setup_peer_connection_socket(self, port=0):
-        self.peer_connection_socket = socket(family=socket.AF_INET, type=socket.SOCK_STREAM, loglevel=self.lg.level)
+        self.peer_connection_socket = socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         self.peer_connection_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # self.peer_connection_socket.set_id(self.id)
         #host = socket.gethostbyname(socket.gethostname())
@@ -70,7 +70,7 @@ class Splitter_DBS():
         self.peer_connection_socket.listen(1)
 
     def setup_team_socket(self):
-        self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM, loglevel=self.lg.level)
+        self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.team_socket.bind(self.id)
 
     def send_chunk(self, chunk_number, chunk, peer):

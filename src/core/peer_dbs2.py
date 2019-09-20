@@ -231,7 +231,6 @@ class Peer_DBS2(Peer_DBS):
                 self.lg.warning(f"{self.ext_id}: process_prune: origin={origin} is not in forward={self.forward}") 
         else:
             self.lg.warning(f"{self.ext_id}: process_prune: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})")
-            #sys.stderr.write(f"{self.ext_id}: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})\n")
 
     def process_hello(self, sender):
         super().process_hello(sender)
@@ -325,10 +324,14 @@ class Peer_DBS2(Peer_DBS):
             # We send the request to the neighbor that we have served.
             #self.request_chunk(chunk_number, self.neighbor)
 
-            if self.ext_id[0] == '000':
-                sys.stderr.write(f" {self.team}"); sys.stderr.flush()
+            #if self.ext_id[0] == '000':
+                #sys.stderr.write(f" {self.team}"); sys.stderr.flush()
             if len(self.team) > 1:
-                self.request_chunk(chunk_number, random.choice(self.team))
+                peer = random.choice(self.team)
+                self.request_chunk(chunk_number, peer)
+                sys.stderr.write(f" {self.ext_id[1]}{peer}")
+                if peer == self.ext_id[1]:
+                    sys.stderr.write(f" hola!!!"); sys.stderr.flush()
 
             # Send the request to all neighbors.
             # for neighbor in self.forward[self.id]:

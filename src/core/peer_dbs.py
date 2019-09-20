@@ -75,7 +75,7 @@ class Peer_DBS():
         self.splitter = splitter
 
     def listen_to_the_team(self):
-        self.team_socket = socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, loglevel=self.lg.level)
+        self.team_socket = socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.team_socket.bind(self.public_endpoint)
         self.say_hello(self.splitter)  # Only works for cone NATs
         #self.team_socket.bind(("", self.public_endpoint[1]))
@@ -410,7 +410,6 @@ class Peer_DBS():
         # self.team_socket.sendto(Messages.GOODBYE, "i", peer)
         msg = self.compose_goodbye_message()
         self.team_socket.sendto(msg, peer)
-        self.lg.info(f"{self.ext_id}: sent [goodbye] to {peer}")
 
     def say_goodbye_to_the_team(self):
         for origin, peer_list in self.forward.items():
