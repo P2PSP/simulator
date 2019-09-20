@@ -294,7 +294,7 @@ class Peer_DBS():
                 try:
                     peers_list.remove(sender)
                 except ValueError:
-                    self.process_goodbye__warning(peers_list)
+                    self.process_goodbye__warning(sender, peers_list)
 
     def process_unpacked_message__warning(self, chunk_number):
         pass
