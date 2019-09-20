@@ -150,6 +150,7 @@ class Splitter_DBS():
             counter += 1
 
     def insert_peer(self, peer):
+        #sys.stderr.write(f" ->{peer}")
         if peer not in self.team:
             self.team.append(peer)
         self.losses[peer] = 0

@@ -75,7 +75,7 @@ class Peer_DBS_simulator(Peer_DBS):
     def buffer_chunk__buffering_feedback(self, chunk_number, chunk_data, origin, sender, position):
         self.lg.info(f"{self.ext_id}: buffer_chunk: buffering ({chunk_number}, {chunk_data}, {origin}) sent by {sender} in position {position}")
 
-    def buffer_chunk__show_buffer(self):
+    def process_chunk__show_buffer(self):
         self.rounds_counter += 1
         for origin, neighbors in self.forward.items():
             buf = ''
@@ -85,7 +85,7 @@ class Peer_DBS_simulator(Peer_DBS):
             self.lg.info(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
             self.lg.debug(f"{self.ext_id}: BUFFER={self.buffer}")
 
-    def buffer_chunk__show_CLR(self, chunk_number):
+    def process_chunk__show_CLR(self, chunk_number):
         try:
             CLR = self.number_of_lost_chunks / (chunk_number - self.prev_chunk_number_round)
             self.lg.info(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_round}")
