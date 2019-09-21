@@ -133,7 +133,8 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
         #if __debug__:
             #sys.stderr.write(str(len(self.team))); sys.stderr.flush()
-        time.sleep(psutil.cpu_percent()/4000.0)
+        time.sleep(psutil.cpu_percent()/100.0)
+        #time.sleep(0.1)
         return b'C'
 
     def say_goodbye(self, peer):

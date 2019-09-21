@@ -456,7 +456,7 @@ class Peer_DBS():
 
     def run(self):
         for i in range(self.buffer_size):
-            self.buffer.append((-1, b'L', None, 0))  # L == Lost
+            self.buffer.append((-1, b'L', (None, 0)))  # L == Lost
 
         self.buffer_data()
         #while (not self.is_the_player_disconected() or self.waiting_for_goodbye):
