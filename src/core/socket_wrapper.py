@@ -7,7 +7,7 @@ simulator module
 # a time.sleep(). However, by default, latency is disabled. In order
 # to simulate it, uncoment the lines L0, L1, L2 and L3.
 
-# Latency HAS BEEN DISABLED
+# Latency HAS BEEN ENABLED
 
 latency = 0.005  # Seconds (L0)
 #latency = 0.020
@@ -73,7 +73,7 @@ class Socket_wrapper():
             raise
 
     def recv(self, msg_length):
-        #time.sleep(latency)  # L2
+        time.sleep(latency)  # L2
         msg = self.sock.recv(msg_length)
         while len(msg) < msg_length:
             msg += self.sock.recv(msg_length - len(msg))
@@ -81,7 +81,7 @@ class Socket_wrapper():
         return msg
 
     def recvfrom(self, max_msg_length):
-        #time.sleep(latency)  # L3
+        time.sleep(latency)  # L3
         try:
             msg, sender = self.sock.recvfrom(max_msg_length)
             self.lg.info(f"{self.sock.getsockname()} <-- [{msg}] - {sender}")
