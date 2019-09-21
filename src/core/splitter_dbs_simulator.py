@@ -131,7 +131,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
     def compute_cpu_usage(self):
         while True:
             self.cpu_usage = psutil.cpu_percent()
-            sys.stderr.write(f" {self.cpu_usage}"); sys.stderr.flush()
+            sys.stderr.write(f" {int(self.cpu_usage)}"); sys.stderr.flush()
             time.sleep(0.5)
     
     def retrieve_chunk(self):
