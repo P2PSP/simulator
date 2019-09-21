@@ -30,9 +30,6 @@ class Peer_DBS2(Peer_DBS):
     def __init__(self):
         #super().__init__()
         Peer_DBS.__init__(self)
-        logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
-        self.lg = logging.getLogger(__name__)
-        self.lg.setLevel(logging.ERROR)
 
         # Peers (end-points) in the known team, which is formed by
         # those peers that has sent to this peer a chunk, directly or
@@ -46,6 +43,7 @@ class Peer_DBS2(Peer_DBS):
         self.lg.warning(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
 
     def process_chunk(self, chunk_number, origin, chunk_data, sender):
+        mierda
         self.buffer_chunk(chunk_number, origin, chunk_data, sender)
 
         # A new chunk is received, so, a new chunk to forward to the
@@ -73,7 +71,7 @@ class Peer_DBS2(Peer_DBS):
 
             #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
 
-            self.buffer_chunk__show_buffer()
+            self.buffer_chunk__show_fanout()
             self.buffer_chunk__show_CLR(chunk_number)
             self.number_of_lost_chunks = 0 # ?? Simulator
 
@@ -332,9 +330,9 @@ class Peer_DBS2(Peer_DBS):
             if len(self.team) > 1:
                 peer = random.choice(self.team)
                 self.request_chunk(chunk_number, peer)
-                sys.stderr.write(f" {self.ext_id[1]}{peer}")
+                sys.stderr.write(f" ->{peer}"); sys.stderr.flush()
                 if peer == self.ext_id[1]:
-                    sys.stderr.write(f" hola!!!"); sys.stderr.flush()
+                    sys.stderr.write(f" ------------------------->hola!!!<---------------------"); sys.stderr.flush()
 
             # Send the request to all neighbors.
             # for neighbor in self.forward[self.id]:

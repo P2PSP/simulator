@@ -83,15 +83,14 @@ class Peer_DBS_simulator(Peer_DBS):
         self.lg.info(f"{self.ext_id}: processing chunk {chunk_number} received from {sender} originated by {origin}")
         Peer_DBS.process_chunk(self, chunk_number, origin, chunk_data, sender)
         
-    def process_chunk__show_buffer(self):
+    def process_chunk__show_fanout(self):
         self.rounds_counter += 1
         for origin, neighbors in self.forward.items():
             buf = ''
             #for i in neighbors:
             #    buf += str(i)
             buf = len(neighbors)*"#"
-            self.lg.info(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
-            self.lg.debug(f"{self.ext_id}: BUFFER={self.buffer}")
+            self.lg.debug(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
 
     def process_chunk__show_CLR(self, chunk_number):
         try:
@@ -113,7 +112,7 @@ class Peer_DBS_simulator(Peer_DBS):
         super().send_chunk_to_peer(chunk_number, destination)
 
     def process_hello(self, sender):
-        self.lg.info("f{self.ext_id}: received [hello] from {sender}")
+        self.lg.info(f"{self.ext_id}: received [hello] from {sender}")
         super().process_hello(sender)
 
     def process_goodbye__warning(self, sender, peers_list):
@@ -132,22 +131,21 @@ class Peer_DBS_simulator(Peer_DBS):
 
     def request_chunk(self, chunk_number, peer):
         super().request_chunk(chunk_number, peer)
-        self.lg.warning(f"{self.ext_id}: request_chunk: [request {chunk_number}] sent to {peer}")
+        self.lg.info(f"{self.ext_id}: sent [request {chunk_number}] to {peer}")
 
     def play_chunk__show_buffer(self):
         #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
-        if __debug__:
-            buf = ""
-            for i in self.buffer:
-                if i[ChunkStructure.CHUNK_DATA] != b'L':
-                    try:
-                        _origin = list(self.forward[self.public_endpoint]).index(i[ChunkStructure.ORIGIN])
-                        buf += hash(_origin)
-                    except ValueError:
-                        buf += '-' # Peers do not exist in their forwarding table.
-                else:
-                    buf += " "
-            self.lg.debug(f"{self.ext_id}: buffer={buf}")
+        buf = ""
+        for i in self.buffer:
+            if i[ChunkStructure.CHUNK_DATA] != b'L':
+                try:
+                    _origin = list(self.forward[self.public_endpoint]).index(i[ChunkStructure.ORIGIN])
+                    buf += hash(_origin)
+                except ValueError:
+                    buf += '-' # Peers do not exist in their forwarding table.
+            else:
+                buf += " "
+        self.lg.debug(f"{self.ext_id}: buffer={buf}")
 
     def play_chunk__lost_chunk_feedback(self):
         self.lg.warning(f"{self.ext_id}: play_chunk: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")

@@ -70,6 +70,10 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         super().send_peer_index_in_team(peer_serve_socket = peer_serve_socket,
                                         peer_index_in_team = peer_index_in_team)
 
+    def send_the_list_of_peers(self, peer_serve_socket):
+        Splitter_DBS.send_the_list_of_peers(self, peer_serve_socket)
+        self.lg.info(f"{self.id}: list of peers sent ({len(self.team)} peers)")
+
     def insert_peer(self, peer):
         super().insert_peer(peer)
         self.lg.info(f"{self.id}: {peer} inserted in the team")

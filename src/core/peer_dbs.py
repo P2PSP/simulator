@@ -169,7 +169,10 @@ class Peer_DBS():
             self.splitter_socket.connect(self.splitter)
         except ConnectionRefusedError as e:
             self.connect_to_the_splitter__error_feedback(e)
-            raise
+            pass
+        except ConnectionResetError as e:
+            self.connect_to_the_splitter__error_feedback(e)
+            pass
 
         # The index for pending[].
         self.splitter = self.splitter_socket.getpeername() # Be careful, not "127.0.1.1 hostname" in /etc/hosts
@@ -202,6 +205,7 @@ class Peer_DBS():
         self.buffer[chunk_number % self.buffer_size] = (chunk_number, chunk_data, origin)
 
     def process_chunk(self, chunk_number, origin, chunk_data, sender):
+        joder
         self.buffer_chunk(chunk_number, origin, chunk_data, sender)
 
         #sys.stderr.write(f" sender={sender} splitter={self.splitter}"); sys.stderr.flush()
@@ -230,7 +234,7 @@ class Peer_DBS():
 
             #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
 
-            self.process_chunk__show_buffer()
+            self.process_chunk__show_fanout()
             self.process_chunk__show_CLR(chunk_number)
             self.number_of_lost_chunks = 0 # ?? Simulator
 

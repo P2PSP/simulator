@@ -151,6 +151,7 @@ class Splitter_DBS():
             msg = struct.pack("!Ii", IP_tools.ip2int(p[0]), p[1])
             peer_serve_socket.sendall(msg)
             counter += 1
+        #sys.stderr.write(f" ->{len(self.team)}"); sys.stderr.flush()
 
     def insert_peer(self, peer):
         #sys.stderr.write(f" ->{peer}")
@@ -325,7 +326,6 @@ class Splitter_DBS():
         #Thread(target=self.reset_counters_thread).start()
 
         while len(self.team) == 0:
-            
             time.sleep(1)
         print()
 
