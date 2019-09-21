@@ -23,15 +23,15 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
                  buffer_size = 32,
                  max_chunk_loss = 16,
                  number_of_rounds = 100,
-                 name = "Splitter_DBS_simulator"
-    ):
+                 speed = 4000,
+                 name = "Splitter_DBS_simulator"):
         super().__init__(buffer_size = buffer_size,
-                         max_chunk_loss = max_chunk_loss
-        )
+                         max_chunk_loss = max_chunk_loss)
         logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
         self.lg = logging.getLogger(__name__)
         self.lg.setLevel(logging.ERROR)
         self.number_of_rounds = number_of_rounds
+        self.speed = speed
         self.lg.debug("{name}: initialized")
         colorama.init()
         #self.total_lost_chunks = 0
@@ -140,7 +140,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
         #if __debug__:
             #sys.stderr.write(str(len(self.team))); sys.stderr.flush()
-        sleeping_time = self.cpu_usage/4000.0
+        sleeping_time = self.cpu_usage/self.speed
         time.sleep(sleeping_time)
         #time.sleep(0.1)
         return b'C'

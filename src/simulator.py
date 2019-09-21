@@ -61,6 +61,7 @@ class Simulator():
                  chunk_cadence=0.01,
                  max_chunk_loss_at_peers = 10, # chunks/secon
                  max_chunk_loss_at_splitter = 16,
+                 speed = 4000.0,
                  gui=False):
 
         logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
@@ -79,6 +80,7 @@ class Simulator():
         self.max_chunk_loss_at_peers = int(max_chunk_loss_at_peers)
         self.max_chunk_loss_at_splitter = float(max_chunk_loss_at_splitter)
         self.current_round = 0
+        self.speed = float(speed)
         self.gui = gui
         self.processes = {}
 
@@ -116,7 +118,8 @@ class Simulator():
         if self.set_of_rules == "DBS" or self.set_of_rules == "DBS2" or self.set_of_rules == "IMS":
             splitter = Splitter_DBS_simulator(buffer_size = self.buffer_size,
                 max_chunk_loss = self.max_chunk_loss_at_splitter,
-                number_of_rounds = self.number_of_rounds)
+                number_of_rounds = self.number_of_rounds,
+                speed = self.speed)
             self.lg.info("simulator: DBS/IMS splitter created")
         elif self.set_of_rules == "CIS":
             splitter = Splitter_STRPEDS()
