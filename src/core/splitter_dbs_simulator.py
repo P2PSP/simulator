@@ -126,17 +126,22 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
     def moderate_the_team__hello_feedback(self, sender):
         self.lg.info(f"{self.id}: received [hello] from {sender}")
-        
+
+
+    def compute_cpu_usage(self):
+        while True:
+            self.cpu_usage = psutil.cpu_percent()
+            sys.stderr.write(f" {self.cpu_usage}"); sys.stderr.flush()
+            time.sleep(0.5)
+    
     def retrieve_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
         #time.sleep(Common.CHUNK_CADENCE)  # Simulates bit-rate control
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
         #if __debug__:
             #sys.stderr.write(str(len(self.team))); sys.stderr.flush()
-        cpu_usage = psutil.cpu_percent()
-        sleeping_time = cpu_usage/100.0
+        sleeping_time = self.cpu_usage/4000.0
         time.sleep(sleeping_time)
-        sys.stderr.write(f" {cpu_usage},{sleeping_time}"); sys.stderr.flush()
         #time.sleep(0.1)
         return b'C'
 
@@ -176,6 +181,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         self.lg.info("{}: waiting for [goodbye]s from peers (peers_list={})".format(self.id, self.team))
             
     def run(self):
+        Thread(target=self.compute_cpu_usage).start()
         super().run()
         sys.stderr.write("\n")
         #sys.stderr.write(f"\n{self.id}: {self.chunks_lost_by_team} lost chunks of {self.chunks_received_by_team}\n")
