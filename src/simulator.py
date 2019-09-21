@@ -127,8 +127,10 @@ class Simulator():
 
         # splitter.start()
         splitter.setup_peer_connection_socket()
+        sys.stderr.write(f" splitter={splitter.get_id()}"); sys.stderr.flush()
         splitter.setup_team_socket()
         splitter_id['address'] = splitter.get_id()
+        sys.stderr.write(f" splitter_id={splitter_id}"); sys.stderr.flush()
         splitter.max_number_of_rounds = self.number_of_rounds
         splitter.run()
         # while splitter.current_round < self.number_of_rounds:
@@ -282,6 +284,7 @@ class Simulator():
 
         # Run splitter
         p = Process(target=self.run_a_splitter,args=[self.splitter_id])
+        #sys.stderr.write(f" splitter_id={self.splitter_id}"); sys.stderr.flush()
         p.start()
         self.processes["S"] = p.pid
         self.attended_monitors = 0

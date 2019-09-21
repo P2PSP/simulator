@@ -65,9 +65,12 @@ class Splitter_DBS():
         self.peer_connection_socket = socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         self.peer_connection_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # self.peer_connection_socket.set_id(self.id)
-        #host = socket.gethostbyname(socket.gethostname())
+        host = socket.gethostbyname(socket.gethostname())
         self.peer_connection_socket.bind(('', port))
         self.peer_connection_socket.listen(1)
+        port = self.peer_connection_socket.getsockname()[1]
+        self.id = (host, port)
+        sys.stderr.write(f" host={host}"); sys.stderr.flush()
 
     def setup_team_socket(self):
         self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)

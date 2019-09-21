@@ -38,7 +38,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
     def setup_peer_connection_socket(self, port=0):
         super().setup_peer_connection_socket(port = port)
-        self.id = self.peer_connection_socket.getsockname()
+        #self.id = self.peer_connection_socket.getsockname()
         self.lg.info(f"{self.id}: I am the splitter")
 
     def send_chunk(self, chunk_number, chunk, peer):

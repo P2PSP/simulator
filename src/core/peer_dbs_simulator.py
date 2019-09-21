@@ -73,8 +73,16 @@ class Peer_DBS_simulator(Peer_DBS):
         self.lg.info(f"{self.public_endpoint}: connected to the splitter at {self.splitter}")
 
     def buffer_chunk__buffering_feedback(self, chunk_number, chunk_data, origin, sender, position):
-        self.lg.info(f"{self.ext_id}: buffer_chunk: buffering ({chunk_number}, {chunk_data}, {origin}) sent by {sender} in position {position}")
+        self.lg.info(f"{self.ext_id}: buffering ({chunk_number}, {chunk_data}, {origin}) received from {sender} in position {position}")
 
+    def send_chunks_to_neighbors(self):
+        self.lg.info(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending})")
+        Peer_DBS.send_chunks_to_neighbors(self)
+
+    def process_chunk(self, chunk_number, origin, chunk_data, sender):
+        self.lg.info(f"{self.ext_id}: processing chunk {chunk_number} received from {sender} originated by {origin}")
+        Peer_DBS.process_chunk(self, chunk_number, origin, chunk_data, sender)
+        
     def process_chunk__show_buffer(self):
         self.rounds_counter += 1
         for origin, neighbors in self.forward.items():
@@ -93,11 +101,15 @@ class Peer_DBS_simulator(Peer_DBS):
             pass
         self.prev_chunk_number_round = chunk_number
 
+    def update_pendings(self, origin, chunk_number):
+        self.lg.info(f"{self.ext_id}: updating pendings (origin={origin}, chunk_number={chunk_number})")
+        Peer_DBS.update_pendings(self, origin, chunk_number)
+
     def compose_message__show(self, chunk_position, chunk_number):
-        self.lg.info(f"{self.ext_id}: compose_message: chunk_position={chunk_position} chunk_number={self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]} origin={self.buffer[chunk_position][ChunkStructure.ORIGIN]}")
+        self.lg.info(f"{self.ext_id}: chunk_position={chunk_position} chunk_number={self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]} origin={self.buffer[chunk_position][ChunkStructure.ORIGIN]}")
 
     def send_chunk_to_peer(self, chunk_number, destination):
-        self.lg.info(f"{self.ext_id}: send_chunk_to_peer: chunk {chunk_number} sent to {destination}")
+        self.lg.info(f"{self.ext_id}: chunk {chunk_number} sent to {destination}")
         super().send_chunk_to_peer(chunk_number, destination)
 
     def process_hello(self, sender):
@@ -105,7 +117,7 @@ class Peer_DBS_simulator(Peer_DBS):
         super().process_hello(sender)
 
     def process_goodbye__warning(self, sender, peers_list):
-        self.lg.warning(f"{self.ext_id}: process_goodbye: failed to remove peer {sender} from {peers_list}")
+        self.lg.warning(f"{self.ext_id}: failed to remove peer {sender} from {peers_list}")
 
     def process_goodbye(self, sender):
         self.lg.info(f"{self.ext_id}: received [goodbye] from {sender}")
@@ -115,7 +127,7 @@ class Peer_DBS_simulator(Peer_DBS):
         self.lg.warning("{self.ext_id}: unexpected control chunk of index={chunk_number}")
 
     def send_chunks(self, neighbor):
-        self.lg.info(f"{self.ext_id}: send_chunks: (begin) neighbor={neighbor} pending[{neighbor}]={self.pending[neighbor]}")
+        self.lg.info(f"{self.ext_id}: sending chunks neighbor={neighbor} pending[{neighbor}]={self.pending[neighbor]}")
         super().send_chunks(neighbor)
 
     def request_chunk(self, chunk_number, peer):

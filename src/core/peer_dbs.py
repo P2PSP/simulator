@@ -204,6 +204,7 @@ class Peer_DBS():
     def process_chunk(self, chunk_number, origin, chunk_data, sender):
         self.buffer_chunk(chunk_number, origin, chunk_data, sender)
 
+        #sys.stderr.write(f" sender={sender} splitter={self.splitter}"); sys.stderr.flush()
         if sender == self.splitter:
             # New round
 
@@ -229,8 +230,8 @@ class Peer_DBS():
 
             #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
 
-            self.buffer_chunk__show_buffer()
-            self.buffer_chunk__show_CLR(chunk_number)
+            self.process_chunk__show_buffer()
+            self.process_chunk__show_CLR(chunk_number)
             self.number_of_lost_chunks = 0 # ?? Simulator
 
         else:
