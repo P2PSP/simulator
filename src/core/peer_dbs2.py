@@ -40,10 +40,8 @@ class Peer_DBS2(Peer_DBS):
         #sys.stderr.write(f" {self.ext_id}{chunk_number}{peer}"); sys.stderr.flush()
         msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
-        self.lg.warning(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
 
     def process_chunk(self, chunk_number, origin, chunk_data, sender):
-        mierda
         self.buffer_chunk(chunk_number, origin, chunk_data, sender)
 
         # A new chunk is received, so, a new chunk to forward to the
@@ -71,8 +69,8 @@ class Peer_DBS2(Peer_DBS):
 
             #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
 
-            self.buffer_chunk__show_fanout()
-            self.buffer_chunk__show_CLR(chunk_number)
+            self.process_chunk__show_fanout()
+            self.process_chunk__show_CLR(chunk_number)
             self.number_of_lost_chunks = 0 # ?? Simulator
 
         else:
@@ -95,7 +93,6 @@ class Peer_DBS2(Peer_DBS):
         # Check duplicate.
         position = chunk_number % self.buffer_size
         if self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number:
-            self.lg.warning(f"{self.ext_id}: buffer_chunk: duplicate chunk {chunk_number} from {sender} (the first one was originated by {self.buffer[position][ChunkStructure.ORIGIN]})")
             self.send_prune_origin(chunk_number, sender)
 
         # Check if new origin to add it to the known team.
@@ -112,7 +109,7 @@ class Peer_DBS2(Peer_DBS):
                 # message to these neighbors), but the peer
                 # should not be added to the team.
                 self.team.append(origin)
-                self.lg.info(f"{self.ext_id}: buffer_chunk: appended {origin} to team={self.team} by chunk from origin={origin}")
+                #self.lg.info(f"{self.ext_id}: buffer_chunk: appended {origin} to team={self.team} by chunk from origin={origin}")
 
         # Remove empty forwarding tables.
         for _origin in list(self.forward):
@@ -234,7 +231,7 @@ class Peer_DBS2(Peer_DBS):
             self.lg.warning(f"{self.ext_id}: process_prune: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})")
 
     def process_hello(self, sender):
-        super().process_hello(sender)
+        Peer_DBS.process_hello(self, sender)
         if sender not in self.team:
             if __debug__:
                 if sender == self.public_endpoint:
@@ -243,7 +240,7 @@ class Peer_DBS2(Peer_DBS):
             self.lg.info(f"{self.ext_id}: appended {sender} to team={self.team} by [hello]")
 
     def process_goodbye(self, sender):
-        super().process_goodbye(sender)
+        Peer_DBS.process_goodbye(self, sender)
         try:
             self.team.remove(sender)
             #self.number_of_peers -= 1
@@ -263,7 +260,8 @@ class Peer_DBS2(Peer_DBS):
             self.lg.info(f"{self.ext_id}: process_unpacked_message: received chunk {chunk_number} from {sender} with origin {origin}")
             self.received_chunks += 1
             self.provide_CLR_feedback(sender)
-            self.buffer_chunk(chunk_number = chunk_number, origin = origin, chunk_data = chunk_data, sender = sender)
+            self.process_chunk(chunk_number = chunk_number, origin = origin, chunk_data = chunk_data, sender = sender)
+            self.send_chunks_to_neighbors()
 
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
             if chunk_number == Messages.REQUEST:

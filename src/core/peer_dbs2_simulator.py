@@ -18,6 +18,7 @@ from .peer_dbs_simulator import Peer_DBS_simulator
 import logging
 from .chunk_structure import ChunkStructure
 
+#class Peer_DBS2_simulator(Peer_DBS2):
 class Peer_DBS2_simulator(Peer_DBS2, Peer_DBS_simulator):
 
     def __init__(self, id, name = "Peer_DBS2_simulator"):
@@ -30,6 +31,14 @@ class Peer_DBS2_simulator(Peer_DBS2, Peer_DBS_simulator):
         #colorama.init()
         self.lg.info(f"{name}: DBS2 initialized")
 
+    def send_prune_origin(self, chunk_number, peer):
+        Peer_DBS2.send_prune_origin(self, chunk_number, peer)
+        self.lg.info(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}, (the first one was originated by {self.buffer[position][ChunkStructure.ORIGIN]})")
+
+    def process_chunk(self, chunk_number, origin, chunk_data, sender):
+        self.lg.info(f" {self.ext_id}: process_chunk({chunk_number}, {origin}, {chunk_data}, {sender})")
+        Peer_DBS2.process_chunk(self, chunk_number, origin, chunk_data, sender)
+        
     def request_chunk(self, chunk_number, peer):
         self.lg.info(f"{self.ext_id}: sent [request {chunk_number}] to {peer}")
         Peer_DBS2.request_chunk(self, chunk_number, peer)
@@ -47,11 +56,8 @@ class Peer_DBS2_simulator(Peer_DBS2, Peer_DBS_simulator):
                     _origin = list(self.team).index(i[ChunkStructure.ORIGIN])
                     buf += hash(_origin)
                 except ValueError:
-                    buf += '-' # Peers do not exist in their forwarding table.
+                    buf += '-'  # Does not exist in their forwarding table.
             else:
                 buf += " "
         self.lg.debug(f"{self.ext_id}: buffer={buf}")
 
-    def process_chunk(self, chunk_number, origin, chunk_data, sender):
-        Peer_DBS2.process_chunk(self, chunk_number, origin, chunk_data, sender)
-        
