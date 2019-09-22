@@ -33,7 +33,16 @@ class Peer_DBS2_simulator(Peer_DBS2, Peer_DBS_simulator):
 
     def send_prune_origin(self, chunk_number, peer):
         Peer_DBS2.send_prune_origin(self, chunk_number, peer)
-        self.lg.info(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}, (the first one was originated by {self.buffer[position][ChunkStructure.ORIGIN]})")
+        self.lg.info(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
+
+    def is_duplicate(self, chunk_number):
+        Peer_DBS2.is_duplicate(self, chunk_number)
+        position = chunk_number % self.buffer_size        
+        self.lg.info(f"{self.ext_id}: duplicate {chunk_number} (the first one was originated by {self.buffer[position][ChunkStructure.ORIGIN]})")
+
+    def update_the_team(self, peer):
+        Peer_DBS2.update_the_team(self, peer)
+        self.lg.info(f"{self.ext_id}: updating team with peer {peer}")
 
     def process_chunk(self, chunk_number, origin, chunk_data, sender):
         self.lg.info(f" {self.ext_id}: process_chunk({chunk_number}, {origin}, {chunk_data}, {sender})")

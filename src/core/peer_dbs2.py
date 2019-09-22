@@ -41,15 +41,31 @@ class Peer_DBS2(Peer_DBS):
         msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
 
-    def process_chunk(self, chunk_number, origin, chunk_data, sender):
-        self.buffer_chunk(chunk_number, origin, chunk_data, sender)
+    def is_duplicate(self, chunk_number):
+        position = chunk_number % self.buffer_size
+        return self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
 
-        # A new chunk is received, so, a new chunk to forward to the
-        # rest of the team. DBS2 specific.
-        self.update_pendings(origin, chunk_number)
+    def update_the_team(self, peer):
+        self.team.append(peer)
+
+    def update_forward(self, origin, sender):
+        if origin in self.forward:
+            if sender not in self.forward[origin]:
+                self.forward[origin].append(sender)
+                self.pending[sender] = []
+            else:
+                # sender already in self.forward[origin]
+                pass
+        else:
+            # origin is not in self.forward
+            self.forward[origin] = [sender]
+            self.pending[sender] = []
+        
+    def process_chunk(self, chunk_number, origin, chunk_data, sender):
 
         if sender == self.splitter:
             # New round
+            self.buffer_chunk(chunk_number, origin, chunk_data, sender)
 
             # Remove selfish neighbors.
             for _origin in list(self.activity):
@@ -73,15 +89,35 @@ class Peer_DBS2(Peer_DBS):
             self.process_chunk__show_CLR(chunk_number)
             self.number_of_lost_chunks = 0 # ?? Simulator
 
+            # Remove empty forwarding tables.
+            for _origin in list(self.forward):
+                if len(self.forward[_origin]) == 0:
+                    del self.forward[_origin]
+
         else:
             # Chunk received from a peer.
 
+            #self.update_forward(origin, sender)
+            
+            if self.is_duplicate(chunk_number):
+                self.send_prune_origin(chunk_number, sender)
+            else:
+                self.buffer_chunk(chunk_number, origin, chunk_data, sender)
+
             # Extend the list of known peers checking if the origin of
-            # the received chunk is new. DBS specific because peers
-            # will forward to the <origin> all chunks originated at
-            # themselves (received by the splitter).
+            # the received chunk is new.
             if origin not in self.team:
-                self.team.append(origin)
+                # In the optimization stage, the peer could request to
+                # a neighbor a chunk that should be provided by the
+                # splitter (the peer is the origin). If this happens,
+                # the peer will receive chunks from neighbors for what
+                # he is the origin (that is not good, but neither a
+                # fatal error ... the peer will send a prunning
+                # message to these neighbors), but the peer should not
+                # be added to the team.
+                if origin != self.public_endpoint:
+                    self.update_the_team(origin)
+                    #self.lg.info(f"{self.ext_id}: buffer_chunk: appended {origin} to team={self.team} by chunk from origin={origin}")
 
             try:
                 self.activity[origin] += 1
@@ -89,32 +125,7 @@ class Peer_DBS2(Peer_DBS):
                 self.activity[origin] = 1
 
         # For all received chunks
-
-        # Check duplicate.
-        position = chunk_number % self.buffer_size
-        if self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number:
-            self.send_prune_origin(chunk_number, sender)
-
-        # Check if new origin to add it to the known team.
-        if origin not in self.team:
-            if origin != self.public_endpoint:
-                # In the optimization stage, the peer
-                # could request to a neighbor a chunk that
-                # should be provided by the splitter (the
-                # peer is the origin). If this happens,
-                # the peer will receive chunks from
-                # neighbors for what he is the origin
-                # (that is not good, but neither a fatal
-                # error ... the peer will send a prunning
-                # message to these neighbors), but the peer
-                # should not be added to the team.
-                self.team.append(origin)
-                #self.lg.info(f"{self.ext_id}: buffer_chunk: appended {origin} to team={self.team} by chunk from origin={origin}")
-
-        # Remove empty forwarding tables.
-        for _origin in list(self.forward):
-            if len(self.forward[_origin]) == 0:
-                del self.forward[_origin]
+        self.update_pendings(origin, chunk_number)
 
     # If a peer X receives [request chunk] from peer Z, X will
     # append Z to forward[chunk.origin], but only if Z is not the
@@ -125,21 +136,9 @@ class Peer_DBS2(Peer_DBS):
         position = chunk_number % self.buffer_size
         if self.buffer[position][ChunkStructure.CHUNK_DATA] != b'L':
             origin = self.buffer[position][ChunkStructure.ORIGIN]
-            if origin != sender:
-                if origin in self.forward:
-                    if sender not in self.forward[origin]:
-                        self.forward[origin].append(sender)
-                        self.pending[sender] = []
-                    else:
-                        # sender already in self.forward[origin]
-                        pass
-                else:
-                    # origin is not in self.forward
-                    self.forward[origin] = [sender]
-                    self.pending[sender] = []
-            else:
-                # Request ignored
-                pass
+            assert origin != sender, \
+                f"{self.ext_id}: update_forward: origin {origin} is the sender of the request"
+            self.update_forward(origin, sender)
         else:
             # I haven't the chunk
             pass
@@ -328,7 +327,7 @@ class Peer_DBS2(Peer_DBS):
             if len(self.team) > 1:
                 peer = random.choice(self.team)
                 self.request_chunk(chunk_number, peer)
-                sys.stderr.write(f" ->{peer}"); sys.stderr.flush()
+                #sys.stderr.write(f" ->{peer}"); sys.stderr.flush()
                 if peer == self.ext_id[1]:
                     sys.stderr.write(f" ------------------------->hola!!!<---------------------"); sys.stderr.flush()
 
