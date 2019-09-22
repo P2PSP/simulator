@@ -260,6 +260,8 @@ class Peer_DBS():
         # forward[origin] the chunk (number) is appended to pending[P_i].
         #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
         #sys.stderr.write(f" {origin in self.forward}"); sys.stderr.flush()
+        assert origin in self.forward, \
+            f"{self.ext_id}: {origin} is not in the forwarding table"
         for peer in self.forward[origin]:
             try:
                 self.pending[peer].append(chunk_number)
