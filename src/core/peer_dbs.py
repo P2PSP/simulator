@@ -205,7 +205,6 @@ class Peer_DBS():
         self.buffer[chunk_number % self.buffer_size] = (chunk_number, chunk_data, origin)
 
     def process_chunk(self, chunk_number, origin, chunk_data, sender):
-        joder
         self.buffer_chunk(chunk_number, origin, chunk_data, sender)
 
         #sys.stderr.write(f" sender={sender} splitter={self.splitter}"); sys.stderr.flush()
