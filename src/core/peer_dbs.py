@@ -157,6 +157,14 @@ class Peer_DBS():
         pass
 
     def connect_to_the_splitter(self, peer_port):
+        host_name = socket.gethostname()
+        for i in range(3):
+            while True:
+                try:
+                    address = socket.gethostbyname(host_name)
+                except socket.gaierror:
+                    continue
+                break
         self.splitter_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.splitter_socket.set_id(self.id) # Ojo, simulation dependant
         #host = socket.gethostbyname(socket.gethostname())
@@ -166,8 +174,6 @@ class Peer_DBS():
         #time.sleep(1000)
         #IP_stuff = stuff[netifaces.AF_INET][0] # Only the IP stuff
         #address = IP_stuff['addr']             # Get local IP addr
-        host_name = socket.gethostname()
-        address = socket.gethostbyname(host_name)
         self.splitter_socket.bind((address, peer_port))
 
         try:

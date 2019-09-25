@@ -238,7 +238,6 @@ class Splitter_DBS():
         self.outgoing_peers_list.clear()
 
     def on_round_beginning(self):
-        sys.stderr.write("*"); sys.stderr.flush()
         self.remove_outgoing_peers()
         #while not self.new_peers.empty():
         #    self.insert_peer(self.new_peers.get())
