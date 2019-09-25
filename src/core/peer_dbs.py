@@ -108,6 +108,11 @@ class Peer_DBS():
     def receive_the_chunk_size(self):
         pass
 
+    def send_ready_for_receiving_chunks(self):
+        # self.splitter_socket.send(b"R", "s") # R = Ready
+        msg = struct.pack("s", b"R")
+        self.splitter_socket.send(msg)
+
     def say_hello(self, entity):
         msg = struct.pack("!i", Messages.HELLO)
         self.team_socket.sendto(msg, entity)

@@ -50,6 +50,10 @@ class Peer_DBS_simulator(Peer_DBS):
         super().receive_the_peer_index_in_team()
         self.lg.info(f"{self.ext_id}: peer_index_in_team={self.peer_index_in_team}")
 
+    def send_ready_for_receiving_chunks(self):
+        Peer_DBS.send_ready_for_receiving_chunks(self)
+        self.lg.info(f"{self.ext_id}: sent [ready] to splitter")
+
     def say_hello(self, entity):
         super().say_hello(entity)
         self.lg.info(f"{self.ext_id}: sent [hello] to {entity}")

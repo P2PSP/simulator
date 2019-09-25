@@ -208,7 +208,7 @@ class Simulator():
             peer.receive_the_list_of_peers()
             peer.receive_the_buffer_size()
             peer.receive_the_chunk_size()
-            #peer.send_ready_for_receiving_chunks()
+            peer.send_ready_for_receiving_chunks()
             #peer.send_peer_type()   #Only for simulation purpose
             # peer.buffer_data()
             # peer.start()
