@@ -73,7 +73,7 @@ class Splitter_DBS():
         self.peer_connection_socket.listen(1)
         port = self.peer_connection_socket.getsockname()[1]
         self.id = (host, port)
-        sys.stderr.write(f" host={host}"); sys.stderr.flush()
+        #sys.stderr.write(f" host={host}"); sys.stderr.flush()
 
     def setup_team_socket(self):
         self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
