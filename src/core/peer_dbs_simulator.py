@@ -68,9 +68,13 @@ class Peer_DBS_simulator(Peer_DBS):
 
     def connect_to_the_splitter(self, peer_port):
         self.lg.info(f"{self.public_endpoint}: connecting to the splitter at {self.splitter}")
-        super().connect_to_the_splitter(peer_port)
-        self.lg.info(f"{self.public_endpoint}: I am a peer")
-        self.lg.info(f"{self.public_endpoint}: connected to the splitter at {self.splitter}")
+        if super().connect_to_the_splitter(peer_port):
+            self.lg.info(f"{self.public_endpoint}: I am a peer")
+            self.lg.info(f"{self.public_endpoint}: connected to the splitter at {self.splitter}")
+            return True
+        else:
+            self.lg.error(f"{self.public_endpoint}: unable to connect to the splitter at {self.splitter}")
+            return False
 
     def buffer_chunk__buffering_feedback(self, chunk_number, chunk_data, origin, sender, position):
         self.lg.info(f"{self.ext_id}: buffering ({chunk_number}, {chunk_data}, {origin}) received from {sender} in position {position}")
@@ -158,6 +162,7 @@ class Peer_DBS_simulator(Peer_DBS):
         self.lg.info(f"{self.ext_id}: position in the buffer of the first chunk to play={self.chunk_to_play}")
 
     def buffer_data(self):
+        self.lg.info(f"{self.ext_id}: buffering")
         start_time = time.time()
         super().buffer_data()
         buffering_time = time.time() - start_time

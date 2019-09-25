@@ -29,7 +29,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
                          max_chunk_loss = max_chunk_loss)
         logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
         self.lg = logging.getLogger(__name__)
-        self.lg.setLevel(logging.ERROR)
+        self.lg.setLevel(logging.DEBUG)
         self.number_of_rounds = number_of_rounds
         self.speed = speed
         self.lg.debug("{name}: initialized")

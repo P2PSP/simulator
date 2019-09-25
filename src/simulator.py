@@ -46,7 +46,7 @@ import sys
 
 
 class Simulator():
-    P_IN = 1.0  # 0.4
+    P_IN = 0.1  # 0.4
     P_MoP = 0.0  # 0.2
     P_WIP = 1.0  # 0.6
     P_MP = 0.0  # 0.2
@@ -200,20 +200,19 @@ class Simulator():
 
         #peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
-#        peer.set_optimization_horizon(self.optimization_horizon)
-        peer.connect_to_the_splitter(peer_port=0)
-        peer.receive_the_public_endpoint()
-        peer.receive_the_peer_index_in_team()
-        peer.receive_the_buffer_size()
-        peer.receive_the_number_of_peers()
-        peer.listen_to_the_team()
-        peer.receive_the_list_of_peers()
-        peer.receive_the_chunk_size()
-        #peer.send_ready_for_receiving_chunks()
-        #peer.send_peer_type()   #Only for simulation purpose
-        # peer.buffer_data()
-        # peer.start()
-        peer.run()
+        if peer.connect_to_the_splitter(peer_port=0):
+            peer.receive_the_public_endpoint()
+            peer.receive_the_peer_index_in_team()
+            peer.receive_the_number_of_peers()
+            peer.listen_to_the_team()
+            peer.receive_the_list_of_peers()
+            peer.receive_the_buffer_size()
+            peer.receive_the_chunk_size()
+            #peer.send_ready_for_receiving_chunks()
+            #peer.send_peer_type()   #Only for simulation purpose
+            # peer.buffer_data()
+            # peer.start()
+            peer.run()
 
         '''
         while not peer.ready_to_leave_the_team:
