@@ -28,6 +28,8 @@ from .ip_tools import IP_tools
 # class Splitter_DBS(Simulator_stuff):
 import random
 
+import queue
+
 class Splitter_DBS():
 
     def __init__(self,
@@ -60,6 +62,7 @@ class Splitter_DBS():
         #self.received_chunks_from = {}
         #self.lost_chunks_from = {}
         self.total_losses = 0  # Total number of lost chunks (reset when a peer is removed)
+        self.new_peers = queue.Queue()
 
     def setup_peer_connection_socket(self, port=0):
         self.peer_connection_socket = socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
@@ -112,12 +115,12 @@ class Splitter_DBS():
         #sys.stderr.write(f" ->{incoming_peer}"); sys.stderr.flush()
         self.send_the_public_endpoint(incoming_peer, serve_socket)
         self.send_the_peer_index_in_team(serve_socket, len(self.team))
-        self.send_the_buffer_size(serve_socket)
-        self.send_the_header_bytes(serve_socket)
-        self.send_the_header(serve_socket)
         self.send_the_number_of_peers(serve_socket)
         self.send_the_list_of_peers(serve_socket)
+        self.send_the_buffer_size(serve_socket)
         self.send_the_chunk_size(serve_socket)
+        self.send_the_header_bytes(serve_socket)
+        self.send_the_header(serve_socket)
 
         # ??????????????????????????????
         #msg_length = struct.calcsize("s")
@@ -125,6 +128,7 @@ class Splitter_DBS():
         #message = struct.unpack("s", msg)[0]
 
         self.insert_peer(incoming_peer)
+        #self.new_peers.put(incoming_peer)
         serve_socket.close()
 
     def send_the_public_endpoint(self, endpoint, peer_serve_socket):
@@ -234,7 +238,10 @@ class Splitter_DBS():
         self.outgoing_peers_list.clear()
 
     def on_round_beginning(self):
+        sys.stderr.write("*"); sys.stderr.flush()
         self.remove_outgoing_peers()
+        #while not self.new_peers.empty():
+        #    self.insert_peer(self.new_peers.get())
         #self.reset_counters()
 
     def moderate_the_team__warning1(self, packed_msg, sender):
@@ -327,21 +334,21 @@ class Splitter_DBS():
 
         while len(self.team) == 0:
             time.sleep(1)
+            #self.on_round_beginning()
         print()
 
         while (len(self.team) > 0) and self.alive:
             chunk = self.retrieve_chunk()
             if self.peer_number == 0:
                 total_peers += len(self.team)
-                self.on_round_beginning()  # Remove outgoing peers
+                self.on_round_beginning()
 
             try:
                 peer = self.team[self.peer_number]
-
             except IndexError:
                 self.run__index_error_feedback()
 
-            self.destination_of_chunk[chunk_number % (self.buffer_size)] = peer#self.team.index(peer)
+            self.destination_of_chunk[chunk_number % (self.buffer_size)] = peer  # self.team.index(peer)
             self.run__destinations_feedback()
             self.send_chunk(chunk_number, chunk, peer)
             chunk_number = (chunk_number + 1) % Limits.MAX_CHUNK_NUMBER

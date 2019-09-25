@@ -169,14 +169,15 @@ class Peer_DBS():
             self.splitter_socket.connect(self.splitter)
         except ConnectionRefusedError as e:
             self.connect_to_the_splitter__error_feedback(e)
-            pass
+            return False
         except ConnectionResetError as e:
             self.connect_to_the_splitter__error_feedback(e)
-            pass
+            return False
 
         # The index for pending[].
         self.splitter = self.splitter_socket.getpeername() # Be careful, not "127.0.1.1 hostname" in /etc/hosts
         #self.private_endpoint = self.splitter_socket.getsockname()
+        return True
 
     def buffer_chunk__buffering_feedback(self, chunk_number, chunk_data, origin, sender, position):
         pass
