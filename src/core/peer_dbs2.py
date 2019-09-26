@@ -266,7 +266,10 @@ class Peer_DBS2(Peer_DBS):
             chunk_data = message[ChunkStructure.CHUNK_DATA]
             self.lg.debug(f"{self.ext_id}: process_unpacked_message: received chunk {chunk_number} from {sender} with origin {origin}")
             self.received_chunks += 1
-            self.provide_CLR_feedback(sender)
+            if __debug__:
+                if sender == self.splitter:
+                    if self.played > 0 and self.played >= self.number_of_peers:
+                        CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks) # Chunk Loss Ratio                
             self.process_chunk(chunk_number = chunk_number, origin = origin, chunk_data = chunk_data, sender = sender)
             self.send_chunks_to_neighbors()
 
