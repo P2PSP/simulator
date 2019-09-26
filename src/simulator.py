@@ -118,7 +118,8 @@ class Simulator():
         if self.buffer_size == 0:
             self.buffer_size = self.compute_buffer_size()
         if self.set_of_rules == "DBS" or self.set_of_rules == "DBS2" or self.set_of_rules == "IMS":
-            splitter = Splitter_DBS_simulator(buffer_size = self.buffer_size,
+            splitter = Splitter_DBS_simulator(
+                buffer_size = self.buffer_size,
                 max_chunk_loss = self.max_chunk_loss_at_splitter,
                 number_of_rounds = self.number_of_rounds,
                 speed = self.speed)
