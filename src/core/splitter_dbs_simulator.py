@@ -32,6 +32,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         self.lg.setLevel(logging.DEBUG)
         self.number_of_rounds = number_of_rounds
         self.speed = speed
+        self.cpu_usage = 50
         self.lg.debug("{name}: initialized")
         colorama.init()
         #self.total_lost_chunks = 0
@@ -134,9 +135,9 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
     def compute_cpu_usage(self):
         while True:
-            self.cpu_usage = psutil.cpu_percent()
+            self.cpu_usage = 0.1*psutil.cpu_percent() + 0.9*self.cpu_usage
             sys.stderr.write(f" {int(self.cpu_usage)}"); sys.stderr.flush()
-            time.sleep(0.1)
+            time.sleep(0.5)
     
     def retrieve_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
