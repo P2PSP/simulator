@@ -314,7 +314,7 @@ class Peer_DBS2(Peer_DBS):
             self.complain(chunk_number) # Only monitors
             #self.complain(self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]) # If I'm a monitor
             self.number_of_lost_chunks += 1
-            self.play_chunk__lost_chunk_feedback()
+            self.lg.debug(f"{self.ext_id}: play_chunk: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change
             # this in the near future. The action here is to request
@@ -376,8 +376,8 @@ class Peer_DBS2(Peer_DBS):
             #     if self.neighbor is not None:  # Este if no debería existir
             #        self.request_chunk(chunk_number, self.neighbor)
 
+        self.number_of_chunks_consumed += 1
         if __debug__:
-            self.number_of_chunks_consumed += 1
             #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
             buf = ""
             for i in self.buffer:
