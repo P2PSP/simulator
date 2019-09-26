@@ -37,20 +37,26 @@ class Peer_DBS2(Peer_DBS):
         #sys.stderr.write(f" {self.ext_id}{chunk_number}{peer}"); sys.stderr.flush()
         msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
+        self.lg.debug(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
 
     # Checks if the chunk with chunk_number was previously received.
     def is_duplicate(self, chunk_number):
         position = chunk_number % self.buffer_size
-        return self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
+        duplicate = self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
+        if __debug__:
+            if duplicate:
+                self.lg.debug(f"{self.ext_id}: duplicate {chunk_number} (the first one was originated by {self.buffer[position][ChunkStructure.ORIGIN]})")
+        return duplicate
 
     # Add a new peer to the team structure.
     def update_the_team(self, peer):
+        self.lg.debug(f"{self.ext_id}: updating team with peer {peer}")
         self.team.append(peer)
 
     # The forwarding table indicates to which peers the received
     # chunks must be retransmitted. This method adds <sender> to the
-    # list of peers forwarded for <origin>. If <origin> is new, a new
-    # list is created. When <sender> is added, its pending table is
+    # list of peers forwarded for {origin}. If <origin> is new, a new
+    # list is created. When {sender} is added, its pending table is
     # also created.
     def update_forward(self, origin, sender):
         if origin in self.forward:
@@ -58,15 +64,16 @@ class Peer_DBS2(Peer_DBS):
                 self.forward[origin].append(sender)
                 self.pending[sender] = []
             else:
-                # <sender> already in self.forward[<origin>]
+                # {sender} already in {self.forward[origin]}
                 pass
         else:
-            # <origin> is not in self.forward
+            # {origin} is not in self.forward
             self.forward[origin] = [sender]
             self.pending[sender] = []
 
-    def process_chunk_received_from_the_splitter(self, chunk_number, origin, chunk_data, sender):
-        self.buffer_chunk(chunk_number, origin, chunk_data, sender)
+    def process_chunk_received_from_the_splitter(self, chunk_number, origin, chunk_data):
+        self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the splitter")
+        self.buffer_chunk(chunk_number, origin, chunk_data)
 
         # Remove selfish neighbors.
         for _origin in list(self.activity):
@@ -84,25 +91,18 @@ class Peer_DBS2(Peer_DBS):
         #for neighbor in self.pending:
         #    self.send_chunks(neighbor)
 
-        #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
-
-        self.process_chunk__show_fanout()
-        self.process_chunk__show_CLR(chunk_number)
-        self.number_of_lost_chunks = 0 # ?? Simulator
-
         # Remove empty forwarding tables.
         for _origin in list(self.forward):
             if len(self.forward[_origin]) == 0:
                 del self.forward[_origin]
 
     def process_chunk_received_from_a_peer(self, chunk_number, origin, chunk_data, sender):
-
+        self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the peer {sender}")
         #self.update_forward(origin, sender)
-
         if self.is_duplicate(chunk_number):
             self.send_prune_origin(chunk_number, sender)
         else:
-            self.buffer_chunk(chunk_number, origin, chunk_data, sender)
+            self.buffer_chunk(chunk_number, origin, chunk_data)
 
         # Extend the list of known peers checking if the origin of
         # the received chunk is new.
@@ -125,9 +125,9 @@ class Peer_DBS2(Peer_DBS):
             self.activity[origin] = 1
         
     def process_chunk(self, chunk_number, origin, chunk_data, sender):
+        self.lg.debug(f" {self.ext_id}: process_chunk({chunk_number}, {origin}, {chunk_data}, {sender})")
         if sender == self.splitter:
-            # New round
-            self.process_chunk_received_from_the_splitter(chunk_number, origin, chunk_data, sender)
+            self.process_chunk_received_from_the_splitter(chunk_number, origin, chunk_data)
         else:
             self.process_chunk_received_from_a_peer(chunk_number, origin, chunk_data, sender)
         self.update_pendings(origin, chunk_number)
@@ -137,12 +137,13 @@ class Peer_DBS2(Peer_DBS):
     # origin of the requested chunk. This last thing can happen if
     # Z requests chunks that will be originated at itself.
     def process_request(self, chunk_number, sender):
+        self.lg.debug(f"{self.ext_id}: received [request {chunk_number}] from {sender}")
         #sys.stderr.write(f" R{self.ext_id}/{chunk_number}/{sender}"); sys.stderr.flush()
         position = chunk_number % self.buffer_size
-        if self.buffer[position][ChunkStructure.CHUNK_DATA] != b'L':
-            origin = self.buffer[position][ChunkStructure.ORIGIN]
-            assert origin != sender, \
-                f"{self.ext_id}: update_forward: origin {origin} is the sender of the request"
+        buffer_box = self.buffer[position]
+        if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
+            origin = buffer_box[ChunkStructure.ORIGIN]
+            assert origin != sender, f"{self.ext_id}: update_forward: origin {origin} is the sender of the request"
             self.update_forward(origin, sender)
         else:
             # I haven't the chunk
@@ -190,49 +191,51 @@ class Peer_DBS2(Peer_DBS):
     # requesting that {peer} stop sending chunks originated at
     # {self.buffer[chunk_number % self.buffer_size].origin}.
     def process_prune(self, chunk_number, sender):
+        self.lg.debug(f"{self.ext_id}: received [prune {chunk_number}] from {sender}")
 
         def remove_sender(origin, sender):
-            self.lg.debug(f"{self.ext_id}: process_prune: removing {sender} from forward[{origin}]={self.forward[origin]}")
             try:
                 self.forward[origin].remove(sender)
-                self.lg.warning(f"{self.ext_id}: process_prune: sender={sender} has been removed from forward[{origin}]={self.forward[origin]}")
+                self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} has been removed from forward[{origin}]={self.forward[origin]}")
             except ValueError:
                 self.lg.error(f"{self.ext_id}: process_prune: failed to remove peer {sender} from forward={self.forward[origin]} for origin={origin} ")
             if len(self.forward[origin])==0:
                 del self.forward[origin]
                 if __debug__:
                     if origin in self.forward:
-                        self.lg.info(f"{self.ext_id}: process_prune: origin {origin} is still in forward[{origin}]={self.forward[origin]}")
+                        self.lg.debug(f"{self.ext_id}: process_prune: origin {origin} is still in forward[{origin}]={self.forward[origin]}")
                     else:
                         self.lg.debug(f"{self.ext_id}: process_prune: origin={origin} removed from forward={self.forward}")
             if __debug__:
                 if origin == self.public_endpoint:
                     try:
-                        self.lg.info(f"{self.ext_id}: process_prune: sender={sender} removed from the primary forwarding table (public_endpoint == origin={origin}) now with length {len(self.forward[self.public_endpoint])}")
+                        self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} removed from the primary forwarding table (public_endpoint == origin={origin}) now with length {len(self.forward[self.public_endpoint])}")
                     except KeyError:
                         pass
         
         position = chunk_number % self.buffer_size
+        buffer_box = self.buffer[position]
         
         # Notice that chunk "chunk_number" should be stored in the
         # buffer because it has been sent to the neighbor that is
         # requesting the prune.
-        
-        if self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number:
-            origin = self.buffer[position][ChunkStructure.ORIGIN]
-            self.lg.warning(f"{self.ext_id}: process_prune: [prune {chunk_number}] received from {sender} for pruning origin={origin}")
+
+        # Only complete prunning if I have the origin of the pruned chunk.
+        if buffer_box[ChunkStructure.CHUNK_NUMBER] == chunk_number:
+            origin = buffer_box[ChunkStructure.ORIGIN]
+            self.lg.debug(f"{self.ext_id}: process_prune: [prune {chunk_number}] received from {sender} for pruning origin={origin}")
 
             if origin in self.forward:
-                self.lg.warning(f"{self.ext_id}: process_prune: origin={origin} is in forward")
+                self.lg.debug(f"{self.ext_id}: process_prune: origin={origin} is in forward")
                 if sender in self.forward[origin]:
                     self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} is in forward[{origin}]")
                     remove_sender(origin, sender)
                 else:
-                    self.lg.warning(f"{self.ext_id}: process_prune: sender={sender} is not in forward[{origin}]={self.forward[origin]}")
+                    self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} is not in forward[{origin}]={self.forward[origin]}")
             else:
-                self.lg.warning(f"{self.ext_id}: process_prune: origin={origin} is not in forward={self.forward}") 
+                self.lg.debug(f"{self.ext_id}: process_prune: origin={origin} is not in forward={self.forward}")
         else:
-            self.lg.warning(f"{self.ext_id}: process_prune: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})")
+            self.lg.debug(f"{self.ext_id}: process_prune: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})")
 
     def process_hello(self, sender):
         Peer_DBS.process_hello(self, sender)
@@ -241,27 +244,27 @@ class Peer_DBS2(Peer_DBS):
                 if sender == self.public_endpoint:
                     self.lg.error(f"{self.ext_id}: appending myself to the team by [hello]")
             self.team.append(sender)
-            self.lg.info(f"{self.ext_id}: appended {sender} to team={self.team} by [hello]")
+            self.lg.debug(f"{self.ext_id}: appended {sender} to team={self.team} by [hello]")
 
     def process_goodbye(self, sender):
         Peer_DBS.process_goodbye(self, sender)
         try:
             self.team.remove(sender)
             #self.number_of_peers -= 1
-            self.lg.info(f"{self.ext_id}: process_goodbye: removed {sender} from team={self.team} by [goodbye]")
+            self.lg.debug(f"{self.ext_id}: process_goodbye: removed {sender} from team={self.team} by [goodbye]")
         except ValueError:
             self.lg.warning(f"{self.ext_id}: process_goodbye: failed to remove {sender} from team={self.team}")
 
     def process_unpacked_message(self, message, sender):
         chunk_number = message[ChunkStructure.CHUNK_NUMBER]
-        self.lg.info(f"{self.ext_id}: process_unpacked_message: [{chunk_number}] <-- {sender}")
+        self.lg.debug(f"{self.ext_id}: process_unpacked_message: [{chunk_number}] <-- {sender}")
 
         if chunk_number >= 0:
             # We have received a chunk.
             chunk_data = message[ChunkStructure.CHUNK_DATA]
             origin = message[ChunkStructure.ORIGIN]
             chunk_data = message[ChunkStructure.CHUNK_DATA]
-            self.lg.info(f"{self.ext_id}: process_unpacked_message: received chunk {chunk_number} from {sender} with origin {origin}")
+            self.lg.debug(f"{self.ext_id}: process_unpacked_message: received chunk {chunk_number} from {sender} with origin {origin}")
             self.received_chunks += 1
             self.provide_CLR_feedback(sender)
             self.process_chunk(chunk_number = chunk_number, origin = origin, chunk_data = chunk_data, sender = sender)
@@ -273,17 +276,17 @@ class Peer_DBS2(Peer_DBS):
             elif chunk_number == Messages.PRUNE:
                 self.process_prune(message[1], sender)
             elif chunk_number == Messages.HELLO:
-                # if len(self.forward[self.id]) < self.max_degree:
                 self.process_hello(sender)
             elif chunk_number == Messages.GOODBYE:
                 self.process_goodbye(sender)
             else:
-                self.lg.info("{self.ext_id}: process_unpacked_message: unexpected control chunk of index={chunk_number}")
-
+                sys.stderr.write("{self.ext_id}: process_unpacked_message: unexpected control chunk of index={chunk_number}")
+                sys.stderr.flush()
         return (chunk_number, sender)
 
     def request_chunk(self, chunk_number, peer):
         #sys.stderr.write(f" R{self.ext_id}-{chunk_number}-{peer}"); sys.stderr.flush()
+        self.lg.debug(f"{self.ext_id}: sent [request {chunk_number}] to {peer}")
         msg = struct.pack("!ii", Messages.REQUEST, chunk_number)
         self.team_socket.sendto(msg, peer)
 
@@ -362,5 +365,18 @@ class Peer_DBS2(Peer_DBS):
             #     if self.neighbor is not None:  # Este if no debería existir
             #        self.request_chunk(chunk_number, self.neighbor)
 
-        self.number_of_chunks_consumed += 1
-        self.play_chunk__show_buffer()
+        if __debug__:
+            self.number_of_chunks_consumed += 1
+            #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
+            buf = ""
+            for i in self.buffer:
+                if i[ChunkStructure.CHUNK_DATA] != b'L':
+                    try:
+                        _origin = list(self.team).index(i[ChunkStructure.ORIGIN])
+                        buf += hash(_origin)
+                    except ValueError:
+                        buf += '-'  # Does not exist in their forwarding table.
+                else:
+                    buf += " "
+            self.lg.debug(f"{self.ext_id}: buffer={buf}")
+
