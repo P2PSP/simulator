@@ -44,6 +44,13 @@ class Peer_DBS2_simulator(Peer_DBS2, Peer_DBS_simulator):
         Peer_DBS2.update_the_team(self, peer)
         self.lg.info(f"{self.ext_id}: updating team with peer {peer}")
 
+    def process_chunk_received_from_the_splitter(self, chunk_number, origin, chunk_data, sender):
+        self.lg.info(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the splitter")
+        Peer_DBS2.process_chunk_received_from_the_splitter(self, chunk_number, origin, chunk_data, sender)
+        self.process_chunk__show_fanout()
+        self.process_chunk__show_CLR(chunk_number)
+        self.number_of_lost_chunks = 0 # ?? Simulator
+
     def process_chunk(self, chunk_number, origin, chunk_data, sender):
         self.lg.info(f" {self.ext_id}: process_chunk({chunk_number}, {origin}, {chunk_data}, {sender})")
         Peer_DBS2.process_chunk(self, chunk_number, origin, chunk_data, sender)

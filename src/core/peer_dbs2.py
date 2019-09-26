@@ -7,22 +7,15 @@ peer_dbs2 module
 
 # DBS2 (Data Broadcasting Set extension 2) layer, peer side.
 
-# DBS2 extends the functionality of DBS considering more origin
-# peers. This means that peers can receive the chunks indirectly,
-# tracing multihop paths. Peers retrieve these alternatives (to the
-# one used in DBS) when chunks are lost.
+# DBS2 extends the functionality of DBS considering that peers can
+# receive the chunks indirectly, tracing multihop paths. Peers create
+# such paths when chunks are lost.
 
 import struct
 import sys
-from threading import Thread
 from .messages import Messages
-from .limits import Limits
-from .socket_wrapper import Socket_wrapper as socket
-from .simulator_stuff import hash
-from .ip_tools import IP_tools
 from .chunk_structure import ChunkStructure
 from .peer_dbs import Peer_DBS
-
 import random
 
 class Peer_DBS2(Peer_DBS):
@@ -33,98 +26,110 @@ class Peer_DBS2(Peer_DBS):
 
         # Peers (end-points) in the known team, which is formed by
         # those peers that has sent to this peer a chunk, directly or
-        # indirectly.
+        # indirectly. In DBS this structure is not necessary because
+        # the list of peers of the peers plus the peer itself is the
+        # team.
         self.team = []
 
+    # Pruning messages are sent by the peers when chunks are received
+    # more than once.
     def send_prune_origin(self, chunk_number, peer):
         #sys.stderr.write(f" {self.ext_id}{chunk_number}{peer}"); sys.stderr.flush()
         msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
 
+    # Checks if the chunk with chunk_number was previously received.
     def is_duplicate(self, chunk_number):
         position = chunk_number % self.buffer_size
         return self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
 
+    # Add a new peer to the team structure.
     def update_the_team(self, peer):
         self.team.append(peer)
 
+    # The forwarding table indicates to which peers the received
+    # chunks must be retransmitted. This method adds <sender> to the
+    # list of peers forwarded for <origin>. If <origin> is new, a new
+    # list is created. When <sender> is added, its pending table is
+    # also created.
     def update_forward(self, origin, sender):
         if origin in self.forward:
             if sender not in self.forward[origin]:
                 self.forward[origin].append(sender)
                 self.pending[sender] = []
             else:
-                # sender already in self.forward[origin]
+                # <sender> already in self.forward[<origin>]
                 pass
         else:
-            # origin is not in self.forward
+            # <origin> is not in self.forward
             self.forward[origin] = [sender]
             self.pending[sender] = []
-        
-    def process_chunk(self, chunk_number, origin, chunk_data, sender):
 
-        if sender == self.splitter:
-            # New round
+    def process_chunk_received_from_the_splitter(self, chunk_number, origin, chunk_data, sender):
+        self.buffer_chunk(chunk_number, origin, chunk_data, sender)
+
+        # Remove selfish neighbors.
+        for _origin in list(self.activity):
+            if self.activity[_origin] < -5:
+                del self.activity[_origin]
+                for neighbors in self.forward.values():
+                    if _origin in neighbors:
+                        neighbors.remove(_origin)
+
+        # Increase inactivity
+        for origin in self.activity.keys():
+            self.activity[origin] -= 1
+
+        # Can produce network congestion!
+        #for neighbor in self.pending:
+        #    self.send_chunks(neighbor)
+
+        #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
+
+        self.process_chunk__show_fanout()
+        self.process_chunk__show_CLR(chunk_number)
+        self.number_of_lost_chunks = 0 # ?? Simulator
+
+        # Remove empty forwarding tables.
+        for _origin in list(self.forward):
+            if len(self.forward[_origin]) == 0:
+                del self.forward[_origin]
+
+    def process_chunk_received_from_a_peer(self, chunk_number, origin, chunk_data, sender):
+
+        #self.update_forward(origin, sender)
+
+        if self.is_duplicate(chunk_number):
+            self.send_prune_origin(chunk_number, sender)
+        else:
             self.buffer_chunk(chunk_number, origin, chunk_data, sender)
 
-            # Remove selfish neighbors.
-            for _origin in list(self.activity):
-                if self.activity[_origin] < -5:
-                    del self.activity[_origin]
-                    for neighbors in self.forward.values():
-                        if _origin in neighbors:
-                            neighbors.remove(_origin)
+        # Extend the list of known peers checking if the origin of
+        # the received chunk is new.
+        if origin not in self.team:
+            # In the optimization stage, the peer could request to
+            # a neighbor a chunk that should be provided by the
+            # splitter (the peer is the origin). If this happens,
+            # the peer will receive chunks from neighbors for what
+            # he is the origin (that is not good, but neither a
+            # fatal error ... the peer will send a prunning
+            # message to these neighbors), but the peer should not
+            # be added to the team.
+            if origin != self.public_endpoint:
+                self.update_the_team(origin)
+                #self.lg.info(f"{self.ext_id}: buffer_chunk: appended {origin} to team={self.team} by chunk from origin={origin}")
 
-            # Increase inactivity
-            for origin in self.activity.keys():
-                self.activity[origin] -= 1
-
-            # New round, all pending chunks are sent
-            #for neighbor in self.pending:
-            #    self.send_chunks(neighbor)
-
-            #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
-
-            self.process_chunk__show_fanout()
-            self.process_chunk__show_CLR(chunk_number)
-            self.number_of_lost_chunks = 0 # ?? Simulator
-
-            # Remove empty forwarding tables.
-            for _origin in list(self.forward):
-                if len(self.forward[_origin]) == 0:
-                    del self.forward[_origin]
-
+        try:
+            self.activity[origin] += 1
+        except KeyError:
+            self.activity[origin] = 1
+        
+    def process_chunk(self, chunk_number, origin, chunk_data, sender):
+        if sender == self.splitter:
+            # New round
+            self.process_chunk_received_from_the_splitter(chunk_number, origin, chunk_data, sender)
         else:
-            # Chunk received from a peer.
-
-            #self.update_forward(origin, sender)
-            
-            if self.is_duplicate(chunk_number):
-                self.send_prune_origin(chunk_number, sender)
-            else:
-                self.buffer_chunk(chunk_number, origin, chunk_data, sender)
-
-            # Extend the list of known peers checking if the origin of
-            # the received chunk is new.
-            if origin not in self.team:
-                # In the optimization stage, the peer could request to
-                # a neighbor a chunk that should be provided by the
-                # splitter (the peer is the origin). If this happens,
-                # the peer will receive chunks from neighbors for what
-                # he is the origin (that is not good, but neither a
-                # fatal error ... the peer will send a prunning
-                # message to these neighbors), but the peer should not
-                # be added to the team.
-                if origin != self.public_endpoint:
-                    self.update_the_team(origin)
-                    #self.lg.info(f"{self.ext_id}: buffer_chunk: appended {origin} to team={self.team} by chunk from origin={origin}")
-
-            try:
-                self.activity[origin] += 1
-            except KeyError:
-                self.activity[origin] = 1
-
-        # For all received chunks
+            self.process_chunk_received_from_a_peer(chunk_number, origin, chunk_data, sender)
         self.update_pendings(origin, chunk_number)
 
     # If a peer X receives [request chunk] from peer Z, X will

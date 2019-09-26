@@ -132,7 +132,6 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
     def moderate_the_team__hello_feedback(self, sender):
         self.lg.info(f"{self.id}: received [hello] from {sender}")
 
-
     def compute_cpu_usage(self):
         while True:
             self.cpu_usage = 0.1*psutil.cpu_percent() + 0.9*self.cpu_usage
