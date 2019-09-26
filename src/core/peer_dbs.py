@@ -129,9 +129,6 @@ class Peer_DBS():
         self.team_socket.sendto(msg, entity)
         self.lg.debug(f"{self.ext_id}: sent [hello] to {entity}")
 
-    def receive_the_list_of_peers__peer_feedback(self, peer):
-        pass
-
     def receive_the_list_of_peers(self):
         peers_pending_of_reception = self.number_of_peers
         msg_length = struct.calcsize("!Ii")
@@ -151,10 +148,7 @@ class Peer_DBS():
             self.pending[peer] = []
             
             self.say_hello(peer)
-            #self.debts[peer] = 0
-            self.receive_the_list_of_peers__peer_feedback(peer)
             self.lg.debug(f"{self.ext_id}: peer {peer} is in the team")
-
             counter += 1
             peers_pending_of_reception -= 1
 
@@ -293,8 +287,7 @@ class Peer_DBS():
         # forward[origin] the chunk (number) is appended to pending[P_i].
         #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
         #sys.stderr.write(f" {origin in self.forward}"); sys.stderr.flush()
-        assert origin in self.forward, \
-            f"{self.ext_id}: {origin} is not in the forwarding table"
+        assert origin in self.forward, f"{self.ext_id}: {origin} is not in the forwarding table={self.forward}"
         for peer in self.forward[origin]:
             try:
                 self.pending[peer].append(chunk_number)
