@@ -18,13 +18,16 @@ from core.common import Common
 #from core.monitor_dbs_latency import Monitor_DBS_latency as Monitor_DBS
 from core.monitor_dbs import Monitor_DBS
 from core.monitor_dbs_simulator import Monitor_DBS_simulator
+from core.monitor_dbs2_simulator import Monitor_DBS2_simulator
 from core.monitor_ims import Monitor_IMS
 from core.monitor_ims_simulator import Monitor_IMS_simulator
 from core.monitor_sss import Monitor_SSS
 from core.monitor_strpeds import Monitor_STRPEDS
 #from core.peer_dbs_latency import Peer_DBS_latency as Peer_DBS
-from core.peer_dbs import Peer_DBS
+#from core.peer_dbs import Peer_DBS
 from core.peer_dbs_simulator import Peer_DBS_simulator
+#from core.peer_dbs2 import Peer_DBS2
+from core.peer_dbs2_simulator import Peer_DBS2_simulator
 from core.peer_ims import Peer_IMS
 from core.peer_ims_simulator import Peer_IMS_simulator
 from core.peer_malicious import Peer_Malicious
@@ -43,7 +46,7 @@ import sys
 
 
 class Simulator():
-    P_IN = 1.0  # 0.4
+    P_IN = 0.1  # 0.4
     P_MoP = 0.0  # 0.2
     P_WIP = 1.0  # 0.6
     P_MP = 0.0  # 0.2
@@ -51,29 +54,21 @@ class Simulator():
     def __init__(self, drawing_log="/tmp/drawing_log.txt",
                  set_of_rules="DBS",
                  number_of_monitors=1,
-                 number_of_peers=9,
+                 number_of_peers=7,    # Monitor apart
                  number_of_rounds=100,
                  number_of_malicious=0,
                  buffer_size=32,
                  chunk_cadence=0.01,
-                 link_failure_prob=0.0,
-                 max_degree=5,
                  max_chunk_loss_at_peers = 10, # chunks/secon
                  max_chunk_loss_at_splitter = 16,
-                 loglevel=logging.WARNING,  # CRITICAL, ERROR, WARNING, INFO, DEBUG
+                 speed = 1000.0,
                  gui=False):
 
-        #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
-        #self.lg = ColorLog(logging.getLogger(__name__))
         self.lg = logging.getLogger(__name__)
-        self.loglevel = loglevel
-        self.lg.setLevel(loglevel)
-        # self.lg.critical('Critical messages enabled.')
-        # self.lg.error('Error messages enabled.')
-        # self.lg.warning('Warning message enabled.')
-        # self.lg.info('Informative message enabled.')
-        # self.lg.debug('Low-level debug message enabled.')
+        self.lg.setLevel(logging.ERROR)        
+
+        #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
         self.set_of_rules = set_of_rules
         self.number_of_peers = int(number_of_peers)
@@ -85,27 +80,28 @@ class Simulator():
         self.max_chunk_loss_at_peers = int(max_chunk_loss_at_peers)
         self.max_chunk_loss_at_splitter = float(max_chunk_loss_at_splitter)
         self.current_round = 0
+        self.speed = float(speed)
         self.gui = gui
         self.processes = {}
 
         self.lg.info(f"set_of_rules=\"{self.set_of_rules}\"")
-        sys.stderr.write(f"simulator: set_of_rules=\"{self.set_of_rules}\"\n")
+        sys.stderr.write(f"set_of_rules=\"{self.set_of_rules}\"\n")
         self.lg.info(f"number_of_peers={self.number_of_peers}")
-        sys.stderr.write(f"simulator: number_of_peers={self.number_of_peers}\n")
+        sys.stderr.write(f"number_of_peers={self.number_of_peers}\n")
         self.lg.info(f"number_of_monitors={self.number_of_monitors}")
-        sys.stderr.write(f"simulator: number_of_monitors={self.number_of_monitors}\n")
+        sys.stderr.write(f"number_of_monitors={self.number_of_monitors}\n")
         self.lg.info(f"number_of_rounds={self.number_of_rounds}")
-        sys.stderr.write(f"simulator: number_of_rounds={self.number_of_rounds}\n")
+        sys.stderr.write(f"number_of_rounds={self.number_of_rounds}\n")
         self.lg.info(f"number_of_malicious={self.number_of_malicious}")
-        sys.stderr.write(f"simulator: number_of_malicious={self.number_of_malicious}\n")
+        sys.stderr.write(f"number_of_malicious={self.number_of_malicious}\n")
         self.lg.info(f"buffer_size={self.buffer_size}")
-        sys.stderr.write(f"simulator: buffer_size={self.buffer_size}\n")
+        sys.stderr.write(f"buffer_size={self.buffer_size}\n")
         self.lg.info(f"max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}")
         sys.stderr.write(f"simulator: max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}\n")
         self.lg.info(f"max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}")
-        sys.stderr.write(f"simulator: max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}\n")
-        self.lg.info(f"loglevel={self.loglevel}")
-        sys.stderr.write(f"simulator: loglevel={self.loglevel}\n")
+        sys.stderr.write(f"max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}\n")
+        self.lg.info(f"speed={self.speed}")
+        sys.stderr.write(f"speed={self.speed}\n")
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -121,14 +117,11 @@ class Simulator():
     def run_a_splitter(self, splitter_id):
         if self.buffer_size == 0:
             self.buffer_size = self.compute_buffer_size()
-        if self.set_of_rules == "DBS" or self.set_of_rules == "IMS":
+        if self.set_of_rules == "DBS" or self.set_of_rules == "DBS2" or self.set_of_rules == "IMS":
             splitter = Splitter_DBS_simulator(buffer_size = self.buffer_size,
-#                                              optimization_horizon = self.optimization_horizon,
-#                                              chunk_cadence = self.chunk_cadence,
-                                              max_chunk_loss = self.max_chunk_loss_at_splitter,
-                                              #number_of_monitors = self.number_of_monitors,
-                                              number_of_rounds = self.number_of_rounds,
-                                              loglevel = self.loglevel)
+                max_chunk_loss = self.max_chunk_loss_at_splitter,
+                number_of_rounds = self.number_of_rounds,
+                speed = self.speed)
             self.lg.info("simulator: DBS/IMS splitter created")
         elif self.set_of_rules == "CIS":
             splitter = Splitter_STRPEDS()
@@ -139,8 +132,10 @@ class Simulator():
 
         # splitter.start()
         splitter.setup_peer_connection_socket()
+        #sys.stderr.write(f" splitter={splitter.get_id()}"); sys.stderr.flush()
         splitter.setup_team_socket()
         splitter_id['address'] = splitter.get_id()
+        #sys.stderr.write(f" splitter_id={splitter_id}"); sys.stderr.flush()
         splitter.max_number_of_rounds = self.number_of_rounds
         splitter.run()
         # while splitter.current_round < self.number_of_rounds:
@@ -160,14 +155,16 @@ class Simulator():
                 #chunks_before_leave = 99999999
             if self.set_of_rules == "DBS":
                 peer = Monitor_DBS_simulator(id = id,
-                                             name = "Monitor_DBS_simulator",
-                                             loglevel = self.loglevel)
+                                             name = "Monitor_DBS_simulator")
                 self.lg.info("simulator: DBS monitor created")
             elif self.set_of_rules == "IMS":
                 peer = Monitor_IMS_simulator(id = id,
-                                             name = "Monitor_IMS_simulator",
-                                             loglevel = self.loglevel)
+                                             name = "Monitor_IMS_simulator")
                 self.lg.info("simulator: IMS monitor created")
+            elif self.set_of_rules == "DBS2":
+                peer = Monitor_DBS2_simulator(id = id,
+                                             name = "Monitor_DBS2_simulator")
+                self.lg.info("simulator: DBS monitor created")
             elif self.set_of_rules == "CIS":
                 peer = Monitor_STRPEDS(id)
                 self.lg.info("simulator: STRPEDS monitor created")
@@ -185,16 +182,13 @@ class Simulator():
                 self.lg.info("simulator: Malicious peers are only compatible with CIS")
         else:
             if self.set_of_rules == "DBS":
-                peer = Peer_DBS_simulator(
-                    id = id,
-                    name = "Peer_DBS_simulator",
-                    loglevel = self.loglevel)
+                peer = Peer_DBS_simulator(id = id, name = "Peer_DBS_simulator")
                 self.lg.info("simulator: DBS peer created")
-            if self.set_of_rules == "IMS":
-                peer = Peer_IMS_simulator(
-                    id = id,
-                    name = "Peer_IMS_simulator",
-                    loglevel = self.loglevel)
+            elif self.set_of_rules == "DBS2":
+                peer = Peer_DBS2_simulator(id = id, name = "Peer_DBS2_simulator")
+                self.lg.info("simulator: DBS2 peer created")
+            elif self.set_of_rules == "IMS":
+                peer = Peer_IMS_simulator(id = id, name = "Peer_IMS_simulator")
                 self.lg.info("simulator: IMS peer created")
             elif self.set_of_rules == "CIS":
                 peer = Peer_STRPEDS(id)
@@ -204,23 +198,21 @@ class Simulator():
                 self.lg.info("simulator: CIS-SSS peer created")
         self.lg.critical("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
-#        peer.link_failure_prob = self.link_failure_prob
-#        peer.optimization_horizon = self.optimization_horizon
         #peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
-#        peer.set_optimization_horizon(self.optimization_horizon)
-        peer.connect_to_the_splitter(peer_port=0)
-        peer.receive_peer_index_in_team()
-        peer.receive_public_endpoint()
-        peer.receive_buffer_size()
-        peer.receive_the_number_of_peers()
-        peer.listen_to_the_team()
-        peer.receive_the_list_of_peers()
-        #peer.send_ready_for_receiving_chunks()
-        #peer.send_peer_type()   #Only for simulation purpose
-        # peer.buffer_data()
-        # peer.start()
-        peer.run()
+        if peer.connect_to_the_splitter(peer_port=0):
+            peer.receive_the_public_endpoint()
+            peer.receive_the_peer_index_in_team()
+            peer.receive_the_number_of_peers()
+            peer.listen_to_the_team()
+            peer.receive_the_list_of_peers()
+            peer.receive_the_buffer_size()
+            peer.receive_the_chunk_size()
+            #peer.send_ready_for_receiving_chunks()
+            #peer.send_peer_type()   #Only for simulation purpose
+            # peer.buffer_data()
+            # peer.start()
+            peer.run()
 
         '''
         while not peer.ready_to_leave_the_team:
@@ -296,6 +288,7 @@ class Simulator():
 
         # Run splitter
         p = Process(target=self.run_a_splitter,args=[self.splitter_id])
+        #sys.stderr.write(f" splitter_id={self.splitter_id}"); sys.stderr.flush()
         p.start()
         self.processes["S"] = p.pid
         self.attended_monitors = 0

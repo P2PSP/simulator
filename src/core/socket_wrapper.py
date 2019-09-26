@@ -7,16 +7,17 @@ simulator module
 # a time.sleep(). However, by default, latency is disabled. In order
 # to simulate it, uncoment the lines L0, L1, L2 and L3.
 
-# Latency HAS BEEN DISABLED
+# Latency HAS BEEN ENABLED
 
-#latency = 0.005  # Seconds (L0)
-#latency = 0.020  
+latency = 0.005  # Seconds (L0)
+#latency = 0.020
 
-#import time  # (L1)
+import time  # (L1)
 import socket
-import sys
-#from .stderr import stderr as info
-import logging
+if __debug__:
+    import sys
+    #from .stderr import stderr as info
+    import logging
 
 class Socket_wrapper():
     AF_INET = socket.AF_INET
@@ -28,13 +29,11 @@ class Socket_wrapper():
     TimeoutException = socket.timeout
     ErrorException = socket.error
 
-    def __init__(self, family=None, type=None, sock=None, loglevel=logging.ERROR):
+    def __init__(self, family=None, type=None, sock=None):
     #def __init__(self, family=None, type=None, sock=None):
-
-        #self.lg = ColorLog(logging.getLogger(__name__))
+        logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
         self.lg = logging.getLogger(__name__)
-        self.lg.setLevel(loglevel)
-        #self.lg.setLevel(logging.INFO)
+        self.lg.setLevel(logging.ERROR)
 
         if sock is None:
             self.sock = socket.socket(family, type)
@@ -44,8 +43,10 @@ class Socket_wrapper():
             self.type = type
         try:
             self.lg.info(f"{self.sock.getsockname()}: latency={latency}\n")
+            #sys.stderr.write(f"{self.sock.getsockname()}: latency={latency}\n"); sys.stderr.flush()
         except:
             self.lg.info(f"{self.sock.getsockname()}: latency disabled\n")
+            #sys.stderr.write(f"{self.sock.getsockname()}: latency disabled\n"); sys.stderr.flush()
 
     def send(self, msg):
         self.lg.info(f"{self.sock.getsockname()} - [{msg}] => {self.sock.getpeername()}")
@@ -72,7 +73,7 @@ class Socket_wrapper():
             raise
 
     def recv(self, msg_length):
-#        time.sleep(latency)  # L2
+        time.sleep(latency)  # L2
         msg = self.sock.recv(msg_length)
         while len(msg) < msg_length:
             msg += self.sock.recv(msg_length - len(msg))
@@ -80,7 +81,7 @@ class Socket_wrapper():
         return msg
 
     def recvfrom(self, max_msg_length):
-#        time.sleep(latency)  # L3
+        time.sleep(latency)  # L3
         try:
             msg, sender = self.sock.recvfrom(max_msg_length)
             self.lg.info(f"{self.sock.getsockname()} <-- [{msg}] - {sender}")

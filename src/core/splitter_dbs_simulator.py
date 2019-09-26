@@ -23,22 +23,22 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
                  buffer_size = 32,
                  max_chunk_loss = 16,
                  number_of_rounds = 100,
-                 name = "Splitter_DBS_simulator",
-                 loglevel = logging.ERROR
-    ):
+                 speed = 4000,
+                 name = "Splitter_DBS_simulator"):
         super().__init__(buffer_size = buffer_size,
-                         max_chunk_loss = max_chunk_loss
-        )
-        self.lg = logging.getLogger(name)
-        self.lg.setLevel(loglevel)
+                         max_chunk_loss = max_chunk_loss)
+        logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
+        self.lg = logging.getLogger(__name__)
+        self.lg.setLevel(logging.DEBUG)
         self.number_of_rounds = number_of_rounds
+        self.speed = speed
         self.lg.debug("{name}: initialized")
         colorama.init()
         #self.total_lost_chunks = 0
 
     def setup_peer_connection_socket(self, port=0):
         super().setup_peer_connection_socket(port = port)
-        self.id = self.peer_connection_socket.getsockname()
+        #self.id = self.peer_connection_socket.getsockname()
         self.lg.info(f"{self.id}: I am the splitter")
 
     def send_chunk(self, chunk_number, chunk, peer):
@@ -69,6 +69,10 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         self.lg.info(f"{self.id}: sending peer_index_in_team={peer_index_in_team}")
         super().send_peer_index_in_team(peer_serve_socket = peer_serve_socket,
                                         peer_index_in_team = peer_index_in_team)
+
+    def send_the_list_of_peers(self, peer_serve_socket):
+        Splitter_DBS.send_the_list_of_peers(self, peer_serve_socket)
+        self.lg.info(f"{self.id}: list of peers sent ({len(self.team)} peers)")
 
     def insert_peer(self, peer):
         super().insert_peer(peer)
@@ -126,14 +130,23 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
     def moderate_the_team__hello_feedback(self, sender):
         self.lg.info(f"{self.id}: received [hello] from {sender}")
-        
+
+
+    def compute_cpu_usage(self):
+        while True:
+            self.cpu_usage = psutil.cpu_percent()
+            sys.stderr.write(f" {int(self.cpu_usage)}"); sys.stderr.flush()
+            time.sleep(0.1)
+    
     def retrieve_chunk(self):
         # Simulator_stuff.LOCK.acquire(True,0.1)
         #time.sleep(Common.CHUNK_CADENCE)  # Simulates bit-rate control
         # C -> Chunk, L -> Loss, G -> Goodbye, B -> Broken, P -> Peer, M -> Monitor, R -> Ready
         #if __debug__:
             #sys.stderr.write(str(len(self.team))); sys.stderr.flush()
-        time.sleep(psutil.cpu_percent()/4000.0)
+        sleeping_time = self.cpu_usage/self.speed
+        time.sleep(sleeping_time)
+        #time.sleep(0.1)
         return b'C'
 
     def say_goodbye(self, peer):
@@ -172,6 +185,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         self.lg.info("{}: waiting for [goodbye]s from peers (peers_list={})".format(self.id, self.team))
             
     def run(self):
+        Thread(target=self.compute_cpu_usage).start()
         super().run()
         sys.stderr.write("\n")
         #sys.stderr.write(f"\n{self.id}: {self.chunks_lost_by_team} lost chunks of {self.chunks_received_by_team}\n")

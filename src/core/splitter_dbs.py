@@ -28,6 +28,8 @@ from .ip_tools import IP_tools
 # class Splitter_DBS(Simulator_stuff):
 import random
 
+import queue
+
 class Splitter_DBS():
 
     def __init__(self,
@@ -60,17 +62,21 @@ class Splitter_DBS():
         #self.received_chunks_from = {}
         #self.lost_chunks_from = {}
         self.total_losses = 0  # Total number of lost chunks (reset when a peer is removed)
+        self.new_peers = queue.Queue()
 
     def setup_peer_connection_socket(self, port=0):
-        self.peer_connection_socket = socket(family=socket.AF_INET, type=socket.SOCK_STREAM, loglevel=self.lg.level)
+        self.peer_connection_socket = socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         self.peer_connection_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # self.peer_connection_socket.set_id(self.id)
-        #host = socket.gethostbyname(socket.gethostname())
+        host = socket.gethostbyname(socket.gethostname())
         self.peer_connection_socket.bind(('', port))
         self.peer_connection_socket.listen(1)
+        port = self.peer_connection_socket.getsockname()[1]
+        self.id = (host, port)
+        #sys.stderr.write(f" host={host}"); sys.stderr.flush()
 
     def setup_team_socket(self):
-        self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM, loglevel=self.lg.level)
+        self.team_socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.team_socket.bind(self.id)
 
     def send_chunk(self, chunk_number, chunk, peer):
@@ -95,25 +101,26 @@ class Splitter_DBS():
         pass
 
     # Depends on the application
-    def send_header_bytes(self, peer_serve_socket):
+    def send_the_header_bytes(self, peer_serve_socket):
         pass
 
     # Depends on the application
-    def send_header(self, peer_serve_socket):
+    def send_the_header(self, peer_serve_socket):
         pass
 
     # Depends on the application
     def handle_a_peer_arrival(self, connection):
         serve_socket = connection[0]
         incoming_peer = connection[1]
-        self.send_peer_index_in_team(serve_socket, len(self.team))
-        self.send_the_chunk_size(serve_socket)
-        self.send_public_endpoint(incoming_peer, serve_socket)
-        self.send_buffer_size(serve_socket)
-        self.send_header_bytes(serve_socket)
-        self.send_header(serve_socket)
+        #sys.stderr.write(f" ->{incoming_peer}"); sys.stderr.flush()
+        self.send_the_public_endpoint(incoming_peer, serve_socket)
+        self.send_the_peer_index_in_team(serve_socket, len(self.team))
         self.send_the_number_of_peers(serve_socket)
         self.send_the_list_of_peers(serve_socket)
+        self.send_the_buffer_size(serve_socket)
+        self.send_the_chunk_size(serve_socket)
+        self.send_the_header_bytes(serve_socket)
+        self.send_the_header(serve_socket)
 
         # ??????????????????????????????
         #msg_length = struct.calcsize("s")
@@ -121,13 +128,14 @@ class Splitter_DBS():
         #message = struct.unpack("s", msg)[0]
 
         self.insert_peer(incoming_peer)
+        #self.new_peers.put(incoming_peer)
         serve_socket.close()
 
-    def send_public_endpoint(self, endpoint, peer_serve_socket):
+    def send_the_public_endpoint(self, endpoint, peer_serve_socket):
         msg = struct.pack("!Ii", IP_tools.ip2int(endpoint[0]), endpoint[1])
         peer_serve_socket.sendall(msg)
 
-    def send_buffer_size(self, peer_serve_socket):
+    def send_the_buffer_size(self, peer_serve_socket):
         msg = struct.pack("!H", self.buffer_size)
         peer_serve_socket.sendall(msg)
 
@@ -135,7 +143,7 @@ class Splitter_DBS():
         msg = struct.pack("!H", len(self.team))
         peer_serve_socket.sendall(msg)
 
-    def send_peer_index_in_team(self, peer_serve_socket, peer_index_in_team):
+    def send_the_peer_index_in_team(self, peer_serve_socket, peer_index_in_team):
         msg = struct.pack("!H", peer_index_in_team)
         peer_serve_socket.sendall(msg)
 
@@ -147,8 +155,10 @@ class Splitter_DBS():
             msg = struct.pack("!Ii", IP_tools.ip2int(p[0]), p[1])
             peer_serve_socket.sendall(msg)
             counter += 1
+        #sys.stderr.write(f" ->{len(self.team)}"); sys.stderr.flush()
 
     def insert_peer(self, peer):
+        #sys.stderr.write(f" ->{peer}")
         if peer not in self.team:
             self.team.append(peer)
         self.losses[peer] = 0
@@ -229,6 +239,8 @@ class Splitter_DBS():
 
     def on_round_beginning(self):
         self.remove_outgoing_peers()
+        #while not self.new_peers.empty():
+        #    self.insert_peer(self.new_peers.get())
         #self.reset_counters()
 
     def moderate_the_team__warning1(self, packed_msg, sender):
@@ -320,23 +332,22 @@ class Splitter_DBS():
         #Thread(target=self.reset_counters_thread).start()
 
         while len(self.team) == 0:
-            
             time.sleep(1)
+            #self.on_round_beginning()
         print()
 
         while (len(self.team) > 0) and self.alive:
             chunk = self.retrieve_chunk()
             if self.peer_number == 0:
                 total_peers += len(self.team)
-                self.on_round_beginning()  # Remove outgoing peers
+                self.on_round_beginning()
 
             try:
                 peer = self.team[self.peer_number]
-
             except IndexError:
                 self.run__index_error_feedback()
 
-            self.destination_of_chunk[chunk_number % (self.buffer_size)] = peer#self.team.index(peer)
+            self.destination_of_chunk[chunk_number % (self.buffer_size)] = peer  # self.team.index(peer)
             self.run__destinations_feedback()
             self.send_chunk(chunk_number, chunk, peer)
             chunk_number = (chunk_number + 1) % Limits.MAX_CHUNK_NUMBER
