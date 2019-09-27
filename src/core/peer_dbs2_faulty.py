@@ -14,7 +14,7 @@ class Peer_DBS2_faulty(Peer_DBS2_simulator):
         self.lg.debug("Faulty peer instantiated")
 
     def choose_target(self):
-        self.target = self.forward[self.public_endpoint][0]  # The first monitor
+        self.target = self.forward[self.public_endpoint][0]  # The first peer in the list (possiblely random)
         self.lg.debug(f"{self.ext_id}: selected target {self.target}")
 
     def send_chunks_to_neighbors(self):

@@ -147,8 +147,10 @@ class Peer_DBS2(Peer_DBS):
         buffer_box = self.buffer[position]
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
             origin = buffer_box[ChunkStructure.ORIGIN]
-            assert origin != sender, f"{self.ext_id}: update_forward: origin {origin} is the sender of the request"
-            self.update_forward(origin, sender)
+            if origin != sender:
+                self.update_forward(origin, sender)
+            else:
+                self.lg.debug(f"{self.ext_id}: update_forward: origin {origin} is the sender of the request")
         else:
             # I haven't the chunk
             pass
