@@ -5,18 +5,17 @@ peer_dbs2_faulty module
 
 # Instantiable class. Only for the simulator.
 
-from .peer_dbs2 import Peer_DBS2
+from .peer_dbs2_simulator import Peer_DBS2_simulator
 
-class Peer_DBS2_Faulty(Peer_DBS2):
+class Peer_DBS2_faulty(Peer_DBS2_simulator):
 
-    def __init__(self):
-        Peer_DBS2.__init__(self)
+    def __init__(self, id, name = "Peer_DBS2_faulty"):
+        Peer_DBS2_simulator.__init__(self, id, name)
         self.lg.debug("Faulty peer instantiated")
 
     def choose_target(self):
-        target = self.forward[self.public_endpoint][0] # The first monitor
-        self.lg.debug(f"{self.ext_id}: selected target {target}")
-        return target
+        self.target = self.forward[self.public_endpoint][0]  # The first monitor
+        self.lg.debug(f"{self.ext_id}: selected target {self.target}")
 
     def send_chunks_to_neighbors(self):
         self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending})")
@@ -25,7 +24,7 @@ class Peer_DBS2_Faulty(Peer_DBS2):
             counter = 0
             neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
             if neighbor == self.target:
-                self.send_chunks((self.public_endpoint, 65535))
+                pass
             else:
                 self.send_chunks(neighbor)
             while len(self.pending[neighbor]) == 0:

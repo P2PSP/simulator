@@ -16,7 +16,7 @@ import sys
 import time
 import struct
 from threading import Thread
-import netifaces
+#import netifaces
 from .messages import Messages
 from .limits import Limits
 from .socket_wrapper import Socket_wrapper as socket
@@ -360,7 +360,7 @@ class Peer_DBS():
         return (chunk_number, sender)
 
     def send_chunks(self, neighbor):
-        self.lg.debug(f"{self.ext_id}: sending chunks neighbor={neighbor} pending[{neighbor}]={self.pending[neighbor]}")
+        self.lg.debug(f"{self.ext_id}: sending chunks neighbor={neighbor}")
         # When peer X receives a chunk, X selects the next
         # entry pending[E] (with one or more chunk numbers),
         # sends the chunk with chunk_number C indicated by

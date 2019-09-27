@@ -16,23 +16,23 @@ from core.monitor_ims_simulator import Monitor_IMS_simulator
 from core.peer_dbs_simulator import Peer_DBS_simulator
 from core.peer_dbs2_simulator import Peer_DBS2_simulator
 from core.peer_ims_simulator import Peer_IMS_simulator
-from core.peer_dbs2_faulty import Peer_DBS2_Faulty as Peer_Faulty
+from core.peer_dbs2_faulty import Peer_DBS2_faulty as Peer_faulty
 from core.simulator_stuff import Simulator_stuff as sim
 from core.splitter_dbs_simulator import Splitter_DBS_simulator
 
 class Simulator():
-    P_in = 0.1   # 0.4 # Churn probability
+    P_in  = 0.1  # 0.4 # Churn probability
     
     P_MoP = 0.0  # 0.2 # Monitor probability (apart from the first one)
-    P_WIP = 1.0  # 0.6 # 
-    P_FP = 0.0   # 0.2
+    P_WIP = 0.5  # 0.6 # 
+    P_FP  = 0.5  # 0.2
 
     def __init__(self, drawing_log="/tmp/drawing_log.txt",
                  set_of_rules="DBS",
                  number_of_monitors=1,
                  number_of_peers=7,    # Monitor apart
                  number_of_rounds=100,
-                 number_of_faulty=0,
+                 number_of_faulty=1,
                  buffer_size=32,
                  chunk_cadence=0.01,
                  max_chunk_loss_at_peers = 10, # chunks/secon
@@ -131,7 +131,7 @@ class Simulator():
                                              name = "Monitor_DBS2_simulator")
                 self.lg.debug("simulator: DBS2 monitor created")
         elif type == "faulty":
-            peer = Peer_Faulty(id)
+            peer = Peer_faulty(id, name="Peer_DBS2_faulty")
             self.lg.debug("simulator: faulty peer created")
         else:
             if self.set_of_rules == "DBS":
@@ -153,6 +153,8 @@ class Simulator():
             peer.receive_the_number_of_peers()
             peer.listen_to_the_team()
             peer.receive_the_list_of_peers()
+            if isinstance(peer, Peer_faulty):
+                peer.choose_target()
             peer.receive_the_buffer_size()
             peer.receive_the_chunk_size()
             #peer.send_ready_for_receiving_chunks()
@@ -211,9 +213,9 @@ class Simulator():
                 self.attended_peers += 1
         elif option == 2:
             if self.attended_faulty_peers < self.number_of_faulty:
-                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "faulty", "FP" + str(self.attended_faulty_peers + 1)])
+                p = Process(target=self.run_a_peer, args=[self.splitter_id['address'], "faulty", "F" + str(self.attended_faulty_peers + 1)])
                 p.start()
-                self.processes["FP" + str(self.attended_faulty_peers + 1)] = p.pid
+                self.processes["F" + str(self.attended_faulty_peers + 1)] = p.pid
                 self.attended_faulty_peers += 1
 
     def run(self):
@@ -280,11 +282,11 @@ class Simulator():
 
         sim.FEEDBACK["DRAW"].put(("Bye", "Bye"))
         sim.FEEDBACK["STATUS"].put(("Bye", "Bye"))
-#        for name, pid in self.processes.items():
-#            self.lg.debug("Killing {}, ...".format(name))
-#            os.system("kill -9 " + str(pid))
-#            self.lg.debug("{} killed".format(name))
-
+        for name, pid in self.processes.items():
+            self.lg.debug("Killing {}, ...".format(name))
+            os.system("kill -9 " + str(pid))
+            self.lg.debug("{} killed".format(name))
+        sys.stderr.write("\n"); sys.stderr.flush()
 
 if __name__ == "__main__":
     fire.Fire(Simulator)
