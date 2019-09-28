@@ -94,11 +94,28 @@ class Peer_DBS2(Peer_DBS):
         #    self.send_chunks(neighbor)
 
         # Remove empty forwarding tables.
-        '''
         for _origin in list(self.forward):
-            if len(self.forward[_origin]) == 0:
-                del self.forward[_origin]
-        '''
+            if origin != self.public_endpoint:
+                if len(self.forward[_origin]) == 0:
+                    del self.forward[_origin]
+
+        if __debug__:
+            self.rounds_counter += 1
+            for origin, neighbors in self.forward.items():
+                buf = ''
+                #for i in neighbors:
+                #    buf += str(i)
+                buf = len(neighbors)*"#"
+                self.lg.debug(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
+
+            try:
+                CLR = self.number_of_lost_chunks / (chunk_number - self.prev_chunk_number_round)
+                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_round}")
+            except ZeroDivisionError:
+                pass
+            self.prev_chunk_number_round = chunk_number
+            self.number_of_lost_chunks = 0
+
     def on_chunk_received_from_a_peer(self, chunk_number, origin, chunk_data, sender):
         self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the peer {sender}")
         #self.update_forward(origin, sender)
