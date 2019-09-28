@@ -28,11 +28,11 @@ class Simulator():
     P_FP  = 0.5  # 0.2
 
     def __init__(self, drawing_log="/tmp/drawing_log.txt",
-                 set_of_rules="DBS",
+                 set_of_rules="DBS2",
                  number_of_monitors=1,
                  number_of_peers=7,    # Monitor apart
                  number_of_rounds=100,
-                 number_of_faulty=1,
+                 number_of_faulty=0,
                  buffer_size=32,
                  chunk_cadence=0.01,
                  max_chunk_loss_at_peers = 10, # chunks/secon
