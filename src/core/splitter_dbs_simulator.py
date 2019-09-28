@@ -17,6 +17,7 @@ from .simulator_stuff import Simulator_stuff
 import logging
 import psutil
 import colorama
+from .ip_tools import IP_tools
 
 class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
@@ -26,12 +27,15 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
                  number_of_rounds = 100,
                  speed = 4000,
                  name = "Splitter_DBS_simulator"):
-        super().__init__(buffer_size = buffer_size,
-                         max_chunk_loss = max_chunk_loss)
+        Splitter_DBS.__init__(self,
+                              buffer_size = buffer_size,
+                              max_chunk_loss = max_chunk_loss,
+                              name = "Splitter_DBS_simulator")
         self.number_of_rounds = number_of_rounds
         self.speed = speed
         self.cpu_usage = 50
         self.current_round = 0
+        self.packet_format()
         self.lg.debug("{name}: initialized")
         colorama.init()
 
@@ -68,6 +72,20 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
             self.alive = False
         Simulator_stuff.FEEDBACK["STATUS"].put(("R", self.current_round))
         Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
+
+    def packet_format(self):
+        self.chunk_packet_format = "!isIii"
+
+    def compose_chunk_packet(self, chunk_number, chunk, peer):
+        #now = time.time()
+        hops = 0
+        chunk_msg = (chunk_number,
+                     chunk,
+                     IP_tools.ip2int(peer[0]), # now,
+                     peer[1],
+                     hops)
+        msg = struct.pack(self.chunk_packet_format, *chunk_msg)
+        return msg
 
     def run(self):
         Thread(target=self.compute_cpu_usage).start()

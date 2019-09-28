@@ -55,15 +55,7 @@ class Peer_DBS():
 
         self.sendto_counter = 0
         self.received_chunks = 0
-
-        self.chunk_packet_format = "!isIi"
-        #                           |||||
-        #                           ||||+-- Chunk data
-        #                           |||+--- Port
-        #                           ||+---- IP address
-        #                           |+----- Chunk number
-        #                           +------ Network endian
-
+        self.packet_format()
         self.max_packet_length = struct.calcsize(self.chunk_packet_format)
         self.neighbor_index = 0 
         self.number_of_chunks_consumed = 0 # Simulation ?
@@ -79,6 +71,15 @@ class Peer_DBS():
             self.lg.setLevel(logging.DEBUG)
         else:
             self.lg.setLevel(logging.ERROR)
+
+    def packet_format(self):
+        self.chunk_packet_format = "!isIi"
+        #                           |||||
+        #                           ||||+-- Port
+        #                           |||+--- address
+        #                           ||+---- Chunk dataIP
+        #                           |+----- Chunk number
+        #                           +------ Network endian
 
     def set_splitter(self, splitter):
         self.splitter = splitter
@@ -380,13 +381,16 @@ class Peer_DBS():
         packet, sender = self.receive_packet()
         return self.unpack_message(packet, sender)
 
+    def unpack_chunk(self, packet):
+        message = struct.unpack(self.chunk_packet_format, packet)
+        message = message[ChunkStructure.CHUNK_NUMBER], \
+            message[ChunkStructure.CHUNK_DATA], \
+            (IP_tools.int2ip(message[ChunkStructure.ORIGIN]), message[ChunkStructure.ORIGIN+1])
+        return message
+
     def unpack_message(self, packet, sender):
         if len(packet) == self.max_packet_length:
-            message = struct.unpack(self.chunk_packet_format, packet)
-            message = message[ChunkStructure.CHUNK_NUMBER], \
-                message[ChunkStructure.CHUNK_DATA], \
-                (IP_tools.int2ip(message[ChunkStructure.ORIGIN]), message[ChunkStructure.ORIGIN+1])
-
+            message = self.unpack_chunk(packet)
         elif len(packet) == struct.calcsize("!iii"):
             message = struct.unpack("!iii", packet)  # Control message: [control, parameter, parameter]
         elif len(packet) == struct.calcsize("!ii"):
@@ -399,14 +403,16 @@ class Peer_DBS():
     def complain(self, chunk_number):
         # Only monitors complain
         pass
-    
+
+    def clear_entry_in_buffer(self):
+        return (buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN])
+
     def play_chunk(self, chunk_number):
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
             # Only the data will be empty in order to remember things ...
-            clear_entry_in_buffer = (buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN])
 #            self.buffer[chunk_number % self.buffer_size] = (-1, b'L', None, 0)
-            self.buffer[chunk_number % self.buffer_size] = clear_entry_in_buffer
+            self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer()
             self.played += 1
         else:
             # The cell in the buffer is empty.
@@ -500,10 +506,13 @@ class Peer_DBS():
             buffering_time = time.time() - start_time
             self.lg.debug(f"{self.ext_id}: buffering time={buffering_time}")
 
+    def init_entry_in_buffer(self):
+        return (-1, b'L', (None, 0))
+
     def run(self):
         self.lg.debug(f"{self.ext_id}: waiting for the chunks ...")
         for i in range(self.buffer_size):
-            self.buffer.append((-1, b'L', (None, 0)))  # L == Lost
+            self.buffer.append(self.init_entry_in_buffer())  # L == Lost
 
         self.buffer_data()
         #while (not self.is_the_player_disconected() or self.waiting_for_goodbye):
