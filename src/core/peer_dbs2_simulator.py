@@ -12,8 +12,8 @@ class Peer_DBS2_simulator(Peer_DBS2, Peer_DBS_simulator):
     def __init__(self, id, name = "Peer_DBS2_simulator"):
         Peer_DBS2.__init__(self)
         Peer_DBS_simulator.__init__(self, id, name)
-        self.lg.debug(f"{name}: DBS2 initialized")
-
+        self.lg.debug(f"{name}: DBS2 simulator initialized")
+    '''
     def receive_the_chunk_size(self):
         Peer_DBS_simulator.receive_the_chunk_size(self)
 
@@ -26,8 +26,9 @@ class Peer_DBS2_simulator(Peer_DBS2, Peer_DBS_simulator):
     def unpack_chunk(self, packet):
         return Peer_DBS_simulator.unpack_chunk(self, packet)
 
-    def clear_entry_in_buffer(self):
-        return Peer_DBS_simulator.clear_entry_in_buffer(self)
+    def clear_entry_in_buffer(self, buffer_box):
+        return Peer_DBS_simulator.clear_entry_in_buffer(self, buffer_box)
 
     def init_entry_in_buffer(self):
         return Peer_DBS_simulator.init_entry_in_buffer(self)
+    '''

@@ -3,10 +3,7 @@
 peer_dbs_video module
 """
 
-# In this implementation, the peer retrieves the first chunks form the
-# source because some audio/video codecs (such as Vorbis/Theora) have
-# a header. The channel name is provided by the player that performs a
-# HTTP GET request (possiblely after an HTTP 302 redirection).
+# Abstract class. Generic video.
 
 import random
 import struct
@@ -14,7 +11,6 @@ import struct
 from .common import Common
 from .peer_dbs import Peer_DBS
 from .simulator_stuff import Simulator_socket as socket
-
 
 class Peer_DBS_video(Peer_DBS):
 
@@ -24,6 +20,29 @@ class Peer_DBS_video(Peer_DBS):
 
     # def __init__(self, id, name, loglevel):
     #    super().__init_(id, name, loglevel)
+
+    def __init__(self, id, name = "Peer_DBS_video"):
+        super().__init__()
+        self.lg.debug(f"{name}: DBS video initialized")
+
+    def receive_the_chunk_size(self):
+        # Aquí habrá código
+        pass
+
+    def packet_format(self):
+        self.chunk_packet_format = "!isIi"
+        #                           |||||
+        #                           ||||+-- Port
+        #                           |||+--- address
+        #                           ||+---- Chunk dataIP
+        #                           |+----- Chunk number
+        #                           +------ Network endian
+
+    def clear_entry_in_buffer(self, buffer_box):
+        return [buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT]]
+
+    def empty_entry_in_buffer(self):
+        return [-1, b'L', None, 0]
 
     def wait_for_the_player(self):
         self.player_socket = socket(socket.AF_INET, socket.SOCK_STREAM)

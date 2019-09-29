@@ -26,7 +26,7 @@ class Peer_DBS_simulator(Peer_DBS):
 
     def __init__(self, id, name = "Peer_DBS_simulator"):
         super().__init__()
-        self.lg.debug(f"{name}: DBS initialized")
+        self.lg.debug(f"{name}: DBS simulator initialized")
 
     def receive_the_chunk_size(self):
         pass

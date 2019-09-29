@@ -46,7 +46,7 @@ class Peer_DBS2(Peer_DBS):
         duplicate = self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
         if __debug__:
             if duplicate:
-                self.lg.debug(f"{self.ext_id}: duplicate {chunk_number} (the first one was originated by {self.buffer[position][ChunkStructure.ORIGIN]})")
+                self.lg.debug(f"{self.ext_id}: duplicate {chunk_number} (the first one was originated by ({self.buffer[position][ChunkStructure.ORIGIN_ADDR]}, {self.buffer[position][ChunkStructure.ORIGIN_PORT]})")
         return duplicate
 
     # Add a new peer to the team structure.
@@ -73,9 +73,12 @@ class Peer_DBS2(Peer_DBS):
             self.pending[sender] = []
         assert origin in self.forward, f"{self.ext_id}: {origin} is not in the forwarding table={self.forward}"
 
-    def on_chunk_received_from_the_splitter(self, chunk_number, origin, chunk_data):
-        self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the splitter")
-        self.buffer_chunk(chunk_number, origin, chunk_data)
+    def on_chunk_received_from_the_splitter(self, chunk):
+        if __debug__:
+            chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
+            origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
+            self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the splitter")
+        self.buffer_chunk(chunk)
 
         # Remove selfish neighbors.
         for _origin in list(self.activity):
@@ -116,13 +119,17 @@ class Peer_DBS2(Peer_DBS):
             self.prev_chunk_number_round = chunk_number
             self.number_of_lost_chunks = 0
 
-    def on_chunk_received_from_a_peer(self, chunk_number, origin, chunk_data, sender):
-        self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the peer {sender}")
+    def on_chunk_received_from_a_peer(self, chunk, sender):
+        chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
+        if __debug__:
+            origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
+            self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the peer {sender}")
+        
         #self.update_forward(origin, sender)
         if self.is_duplicate(chunk_number):
             self.send_prune_origin(chunk_number, sender)
         else:
-            self.buffer_chunk(chunk_number, origin, chunk_data)
+            self.buffer_chunk(chunk)
 
         # Extend the list of known peers checking if the origin of
         # the received chunk is new.
@@ -142,13 +149,15 @@ class Peer_DBS2(Peer_DBS):
             self.activity[origin] += 1
         except KeyError:
             self.activity[origin] = 1
-        
-    def process_chunk(self, chunk_number, origin, chunk_data, sender):
-        self.lg.debug(f" {self.ext_id}: process_chunk({chunk_number}, {origin}, {chunk_data}, {sender})")
+
+    def process_chunk(self, chunk, sender):
+        self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
         if sender == self.splitter:
-            self.on_chunk_received_from_the_splitter(chunk_number, origin, chunk_data)
+            self.on_chunk_received_from_the_splitter(chunk)
         else:
-            self.on_chunk_received_from_a_peer(chunk_number, origin, chunk_data, sender)
+            self.on_chunk_received_from_a_peer(chunk, sender)
+        chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
+        origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
         if origin in self.forward:
             self.update_pendings(origin, chunk_number)
 
@@ -163,7 +172,7 @@ class Peer_DBS2(Peer_DBS):
         position = chunk_number % self.buffer_size
         buffer_box = self.buffer[position]
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
-            origin = buffer_box[ChunkStructure.ORIGIN]
+            origin = buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT] 
             if origin != sender:
                 self.update_forward(origin, sender)
             else:
@@ -250,7 +259,7 @@ class Peer_DBS2(Peer_DBS):
 
         # Only complete prunning if I have the origin of the pruned chunk.
         if buffer_box[ChunkStructure.CHUNK_NUMBER] == chunk_number:
-            origin = buffer_box[ChunkStructure.ORIGIN]
+            origin = buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT]
             self.lg.debug(f"{self.ext_id}: process_prune: [prune {chunk_number}] received from {sender} for pruning origin={origin}")
             if origin in self.forward:
                 self.lg.debug(f"{self.ext_id}: process_prune: origin={origin} is in forward")
@@ -288,16 +297,13 @@ class Peer_DBS2(Peer_DBS):
 
         if chunk_number >= 0:
             # We have received a chunk.
-            #chunk_data = message[ChunkStructure.CHUNK_DATA]
-            origin = message[ChunkStructure.ORIGIN]
-            chunk_data = message[ChunkStructure.CHUNK_DATA]
-            self.lg.debug(f"{self.ext_id}: process_unpacked_message: received chunk {chunk_number} from {sender} with origin {origin}")
+            self.lg.debug(f"{self.ext_id}: process_unpacked_message: received chunk {chunk_number} from {sender} with origin {message[ChunkStructure.ORIGIN_ADDR]}")
             self.received_chunks += 1
             if __debug__:
                 if sender == self.splitter:
                     if self.played > 0 and self.played >= self.number_of_peers:
                         CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks) # Chunk Loss Ratio                
-            self.process_chunk(chunk_number = chunk_number, origin = origin, chunk_data = chunk_data, sender = sender)
+            self.process_chunk(message, sender)
             self.send_chunks_to_neighbors()
 
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
@@ -324,9 +330,7 @@ class Peer_DBS2(Peer_DBS):
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
             # Only the data will be empty in order to remember things ...
-            clear_entry_in_buffer = (buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN])
-#            self.buffer[chunk_number % self.buffer_size] = (-1, b'L', None)
-            self.buffer[chunk_number % self.buffer_size] = clear_entry_in_buffer
+            self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer(buffer_box)
             self.played += 1
         else:
             # The cell in the buffer is empty.
@@ -402,7 +406,7 @@ class Peer_DBS2(Peer_DBS):
             for i in self.buffer:
                 if i[ChunkStructure.CHUNK_DATA] != b'L':
                     try:
-                        _origin = list(self.team).index(i[ChunkStructure.ORIGIN])
+                        _origin = list(self.team).index((i[ChunkStructure.ORIGIN_ADDR],i[ChunkStructure.ORIGIN_PORT]))
                         buf += hash(_origin)
                     except ValueError:
                         buf += '-'  # Does not exist in their forwarding table.
