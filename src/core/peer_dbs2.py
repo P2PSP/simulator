@@ -288,7 +288,7 @@ class Peer_DBS2(Peer_DBS):
 
         if chunk_number >= 0:
             # We have received a chunk.
-            chunk_data = message[ChunkStructure.CHUNK_DATA]
+            #chunk_data = message[ChunkStructure.CHUNK_DATA]
             origin = message[ChunkStructure.ORIGIN]
             chunk_data = message[ChunkStructure.CHUNK_DATA]
             self.lg.debug(f"{self.ext_id}: process_unpacked_message: received chunk {chunk_number} from {sender} with origin {origin}")

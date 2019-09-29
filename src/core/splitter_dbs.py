@@ -36,11 +36,10 @@ class Splitter_DBS():
     def __init__(self,
                  buffer_size = 32,
                  max_chunk_loss = 16,
-                 number_of_rounds = 100,
                  name="Splitter_DBS"):
         self.name = name
         self.buffer_size = buffer_size
-        self.max_chunk_loss = max_chunk_loss    
+        self.max_chunk_loss = max_chunk_loss
         self.alive = True                                                       # While True, keeps the splitter alive
         self.team = []                                                          # Current peers in the team
         self.losses = {}                                                        # Reported (by monitors) lost chunks per peer
@@ -48,7 +47,7 @@ class Splitter_DBS():
         self.peer_number = 0                                                    # First peer to serve in the list of peers
         self.number_of_monitors = 1
         self.outgoing_peers_list = []                                           # Peers which requested to leave the team
-        self.chunk_packet_format = "!isIi"
+        self.packet_format()
         self.peer_index_in_team = 0
         self.total_losses = 0                                                   # Total number of lost chunks (reset when a peer is removed)
 
@@ -59,6 +58,9 @@ class Splitter_DBS():
         else:
             self.lg.setLevel(logging.ERROR)
 
+    def packet_format(self):
+        self.chunk_packet_format = "!isIi"
+            
     def setup_peer_connection_socket(self, port=0):
         self.peer_connection_socket = socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         self.peer_connection_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

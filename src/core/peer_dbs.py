@@ -87,6 +87,7 @@ class Peer_DBS():
     def listen_to_the_team(self):
         self.team_socket = socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.team_socket.bind(self.public_endpoint)
+        #self.team_socket.bind((IP_tools.int2ip(self.public_endpoint[0]), self.public_endpoint[1]))
         self.say_hello(self.splitter)  # Only works for cone NATs
         #self.team_socket.bind(("", self.public_endpoint[1]))
         #self.team_socket.settimeout(self.timeout) # In seconds
@@ -98,6 +99,8 @@ class Peer_DBS():
         msg = self.splitter_socket.recv(msg_length)
         pe = struct.unpack("!Ii", msg)
         self.public_endpoint = (IP_tools.int2ip(pe[0]), pe[1])
+        #self.public_endpoint = pe[0], pe[1]
+        #self.public_endpoint = struct.unpack("!Ii", msg)
         self.lg.debug(f"{self.public_endpoint}: received public_endpoint")
 
     def receive_the_buffer_size(self):
@@ -194,12 +197,6 @@ class Peer_DBS():
         self.lg.debug(f"{self.public_endpoint}: connected to the splitter at {self.splitter}")
         return True
 
-    def buffer_chunk__buffering_feedback(self, chunk_number, chunk_data, origin, sender, position):
-        pass
-
-    def buffer_chunk__show_buffer(self):
-        pass
-
     def send_chunks_to_neighbors(self):
         self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending})")
         # Select next entry in pending with chunks to send
@@ -214,13 +211,20 @@ class Peer_DBS():
                 counter += 1
                 if counter > len(self.pending):
                     break
-        
-    def buffer_chunk(self, chunk_number, origin, chunk_data):
-        position = chunk_number % self.buffer_size
-        self.buffer[position] = (chunk_number, chunk_data, origin)
-        self.lg.debug(f"{self.ext_id}: buffering chunk={chunk_number} with origin={origin} at position={position})")
 
-    def on_chunk_received_from_the_splitter(self, chunk_number, origin, chunk_data):
+    def buffer_chunk(self, chunk):
+        position = chunk[ChunkStructure.CHUNK_NUMBER] % self.buffer_size
+        #chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
+        #assert isinstance(chunk[ChunkStructure.ORIGIN_ADDR], str), f" {chunk}"
+        self.buffer[position] = chunk
+        self.lg.debug(f"{self.ext_id}: buffering chunk={chunk}")
+        #sys.stderr.write(f"{self.ext_id}: {self.buffer}\n"); sys.stderr.flush()
+        #self.lg.debug(f"{self.ext_id}: BUFFER={self.buffer}")
+    #def on_chunk_received_from_the_splitter(self, chunk_number, origin, chunk_data):
+    def on_chunk_received_from_the_splitter(self, chunk):
+        chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
+        origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
+
         # A new chunk is received from the splitter, so, a new
         # chunk to forward to the rest of the team. DBS specific.
         self.update_pendings(origin, chunk_number)
@@ -260,11 +264,14 @@ class Peer_DBS():
             self.prev_chunk_number_round = chunk_number
             self.number_of_lost_chunks = 0
 
-    def on_chunk_received_from_a_peer(self, chunk_number, origin, chunk_data):
+    #def on_chunk_received_from_a_peer(self, chunk_number, origin, chunk_data):
+    def on_chunk_received_from_a_peer(self, chunk):
         # Extend the list of known peers checking if the origin of
         # the received chunk is new. DBS specific because peers
         # will forward to the <origin> all chunks originated at
         # themselves (received by the splitter).
+        chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
+        origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
         if origin not in self.forward[self.public_endpoint]:
             self.forward[self.public_endpoint].append(origin)
 
@@ -272,14 +279,14 @@ class Peer_DBS():
             self.activity[origin] += 1
         except KeyError:
             self.activity[origin] = 1
-        
-    def process_chunk(self, chunk_number, origin, chunk_data, sender):
-        self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} received from {sender} originated by {origin}")
-        self.buffer_chunk(chunk_number, origin, chunk_data)
+
+    def process_chunk(self, chunk, sender):
+        self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
+        self.buffer_chunk(chunk)
         if sender == self.splitter:
-            self.on_chunk_received_from_the_splitter(chunk_number, origin, chunk_data)
+            self.on_chunk_received_from_the_splitter(chunk)
         else:
-            self.on_chunk_received_from_a_peer(chunk_number, origin, chunk_data)
+            self.on_chunk_received_from_a_peer(chunk)
 
     def update_pendings(self, origin, chunk_number):
         self.lg.debug(f"{self.ext_id}: updating pendings (origin={origin}, chunk_number={chunk_number})")
@@ -295,24 +302,17 @@ class Peer_DBS():
             except KeyError:
                 self.pending[peer] = [chunk_number]
 
-    def compose_message(self, chunk_number):
-        chunk_position = chunk_number % self.buffer_size
-        chunk = self.buffer[chunk_position]
-        stored_chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
-        chunk_data = chunk[ChunkStructure.CHUNK_DATA]
-        chunk_origin_IP = chunk[ChunkStructure.ORIGIN][0]
-        chunk_origin_port = chunk[ChunkStructure.ORIGIN][1]
-        content = (stored_chunk_number, chunk_data, IP_tools.ip2int(chunk_origin_IP), chunk_origin_port)
-        #self.compose_message__show(chunk_position, chunk_number)
-        self.lg.debug(f"{self.ext_id}: chunk_position={chunk_position} chunk_number={self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]} origin={self.buffer[chunk_position][ChunkStructure.ORIGIN]}")
-        packet = struct.pack(self.chunk_packet_format, *content)
-        return packet
-
     def send_chunk_to_peer(self, chunk_number, destination):
-        msg = self.compose_message(chunk_number)
-        self.team_socket.sendto(msg, destination)
+        packet = self.create_packet(chunk_number)
+        self.team_socket.sendto(packet, destination)
         self.sendto_counter += 1
         self.lg.debug(f"{self.ext_id}: chunk {chunk_number} sent to {destination}")
+    def create_packet(self, chunk_number):
+        chunk_position = chunk_number % self.buffer_size
+        chunk = self.buffer[chunk_position].copy()
+        chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.ip2int(chunk[ChunkStructure.ORIGIN_ADDR])
+        packet = struct.pack(self.chunk_packet_format, *chunk)
+        return packet
 
     def process_hello(self, sender):
         self.lg.debug(f"{self.ext_id}: received [hello] from {sender}")
@@ -338,16 +338,12 @@ class Peer_DBS():
     def process_unpacked_message(self, message, sender):
         chunk_number = message[ChunkStructure.CHUNK_NUMBER]
         if chunk_number >= 0:
-            # We have received a chunk.
-            chunk_data = message[ChunkStructure.CHUNK_DATA]
-            origin = message[ChunkStructure.ORIGIN]
-            chunk_data = message[ChunkStructure.CHUNK_DATA]
             self.received_chunks += 1
             if __debug__:
                 if sender == self.splitter:
                     if self.played > 0 and self.played >= self.number_of_peers:
                         CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks) # Chunk Loss Ratio                
-            self.process_chunk(chunk_number = chunk_number, origin = origin, chunk_data = chunk_data, sender = sender)
+            self.process_chunk(message, sender)
             self.send_chunks_to_neighbors()
 
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
@@ -382,11 +378,9 @@ class Peer_DBS():
         return self.unpack_message(packet, sender)
 
     def unpack_chunk(self, packet):
-        message = struct.unpack(self.chunk_packet_format, packet)
-        message = message[ChunkStructure.CHUNK_NUMBER], \
-            message[ChunkStructure.CHUNK_DATA], \
-            (IP_tools.int2ip(message[ChunkStructure.ORIGIN]), message[ChunkStructure.ORIGIN+1])
-        return message
+        chunk = list(struct.unpack(self.chunk_packet_format, packet))
+        chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
+        return chunk
 
     def unpack_message(self, packet, sender):
         if len(packet) == self.max_packet_length:
@@ -404,15 +398,16 @@ class Peer_DBS():
         # Only monitors complain
         pass
 
-    def clear_entry_in_buffer(self):
-        return (buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN])
+    def clear_entry_in_buffer(self, buffer_box):
+        return [buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN]]
 
     def play_chunk(self, chunk_number):
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
             # Only the data will be empty in order to remember things ...
 #            self.buffer[chunk_number % self.buffer_size] = (-1, b'L', None, 0)
-            self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer()
+            self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer(buffer_box)
+            #self.buffer[chunk_number % self.buffer_size] = (buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN])
             self.played += 1
         else:
             # The cell in the buffer is empty.
@@ -426,7 +421,7 @@ class Peer_DBS():
             for i in self.buffer:
                 if i[ChunkStructure.CHUNK_DATA] != b'L':
                     try:
-                        _origin = list(self.forward[self.public_endpoint]).index(i[ChunkStructure.ORIGIN])
+                        _origin = list(self.forward[self.public_endpoint]).index((i[ChunkStructure.ORIGIN_ADDR],i[ChunkStructure.ORIGIN_PORT]))
                         buf += hash(_origin)
                     except ValueError:
                         buf += '-' # Peers do not exist in their forwarding table.
@@ -506,13 +501,14 @@ class Peer_DBS():
             buffering_time = time.time() - start_time
             self.lg.debug(f"{self.ext_id}: buffering time={buffering_time}")
 
-    def init_entry_in_buffer(self):
-        return (-1, b'L', (None, 0))
+    def empty_entry_in_buffer(self):
+        return [-1, b'L', (None, 0)]
 
     def run(self):
         self.lg.debug(f"{self.ext_id}: waiting for the chunks ...")
         for i in range(self.buffer_size):
-            self.buffer.append(self.init_entry_in_buffer())  # L == Lost
+            self.buffer.append(self.empty_entry_in_buffer())  # L == Lost
+            #self.buffer.append((-1, b'L', (None, 0)))  # L == Lost
 
         self.buffer_data()
         #while (not self.is_the_player_disconected() or self.waiting_for_goodbye):
