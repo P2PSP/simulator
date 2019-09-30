@@ -297,13 +297,6 @@ class Peer_DBS():
         self.team_socket.sendto(packet, destination)
         self.sendto_counter += 1
         self.lg.debug(f"{self.ext_id}: chunk {chunk_number} sent to {destination}")
-    def create_packet(self, chunk_number):
-        chunk_position = chunk_number % self.buffer_size
-        chunk = self.buffer[chunk_position].copy()
-        chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.ip2int(chunk[ChunkStructure.ORIGIN_ADDR])
-        packet = struct.pack(self.chunk_packet_format, *chunk)
-        return packet
-
     def process_hello(self, sender):
         self.lg.debug(f"{self.ext_id}: received [hello] from {sender}")
         # If a peer X receives [hello] from peer Z, X will
@@ -324,28 +317,6 @@ class Peer_DBS():
                 except ValueError:
                     sys.stderr.write(f"{self.ext_id}: failed to remove peer {sender} from {peers_list}")
                     sys.stderr.flush()
-
-    def process_unpacked_message(self, message, sender):
-        chunk_number = message[ChunkStructure.CHUNK_NUMBER]
-        if chunk_number >= 0:
-            self.lg.debug(f"{self.ext_id}: process_unpacked_message: received chunk {chunk_number} from {sender} with origin {message[ChunkStructure.ORIGIN_ADDR]}")
-            self.received_chunks += 1
-            if __debug__:
-                if sender == self.splitter:
-                    if self.played > 0 and self.played >= self.number_of_peers:
-                        CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks) # Chunk Loss Ratio                
-            self.process_chunk(message, sender)
-            self.send_chunks_to_neighbors()
-
-        else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
-            if chunk_number == Messages.HELLO:
-                self.process_hello(sender)
-            elif chunk_number == Messages.GOODBYE:
-                self.process_goodbye(sender)
-            else:
-                sys.stderr.write("{self.ext_id}: unexpected control chunk of index={chunk_number}")
-                sys.stderr.flush()
-        return (chunk_number, sender)
 
     def send_chunks(self, neighbor):
         self.lg.debug(f"{self.ext_id}: sending chunks neighbor={neighbor}")
@@ -368,10 +339,16 @@ class Peer_DBS():
         packet, sender = self.receive_packet()
         return self.unpack_message(packet, sender)
 
+    def create_packet(self, chunk_number):
+        chunk_position = chunk_number % self.buffer_size
+        chunk = self.buffer[chunk_position].copy()
+        chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.ip2int(chunk[ChunkStructure.ORIGIN_ADDR])
+        packet = struct.pack(self.chunk_packet_format, *chunk)
+        return packet
+
     def unpack_chunk(self, packet):
         chunk = list(struct.unpack(self.chunk_packet_format, packet))
         chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
-        self.lg.debug(f"{self.ext_id}: received chunk {chunk}")
         return chunk
 
     def unpack_message(self, packet, sender):
@@ -385,6 +362,28 @@ class Peer_DBS():
             message = struct.unpack("!i", packet)  # Control message: [control]
         x = self.process_unpacked_message(message, sender)
         return x
+
+    def process_unpacked_message(self, message, sender):
+        chunk_number = message[ChunkStructure.CHUNK_NUMBER]
+        if chunk_number >= 0:
+            self.lg.debug(f"{self.ext_id}: received chunk {message} from {sender}")
+            self.received_chunks += 1
+            if __debug__:
+                if sender == self.splitter:
+                    if self.played > 0 and self.played >= self.number_of_peers:
+                        CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks)  # Chunk Loss Ratio                
+            self.process_chunk(message, sender)
+            self.send_chunks_to_neighbors()
+
+        else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
+            if chunk_number == Messages.HELLO:
+                self.process_hello(sender)
+            elif chunk_number == Messages.GOODBYE:
+                self.process_goodbye(sender)
+            else:
+                sys.stderr.write("{self.ext_id}: unexpected control chunk of index={chunk_number}")
+                sys.stderr.flush()
+        return (chunk_number, sender)
 
     def complain(self, chunk_number):
         # Only monitors complain
@@ -400,7 +399,7 @@ class Peer_DBS():
             # The cell in the buffer is empty.
             self.complain(chunk_number) # Only monitors
             self.number_of_lost_chunks += 1
-            self.lg.debug(f"{self.ext_id}: play_chunk: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
+            self.lg.debug(f"{self.ext_id}: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
 
         self.number_of_chunks_consumed += 1
         if __debug__:

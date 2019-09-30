@@ -293,16 +293,15 @@ class Peer_DBS2(Peer_DBS):
 
     def process_unpacked_message(self, message, sender):
         chunk_number = message[ChunkStructure.CHUNK_NUMBER]
-        self.lg.debug(f"{self.ext_id}: process_unpacked_message: [{chunk_number}] <-- {sender}")
 
         if chunk_number >= 0:
             # We have received a chunk.
-            self.lg.debug(f"{self.ext_id}: process_unpacked_message: received chunk {chunk_number} from {sender} with origin {message[ChunkStructure.ORIGIN_ADDR]}")
+            self.lg.debug(f"{self.ext_id}: received chunk {message} from {sender}")
             self.received_chunks += 1
             if __debug__:
                 if sender == self.splitter:
                     if self.played > 0 and self.played >= self.number_of_peers:
-                        CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks) # Chunk Loss Ratio                
+                        CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks)  # Chunk Loss Ratio                
             self.process_chunk(message, sender)
             self.send_chunks_to_neighbors()
 
@@ -337,7 +336,7 @@ class Peer_DBS2(Peer_DBS):
             self.complain(chunk_number) # Only monitors
             #self.complain(self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]) # If I'm a monitor
             self.number_of_lost_chunks += 1
-            self.lg.debug(f"{self.ext_id}: play_chunk: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
+            self.lg.debug(f"{self.ext_id}: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change
             # this in the near future. The action here is to request
