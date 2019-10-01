@@ -28,6 +28,7 @@ class Socket_wrapper():
     SO_REUSEADDR = socket.SO_REUSEADDR
     TimeoutException = socket.timeout
     ErrorException = socket.error
+    gaierror = socket.gaierror
 
     def __init__(self, family=None, type=None, sock=None):
     #def __init__(self, family=None, type=None, sock=None):
