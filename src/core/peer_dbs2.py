@@ -175,7 +175,7 @@ class Peer_DBS2(Peer_DBS):
     # origin of the requested chunk. This last thing can happen if
     # Z requests chunks that will be originated at itself.
     def process_request(self, chunk_number, sender):
-        sys.stderr.write(f" {colorama.Back.CYAN}{chunk_number}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
+        sys.stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{chunk_number}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
         #sys.stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
         self.lg.debug(f"{self.ext_id}: received [request {chunk_number}] from {sender}")
         #sys.stderr.write(f" R{self.ext_id}/{chunk_number}/{sender}"); sys.stderr.flush()
@@ -342,6 +342,7 @@ class Peer_DBS2(Peer_DBS):
 
     def play_chunk(self, chunk_number):
         buffer_box = self.buffer[chunk_number % self.buffer_size]
+        self.lg.debug(f"{self.ext_id}: chunk={chunk_number} hops={buffer_box[ChunkStructure.HOPS]}")
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
             # Only the data will be empty in order to remember things ...
             self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer(buffer_box)
