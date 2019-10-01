@@ -33,6 +33,15 @@ class Peer_DBS2(Peer_DBS):
         # team.
         self.team = []
 
+    def process_hello(self, sender):
+        self.lg.debug(f"{self.ext_id}: received [hello] from {sender}")
+        # If a peer X receives [hello] from peer Z, X will
+        # append Z to forward[X].
+        if self.public_endpoint in self.forward:
+            if sender not in self.forward[self.public_endpoint]:
+                self.forward[self.public_endpoint].append(sender)
+                self.pending[sender] = []
+
     # Pruning messages are sent by the peers when chunks are received
     # more than once.
     def send_prune_origin(self, chunk_number, peer):
@@ -166,6 +175,7 @@ class Peer_DBS2(Peer_DBS):
     # origin of the requested chunk. This last thing can happen if
     # Z requests chunks that will be originated at itself.
     def process_request(self, chunk_number, sender):
+        sys.stderr.write(f" {colorama.Back.CYAN}{chunk_number}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
         #sys.stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
         self.lg.debug(f"{self.ext_id}: received [request {chunk_number}] from {sender}")
         #sys.stderr.write(f" R{self.ext_id}/{chunk_number}/{sender}"); sys.stderr.flush()
