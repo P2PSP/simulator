@@ -9,5 +9,6 @@ chunk_structure module
 class ChunkStructure:
     CHUNK_NUMBER = 0
     CHUNK_DATA   = 1
-    ORIGIN       = 2  # (IP_address, port)
-#   TIMESTAMP    = 3
+    ORIGIN_ADDR  = 2
+    ORIGIN_PORT  = 3
+    HOPS         = 4  # Used only in the simulator

@@ -28,6 +28,7 @@ class Socket_wrapper():
     SO_REUSEADDR = socket.SO_REUSEADDR
     TimeoutException = socket.timeout
     ErrorException = socket.error
+    gaierror = socket.gaierror
 
     def __init__(self, family=None, type=None, sock=None):
     #def __init__(self, family=None, type=None, sock=None):
@@ -43,10 +44,10 @@ class Socket_wrapper():
             self.type = type
         try:
             self.lg.info(f"{self.sock.getsockname()}: latency={latency}\n")
-            sys.stderr.write(f"{self.sock.getsockname()}: latency={latency}\n"); sys.stderr.flush()
+            #sys.stderr.write(f"{self.sock.getsockname()}: latency={latency}\n"); sys.stderr.flush()
         except:
             self.lg.info(f"{self.sock.getsockname()}: latency disabled\n")
-            sys.stderr.write(f"{self.sock.getsockname()}: latency disabled\n"); sys.stderr.flush()
+            #sys.stderr.write(f"{self.sock.getsockname()}: latency disabled\n"); sys.stderr.flush()
 
     def send(self, msg):
         self.lg.info(f"{self.sock.getsockname()} - [{msg}] => {self.sock.getpeername()}")

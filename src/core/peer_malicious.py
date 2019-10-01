@@ -10,7 +10,6 @@ from .peer_strpeds import Peer_STRPEDS
 from .simulator_stuff import Simulator_socket as socket
 from .simulator_stuff import Simulator_stuff as sim
 
-
 class Peer_Malicious(Peer_STRPEDS):
     def __init__(self, id):
         super().__init__(id)
