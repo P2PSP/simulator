@@ -61,7 +61,7 @@ class Simulator():
                  chunk_cadence=0.01,
                  max_chunk_loss_at_peers = 10, # chunks/secon
                  max_chunk_loss_at_splitter = 16,
-                 speed = 4000.0,
+                 speed = 400.0,
                  gui=False):
 
         logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")

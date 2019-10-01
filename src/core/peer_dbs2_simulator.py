@@ -70,3 +70,10 @@ class Peer_DBS2_simulator(Peer_DBS2, Peer_DBS_simulator):
                 buf += " "
         self.lg.debug(f"{self.ext_id}: buffer={buf}")
 
+def append_to_team(self, peer):
+    self.lg.info(f"{self.ext_id}: appending {peer} to team")
+    Peer_DBS2.append_to_team(self, peer)
+        
+def process_hello(self, sender):
+    self.lg.info(f"{self.ext_id}: [hello] received from {sender}")
+    Peer_DBS2.process_hello(self, sender)

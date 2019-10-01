@@ -124,8 +124,12 @@ class Peer_DBS2(Peer_DBS):
             except KeyError:
                 self.activity[origin] = 1
 
-        # For all received chunks
-        self.update_pendings(origin, chunk_number)
+        # For all received chunks.
+
+        # I can receive chunks from peers that I haven't in my
+        # forwarding table because I have sent them a [hello].
+        if origin in self.forward:
+            self.update_pendings(origin, chunk_number)
 
     # If a peer X receives [request chunk] from peer Z, X will
     # append Z to forward[chunk.origin], but only if Z is not the
@@ -136,8 +140,7 @@ class Peer_DBS2(Peer_DBS):
         position = chunk_number % self.buffer_size
         if self.buffer[position][ChunkStructure.CHUNK_DATA] != b'L':
             origin = self.buffer[position][ChunkStructure.ORIGIN]
-            assert origin != sender, \
-                f"{self.ext_id}: update_forward: origin {origin} is the sender of the request"
+            #assert origin != sender, f"{self.ext_id}: update_forward: origin {origin} is the sender of the request"
             self.update_forward(origin, sender)
         else:
             # I haven't the chunk
@@ -229,14 +232,14 @@ class Peer_DBS2(Peer_DBS):
         else:
             self.lg.warning(f"{self.ext_id}: process_prune: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})")
 
+    def append_to_team(self, peer):
+        assert peer != self.public_endpoint
+        if peer not in self.team:
+            self.team.append(peer)
+
     def process_hello(self, sender):
         Peer_DBS.process_hello(self, sender)
-        if sender not in self.team:
-            if __debug__:
-                if sender == self.public_endpoint:
-                    self.lg.error(f"{self.ext_id}: appending myself to the team by [hello]")
-            self.team.append(sender)
-            self.lg.info(f"{self.ext_id}: appended {sender} to team={self.team} by [hello]")
+        self.append_to_team(sender)
 
     def process_goodbye(self, sender):
         Peer_DBS.process_goodbye(self, sender)
