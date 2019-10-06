@@ -33,15 +33,6 @@ class Peer_DBS2(Peer_DBS):
         # team.
         self.team = []
 
-    def process_hello(self, sender):
-        self.lg.debug(f"{self.ext_id}: received [hello] from {sender}")
-        # If a peer X receives [hello] from peer Z, X will
-        # append Z to forward[X].
-        if self.public_endpoint in self.forward:
-            if sender not in self.forward[self.public_endpoint]:
-                self.forward[self.public_endpoint].append(sender)
-                self.pending[sender] = []
-
     # Pruning messages are sent by the peers when chunks are received
     # more than once.
     def send_prune_origin(self, chunk_number, peer):
@@ -127,6 +118,14 @@ class Peer_DBS2(Peer_DBS):
                 pass
             self.prev_chunk_number_round = chunk_number
             self.number_of_lost_chunks = 0
+
+            max = 0
+            for i in self.buffer:
+                if i[ChunkStructure.CHUNK_DATA] != b'L':
+                    hops = i[ChunkStructure.HOPS]
+                    if hops > max:
+                        max = hops
+            sys.stderr.write(f" {colorama.Back.RED}{colorama.Fore.BLACK}{max}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
 
     def on_chunk_received_from_a_peer(self, chunk, sender):
         chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
@@ -289,7 +288,13 @@ class Peer_DBS2(Peer_DBS):
             self.team.append(peer)
 
     def process_hello(self, sender):
-        Peer_DBS.process_hello(self, sender)
+        self.lg.debug(f"{self.ext_id}: received [hello] from {sender}")
+        # If a peer X receives [hello] from peer Z, X will
+        # append Z to forward[X].
+        if self.public_endpoint in self.forward:
+            if sender not in self.forward[self.public_endpoint]:
+                self.forward[self.public_endpoint].append(sender)
+                self.pending[sender] = []
         if sender not in self.team:
             if __debug__:
                 if sender == self.public_endpoint:
