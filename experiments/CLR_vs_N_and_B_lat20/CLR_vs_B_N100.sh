@@ -1,9 +1,9 @@
-tail -n 201 < averages.txt > CLR_vs_B_N100.txt
+tail -n 401 < averages.txt > CLR_vs_B_N100.txt
 
 gnuplot << EOF
 set terminal cairolatex eps
 set output "/tmp/CLR_vs_B_N100.tex"
-set title "5~ms of latency"
+set title "20~ms of latency"
 set ylabel "CLR"
 set xlabel "\$B\$"
 set key left
