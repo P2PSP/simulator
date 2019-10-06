@@ -7,8 +7,8 @@ set title "5~ms of latency"
 set xlabel "CLR"
 set ylabel "\$B\$"
 set key left
-#set xrange [20:400]
-plot "CLR_vs_B_N100.txt" with lines title "" 
+set yrange [0:0.15]
+plot "CLR_vs_B_N100.txt" using 2:3 smooth bezier title "" 
 EOF
 
 latex << EOF
