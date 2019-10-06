@@ -48,7 +48,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
     def send_the_header(self, peer_serve_socket):
         pass
 
-    def compute_cpu_usage(self):
+    def get_cpu_usage(self):
         while True:
             self.cpu_usage = 0.1*psutil.cpu_percent() + 0.9*self.cpu_usage
             sys.stderr.write(f" {int(self.cpu_usage)}"); sys.stderr.flush()
@@ -88,7 +88,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         return msg
 
     def run(self):
-        Thread(target=self.compute_cpu_usage).start()
+        Thread(target=self.get_cpu_usage).start()
         super().run()
         sys.stderr.write("\n")
         Simulator_stuff.FEEDBACK["STATUS"].put(("Bye", "Bye"))

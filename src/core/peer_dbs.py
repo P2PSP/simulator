@@ -349,6 +349,7 @@ class Peer_DBS():
     def unpack_chunk(self, packet):
         chunk = list(struct.unpack(self.chunk_packet_format, packet))
         chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
+        chunk[ChunkStructure.HOPS] += 1
         return chunk
 
     def unpack_message(self, packet, sender):
@@ -391,6 +392,7 @@ class Peer_DBS():
 
     def play_chunk(self, chunk_number):
         buffer_box = self.buffer[chunk_number % self.buffer_size]
+        self.lg.debug(f"{self.ext_id}: chunk={chunk_number} hops={buffer_box[ChunkStructure.HOPS]}")
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
             # Only the data will be empty in order to remember things ...
             self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer(buffer_box)

@@ -119,6 +119,14 @@ class Peer_DBS2(Peer_DBS):
             self.prev_chunk_number_round = chunk_number
             self.number_of_lost_chunks = 0
 
+            max = 0
+            for i in self.buffer:
+                if i[ChunkStructure.CHUNK_DATA] != b'L':
+                    hops = i[ChunkStructure.HOPS]
+                    if hops > max:
+                        max = hops
+            sys.stderr.write(f" {colorama.Back.RED}{colorama.Fore.BLACK}{max}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
+
     def on_chunk_received_from_a_peer(self, chunk, sender):
         chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
         if __debug__:
@@ -166,6 +174,7 @@ class Peer_DBS2(Peer_DBS):
     # origin of the requested chunk. This last thing can happen if
     # Z requests chunks that will be originated at itself.
     def process_request(self, chunk_number, sender):
+        sys.stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{chunk_number}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
         #sys.stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
         self.lg.debug(f"{self.ext_id}: received [request {chunk_number}] from {sender}")
         #sys.stderr.write(f" R{self.ext_id}/{chunk_number}/{sender}"); sys.stderr.flush()
@@ -273,8 +282,19 @@ class Peer_DBS2(Peer_DBS):
         else:
             self.lg.debug(f"{self.ext_id}: process_prune: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})")
 
+    def append_to_team(self, peer):
+        assert peer != self.public_endpoint
+        if peer not in self.team:
+            self.team.append(peer)
+
     def process_hello(self, sender):
-        Peer_DBS.process_hello(self, sender)
+        self.lg.debug(f"{self.ext_id}: received [hello] from {sender}")
+        # If a peer X receives [hello] from peer Z, X will
+        # append Z to forward[X].
+        if self.public_endpoint in self.forward:
+            if sender not in self.forward[self.public_endpoint]:
+                self.forward[self.public_endpoint].append(sender)
+                self.pending[sender] = []
         if sender not in self.team:
             if __debug__:
                 if sender == self.public_endpoint:
@@ -327,6 +347,7 @@ class Peer_DBS2(Peer_DBS):
 
     def play_chunk(self, chunk_number):
         buffer_box = self.buffer[chunk_number % self.buffer_size]
+        self.lg.debug(f"{self.ext_id}: chunk={chunk_number} hops={buffer_box[ChunkStructure.HOPS]}")
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
             # Only the data will be empty in order to remember things ...
             self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer(buffer_box)
