@@ -24,9 +24,8 @@ import core.stderr as stderr
 
 class Simulator():
     P_in  = 0.1  # 0.4 # Churn probability
-    
     P_MoP = 0.0  # 0.2 # Monitor probability (apart from the first one)
-    P_WIP = 0.5  # 0.6 # 
+    P_WIP = 0.5  # 0.6 #
     P_FP  = 0.5  # 0.2
 
     def __init__(self, drawing_log="/tmp/drawing_log.txt",

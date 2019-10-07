@@ -24,6 +24,7 @@ from .simulator_stuff import hash
 from .ip_tools import IP_tools
 from .chunk_structure import ChunkStructure
 import logging
+import core.stderr as stderr
 
 class Peer_DBS():
 
@@ -165,7 +166,7 @@ class Peer_DBS():
         #host = socket.gethostbyname(socket.gethostname())
         #iface = netifaces.interfaces()[8]      # Name of the second interface
         #stuff = netifaces.ifaddresses(iface)   # Configuration data
-        #sys.stderr.write(f"---------------> {stuff}"); sys.stderr.flush()
+        #stderr.write(f"---------------> {stuff}")
         #time.sleep(1000)
         #IP_stuff = stuff[netifaces.AF_INET][0] # Only the IP stuff
         #address = IP_stuff['addr']             # Get local IP addr
@@ -174,12 +175,10 @@ class Peer_DBS():
         try:
             self.splitter_socket.connect(self.splitter)
         except ConnectionRefusedError as error:
-            sys.stderr.write(f"{self.public_endpoint}: {error} when connecting to the splitter {self.splitter}")
-            sys.stderr.flush()
+            stderr.write(f"{self.public_endpoint}: {error} when connecting to the splitter {self.splitter}")
             return False
         except ConnectionResetError as error:
-            sys.stderr.write(f"{self.public_endpoint}: {error} when connecting to the splitter {self.splitter}")
-            sys.stderr.flush()
+            stderr.write(f"{self.public_endpoint}: {error} when connecting to the splitter {self.splitter}")
             return False
 
         # The index for pending[].
@@ -191,7 +190,7 @@ class Peer_DBS():
     def send_chunks_to_neighbors(self):
         self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending})")
         # Select next entry in pending with chunks to send
-        #sys.stderr.write(f" ==>{self.pending}"); sys.stderr.flush()
+        #stderr.write(f" ==>{self.pending}")
         if len(self.pending) > 0:
             counter = 0
             neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
@@ -234,7 +233,7 @@ class Peer_DBS():
         #for neighbor in self.pending:
         #    self.send_chunks(neighbor)
 
-        #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
+        #stderr.write(f" {len(self.forward)}")
 
         if __debug__:
             self.rounds_counter += 1
@@ -283,8 +282,8 @@ class Peer_DBS():
         # A new chunk has been received, and this chunk has an origin
         # (not necessarily the sender of the chunk). For all peers P_i in
         # forward[origin] the chunk (number) is appended to pending[P_i].
-        #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
-        #sys.stderr.write(f" {origin in self.forward}"); sys.stderr.flush()
+        #stderr.write(f" {len(self.forward)}")
+        #stderr.write(f" {origin in self.forward}")
         assert origin in self.forward, f"{self.ext_id}: {origin} is not in the forwarding table={self.forward}"
         for peer in self.forward[origin]:
             try:
@@ -315,8 +314,7 @@ class Peer_DBS():
                 try:
                     peers_list.remove(sender)
                 except ValueError:
-                    sys.stderr.write(f"{self.ext_id}: failed to remove peer {sender} from {peers_list}")
-                    sys.stderr.flush()
+                    stderr.write(f"{self.ext_id}: failed to remove peer {sender} from {peers_list}")
 
     def send_chunks(self, neighbor):
         self.lg.debug(f"{self.ext_id}: sending chunks neighbor={neighbor}")
@@ -382,8 +380,7 @@ class Peer_DBS():
             elif chunk_number == Messages.GOODBYE:
                 self.process_goodbye(sender)
             else:
-                sys.stderr.write("{self.ext_id}: unexpected control chunk of index={chunk_number}")
-                sys.stderr.flush()
+                stderr.write("{self.ext_id}: unexpected control chunk of index={chunk_number}")
         return (chunk_number, sender)
 
     def complain(self, chunk_number):
