@@ -28,8 +28,7 @@ from .ip_tools import IP_tools
 
 # class Splitter_DBS(Simulator_stuff):
 import random
-
-import queue
+import core.stderr as stderr
 
 class Splitter_DBS():
 
@@ -78,7 +77,7 @@ class Splitter_DBS():
         self.peer_connection_socket.listen(1)
         port = self.peer_connection_socket.getsockname()[1]
         self.id = (address, port)
-        #sys.stderr.write(f" host={host}"); sys.stderr.flush()
+        #stderr.write(f" host={host}")
         self.lg.debug(f"{self.id}: I am the splitter")
 
     def setup_team_socket(self):
@@ -104,7 +103,7 @@ class Splitter_DBS():
     def handle_a_peer_arrival(self, connection):
         serve_socket = connection[0]
         incoming_peer = connection[1]
-        #sys.stderr.write(f" ->{incoming_peer}"); sys.stderr.flush()
+        #stderr.write(f" ->{incoming_peer}")
         self.send_the_public_endpoint(incoming_peer, serve_socket)
         self.send_the_peer_index_in_team(serve_socket, len(self.team))
         self.send_the_number_of_peers(serve_socket)
@@ -152,7 +151,7 @@ class Splitter_DBS():
             msg = struct.pack("!Ii", IP_tools.ip2int(p[0]), p[1])
             peer_serve_socket.sendall(msg)
             counter += 1
-        #sys.stderr.write(f" ->{len(self.team)}"); sys.stderr.flush()
+        #stderr.write(f" ->{len(self.team)}")
         self.lg.debug(f"{self.id}: list of peers sent ({len(self.team)} peers)")
 
     def insert_peer(self, peer):
@@ -160,11 +159,10 @@ class Splitter_DBS():
             self.team.append(peer)
         self.losses[peer] = 0
         self.lg.debug(f"{self.id}: {peer} inserted in the team")
-        sys.stderr.write(f" {colorama.Fore.GREEN}{len(self.team)}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
-        sys.stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}"); sys.stderr.flush
-        
+        stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}")
+
     def increment_unsupportivity_of_peer(self, peer):
-        sys.stderr.write(f" {colorama.Fore.RED}({self.team.index(peer)}){colorama.Style.RESET_ALL}")
+        stderr.write(f" {colorama.Fore.RED}({self.team.index(peer)}){colorama.Style.RESET_ALL}")
         try:
             self.losses[peer] += 1
         except KeyError:
@@ -184,16 +182,16 @@ class Splitter_DBS():
         if destination in self.team:
             if self.team.index(destination) >= self.number_of_monitors:
                 self.increment_unsupportivity_of_peer(destination)
-        sys.stderr.write(f" {colorama.Fore.RED}{lost_chunk_number}{colorama.Style.RESET_ALL}")
+        stderr.write(f" {colorama.Fore.RED}{lost_chunk_number}{colorama.Style.RESET_ALL}")
 
     def get_losser(self, lost_chunk_number):
         return self.destination_of_chunk[lost_chunk_number % (self.buffer_size)]
 
     def del_peer(self, peer_index):
         del self.team[peer_index]
-        sys.stderr.write(f" {colorama.Fore.BLUE}{peer_index}({len(self.team)}){colorama.Style.RESET_ALL}"); sys.stderr.flush()
-        sys.stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}"); sys.stderr.flush
-    
+        stderr.write(f" {colorama.Fore.BLUE}{peer_index}({len(self.team)}){colorama.Style.RESET_ALL}")
+        stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}")
+
     def remove_peer(self, peer):
         try:
             peer_index = self.team.index(peer)
@@ -242,8 +240,7 @@ class Splitter_DBS():
             try:
                 msg = struct.unpack(msg_format, packed_msg)
             except struct.error:
-                sys.stderr.write(f"{self.id}: unexpected message {packed_msg} with length={len(packed_msg)} received from {sender}")
-                sys.stderr.flush()
+                stderr.write(f"{self.id}: unexpected message {packed_msg} with length={len(packed_msg)} received from {sender}")
 
             if msg[0] == Messages.GOODBYE:
                 # Message sent by all peers when they leave the team
@@ -260,9 +257,8 @@ class Splitter_DBS():
                 # in their NATs. No extra functionality by now.
                 self.lg.info(f"{self.id}: received [hello] from {sender}")
             else:
-                sys.stderr.write(f"{self.id}: unexpected message {packed_msg} with length={len(packed_msg)} decoded as {msg} received from {sender}")
-                sys.stderr.flush()
-                
+                stderr.write(f"{self.id}: unexpected message {packed_msg} with length={len(packed_msg)} decoded as {msg} received from {sender}")
+
     #def reset_counters_thread(self):
     #    while self.alive:
     #        self.reset_counters()
@@ -315,14 +311,13 @@ class Splitter_DBS():
                 self.current_round += 1
                 total_peers += len(self.team)
                 self.on_round_beginning()
-                sys.stderr.write(f" {colorama.Fore.YELLOW}{self.current_round}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
+                stderr.write(f" {colorama.Fore.YELLOW}{self.current_round}{colorama.Style.RESET_ALL}")
 
             try:
                 peer = self.team[self.peer_number]
             except IndexError:
-                sys.stderr.write(f"{self.id}: the peer with index {self.peer_number} does not exist. peers_list={self.team} peer_number={self.peer_number}")
-                sys.stderr.flush()
-                
+                stderr.write(f"{self.id}: the peer with index {self.peer_number} does not exist. peers_list={self.team} peer_number={self.peer_number}")
+
             self.destination_of_chunk[chunk_number % (self.buffer_size)] = peer  # self.team.index(peer)
             self.send_chunk(chunk_number, chunk, peer)
             chunk_number = (chunk_number + 1) % Limits.MAX_CHUNK_NUMBER
@@ -344,4 +339,4 @@ class Splitter_DBS():
 
         #print("{}: total peers {} in {} rounds, {} peers/round".format(self.id, total_peers, self.current_round, (float)(total_peers)/(float)(self.current_round)))
         #print("{}: {} lost chunks of {}".format(self.id, self.total_lost_chunks, self.total_received_chunks, (float)(self.total_lost_chunks)/(float)(self.total_received_chunks)))
-        #sys.stderr.write(f"{self.id}: goodbye!\n")
+        #stderr.write(f"{self.id}: goodbye!\n")

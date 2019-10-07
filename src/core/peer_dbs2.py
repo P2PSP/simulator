@@ -19,6 +19,7 @@ from .peer_dbs import Peer_DBS
 import random
 import colorama
 from .simulator_stuff import hash
+import core.stderr as stderr
 
 class Peer_DBS2(Peer_DBS):
 
@@ -124,7 +125,7 @@ class Peer_DBS2(Peer_DBS):
                     hops = i[ChunkStructure.HOPS]
                     if hops > max:
                         max = hops
-            sys.stderr.write(f" {colorama.Back.RED}{colorama.Fore.BLACK}{max}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
+            stderr.write(f" {colorama.Back.RED}{colorama.Fore.BLACK}{max}{colorama.Style.RESET_ALL}")
 
     def on_chunk_received_from_a_peer(self, chunk, sender):
         chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
@@ -172,10 +173,10 @@ class Peer_DBS2(Peer_DBS):
     # origin of the requested chunk. This last thing can happen if
     # Z requests chunks that will be originated at itself.
     def process_request(self, chunk_number, sender):
-        sys.stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{chunk_number}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
-        #sys.stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
+        stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{chunk_number}{colorama.Style.RESET_ALL}")
+        #stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}")
         self.lg.debug(f"{self.ext_id}: received [request {chunk_number}] from {sender}")
-        #sys.stderr.write(f" R{self.ext_id}/{chunk_number}/{sender}"); sys.stderr.flush()
+        #stderr.write(f" R{self.ext_id}/{chunk_number}/{sender}")
         position = chunk_number % self.buffer_size
         buffer_box = self.buffer[position]
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
@@ -230,7 +231,7 @@ class Peer_DBS2(Peer_DBS):
     # requesting that {peer} stop sending chunks originated at
     # {self.buffer[chunk_number % self.buffer_size].origin}.
     def process_prune(self, chunk_number, sender):
-        sys.stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
+        stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}")
         self.lg.debug(f"{self.ext_id}: received [prune {chunk_number}] from {sender}")
 
         def remove_sender(origin, sender):
@@ -333,12 +334,11 @@ class Peer_DBS2(Peer_DBS):
             elif chunk_number == Messages.GOODBYE:
                 self.process_goodbye(sender)
             else:
-                sys.stderr.write("{self.ext_id}: process_unpacked_message: unexpected control chunk of index={chunk_number}")
-                sys.stderr.flush()
+                stderr.write("{self.ext_id}: process_unpacked_message: unexpected control chunk of index={chunk_number}")
         return (chunk_number, sender)
 
     def request_chunk(self, chunk_number, peer):
-        #sys.stderr.write(f" R{self.ext_id}-{chunk_number}-{peer}"); sys.stderr.flush()
+        #stderr.write(f" R{self.ext_id}-{chunk_number}-{peer}")
         self.lg.debug(f"{self.ext_id}: sent [request {chunk_number}] to {peer}")
         msg = struct.pack("!ii", Messages.REQUEST, chunk_number)
         self.team_socket.sendto(msg, peer)
@@ -383,13 +383,13 @@ class Peer_DBS2(Peer_DBS):
             #self.request_chunk(chunk_number, self.neighbor)
 
             #if self.ext_id[0] == '000':
-                #sys.stderr.write(f" {self.team}"); sys.stderr.flush()
+                #stderr.write(f" {self.team}")
             if len(self.team) > 1:
                 peer = random.choice(self.team)
                 self.request_chunk(chunk_number, peer)
-                #sys.stderr.write(f" ->{peer}"); sys.stderr.flush()
+                #stderr.write(f" ->{peer}")
                 if peer == self.ext_id[1]:
-                    sys.stderr.write(f" ------------------------->hola!!!<---------------------"); sys.stderr.flush()
+                    stderr.write(f" ------------------------->hola!!!<---------------------")
 
             # Send the request to all neighbors.
             # for neighbor in self.forward[self.id]:
@@ -419,7 +419,7 @@ class Peer_DBS2(Peer_DBS):
 
         self.number_of_chunks_consumed += 1
         if __debug__:
-            #sys.stderr.write(f" {len(self.forward)}"); sys.stderr.flush()
+            #stderr.write(f" {len(self.forward)}")
             buf = ""
             for i in self.buffer:
                 if i[ChunkStructure.CHUNK_DATA] != b'L':

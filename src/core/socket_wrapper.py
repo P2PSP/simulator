@@ -16,7 +16,7 @@ import time  # (L1)
 import socket
 import logging
 import sys
-#from .stderr import stderr as info
+import core.stderr as stderr
 
 class Socket_wrapper():
     AF_INET = socket.AF_INET
@@ -46,10 +46,8 @@ class Socket_wrapper():
             self.type = type
         try:
             self.lg.debug(f"{self.sock.getsockname()}: latency={latency}\n")
-            #sys.stderr.write(f"{self.sock.getsockname()}: latency={latency}\n"); sys.stderr.flush()
         except:
             self.lg.debug(f"{self.sock.getsockname()}: latency disabled\n")
-            #sys.stderr.write(f"{self.sock.getsockname()}: latency disabled\n"); sys.stderr.flush()
 
     def send(self, msg):
         self.lg.debug(f"{self.sock.getsockname()} - [{msg}] => {self.sock.getpeername()}")
@@ -60,7 +58,7 @@ class Socket_wrapper():
         return self.sock.sendall(msg)
 
     def sendto(self, msg, address):
-        
+
         self.lg.debug(f"{self.sock.getsockname()} - [{msg}] --> {address}")
         try:
             return self.sock.sendto(msg, socket.MSG_DONTWAIT, address)
