@@ -160,7 +160,6 @@ class Splitter_DBS():
             self.team.append(peer)
         self.losses[peer] = 0
         self.lg.debug(f"{self.id}: {peer} inserted in the team")
-        sys.stderr.write(f" {colorama.Fore.GREEN}{len(self.team)}{colorama.Style.RESET_ALL}"); sys.stderr.flush()
         sys.stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}"); sys.stderr.flush
         
     def increment_unsupportivity_of_peer(self, peer):

@@ -9,6 +9,7 @@ from multiprocessing import Manager, Process, Queue
 import fire
 import numpy as np
 import sys
+import colorama
 
 from core.monitor_dbs_simulator import Monitor_DBS_simulator
 from core.monitor_dbs2_simulator import Monitor_DBS2_simulator
@@ -19,6 +20,7 @@ from core.peer_ims_simulator import Peer_IMS_simulator
 from core.peer_dbs2_faulty import Peer_DBS2_faulty as Peer_faulty
 from core.simulator_stuff import Simulator_stuff as sim
 from core.splitter_dbs_simulator import Splitter_DBS_simulator
+import core.stderr as stderr
 
 class Simulator():
     P_in  = 0.1  # 0.4 # Churn probability
@@ -63,23 +65,34 @@ class Simulator():
         self.processes = {}
 
         self.lg.debug(f"set_of_rules=\"{self.set_of_rules}\"")
-        sys.stderr.write(f"set_of_rules=\"{self.set_of_rules}\"\n")
+        stderr.write(f"set_of_rules=\"{self.set_of_rules}\"\n")
         self.lg.debug(f"number_of_peers={self.number_of_peers}")
-        sys.stderr.write(f"number_of_peers={self.number_of_peers}\n")
+        stderr.write(f"number_of_peers={self.number_of_peers}\n")
         self.lg.debug(f"number_of_monitors={self.number_of_monitors}")
-        sys.stderr.write(f"number_of_monitors={self.number_of_monitors}\n")
+        stderr.write(f"number_of_monitors={self.number_of_monitors}\n")
         self.lg.debug(f"number_of_rounds={self.number_of_rounds}")
-        sys.stderr.write(f"number_of_rounds={self.number_of_rounds}\n")
+        stderr.write(f"number_of_rounds={self.number_of_rounds}\n")
         self.lg.debug(f"number_of_faulty={self.number_of_faulty}")
-        sys.stderr.write(f"number_of_faulty={self.number_of_faulty}\n")
+        stderr.write(f"number_of_faulty={self.number_of_faulty}\n")
         self.lg.debug(f"buffer_size={self.buffer_size}")
-        sys.stderr.write(f"buffer_size={self.buffer_size}\n")
+        stderr.write(f"buffer_size={self.buffer_size}\n")
         self.lg.debug(f"max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}")
-        sys.stderr.write(f"simulator: max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}\n")
+        stderr.write(f"simulator: max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}\n")
         self.lg.debug(f"max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}")
-        sys.stderr.write(f"max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}\n")
+        stderr.write(f"max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}\n")
         self.lg.debug(f"speed={self.speed}")
-        sys.stderr.write(f"speed={self.speed}\n")
+        stderr.write(f"speed={self.speed}\n")
+
+        stderr.write(f"CPU usage\n")
+        stderr.write(f"{colorama.Fore.MAGENTA}Team size{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"{colorama.Fore.RED}Lost chunk{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"{colorama.Fore.RED}(Unsupportive peer){colorama.Style.RESET_ALL}\n")
+        stderr.write(f"{colorama.Fore.BLUE}Deleted peer{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"{colorama.Fore.YELLOW}Round{colorama.Style.RESET_ALL}\n")
+        if __debug__:
+            stderr.write(f"{colorama.Back.RED}{colorama.Fore.BLACK}Max hops{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"{colorama.Back.CYAN}{colorama.Fore.BLACK}Requested chunk{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"{colorama.Fore.CYAN}Prunned chunk{colorama.Style.RESET_ALL}\n")
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -286,7 +299,7 @@ class Simulator():
             self.lg.debug("Killing {}, ...".format(name))
             os.system("kill -9 " + str(pid))
             self.lg.debug("{} killed".format(name))
-        sys.stderr.write("\n"); sys.stderr.flush()
+        stderr.write("\n");
 
 if __name__ == "__main__":
     fire.Fire(Simulator)
