@@ -459,7 +459,7 @@ class Peer_DBS():
 
     def buffer_data(self):
         if __debug__:
-            self.lg.info(f"{self.ext_id}: buffering")
+            self.lg.debug(f"{self.ext_id}: buffering")
             start_time = time.time()
         
         # Receive a chunk.
@@ -530,7 +530,7 @@ class Peer_DBS():
                 avg = total_lengths/entries
             except:
                 avg = 0
-            self.lg.info(f"{self.ext_id}: average_neighborhood_degree={avg} ({total_lengths}/{entries})") # Wrong!!!!!!!!!!!!!!!!!!!!!
+            self.lg.debug(f"{self.ext_id}: average_neighborhood_degree={avg} ({total_lengths}/{entries})") # Wrong!!!!!!!!!!!!!!!!!!!!!
 
             self.lg.debug(f"{self.ext_id}: forward = {self.forward}")
 

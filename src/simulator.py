@@ -46,7 +46,7 @@ class Simulator():
         if __debug__:
             self.lg.setLevel(logging.DEBUG)
         else:
-            self.lg.setLevel(logging.ERROR)        
+            self.lg.setLevel(logging.ERROR)
 
         self.set_of_rules = set_of_rules
         self.number_of_peers = int(number_of_peers)
@@ -143,7 +143,7 @@ class Simulator():
             elif self.set_of_rules == "IMS":
                 peer = Peer_IMS_simulator(id = id, name = "Peer_IMS_simulator")
                 self.lg.debug("simulator: IMS peer created")
-        self.lg.critical("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
+        self.lg.debug("simulator: {}: alive till consuming {} chunks".format(id, chunks_before_leave))
 
         #peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)

@@ -74,10 +74,9 @@ class Peer_DBS2(Peer_DBS):
         assert origin in self.forward, f"{self.ext_id}: {origin} is not in the forwarding table={self.forward}"
 
     def on_chunk_received_from_the_splitter(self, chunk):
-        if __debug__:
-            chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
-            origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
-            self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the splitter")
+        chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
+        origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
+        self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the splitter")
         self.buffer_chunk(chunk)
 
         # Remove selfish neighbors.
@@ -129,9 +128,8 @@ class Peer_DBS2(Peer_DBS):
 
     def on_chunk_received_from_a_peer(self, chunk, sender):
         chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
-        if __debug__:
-            origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
-            self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the peer {sender}")
+        origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
+        self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the peer {sender}")
         
         #self.update_forward(origin, sender)
         if self.is_duplicate(chunk_number):
