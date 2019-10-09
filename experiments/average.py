@@ -18,4 +18,4 @@ try:
 except ZeroDivisionError:
     average = 0.0
 
-sys.stdout.write(f"{average}\n")
+sys.stdout.write(f"average={average}\n")
