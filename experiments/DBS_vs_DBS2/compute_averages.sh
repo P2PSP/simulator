@@ -4,7 +4,7 @@ SOR=$1
 
 printf "#B\tCLR\n"
 
-B=1000
+B=200
 N=100
 STEP=10
 while [ $B -ge 1 ]; do
