@@ -82,7 +82,7 @@ class Peer_DBS2(Peer_DBS):
 
         # Remove selfish neighbors.
         for _origin in list(self.activity):
-            if self.activity[_origin] < -5:
+            if self.activity[_origin] < self.min_activity:
                 del self.activity[_origin]
                 for neighbors in self.forward.values():
                     if _origin in neighbors:

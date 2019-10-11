@@ -36,8 +36,8 @@ class Simulator():
                  number_of_faulty=0,
                  buffer_size=32,
                  chunk_cadence=0.01,
-                 max_chunk_loss_at_peers = 10, # chunks/secon
-                 max_chunk_loss_at_splitter = 16,
+                 min_activity = -5, # rounds
+                 max_chunk_loss = 16,
                  speed = 1000.0,
                  gui=False):
 
@@ -56,8 +56,8 @@ class Simulator():
         self.number_of_rounds = int(number_of_rounds)
         self.number_of_faulty = number_of_faulty
         self.buffer_size = int(buffer_size)
-        self.max_chunk_loss_at_peers = int(max_chunk_loss_at_peers)
-        self.max_chunk_loss_at_splitter = float(max_chunk_loss_at_splitter)
+        self.min_activity = int(min_activity)
+        self.max_chunk_loss = float(max_chunk_loss)
         self.current_round = 0
         self.speed = float(speed)
         self.gui = gui
@@ -75,10 +75,10 @@ class Simulator():
         stderr.write(f"number_of_faulty={self.number_of_faulty}\n")
         self.lg.debug(f"buffer_size={self.buffer_size}")
         stderr.write(f"buffer_size={self.buffer_size}\n")
-        self.lg.debug(f"max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}")
-        stderr.write(f"simulator: max_chunk_loss_at_peers={self.max_chunk_loss_at_peers}\n")
-        self.lg.debug(f"max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}")
-        stderr.write(f"max_chunk_loss_at_splitter={self.max_chunk_loss_at_splitter}\n")
+        self.lg.debug(f"min_activity={self.min_activity}")
+        stderr.write(f"min_activity={self.min_activity}\n")
+        self.lg.debug(f"max_chunk_loss={self.max_chunk_loss}")
+        stderr.write(f"max_chunk_loss={self.max_chunk_loss}\n")
         self.lg.debug(f"speed={self.speed}")
         stderr.write(f"speed={self.speed}\n")
 
@@ -110,7 +110,7 @@ class Simulator():
         if self.set_of_rules == "DBS" or self.set_of_rules == "DBS2" or self.set_of_rules == "IMS":
             splitter = Splitter_DBS_simulator(
                 buffer_size = self.buffer_size,
-                max_chunk_loss = self.max_chunk_loss_at_splitter,
+                max_chunk_loss = self.max_chunk_loss,
                 number_of_rounds = self.number_of_rounds,
                 speed = self.speed)
             self.lg.debug("simulator: DBS/IMS splitter created")
@@ -159,6 +159,7 @@ class Simulator():
 
         #peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
+        peer.set_min_activity(self.min_activity)
         if peer.connect_to_the_splitter(peer_port=0):
             peer.receive_the_public_endpoint()
             peer.receive_the_peer_index_in_team()

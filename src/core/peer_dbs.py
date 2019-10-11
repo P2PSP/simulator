@@ -28,8 +28,8 @@ import core.stderr as stderr
 
 class Peer_DBS():
 
-    peer_port = 4553
-    splitter = ("localhost", 4552)
+    #peer_port = 4553
+    #splitter = ("localhost", 4552)
 
     def __init__(self):
         self.public_endpoint = (None, 0)
@@ -75,6 +75,9 @@ class Peer_DBS():
 
     def set_splitter(self, splitter):
         self.splitter = splitter
+
+    def set_min_activiy(self, min_activity):
+        self.min_activity = min_activity
 
     def listen_to_the_team(self):
         self.team_socket = socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -219,7 +222,7 @@ class Peer_DBS():
 
         # Remove selfish neighbors.
         for _origin in list(self.activity):
-            if self.activity[_origin] < -5:
+            if self.activity[_origin] < self.min_activity:
                 del self.activity[_origin]
                 for neighbors in self.forward.values():
                     if _origin in neighbors:
