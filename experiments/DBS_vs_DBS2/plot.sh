@@ -4,7 +4,7 @@ set output "/tmp/CLR_vs_B.tex"
 set xlabel "\$B\$"
 set ylabel "CLR"
 set key right
-set xrange [10:1000]
+set xrange [10:200]
 plot "DBS.txt" with lines title "full-connected", "DBS2.txt" with lines title "optimized"
 EOF
 
