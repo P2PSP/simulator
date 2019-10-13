@@ -82,7 +82,7 @@ class Peer_DBS2(Peer_DBS):
 
         # Remove selfish neighbors.
         for _origin in list(self.activity):
-            if self.activity[_origin] < -5:
+            if self.activity[_origin] < self.min_activity:
                 del self.activity[_origin]
                 for neighbors in self.forward.values():
                     if _origin in neighbors:
@@ -112,12 +112,12 @@ class Peer_DBS2(Peer_DBS):
                 self.lg.debug(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
 
             try:
-                CLR = self.number_of_lost_chunks / (chunk_number - self.prev_chunk_number_round)
-                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_round}")
+                CLR = self.number_of_lost_chunks_in_this_round / (chunk_number - self.prev_chunk_number_received_from_the_splitter)
+                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks_in_this_round} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_received_from_the_splitter}")
             except ZeroDivisionError:
                 pass
-            self.prev_chunk_number_round = chunk_number
-            self.number_of_lost_chunks = 0
+            self.prev_chunk_number_received_from_the_splitter = chunk_number
+            self.number_of_lost_chunks_in_this_round = 0
 
             max = 0
             for i in self.buffer:
@@ -157,6 +157,13 @@ class Peer_DBS2(Peer_DBS):
         except KeyError:
             self.activity[origin] = 1
 
+        self.delta = chunk_number - self.delta
+        try:
+            self.delta_inertia[sender] = self.delta*0.1 + self.delta_inertia[sender]*0.9
+        except KeyError:
+            self.delta_inertia[sender] = 0.0
+        self.delta = chunk_number
+
     def process_chunk(self, chunk, sender):
         self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
         if sender == self.splitter:
@@ -188,44 +195,6 @@ class Peer_DBS2(Peer_DBS):
         else:
             # I haven't the chunk
             pass
-        '''
-        origin = self.buffer[chunk_number % self.buffer_size][ChunkStructure.ORIGIN]
-        if origin != sender:
-            self.lg.debug(f"{self.ext_id}: process_request: chunks={self.buffer}")
-
-            self.lg.info(f"{self.ext_id}: process_request: received [request {chunk_number}] from {sender} (origin={origin})")
-
-            # if origin[0] != None:
-            if self.buffer[chunk_number % self.buffer_size][ChunkStructure.CHUNK_DATA] != b'L':
-                # In this case, I can start forwarding chunks from origin.
-                try:
-                    self.lg.debug(f"{self.ext_id}: process_request: self.forward[{origin}]={self.forward[origin]} before")
-                    if sender not in self.forward[origin]:
-                        self.lg.debug(f"{self.ext_id}: process_request: adding {sender} to {self.forward[origin]}")
-                        self.forward[origin].append(sender)
-                        self.pending[sender] = []
-                    else:
-                        self.lg.debug(f"{self.ext_id}: process_request: {sender} is already in self.forward[{origin}]={self.forward[origin]}")
-                except KeyError:
-                    #self.forward[origin] = [sender] # OJOOOOOOOOOOOOOOOOOORRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-                    self.pending[sender] = []
-                #self.lg.debug(f"{self.ext_id}: process_request: self.forward[{origin}]={self.forward[origin]} after")
-                self.lg.warning(f"{self.ext_id}: process_request: chunks from {origin} will be sent to {sender}")
-                self.provide_request_feedback(sender)
-
-                if __debug__:
-                    if self.public_endpoint == origin:
-                        self.lg.info(f"{self.ext_id}: process_request: sender={sender} added to the primary forwarding table (public_endpoint == origin={origin}) now with length {len(self.forward[self.public_endpoint])}")
-
-            else:
-                # I can't help :-(
-                self.lg.warning(f"{self.ext_id}: process_request: request received from {sender}, but I have not the requested chunk {chunk_number} in my buffer")
-
-            self.lg.debug(f"{self.ext_id}: process_request: length_forward={len(self.forward)} forward={self.forward}")
-
-        else:
-            self.lg.warning(f"{self.ext_id}: process_request: origin={origin} == sender={sender}. Request ignored")
-        '''
 
     # When a {peer} receives a [prune {chunk_number}], the {sender} is
     # requesting that {peer} stop sending chunks originated at
@@ -238,26 +207,7 @@ class Peer_DBS2(Peer_DBS):
             assert sender in self.forward[origin], f"{self.ext_id}: {sender} is not in self.forward[{origin}]={self.forward[origin]}"
             self.forward[origin].remove(sender)
             self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} has been removed from forward[{origin}]={self.forward[origin]}")
-            '''
-            try:
-                self.forward[origin].remove(sender)
-                self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} has been removed from forward[{origin}]={self.forward[origin]}")
-            except ValueError:
-                self.lg.error(f"{self.ext_id}: process_prune: failed to remove peer {sender} from forward={self.forward[origin]} for origin={origin} ")
-            if len(self.forward[origin])==0:
-                del self.forward[origin]
-                if __debug__:
-                    if origin in self.forward:
-                        self.lg.debug(f"{self.ext_id}: process_prune: origin {origin} is still in forward[{origin}]={self.forward[origin]}")
-                    else:
-                        self.lg.debug(f"{self.ext_id}: process_prune: origin={origin} removed from forward={self.forward}")
-            if __debug__:
-                if origin == self.public_endpoint:
-                    try:
-                        self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} removed from the primary forwarding table (public_endpoint == origin={origin}) now with length {len(self.forward[self.public_endpoint])}")
-                    except KeyError:
-                        pass
-            '''
+
         position = chunk_number % self.buffer_size
         buffer_box = self.buffer[position]
         
@@ -300,6 +250,7 @@ class Peer_DBS2(Peer_DBS):
                     self.lg.error(f"{self.ext_id}: appending myself to the team by [hello]")
             self.team.append(sender)
             self.lg.debug(f"{self.ext_id}: appended {sender} to team={self.team} by [hello]")
+        self.delta_inertia[sender] = 0.0
 
     def process_goodbye(self, sender):
         Peer_DBS.process_goodbye(self, sender)
@@ -317,13 +268,8 @@ class Peer_DBS2(Peer_DBS):
             # We have received a chunk.
             self.lg.debug(f"{self.ext_id}: received chunk {message} from {sender}")
             self.received_chunks += 1
-            if __debug__:
-                if sender == self.splitter:
-                    if self.played > 0 and self.played >= self.number_of_peers:
-                        CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks)  # Chunk Loss Ratio                
             self.process_chunk(message, sender)
             self.send_chunks_to_neighbors()
-
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
             if chunk_number == Messages.REQUEST:
                 self.process_request(message[1], sender)
@@ -354,8 +300,8 @@ class Peer_DBS2(Peer_DBS):
             # The cell in the buffer is empty.
             self.complain(chunk_number) # Only monitors
             #self.complain(self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]) # If I'm a monitor
-            self.number_of_lost_chunks += 1
-            self.lg.debug(f"{self.ext_id}: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
+            self.number_of_lost_chunks_in_this_round += 1
+            self.lg.debug(f"{self.ext_id}: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks_in_this_round})")
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change
             # this in the near future. The action here is to request
@@ -385,7 +331,9 @@ class Peer_DBS2(Peer_DBS):
             #if self.ext_id[0] == '000':
                 #stderr.write(f" {self.team}")
             if len(self.team) > 1:
-                peer = random.choice(self.team)
+                #peer = random.choice(self.team)
+                peer = min(self.delta_inertia, key=self.delta_inertia.get)
+                #stderr.write(f"{peer} {self.delta_inertia}\n")
                 self.request_chunk(chunk_number, peer)
                 #stderr.write(f" ->{peer}")
                 if peer == self.ext_id[1]:
