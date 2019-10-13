@@ -188,44 +188,6 @@ class Peer_DBS2(Peer_DBS):
         else:
             # I haven't the chunk
             pass
-        '''
-        origin = self.buffer[chunk_number % self.buffer_size][ChunkStructure.ORIGIN]
-        if origin != sender:
-            self.lg.debug(f"{self.ext_id}: process_request: chunks={self.buffer}")
-
-            self.lg.info(f"{self.ext_id}: process_request: received [request {chunk_number}] from {sender} (origin={origin})")
-
-            # if origin[0] != None:
-            if self.buffer[chunk_number % self.buffer_size][ChunkStructure.CHUNK_DATA] != b'L':
-                # In this case, I can start forwarding chunks from origin.
-                try:
-                    self.lg.debug(f"{self.ext_id}: process_request: self.forward[{origin}]={self.forward[origin]} before")
-                    if sender not in self.forward[origin]:
-                        self.lg.debug(f"{self.ext_id}: process_request: adding {sender} to {self.forward[origin]}")
-                        self.forward[origin].append(sender)
-                        self.pending[sender] = []
-                    else:
-                        self.lg.debug(f"{self.ext_id}: process_request: {sender} is already in self.forward[{origin}]={self.forward[origin]}")
-                except KeyError:
-                    #self.forward[origin] = [sender] # OJOOOOOOOOOOOOOOOOOORRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-                    self.pending[sender] = []
-                #self.lg.debug(f"{self.ext_id}: process_request: self.forward[{origin}]={self.forward[origin]} after")
-                self.lg.warning(f"{self.ext_id}: process_request: chunks from {origin} will be sent to {sender}")
-                self.provide_request_feedback(sender)
-
-                if __debug__:
-                    if self.public_endpoint == origin:
-                        self.lg.info(f"{self.ext_id}: process_request: sender={sender} added to the primary forwarding table (public_endpoint == origin={origin}) now with length {len(self.forward[self.public_endpoint])}")
-
-            else:
-                # I can't help :-(
-                self.lg.warning(f"{self.ext_id}: process_request: request received from {sender}, but I have not the requested chunk {chunk_number} in my buffer")
-
-            self.lg.debug(f"{self.ext_id}: process_request: length_forward={len(self.forward)} forward={self.forward}")
-
-        else:
-            self.lg.warning(f"{self.ext_id}: process_request: origin={origin} == sender={sender}. Request ignored")
-        '''
 
     # When a {peer} receives a [prune {chunk_number}], the {sender} is
     # requesting that {peer} stop sending chunks originated at
@@ -238,26 +200,7 @@ class Peer_DBS2(Peer_DBS):
             assert sender in self.forward[origin], f"{self.ext_id}: {sender} is not in self.forward[{origin}]={self.forward[origin]}"
             self.forward[origin].remove(sender)
             self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} has been removed from forward[{origin}]={self.forward[origin]}")
-            '''
-            try:
-                self.forward[origin].remove(sender)
-                self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} has been removed from forward[{origin}]={self.forward[origin]}")
-            except ValueError:
-                self.lg.error(f"{self.ext_id}: process_prune: failed to remove peer {sender} from forward={self.forward[origin]} for origin={origin} ")
-            if len(self.forward[origin])==0:
-                del self.forward[origin]
-                if __debug__:
-                    if origin in self.forward:
-                        self.lg.debug(f"{self.ext_id}: process_prune: origin {origin} is still in forward[{origin}]={self.forward[origin]}")
-                    else:
-                        self.lg.debug(f"{self.ext_id}: process_prune: origin={origin} removed from forward={self.forward}")
-            if __debug__:
-                if origin == self.public_endpoint:
-                    try:
-                        self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} removed from the primary forwarding table (public_endpoint == origin={origin}) now with length {len(self.forward[self.public_endpoint])}")
-                    except KeyError:
-                        pass
-            '''
+
         position = chunk_number % self.buffer_size
         buffer_box = self.buffer[position]
         

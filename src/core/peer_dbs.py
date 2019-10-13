@@ -65,6 +65,8 @@ class Peer_DBS():
         self.rounds_counter = 0 # Simulation?
         self.activity = {}  # Incremented if received a chunk in the last round from that origin
         self.prev_chunk_number_round = 0 # Simulator?
+        self.delta = 0
+        self.delta_inertia = {}
 
         logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
         self.lg = logging.getLogger(__name__)
@@ -145,6 +147,8 @@ class Peer_DBS():
             # I'll forward at least the chunks received from the splitter.
             self.forward[self.public_endpoint].append(peer)
             self.pending[peer] = []
+
+            self.delta_inertia[peer] = 0.0
             
             self.say_hello(peer)
             self.lg.debug(f"{self.ext_id}: peer {peer} is in the team")
@@ -299,6 +303,7 @@ class Peer_DBS():
         self.team_socket.sendto(packet, destination)
         self.sendto_counter += 1
         self.lg.debug(f"{self.ext_id}: chunk {chunk_number} sent to {destination}")
+
     def process_hello(self, sender):
         self.lg.debug(f"{self.ext_id}: received [hello] from {sender}")
         # If a peer X receives [hello] from peer Z, X will
@@ -306,6 +311,7 @@ class Peer_DBS():
         if sender not in self.forward[self.public_endpoint]:
             self.forward[self.public_endpoint].append(sender)
             self.pending[sender] = []
+            self.delta_inertia[sender] = 0.0
 
     def process_goodbye(self, sender):
         self.lg.debug(f"{self.ext_id}: received [goodbye] from {sender}")
@@ -376,6 +382,9 @@ class Peer_DBS():
                         CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks)  # Chunk Loss Ratio                
             self.process_chunk(message, sender)
             self.send_chunks_to_neighbors()
+            self.delta = chunk_number - self.delta
+            self.delta_inertia[sender] = self.delta*0.1 + self.delta_inertia[sender]*0.9
+            self.delta = chunk_number
 
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
             if chunk_number == Messages.HELLO:
@@ -394,7 +403,7 @@ class Peer_DBS():
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         self.lg.debug(f"{self.ext_id}: chunk={chunk_number} hops={buffer_box[ChunkStructure.HOPS]}")
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
-            # Only the data will be empty in order to remember things ...
+            # Only the chunk data is deleted.
             self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer(buffer_box)
             self.played += 1
         else:
