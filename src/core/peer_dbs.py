@@ -76,7 +76,7 @@ class Peer_DBS():
     def set_splitter(self, splitter):
         self.splitter = splitter
 
-    def set_min_activiy(self, min_activity):
+    def set_min_activity(self, min_activity):
         self.min_activity = min_activity
 
     def listen_to_the_team(self):
