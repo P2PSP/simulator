@@ -39,6 +39,7 @@ class Simulator():
                  min_activity = -5, # rounds
                  max_chunk_loss = 16,
                  speed = 1000.0,
+                 seed = None,
                  gui=False):
 
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -60,6 +61,7 @@ class Simulator():
         self.max_chunk_loss = float(max_chunk_loss)
         self.current_round = 0
         self.speed = float(speed)
+        self.seed = seed
         self.gui = gui
         self.processes = {}
 
@@ -81,7 +83,9 @@ class Simulator():
         stderr.write(f"max_chunk_loss={self.max_chunk_loss}\n")
         self.lg.debug(f"speed={self.speed}")
         stderr.write(f"speed={self.speed}\n")
-
+        self.lg.debug(f"seed={self.seed}")
+        stderr.write(f"seed={self.seed}\n")
+        
         stderr.write(f"CPU usage\n")
         stderr.write(f"{colorama.Fore.MAGENTA}Team size{colorama.Style.RESET_ALL}\n")
         stderr.write(f"{colorama.Fore.RED}Lost chunk{colorama.Style.RESET_ALL}\n")
@@ -92,6 +96,7 @@ class Simulator():
             stderr.write(f"{colorama.Back.RED}{colorama.Fore.BLACK}Max hops{colorama.Style.RESET_ALL}\n")
         stderr.write(f"{colorama.Back.CYAN}{colorama.Fore.BLACK}Requested chunk{colorama.Style.RESET_ALL}\n")
         stderr.write(f"{colorama.Fore.CYAN}Prunned chunk{colorama.Style.RESET_ALL}\n")
+        np.random.seed(self.seed)
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()

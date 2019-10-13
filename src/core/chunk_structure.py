@@ -11,4 +11,5 @@ class ChunkStructure:
     CHUNK_DATA   = 1
     ORIGIN_ADDR  = 2
     ORIGIN_PORT  = 3
-    HOPS         = 4  # Used only in the simulator
+    HOPS         = 4  # Simulator only
+    TIME         = 5  # Simulator only

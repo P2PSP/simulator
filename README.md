@@ -32,6 +32,11 @@ python3 simulator.py run --max_chunk_loss 50
 python3 simulator.py run --number_of_monitors 2
 ```
 
+6. Showing the average CLR:
+```
+python3 simulator.py run --set_of_rules DBS --number_of_peers 3 --buffer_size 6 --number_of_rounds 100 --max_chunk_loss 1000 --min_activity -100 | grep CLR | awk '{match($0,/CLR=[0-9.]+/);A=substr($0,RSTART,RLENGTH);sub(/.*=/,X,A);print A}' | python ../experiments/average.py
+```
+
 6. Using IP multicast instead IP unicast:
 ```
 python3 simulator.py run --set_of_rules IMS

@@ -332,7 +332,8 @@ class Peer_DBS2(Peer_DBS):
                 #stderr.write(f" {self.team}")
             if len(self.team) > 1:
                 #peer = random.choice(self.team)
-                peer = min(self.delta_inertia, key=self.delta_inertia.get)
+                peer = min(self.team, key=self.delta_inertia.get)
+                #peer = min(self.delta_inertia, key=self.delta_inertia.get)
                 #stderr.write(f"{peer} {self.delta_inertia}\n")
                 self.request_chunk(chunk_number, peer)
                 #stderr.write(f" ->{peer}")
