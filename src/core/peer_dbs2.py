@@ -112,12 +112,12 @@ class Peer_DBS2(Peer_DBS):
                 self.lg.debug(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
 
             try:
-                CLR = self.number_of_lost_chunks / (chunk_number - self.prev_chunk_number_round)
-                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_round}")
+                CLR = self.number_of_lost_chunks_in_this_round / (chunk_number - self.prev_chunk_number_round)
+                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks_in_this_round} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_round}")
             except ZeroDivisionError:
                 pass
             self.prev_chunk_number_round = chunk_number
-            self.number_of_lost_chunks = 0
+            self.number_of_lost_chunks_in_this_round = 0
 
             max = 0
             for i in self.buffer:
@@ -156,6 +156,13 @@ class Peer_DBS2(Peer_DBS):
             self.activity[origin] += 1
         except KeyError:
             self.activity[origin] = 1
+
+        self.delta = chunk_number - self.delta
+        try:
+            self.delta_inertia[sender] = self.delta*0.1 + self.delta_inertia[sender]*0.9
+        except KeyError:
+            self.delta_inertia[sender] = 0.0
+        self.delta = chunk_number
 
     def process_chunk(self, chunk, sender):
         self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
@@ -243,6 +250,7 @@ class Peer_DBS2(Peer_DBS):
                     self.lg.error(f"{self.ext_id}: appending myself to the team by [hello]")
             self.team.append(sender)
             self.lg.debug(f"{self.ext_id}: appended {sender} to team={self.team} by [hello]")
+        self.delta_inertia[sender] = 0.0
 
     def process_goodbye(self, sender):
         Peer_DBS.process_goodbye(self, sender)
@@ -260,13 +268,8 @@ class Peer_DBS2(Peer_DBS):
             # We have received a chunk.
             self.lg.debug(f"{self.ext_id}: received chunk {message} from {sender}")
             self.received_chunks += 1
-            if __debug__:
-                if sender == self.splitter:
-                    if self.played > 0 and self.played >= self.number_of_peers:
-                        CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks)  # Chunk Loss Ratio                
             self.process_chunk(message, sender)
             self.send_chunks_to_neighbors()
-
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
             if chunk_number == Messages.REQUEST:
                 self.process_request(message[1], sender)
@@ -297,8 +300,8 @@ class Peer_DBS2(Peer_DBS):
             # The cell in the buffer is empty.
             self.complain(chunk_number) # Only monitors
             #self.complain(self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]) # If I'm a monitor
-            self.number_of_lost_chunks += 1
-            self.lg.debug(f"{self.ext_id}: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
+            self.number_of_lost_chunks_in_this_round += 1
+            self.lg.debug(f"{self.ext_id}: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks_in_this_round})")
             # The chunk "chunk_number" has not been received on time
             # and it is quite probable that is not going to change
             # this in the near future. The action here is to request
@@ -328,7 +331,9 @@ class Peer_DBS2(Peer_DBS):
             #if self.ext_id[0] == '000':
                 #stderr.write(f" {self.team}")
             if len(self.team) > 1:
-                peer = random.choice(self.team)
+                #peer = random.choice(self.team)
+                peer = min(self.delta_inertia, key=self.delta_inertia.get)
+                #stderr.write(f"{peer} {self.delta_inertia}\n")
                 self.request_chunk(chunk_number, peer)
                 #stderr.write(f" ->{peer}")
                 if peer == self.ext_id[1]:

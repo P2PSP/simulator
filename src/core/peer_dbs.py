@@ -60,7 +60,7 @@ class Peer_DBS():
         self.max_packet_length = struct.calcsize(self.chunk_packet_format)
         self.neighbor_index = 0 
         self.number_of_chunks_consumed = 0 # Simulation ?
-        self.number_of_lost_chunks = 0 # Simulation?
+        self.number_of_lost_chunks_in_this_round = 0 # Simulation?
         self.played = 0 # Simulation?
         self.rounds_counter = 0 # Simulation?
         self.activity = {}  # Incremented if received a chunk in the last round from that origin
@@ -236,11 +236,8 @@ class Peer_DBS():
         for origin in self.activity.keys():
             self.activity[origin] -= 1
 
-        # New round, all pending chunks are sent
-        #for neighbor in self.pending:
-        #    self.send_chunks(neighbor)
-
-        #stderr.write(f" {len(self.forward)}")
+        # New round, all pending chunks are sent for neighbor in self.pending:
+        # self.send_chunks(neighbor)
 
         if __debug__:
             self.rounds_counter += 1
@@ -252,14 +249,14 @@ class Peer_DBS():
                 self.lg.debug(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
 
             try:
-                CLR = self.number_of_lost_chunks / (chunk_number - self.prev_chunk_number_round)
-                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_round}")
+                CLR = self.number_of_lost_chunks_in_this_round / (chunk_number - self.prev_chunk_number_round)
+                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks_in_this_round} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_round}")
             except ZeroDivisionError:
                 pass
             self.prev_chunk_number_round = chunk_number
-            self.number_of_lost_chunks = 0
+            self.number_of_lost_chunks_in_this_round = 0
 
-    def on_chunk_received_from_a_peer(self, chunk):
+    def on_chunk_received_from_a_peer(self, chunk, sender):
         # Extend the list of known peers checking if the origin of
         # the received chunk is new. DBS specific because peers
         # will forward to the <origin> all chunks originated at
@@ -276,13 +273,20 @@ class Peer_DBS():
         except KeyError:
             self.activity[origin] = 1
 
+        self.delta = chunk_number - self.delta
+        try:
+            self.delta_inertia[sender] = self.delta*0.1 + self.delta_inertia[sender]*0.9
+        except KeyError:
+            self.delta_inertia[sender] = 0.0
+        self.delta = chunk_number
+
     def process_chunk(self, chunk, sender):
         self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
         self.buffer_chunk(chunk)
         if sender == self.splitter:
             self.on_chunk_received_from_the_splitter(chunk)
         else:
-            self.on_chunk_received_from_a_peer(chunk)
+            self.on_chunk_received_from_a_peer(chunk, sender)
 
     def update_pendings(self, origin, chunk_number):
         self.lg.debug(f"{self.ext_id}: updating pendings (origin={origin}, chunk_number={chunk_number})")
@@ -311,7 +315,7 @@ class Peer_DBS():
         if sender not in self.forward[self.public_endpoint]:
             self.forward[self.public_endpoint].append(sender)
             self.pending[sender] = []
-            self.delta_inertia[sender] = 0.0
+        self.delta_inertia[sender] = 0.0
 
     def process_goodbye(self, sender):
         self.lg.debug(f"{self.ext_id}: received [goodbye] from {sender}")
@@ -376,15 +380,8 @@ class Peer_DBS():
         if chunk_number >= 0:
             self.lg.debug(f"{self.ext_id}: received chunk {message} from {sender}")
             self.received_chunks += 1
-            if __debug__:
-                if sender == self.splitter:
-                    if self.played > 0 and self.played >= self.number_of_peers:
-                        CLR = self.number_of_lost_chunks / (self.played + self.number_of_lost_chunks)  # Chunk Loss Ratio                
             self.process_chunk(message, sender)
             self.send_chunks_to_neighbors()
-            self.delta = chunk_number - self.delta
-            self.delta_inertia[sender] = self.delta*0.1 + self.delta_inertia[sender]*0.9
-            self.delta = chunk_number
 
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
             if chunk_number == Messages.HELLO:
@@ -409,8 +406,8 @@ class Peer_DBS():
         else:
             # The cell in the buffer is empty.
             self.complain(chunk_number) # Only monitors
-            self.number_of_lost_chunks += 1
-            self.lg.debug(f"{self.ext_id}: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks})")
+            self.number_of_lost_chunks_in_this_round += 1
+            self.lg.debug(f"{self.ext_id}: lost chunk! {self.chunk_to_play} (number_of_lost_chunks={self.number_of_lost_chunks_in_this_round})")
 
         self.number_of_chunks_consumed += 1
         if __debug__:
