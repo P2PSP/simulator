@@ -256,6 +256,15 @@ class Peer_DBS():
             self.prev_chunk_number_received_from_the_splitter = chunk_number
             self.number_of_lost_chunks_in_this_round = 0
 
+    def compute_deltas(self, chunk_number, sender):
+        self.delta = chunk_number - self.delta
+        try:
+            self.delta_inertia[sender] = abs(self.delta)*0.1 + self.delta_inertia[sender]*0.9
+        except KeyError:
+            self.delta_inertia[sender] = 0.0
+        self.delta = chunk_number
+        self.lg.debug(f"{self.ext_id}: inertia {self.delta_inertia}")
+
     def on_chunk_received_from_a_peer(self, chunk, sender):
         # Extend the list of known peers checking if the origin of
         # the received chunk is new. DBS specific because peers
@@ -273,12 +282,7 @@ class Peer_DBS():
         except KeyError:
             self.activity[origin] = 1
 
-        self.delta = chunk_number - self.delta
-        try:
-            self.delta_inertia[sender] = self.delta*0.1 + self.delta_inertia[sender]*0.9
-        except KeyError:
-            self.delta_inertia[sender] = 0.0
-        self.delta = chunk_number
+        self.compute_deltas(chunk_number, sender)
 
     def process_chunk(self, chunk, sender):
         self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
@@ -470,6 +474,7 @@ class Peer_DBS():
         
         # Receive a chunk.
         (chunk_number, sender) = self.process_next_message()
+        self.delta = chunk_number
         while (chunk_number < 0):
             (chunk_number, sender) = self.process_next_message()
             if self.player_connected == False:

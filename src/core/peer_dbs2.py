@@ -157,12 +157,7 @@ class Peer_DBS2(Peer_DBS):
         except KeyError:
             self.activity[origin] = 1
 
-        self.delta = chunk_number - self.delta
-        try:
-            self.delta_inertia[sender] = self.delta*0.1 + self.delta_inertia[sender]*0.9
-        except KeyError:
-            self.delta_inertia[sender] = 0.0
-        self.delta = chunk_number
+        self.compute_deltas(chunk_number, sender)
 
     def process_chunk(self, chunk, sender):
         self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
