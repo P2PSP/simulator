@@ -64,7 +64,7 @@ class Peer_DBS():
         self.played = 0 # Simulation?
         self.rounds_counter = 0 # Simulation?
         self.activity = {}  # Incremented if received a chunk in the last round from that origin
-        self.prev_chunk_number_round = 0 # Simulator?
+        self.prev_chunk_number_received_from_the_splitter = 0 # Simulator?
         self.delta = 0
         self.delta_inertia = {}
 
@@ -249,11 +249,11 @@ class Peer_DBS():
                 self.lg.debug(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
 
             try:
-                CLR = self.number_of_lost_chunks_in_this_round / (chunk_number - self.prev_chunk_number_round)
-                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks_in_this_round} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_round}")
+                CLR = self.number_of_lost_chunks_in_this_round / (chunk_number - self.prev_chunk_number_received_from_the_splitter)
+                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks_in_this_round} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_received_from_the_splitter}")
             except ZeroDivisionError:
                 pass
-            self.prev_chunk_number_round = chunk_number
+            self.prev_chunk_number_received_from_the_splitter = chunk_number
             self.number_of_lost_chunks_in_this_round = 0
 
     def on_chunk_received_from_a_peer(self, chunk, sender):
