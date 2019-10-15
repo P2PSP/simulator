@@ -34,13 +34,6 @@ class Peer_DBS2(Peer_DBS):
         # team.
         self.team = []
 
-    # Pruning messages are sent by the peers when chunks are received
-    # more than once.
-    def send_prune_origin(self, chunk_number, peer):
-        msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
-        self.team_socket.sendto(msg, peer)
-        self.lg.debug(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
-
     # Checks if the chunk with chunk_number was previously received.
     def is_duplicate(self, chunk_number):
         position = chunk_number % self.buffer_size
@@ -127,6 +120,17 @@ class Peer_DBS2(Peer_DBS):
                         max = hops
             stderr.write(f" {colorama.Back.RED}{colorama.Fore.BLACK}{max}{colorama.Style.RESET_ALL}")
 
+        if len(self.team) > 1:
+            #peer = random.choice(self.team)
+            peer = min(self.team, key=self.delta_inertia.get)
+            #self.lg.info(f"{self.ext_id}: {peer} {self.team}")
+            #peer = min(self.delta_inertia, key=self.delta_inertia.get)
+            #stderr.write(f"{peer} {self.delta_inertia}\n")
+            self.request_chunk(chunk_number, peer)
+            #stderr.write(f" ->{peer}")
+            if peer == self.ext_id[1]:
+                stderr.write(f" ------------------------->hola!!!<---------------------")
+
     def on_chunk_received_from_a_peer(self, chunk, sender):
         chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
         origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
@@ -134,7 +138,7 @@ class Peer_DBS2(Peer_DBS):
         
         #self.update_forward(origin, sender)
         if self.is_duplicate(chunk_number):
-            self.send_prune_origin(chunk_number, sender)
+            self.request_prune(chunk_number, sender)
         else:
             self.buffer_chunk(chunk)
 
@@ -170,12 +174,19 @@ class Peer_DBS2(Peer_DBS):
         if origin in self.forward:
             self.update_pendings(origin, chunk_number)
 
+    def request_chunk(self, chunk_number, peer):
+        stderr.write(f" {colorama.Fore.CYAN}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")
+        #stderr.write(f" R{self.ext_id}-{chunk_number}-{peer}")
+        self.lg.debug(f"{self.ext_id}: sent [request {chunk_number}] to {peer}")
+        msg = struct.pack("!ii", Messages.REQUEST, chunk_number)
+        self.team_socket.sendto(msg, peer)
+
     # If a peer X receives [request chunk] from peer Z, X will
     # append Z to forward[chunk.origin], but only if Z is not the
     # origin of the requested chunk. This last thing can happen if
     # Z requests chunks that will be originated at itself.
     def process_request(self, chunk_number, sender):
-        stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{chunk_number}{colorama.Style.RESET_ALL}")
+        #stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{chunk_number}/{sender[1]}{colorama.Style.RESET_ALL}")
         #stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}")
         self.lg.debug(f"{self.ext_id}: received [request {chunk_number}] from {sender}")
         #stderr.write(f" R{self.ext_id}/{chunk_number}/{sender}")
@@ -191,11 +202,19 @@ class Peer_DBS2(Peer_DBS):
             # I haven't the chunk
             pass
 
+    # Pruning messages are sent by the peers when chunks are received
+    # more than once.
+    def request_prune(self, chunk_number, peer):
+        stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")        
+        msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
+        self.team_socket.sendto(msg, peer)
+        self.lg.debug(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
+
     # When a {peer} receives a [prune {chunk_number}], the {sender} is
     # requesting that {peer} stop sending chunks originated at
     # {self.buffer[chunk_number % self.buffer_size].origin}.
     def process_prune(self, chunk_number, sender):
-        stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}")
+        #stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}")
         self.lg.debug(f"{self.ext_id}: received [prune {chunk_number}] from {sender}")
 
         def remove_sender(origin, sender):
@@ -278,12 +297,6 @@ class Peer_DBS2(Peer_DBS):
                 stderr.write("{self.ext_id}: process_unpacked_message: unexpected control chunk of index={chunk_number}")
         return (chunk_number, sender)
 
-    def request_chunk(self, chunk_number, peer):
-        #stderr.write(f" R{self.ext_id}-{chunk_number}-{peer}")
-        self.lg.debug(f"{self.ext_id}: sent [request {chunk_number}] to {peer}")
-        msg = struct.pack("!ii", Messages.REQUEST, chunk_number)
-        self.team_socket.sendto(msg, peer)
-
     def play_chunk(self, chunk_number):
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         self.lg.debug(f"{self.ext_id}: chunk={chunk_number} hops={buffer_box[ChunkStructure.HOPS]}")
@@ -325,16 +338,15 @@ class Peer_DBS2(Peer_DBS):
 
             #if self.ext_id[0] == '000':
                 #stderr.write(f" {self.team}")
-            if len(self.team) > 1:
-                #peer = random.choice(self.team)
-                peer = min(self.team, key=self.delta_inertia.get)
-                self.lg.info(f"{self.ext_id}: {peer} {self.team}")
-                #peer = min(self.delta_inertia, key=self.delta_inertia.get)
-                #stderr.write(f"{peer} {self.delta_inertia}\n")
-                self.request_chunk(chunk_number, peer)
-                #stderr.write(f" ->{peer}")
-                if peer == self.ext_id[1]:
-                    stderr.write(f" ------------------------->hola!!!<---------------------")
+            #if len(self.team) > 1:
+            #    #peer = random.choice(self.team)
+            #    peer = min(self.team, key=self.delta_inertia.get)
+            #    #peer = min(self.delta_inertia, key=self.delta_inertia.get)
+            #    #stderr.write(f"{peer} {self.delta_inertia}\n")
+            #    self.request_chunk(chunk_number, peer)
+            #    #stderr.write(f" ->{peer}")
+            #    if peer == self.ext_id[1]:
+            #        stderr.write(f" ------------------------->hola!!!<---------------------")
 
             # Send the request to all neighbors.
             # for neighbor in self.forward[self.id]:
