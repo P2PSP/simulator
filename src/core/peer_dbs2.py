@@ -20,6 +20,7 @@ import random
 import colorama
 from .simulator_stuff import hash
 import core.stderr as stderr
+from .limits import Limits
 
 class Peer_DBS2(Peer_DBS):
 
@@ -37,6 +38,7 @@ class Peer_DBS2(Peer_DBS):
     # Checks if the chunk with chunk_number was previously received.
     def is_duplicate(self, chunk_number):
         position = chunk_number % self.buffer_size
+        self.lg.debug(f"{self.buffer[position][ChunkStructure.CHUNK_NUMBER]}<->{chunk_number}")
         duplicate = self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
         if __debug__:
             if duplicate:
@@ -120,16 +122,16 @@ class Peer_DBS2(Peer_DBS):
                         max = hops
             stderr.write(f" {colorama.Back.RED}{colorama.Fore.BLACK}{max}{colorama.Style.RESET_ALL}")
 
-        if len(self.team) > 1:
-            #peer = random.choice(self.team)
-            peer = min(self.team, key=self.delta_inertia.get)
-            #self.lg.info(f"{self.ext_id}: {peer} {self.team}")
-            #peer = min(self.delta_inertia, key=self.delta_inertia.get)
-            #stderr.write(f"{peer} {self.delta_inertia}\n")
-            self.request_chunk(chunk_number, peer)
-            #stderr.write(f" ->{peer}")
-            if peer == self.ext_id[1]:
-                stderr.write(f" ------------------------->hola!!!<---------------------")
+        #if len(self.team) > 1:
+        #    #peer = random.choice(self.team)
+        #    peer = min(self.team, key=self.delta_inertia.get)
+        #    #self.lg.info(f"{self.ext_id}: {peer} {self.team}")
+        #    #peer = min(self.delta_inertia, key=self.delta_inertia.get)
+        #    #stderr.write(f"{peer} {self.delta_inertia}\n")
+        #    self.request_chunk(chunk_number, peer)
+        #    #stderr.write(f" ->{peer}")
+        #    if peer == self.ext_id[1]:
+        #        stderr.write(f" ------------------------->hola!!!<---------------------")
 
     def on_chunk_received_from_a_peer(self, chunk, sender):
         chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
@@ -338,15 +340,15 @@ class Peer_DBS2(Peer_DBS):
 
             #if self.ext_id[0] == '000':
                 #stderr.write(f" {self.team}")
-            #if len(self.team) > 1:
-            #    #peer = random.choice(self.team)
-            #    peer = min(self.team, key=self.delta_inertia.get)
-            #    #peer = min(self.delta_inertia, key=self.delta_inertia.get)
-            #    #stderr.write(f"{peer} {self.delta_inertia}\n")
-            #    self.request_chunk(chunk_number, peer)
-            #    #stderr.write(f" ->{peer}")
-            #    if peer == self.ext_id[1]:
-            #        stderr.write(f" ------------------------->hola!!!<---------------------")
+            if len(self.team) > 1:
+                #peer = random.choice(self.team)
+                peer = min(self.team, key=self.delta_inertia.get)
+                #peer = min(self.delta_inertia, key=self.delta_inertia.get)
+                #stderr.write(f"{peer} {self.delta_inertia}\n")
+                self.request_chunk(chunk_number, peer)
+                #stderr.write(f" ->{peer}")
+                if peer == self.ext_id[1]:
+                    stderr.write(f" ------------------------->hola!!!<---------------------")
 
             # Send the request to all neighbors.
             # for neighbor in self.forward[self.id]:
@@ -388,4 +390,11 @@ class Peer_DBS2(Peer_DBS):
                 else:
                     buf += " "
             self.lg.debug(f"{self.ext_id}: buffer={buf}")
+
+        chunk_number = (chunk_number + 5) % Limits.MAX_CHUNK_NUMBER
+        buffer_box = self.buffer[chunk_number % self.buffer_size]
+        if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
+            if len(self.team) > 1:
+                peer = min(self.team, key=self.delta_inertia.get)
+                self.request_chunk(chunk_number, peer)
 
