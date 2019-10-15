@@ -85,17 +85,19 @@ class Simulator():
         stderr.write(f"speed={self.speed}\n")
         self.lg.debug(f"seed={self.seed}")
         stderr.write(f"seed={self.seed}\n")
-        
+        stderr.write("\n")
         stderr.write(f"CPU usage\n")
         stderr.write(f"{colorama.Fore.MAGENTA}Team size{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Fore.RED}Lost chunk{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Fore.RED}(Unsupportive peer){colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Fore.BLUE}Deleted peer{colorama.Style.RESET_ALL}\n")
         stderr.write(f"{colorama.Fore.YELLOW}Round{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"{colorama.Fore.RED}Lost chunk/Unsupportive peer{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"{colorama.Fore.BLUE}Deleted peer{colorama.Style.RESET_ALL}\n")
         if __debug__:
             stderr.write(f"{colorama.Back.RED}{colorama.Fore.BLACK}Max hops{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Back.CYAN}{colorama.Fore.BLACK}Requested chunk{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Fore.CYAN}Prunned chunk{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"{colorama.Fore.CYAN}Sender/Requested chunk/Receiver{colorama.Style.RESET_ALL}\n")
+        #stderr.write(f"{colorama.Fore.CYAN}Sender/Requested chunk/Receiver{colorama.Back.CYAN} {colorama.Fore.BLACK}Requested chunk/requesting peer{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"{colorama.Back.CYAN}{colorama.Fore.BLACK}Sender/Prunned chunk/Receiver{colorama.Style.RESET_ALL}\n")
+        stderr.write("\n")
+        
         np.random.seed(self.seed)
 
     def compute_team_size(self, n):

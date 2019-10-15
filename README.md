@@ -6,10 +6,10 @@ A complete stand-alone simulator of the P2PSP (Peer-to-Peer Straightforward Prot
 
 ## Examples:
 
-1. Run a team with 10 peers (1 monitor and 9 normal peers), during 100 rounds:
+1. Run a team using the default parameters:
 ```
 # inside of the <src> folder, run:
-python3 simulator.py run
+python3 simulator.py run > /tmp/1
 ```
 
 2. Controlling the number of peers that will join the team:
@@ -49,7 +49,7 @@ python3 simulator.py run --loglevel INFO
 
 8. Showing the buffer of the peer #3 (peers are enumerated sequentially using 3 digits):
 ```
-python3 simulator.py run --loglevel DEBUG | grep "buffer=" | grep "'003'"
+python3 simulator.py run 2> /dev/null | grep "buffer=" | grep "'003'"
 ```
 
 9. Showing the neighborhood degree of peer #3 for optimization_horizon=5:
