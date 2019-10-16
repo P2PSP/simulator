@@ -41,7 +41,6 @@ class Peer_DBS2(Peer_DBS):
     # Checks if the chunk with chunk_number was previously received.
     def is_duplicate(self, chunk_number):
         position = chunk_number % self.buffer_size
-        self.lg.debug(f"{self.buffer[position][ChunkStructure.CHUNK_NUMBER]}<->{chunk_number}")
         duplicate = self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
         if __debug__:
             if duplicate:
