@@ -194,20 +194,35 @@ class Peer_DBS():
         self.lg.debug(f"{self.public_endpoint}: connected to the splitter at {self.splitter}")
         return True
 
-    def send_chunks_to_neighbors(self):
+    def send_chunks(self, neighbor):
+        self.lg.debug(f"{self.ext_id}: sending chunks neighbor={neighbor}")
+        # When peer X receives a chunk, X selects the next
+        # entry pending[E] (with one or more chunk numbers),
+        # sends the chunk with chunk_number C indicated by
+        # pending[E] to E, and removes C from pending[E]. If
+        # in pending[E] there are more than one chunk
+        # (number), all chunks are sent in a burst. E should
+        # be selected to sent first to those peers that we
+        # want to forward us chunks not originated in them.
+        while self.pending[neighbor]:
+            chunk_number = self.pending[neighbor].pop(0)
+            self.send_chunk_to_peer(chunk_number, neighbor)
+
+    def send_chunks_to_the_next_neighbor(self):
         self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending})")
         # Select next entry in pending with chunks to send
         #stderr.write(f" ==>{self.pending}")
         if len(self.pending) > 0:
             counter = 0
-            neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
+            neighbor = list(self.pending.keys())[self.neighbor_index]
             self.send_chunks(neighbor)
+            assert len(self.pending[neighbor]) == 0, f"{self.ext_id}: {self.pending}"
             while len(self.pending[neighbor]) == 0:
-                self.neighbor_index = list(self.pending.keys()).index(neighbor) + 1
-                neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
-                counter += 1
+                self.neighbor_index = (list(self.pending.keys()).index(neighbor) + 1) % len(self.pending)
+                neighbor = list(self.pending.keys())[self.neighbor_index]
                 if counter > len(self.pending):
                     break
+                counter += 1
 
     def buffer_chunk(self, chunk):
         position = chunk[ChunkStructure.CHUNK_NUMBER] % self.buffer_size
@@ -333,20 +348,6 @@ class Peer_DBS():
                 except ValueError:
                     stderr.write(f"{self.ext_id}: failed to remove peer {sender} from {peers_list}")
 
-    def send_chunks(self, neighbor):
-        self.lg.debug(f"{self.ext_id}: sending chunks neighbor={neighbor}")
-        # When peer X receives a chunk, X selects the next
-        # entry pending[E] (with one or more chunk numbers),
-        # sends the chunk with chunk_number C indicated by
-        # pending[E] to E, and removes C from pending[E]. If
-        # in pending[E] there are more than one chunk
-        # (number), all chunks are sent in a burst. E should
-        # be selected to sent first to those peers that we
-        # want to forward us chunks not originated in them.
-        while self.pending[neighbor]:
-            chunk_number = self.pending[neighbor].pop(0)
-            self.send_chunk_to_peer(chunk_number, neighbor)
-
     def receive_packet(self):
         return self.team_socket.recvfrom(self.max_packet_length)
 
@@ -385,7 +386,7 @@ class Peer_DBS():
             self.lg.debug(f"{self.ext_id}: received chunk {message} from {sender}")
             self.received_chunks += 1
             self.process_chunk(message, sender)
-            self.send_chunks_to_neighbors()
+            self.send_chunks_to_the_next_neighbor()
 
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
             if chunk_number == Messages.HELLO:

@@ -40,7 +40,7 @@ class Simulator():
                  max_chunk_loss = 16,
                  speed = 1000.0,
                  seed = None,
-                 optimization_horizon = 16,  # buffer_size / 2
+                 horizon = 16,  # buffer_size / 2
                  gui=False):
 
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -63,7 +63,7 @@ class Simulator():
         self.current_round = 0
         self.speed = float(speed)
         self.seed = seed
-        self.optimization_horizon = optimization_horizon
+        self.horizon = horizon
         self.gui = gui
         self.processes = {}
 
@@ -88,8 +88,8 @@ class Simulator():
         stderr.write(f"| speed={self.speed}\n")
         self.lg.debug(f"seed={self.seed}")
         stderr.write(f"| seed={self.seed}\n")
-        self.lg.debug(f"optimization_horizon={self.optimization_horizon}")
-        stderr.write(f"| optimization_horizon={self.optimization_horizon}\n")
+        self.lg.debug(f"horizon={self.horizon}")
+        stderr.write(f"| horizon={self.horizon}\n")
         stderr.write("\n")
 
         stderr.write(f"Output synopsis:\n")
@@ -156,7 +156,7 @@ class Simulator():
                 peer = Monitor_DBS2_simulator(id = id,
                                              name = "Monitor_DBS2_simulator")
                 self.lg.debug("simulator: DBS2 monitor created")
-                peer.set_optimization_horizon(self.optimization_horizon)
+                peer.set_optimization_horizon(self.horizon)
         elif type == "faulty":
             peer = Peer_faulty(id, name="Peer_DBS2_faulty")
             self.lg.debug("simulator: faulty peer created")
@@ -167,7 +167,7 @@ class Simulator():
             elif self.set_of_rules == "DBS2":
                 peer = Peer_DBS2_simulator(id = id, name = "Peer_DBS2_simulator")
                 self.lg.debug("simulator: DBS2 peer created")
-                peer.set_optimization_horizon(self.optimization_horizon)
+                peer.set_optimization_horizon(self.horizon)
             elif self.set_of_rules == "IMS":
                 peer = Peer_IMS_simulator(id = id, name = "Peer_IMS_simulator")
                 self.lg.debug("simulator: IMS peer created")
