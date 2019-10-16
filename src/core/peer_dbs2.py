@@ -54,24 +54,29 @@ class Peer_DBS2(Peer_DBS):
         self.team.append(peer)
 
     # The forwarding table indicates to which peers the received
-    # chunks must be retransmitted. This method adds {sender} to the
+    # chunks must be retransmitted. This method adds {destination} to the
     # list of peers forwarded for {origin}. If {origin} is new, a new
-    # list is created. When {sender} is added, its pending table is
+    # list is created. When {destination} is added, its pending table is
     # also created.
-    def update_forward(self, origin, sender):
+    def update_forward(self, origin, destination):
         if origin in self.forward:
-            if sender not in self.forward[origin]:
-                self.forward[origin].append(sender)
-                #self.pending[sender] = [] OJJJJJJJJJJJJJJJJOOOOOOOOOOOOOOOOOOOOOOOOOOORRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            if destination not in self.forward[origin]:
+                self.forward[origin].append(destination)
+                #self.pending[destination] = [] OJJJJJJJJJJJJJJJJOOOOOOOOOOOOOOOOOOOOOOOOOOORRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                stderr.write("-")
             else:
-                # {sender} already in {self.forward[origin]}
+                # {destination} already in {self.forward[origin]}
+                stderr.write("+")
                 pass
         else:
             # {origin} is not in self.forward
-            self.forward[origin] = [sender]
-            self.pending[sender] = []
-        assert origin in self.forward, f"{self.ext_id}: {origin} is not in {self.forward}"
-        assert sender in self.forward[origin], f"{self.ext_id}: {sender} not in {self.forward[origin]}"
+            self.forward[origin] = [destination]
+            self.pending[destination] = []
+            stderr.write(f"{self.ext_id}: origin={origin} destination={destination}")
+        #assert origin in self.forward, f"{self.ext_id}: {origin} is not in {self.forward}"
+        #assert destination in self.forward[origin], f"{self.ext_id}: {destination} not in {self.forward[origin]}"
+        
+        stderr.write(f" [{len(self.forward)}]")
         #stderr.write(f"{self.forward}\n")
 
     def on_chunk_received_from_the_splitter(self, chunk):
@@ -209,8 +214,8 @@ class Peer_DBS2(Peer_DBS):
             # I haven't the chunk
             pass
 
-    # Pruning messages are sent by the peers when chunks are received
-    # more than once.
+    # Pruning messages are sent when chunks are received more than
+    # once.
     def request_prune(self, chunk_number, peer):
         return
         stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")        
@@ -307,8 +312,6 @@ class Peer_DBS2(Peer_DBS):
 
     def play_chunk(self, chunk_number):
         optimized_chunk = (chunk_number + self.optimization_horizon) % Limits.MAX_CHUNK_NUMBER
-        #chunk_number = (chunk_number + 5) % Limits.MAX_CHUNK_NUMBER
-        
         buffer_box = self.buffer[optimized_chunk % self.buffer_size]
         if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
             if len(self.team)>1:
