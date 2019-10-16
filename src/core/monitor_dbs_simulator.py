@@ -25,3 +25,6 @@ class Monitor_DBS_simulator(Monitor_DBS, Peer_DBS_simulator):
 
     def empty_entry_in_buffer(self):
         return Peer_DBS_simulator.empty_entry_in_buffer(self)
+
+#    def set_min_activiy(self, min_activity):
+#        return Peer_DBS_simulator.set_min_activiy(min_activity)

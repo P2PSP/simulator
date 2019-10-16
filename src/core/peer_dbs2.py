@@ -35,6 +35,9 @@ class Peer_DBS2(Peer_DBS):
         # team.
         self.team = []
 
+    def set_optimization_horizon(self, optimization_horizon):
+        self.optimization_horizon = optimization_horizon
+        
     # Checks if the chunk with chunk_number was previously received.
     def is_duplicate(self, chunk_number):
         position = chunk_number % self.buffer_size
@@ -45,21 +48,21 @@ class Peer_DBS2(Peer_DBS):
                 self.lg.debug(f"{self.ext_id}: duplicate {chunk_number} (the first one was originated by ({self.buffer[position][ChunkStructure.ORIGIN_ADDR]}, {self.buffer[position][ChunkStructure.ORIGIN_PORT]})")
         return duplicate
 
-    # Add a new peer to the team structure.
+    # Add a new peer to the team list.
     def update_the_team(self, peer):
         self.lg.debug(f"{self.ext_id}: updating team with peer {peer}")
         self.team.append(peer)
 
     # The forwarding table indicates to which peers the received
-    # chunks must be retransmitted. This method adds <sender> to the
-    # list of peers forwarded for {origin}. If <origin> is new, a new
+    # chunks must be retransmitted. This method adds {sender} to the
+    # list of peers forwarded for {origin}. If {origin} is new, a new
     # list is created. When {sender} is added, its pending table is
     # also created.
     def update_forward(self, origin, sender):
         if origin in self.forward:
             if sender not in self.forward[origin]:
                 self.forward[origin].append(sender)
-                self.pending[sender] = []
+                #self.pending[sender] = [] OJJJJJJJJJJJJJJJJOOOOOOOOOOOOOOOOOOOOOOOOOOORRRRRRRRRRRRRRRRRRRRRRRRRRRR
             else:
                 # {sender} already in {self.forward[origin]}
                 pass
@@ -67,7 +70,9 @@ class Peer_DBS2(Peer_DBS):
             # {origin} is not in self.forward
             self.forward[origin] = [sender]
             self.pending[sender] = []
-        assert origin in self.forward, f"{self.ext_id}: {origin} is not in the forwarding table={self.forward}"
+        assert origin in self.forward, f"{self.ext_id}: {origin} is not in {self.forward}"
+        assert sender in self.forward[origin], f"{self.ext_id}: {sender} not in {self.forward[origin]}"
+        #stderr.write(f"{self.forward}\n")
 
     def on_chunk_received_from_the_splitter(self, chunk):
         chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
@@ -207,6 +212,7 @@ class Peer_DBS2(Peer_DBS):
     # Pruning messages are sent by the peers when chunks are received
     # more than once.
     def request_prune(self, chunk_number, peer):
+        return
         stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")        
         msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
@@ -300,6 +306,15 @@ class Peer_DBS2(Peer_DBS):
         return (chunk_number, sender)
 
     def play_chunk(self, chunk_number):
+        optimized_chunk = (chunk_number + self.optimization_horizon) % Limits.MAX_CHUNK_NUMBER
+        #chunk_number = (chunk_number + 5) % Limits.MAX_CHUNK_NUMBER
+        
+        buffer_box = self.buffer[optimized_chunk % self.buffer_size]
+        if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
+            if len(self.team)>1:
+                peer = min(self.team, key=self.delta_inertia.get)
+                self.request_chunk(optimized_chunk, peer)
+
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         self.lg.debug(f"{self.ext_id}: chunk={chunk_number} hops={buffer_box[ChunkStructure.HOPS]}")
         if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
@@ -340,15 +355,15 @@ class Peer_DBS2(Peer_DBS):
 
             #if self.ext_id[0] == '000':
                 #stderr.write(f" {self.team}")
-            if len(self.team) > 1:
-                #peer = random.choice(self.team)
-                peer = min(self.team, key=self.delta_inertia.get)
-                #peer = min(self.delta_inertia, key=self.delta_inertia.get)
-                #stderr.write(f"{peer} {self.delta_inertia}\n")
-                self.request_chunk(chunk_number, peer)
-                #stderr.write(f" ->{peer}")
-                if peer == self.ext_id[1]:
-                    stderr.write(f" ------------------------->hola!!!<---------------------")
+            #if len(self.team) > 1:
+            #    #peer = random.choice(self.team)
+            #    peer = min(self.team, key=self.delta_inertia.get)
+            #    #peer = min(self.delta_inertia, key=self.delta_inertia.get)
+            #    #stderr.write(f"{peer} {self.delta_inertia}\n")
+            #    self.request_chunk(chunk_number, peer)
+            #    #stderr.write(f" ->{peer}")
+            #    if peer == self.ext_id[1]:
+            #        stderr.write(f" ------------------------->hola!!!<---------------------")
 
             # Send the request to all neighbors.
             # for neighbor in self.forward[self.id]:
@@ -391,10 +406,4 @@ class Peer_DBS2(Peer_DBS):
                     buf += " "
             self.lg.debug(f"{self.ext_id}: buffer={buf}")
 
-        chunk_number = (chunk_number + 5) % Limits.MAX_CHUNK_NUMBER
-        buffer_box = self.buffer[chunk_number % self.buffer_size]
-        if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
-            if len(self.team) > 1:
-                peer = min(self.team, key=self.delta_inertia.get)
-                self.request_chunk(chunk_number, peer)
 
