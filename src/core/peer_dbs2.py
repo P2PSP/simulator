@@ -83,7 +83,7 @@ class Peer_DBS2(Peer_DBS):
         self.buffer_chunk(chunk)
 
         # Increase inactivity and remove selfish neighbors.
-        for neighbor in self.activity.keys():
+        for neighbor in list(self.activity.keys()):
             self.activity[neighbor] -= 1
 #        for _neighbor in list(self.activity):
             if self.activity[neighbor] < self.min_activity:
@@ -348,15 +348,15 @@ class Peer_DBS2(Peer_DBS):
 
             #if self.ext_id[0] == '000':
                 #stderr.write(f" {self.team}")
-            #if len(self.team) > 1:
-            #    #peer = random.choice(self.team)
-            #    peer = min(self.team, key=self.delta_inertia.get)
-            #    #peer = min(self.delta_inertia, key=self.delta_inertia.get)
-            #    #stderr.write(f"{peer} {self.delta_inertia}\n")
-            #    self.request_chunk(chunk_number, peer)
-            #    #stderr.write(f" ->{peer}")
-            #    if peer == self.ext_id[1]:
-            #        stderr.write(f" ------------------------->hola!!!<---------------------")
+            if len(self.team) > 1:
+                #peer = random.choice(self.team)
+                peer = min(self.team, key=self.delta_inertia.get)
+                #peer = min(self.delta_inertia, key=self.delta_inertia.get)
+                #stderr.write(f"{peer} {self.delta_inertia}\n")
+                self.request_chunk(chunk_number, peer)
+                #stderr.write(f" ->{peer}")
+                if peer == self.ext_id[1]:
+                    stderr.write(f" ------------------------->hola!!!<---------------------")
 
             # Send the request to all neighbors.
             # for neighbor in self.forward[self.id]:
