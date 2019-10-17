@@ -12,11 +12,9 @@ peer_dbs2 module
 # such paths when chunks are lost.
 
 import struct
-import sys
 from .messages import Messages
 from .chunk_structure import ChunkStructure
 from .peer_dbs import Peer_DBS
-import random
 import colorama
 from .simulator_stuff import hash
 import core.stderr as stderr
@@ -70,12 +68,12 @@ class Peer_DBS2(Peer_DBS):
         else:
             # {origin} is not in self.forward
             self.forward[origin] = [destination]
-            self.pending[destination] = []
+            #self.pending[destination] = [] OJOJOOJOJOJOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
             stderr.write(f"{self.ext_id}: origin={origin} destination={destination}")
         #assert origin in self.forward, f"{self.ext_id}: {origin} is not in {self.forward}"
         #assert destination in self.forward[origin], f"{self.ext_id}: {destination} not in {self.forward[origin]}"
         
-        stderr.write(f" [{len(self.forward)}]")
+        stderr.write(f" [{len(self.forward)}]") # <---------------------
         #stderr.write(f"{self.forward}\n")
 
     def on_chunk_received_from_the_splitter(self, chunk):
@@ -84,27 +82,28 @@ class Peer_DBS2(Peer_DBS):
         self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the splitter")
         self.buffer_chunk(chunk)
 
-        # Remove selfish neighbors.
-        for _origin in list(self.activity):
-            if self.activity[_origin] < self.min_activity:
-                del self.activity[_origin]
+        # Increase inactivity and remove selfish neighbors.
+        for neighbor in self.activity.keys():
+            self.activity[neighbor] -= 1
+#        for _neighbor in list(self.activity):
+            if self.activity[neighbor] < self.min_activity:
+                del self.activity[neighbor]
                 for neighbors in self.forward.values():
-                    if _origin in neighbors:
-                        neighbors.remove(_origin)
-
-        # Increase inactivity
-        for origin in self.activity.keys():
-            self.activity[origin] -= 1
+                    if neighbor in neighbors:
+                        neighbors.remove(neighbor)
+                # Habría que borrar las entradas de forward que
+                #apuntan al selfish peer y los chunks pendientes.  del
+                #self.pending[neighbor]
 
         # Can produce network congestion!
         #for neighbor in self.pending:
         #    self.send_chunks(neighbor)
 
         # Remove empty forwarding tables.
-        for _origin in list(self.forward):
-            if origin != self.public_endpoint:
-                if len(self.forward[_origin]) == 0:
-                    del self.forward[_origin]
+        #for _origin in list(self.forward.keys()):
+        #    #if origin != self.public_endpoint:
+        #    if len(self.forward[_origin]) == 0:
+        #        del self.forward[_origin]
 
         if __debug__:
             self.rounds_counter += 1
@@ -216,7 +215,6 @@ class Peer_DBS2(Peer_DBS):
     # Pruning messages are sent when chunks are received more than
     # once.
     def request_prune(self, chunk_number, peer):
-        return
         stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")        
         msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
         self.team_socket.sendto(msg, peer)
@@ -226,7 +224,6 @@ class Peer_DBS2(Peer_DBS):
     # requesting that {peer} stop sending chunks originated at
     # {self.buffer[chunk_number % self.buffer_size].origin}.
     def process_prune(self, chunk_number, sender):
-        return
         #stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}")
         self.lg.debug(f"{self.ext_id}: received [prune {chunk_number}] from {sender}")
 
@@ -264,13 +261,17 @@ class Peer_DBS2(Peer_DBS):
             self.team.append(peer)
 
     def process_hello(self, sender):
+        self.lg.debug(f"{self.ext_id}: forward={self.forward}")
         self.lg.debug(f"{self.ext_id}: received [hello] from {sender}")
         # If a peer X receives [hello] from peer Z, X will
         # append Z to forward[X].
-        if self.public_endpoint in self.forward:
-            if sender not in self.forward[self.public_endpoint]:
-                self.forward[self.public_endpoint].append(sender)
-                self.pending[sender] = []
+        #if self.public_endpoint in self.forward:
+        assert self.public_endpoint in self.forward, f"{self.ext_id}: forward={self.forward} public_endpoint={self.public_endpoint}"
+        if sender not in self.forward[self.public_endpoint]:
+            self.forward[self.public_endpoint].append(sender)
+            self.pending[sender] = []
+        self.lg.debug(f"{self.ext_id}: forward={self.forward}")
+
         if sender not in self.team:
             if __debug__:
                 if sender == self.public_endpoint:
@@ -311,20 +312,9 @@ class Peer_DBS2(Peer_DBS):
         return (chunk_number, sender)
 
     def play_chunk(self, chunk_number):
-        optimized_chunk = (chunk_number + self.optimization_horizon) % Limits.MAX_CHUNK_NUMBER
-        buffer_box = self.buffer[optimized_chunk % self.buffer_size]
-        if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
-            if len(self.team)>1:
-                peer = min(self.team, key=self.delta_inertia.get)
-                self.request_chunk(optimized_chunk, peer)
-
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         self.lg.debug(f"{self.ext_id}: chunk={chunk_number} hops={buffer_box[ChunkStructure.HOPS]}")
-        if buffer_box[ChunkStructure.CHUNK_DATA] != b'L':
-            # Only the data will be empty in order to remember things ...
-            self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer(buffer_box)
-            self.played += 1
-        else:
+        if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
             # The cell in the buffer is empty.
             self.complain(chunk_number) # Only monitors
             #self.complain(self.buffer[chunk_position][ChunkStructure.CHUNK_NUMBER]) # If I'm a monitor
@@ -393,6 +383,17 @@ class Peer_DBS2(Peer_DBS):
             #     self.lg.debug("{}: debt={}".format(self.ext_id, self.debt))
             #     if self.neighbor is not None:  # Este if no debería existir
             #        self.request_chunk(chunk_number, self.neighbor)
+        else:
+            # Only the data will be empty in order to remember things ...
+            self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer(buffer_box)
+            self.played += 1
+
+        optimized_chunk = (chunk_number + self.optimization_horizon) % Limits.MAX_CHUNK_NUMBER
+        buffer_box = self.buffer[optimized_chunk % self.buffer_size]
+        if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
+            if len(self.team)>1:
+                peer = min(self.team, key=self.delta_inertia.get)
+                self.request_chunk(optimized_chunk, peer)
 
         self.number_of_chunks_consumed += 1
         if __debug__:

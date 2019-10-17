@@ -40,7 +40,7 @@ class Simulator():
                  max_chunk_loss = 16,
                  speed = 1000.0,
                  seed = None,
-                 horizon = 16,  # buffer_size / 2
+                 horizon = 16,  # buffer_size - number_of_peers*2
                  gui=False):
 
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

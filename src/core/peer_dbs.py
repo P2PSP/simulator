@@ -56,7 +56,7 @@ class Peer_DBS():
 
         self.sendto_counter = 0
         self.received_chunks = 0
-        self.packet_format()
+        self.packet_format() # OJOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
         self.max_packet_length = struct.calcsize(self.chunk_packet_format)
         self.neighbor_index = 0 
         self.number_of_chunks_consumed = 0 # Simulation ?
@@ -131,6 +131,7 @@ class Peer_DBS():
         self.lg.debug(f"{self.ext_id}: sent [hello] to {entity}")
 
     def receive_the_list_of_peers(self):
+        self.lg.debug(f"{self.ext_id}: receiving the list of peers")
         peers_pending_of_reception = self.number_of_peers
         msg_length = struct.calcsize("!Ii")
         counter = 0
@@ -141,17 +142,17 @@ class Peer_DBS():
 
         while peers_pending_of_reception > 0:
             msg = self.splitter_socket.recv(msg_length)
-            peer = struct.unpack("!Ii", msg)
-            peer = (IP_tools.int2ip(peer[0]), peer[1])
+            neighbor = struct.unpack("!Ii", msg)
+            neighbor = (IP_tools.int2ip(neighbor[0]), neighbor[1])
             
             # I'll forward at least the chunks received from the splitter.
-            self.forward[self.public_endpoint].append(peer)
-            self.pending[peer] = []
+            self.forward[self.public_endpoint].append(neighbor)
+            self.pending[neighbor] = []
 
-            self.delta_inertia[peer] = 0.0
+            self.delta_inertia[neighbor] = 0.0
             
-            self.say_hello(peer)
-            self.lg.debug(f"{self.ext_id}: peer {peer} is in the team")
+            self.say_hello(neighbor)
+            self.lg.debug(f"{self.ext_id}: peer {neighbor} is in the team")
             counter += 1
             peers_pending_of_reception -= 1
 
@@ -195,7 +196,7 @@ class Peer_DBS():
         return True
 
     def send_chunks(self, neighbor):
-        self.lg.debug(f"{self.ext_id}: sending chunks neighbor={neighbor}")
+        self.lg.debug(f"{self.ext_id}: sending chunks {self.pending[neighbor]} to neighbor={neighbor}")
         # When peer X receives a chunk, X selects the next
         # entry pending[E] (with one or more chunk numbers),
         # sends the chunk with chunk_number C indicated by
@@ -207,6 +208,13 @@ class Peer_DBS():
         while self.pending[neighbor]:
             chunk_number = self.pending[neighbor].pop(0)
             self.send_chunk_to_peer(chunk_number, neighbor)
+        assert len(self.pending[neighbor]) == 0, f"len(self.pending[{neighbor}])={len(self.pending[neighbor])}"
+
+    def send_chunk_to_peer(self, chunk_number, destination):
+        packet = self.create_packet(chunk_number)
+        self.team_socket.sendto(packet, destination)
+        self.sendto_counter += 1
+        self.lg.debug(f"{self.ext_id}: chunk {chunk_number} sent to {destination}")
 
     def send_chunks_to_the_next_neighbor(self):
         self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending})")
@@ -215,6 +223,7 @@ class Peer_DBS():
         if len(self.pending) > 0:
             counter = 0
             neighbor = list(self.pending.keys())[self.neighbor_index]
+            self.lg.debug(f"{self.ext_id}: selected neighbor {neighbor} from {self.pending.keys()}")
             self.send_chunks(neighbor)
             assert len(self.pending[neighbor]) == 0, f"{self.ext_id}: {self.pending}"
             while len(self.pending[neighbor]) == 0:
@@ -229,27 +238,39 @@ class Peer_DBS():
         self.buffer[position] = chunk
         self.lg.debug(f"{self.ext_id}: buffering chunk={chunk}")
 
+    def update_pendings(self, origin, chunk_number):
+        self.lg.debug(f"{self.ext_id}: updating pendings (origin={origin}, chunk_number={chunk_number})")
+        assert origin in self.forward, f"{self.ext_id}: {origin} is not in the forwarding table={self.forward}"
+        for neighbor in self.forward[origin]:
+            try:
+                self.pending[neighbor].append(chunk_number)
+            except KeyError:
+                self.pending[neighbor] = [chunk_number]
+
     def on_chunk_received_from_the_splitter(self, chunk):
         chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
         if __debug__:
             origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
             self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin} received from the splitter")
 
-        # A new chunk is received from the splitter, so, a new
-        # chunk to forward to the rest of the team. DBS specific.
-        self.update_pendings(origin, chunk_number)
+        # A new chunk is received from the splitter, so, a new chunk
+        # must be forwarded to the rest of the team.
+        #for neighbor in self.forward[self.public_endpoint]:
+        #    try:
+        #        self.pending[neighbor].append(chunk_number)
+        #    except KeyError:
+        #        self.pending[neighbor] = [chunk_number]
+        self.update_pendings(self.public_endpoint, chunk_number)
 
-        # Remove selfish neighbors.
-        for _origin in list(self.activity):
-            if self.activity[_origin] < self.min_activity:
-                del self.activity[_origin]
-                for neighbors in self.forward.values():
-                    if _origin in neighbors:
-                        neighbors.remove(_origin)
-
-        # Increase inactivity
-        for origin in self.activity.keys():
-            self.activity[origin] -= 1
+        # Increase inactivity and remove selfish neighbors.
+        for neighbor in self.activity.keys():
+            self.activity[neighbor] -= 1
+        #for neighbor in list(self.activity):
+            if self.activity[neighbor] < self.min_activity:
+                del self.activity[neighbor]
+                for neighbors_list in self.forward.values():
+                    if neighbor in neighbors_list:
+                        neighbors_list.remove(neighbor)
 
         # New round, all pending chunks are sent for neighbor in self.pending:
         # self.send_chunks(neighbor)
@@ -306,26 +327,6 @@ class Peer_DBS():
             self.on_chunk_received_from_the_splitter(chunk)
         else:
             self.on_chunk_received_from_a_peer(chunk, sender)
-
-    def update_pendings(self, origin, chunk_number):
-        self.lg.debug(f"{self.ext_id}: updating pendings (origin={origin}, chunk_number={chunk_number})")
-        # A new chunk has been received, and this chunk has an origin
-        # (not necessarily the sender of the chunk). For all peers P_i in
-        # forward[origin] the chunk (number) is appended to pending[P_i].
-        #stderr.write(f" {len(self.forward)}")
-        #stderr.write(f" {origin in self.forward}")
-        assert origin in self.forward, f"{self.ext_id}: {origin} is not in the forwarding table={self.forward}"
-        for peer in self.forward[origin]:
-            try:
-                self.pending[peer].append(chunk_number)
-            except KeyError:
-                self.pending[peer] = [chunk_number]
-
-    def send_chunk_to_peer(self, chunk_number, destination):
-        packet = self.create_packet(chunk_number)
-        self.team_socket.sendto(packet, destination)
-        self.sendto_counter += 1
-        self.lg.debug(f"{self.ext_id}: chunk {chunk_number} sent to {destination}")
 
     def process_hello(self, sender):
         self.lg.debug(f"{self.ext_id}: received [hello] from {sender}")
