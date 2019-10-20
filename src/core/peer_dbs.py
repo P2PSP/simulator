@@ -65,7 +65,7 @@ class Peer_DBS():
         self.rounds_counter = 0 # Simulation?
         self.activity = {}  # Incremented if received a chunk in the last round from that origin
         self.prev_chunk_number_received_from_the_splitter = 0 # Simulator?
-        self.delta = 0
+        #self.delta = 0
         self.delta_inertia = {}
 
         logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
@@ -293,12 +293,13 @@ class Peer_DBS():
             self.number_of_lost_chunks_in_this_round = 0
 
     def compute_deltas(self, chunk_number, sender):
-        self.delta = chunk_number - self.delta
+        #self.delta = chunk_number - self.delta
+        delta = chunk_number - self.chunk_to_play
         try:
-            self.delta_inertia[sender] = abs(self.delta)*0.1 + self.delta_inertia[sender]*0.9
+            self.delta_inertia[sender] = abs(delta)*0.1 + self.delta_inertia[sender]*0.9
         except KeyError:
             self.delta_inertia[sender] = 0.0
-        self.delta = chunk_number
+        #self.delta = chunk_number
         self.lg.debug(f"{self.ext_id}: inertia {self.delta_inertia}")
 
     def on_chunk_received_from_a_peer(self, chunk, sender):
@@ -363,17 +364,37 @@ class Peer_DBS():
         packet = struct.pack(self.chunk_packet_format, *chunk)
         return packet
 
-    def unpack_chunk(self, packet):
+    def ___unpack_chunk(self, packet):
         chunk = list(struct.unpack(self.chunk_packet_format, packet))
         chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
         chunk[ChunkStructure.HOPS] += 1
         return chunk
 
     def unpack_message(self, packet, sender):
+        msg_format = "!i" + (len(packet)-4)*'s'
+        chunk_number, *i_dont_know = struct.unpack(msg_format, packet)
+        if chunk_number >= 0:
+            self.received_chunks += 1
+            chunk = list(struct.unpack(self.chunk_packet_format, packet))
+            chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
+            chunk[ChunkStructure.HOPS] += 1
+            self.lg.debug(f"{self.ext_id}: received chunk {chunk} from {sender}")
+            self.process_chunk(chunk, sender)
+            self.send_chunks_to_the_next_neighbor()
+        else:
+            if chunk_number == Messages.HELLO:
+                self.process_hello(sender)
+            elif chunk_number == Messages.GOODBYE:
+                self.process_goodbye(sender)
+            else:
+                stderr.write("{self.ext_id}: unexpected control chunk of index={chunk_number}")
+        return (chunk_number, sender)            
+
+    def ___unpack_message(self, packet, sender):
         if len(packet) == self.max_packet_length:
             message = self.unpack_chunk(packet)
-        elif len(packet) == struct.calcsize("!iii"):
-            message = struct.unpack("!iii", packet)  # Control message: [control, parameter, parameter]
+        elif len(packet) == struct.calcsize("!iIi"):
+            message = struct.unpack("!iIi", packet)  # Control message: [control, parameter, parameter]
         elif len(packet) == struct.calcsize("!ii"):
             message = struct.unpack("!ii", packet)  # Control message: [control, parameter]
         else:
@@ -381,7 +402,7 @@ class Peer_DBS():
         x = self.process_unpacked_message(message, sender)
         return x
 
-    def process_unpacked_message(self, message, sender):
+    def ___process_unpacked_message(self, message, sender):
         chunk_number = message[ChunkStructure.CHUNK_NUMBER]
         if chunk_number >= 0:
             self.lg.debug(f"{self.ext_id}: received chunk {message} from {sender}")

@@ -11,6 +11,7 @@ peer_dbs2 module
 # receive the chunks indirectly, tracing multihop paths. Peers create
 # such paths when chunks are lost.
 
+import random
 import struct
 from .messages import Messages
 from .chunk_structure import ChunkStructure
@@ -19,11 +20,11 @@ import colorama
 from .simulator_stuff import hash
 import core.stderr as stderr
 from .limits import Limits
+from .ip_tools import IP_tools
 
 class Peer_DBS2(Peer_DBS):
 
     def __init__(self):
-        #super().__init__()
         Peer_DBS.__init__(self)
 
         # Peers (end-points) in the known team, which is formed by
@@ -39,6 +40,7 @@ class Peer_DBS2(Peer_DBS):
     # Checks if the chunk with chunk_number was previously received.
     def is_duplicate(self, chunk_number):
         position = chunk_number % self.buffer_size
+        stderr.write(f" {chunk_number}/{self.buffer[position][ChunkStructure.CHUNK_NUMBER]}")
         duplicate = self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
         if __debug__:
             if duplicate:
@@ -75,6 +77,31 @@ class Peer_DBS2(Peer_DBS):
         
         stderr.write(f" [{len(self.forward)}]") # <---------------------
         #stderr.write(f"{self.forward}\n")
+
+    def unpack_message(self, packet, sender):
+        msg_format = "!i" + (len(packet)-4)*'s'
+        chunk_number, *i_dont_know = struct.unpack(msg_format, packet)
+        if chunk_number >= 0:
+            self.received_chunks += 1
+            chunk = list(struct.unpack(self.chunk_packet_format, packet))
+            chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
+            chunk[ChunkStructure.HOPS] += 1
+            self.lg.debug(f"{self.ext_id}: received chunk {chunk} from {sender}")
+            self.process_chunk(chunk, sender)
+            self.send_chunks_to_the_next_neighbor()
+        else:
+            if chunk_number == Messages.HELLO:
+                self.process_hello(sender)
+            elif chunk_number == Messages.GOODBYE:
+                self.process_goodbye(sender)
+            elif chunk_number == Messages.REQUEST:
+                self.process_request(chunk_number, sender)
+            elif chunk_number == Messages.PRUNE:
+                stderr.write(f" ==== {i_dont_know} ====")
+                self.process_prune((IP_tools.int2ip(i_dont_know[0]), i_dont_know[1]), sender)
+            else:
+                stderr.write("{self.ext_id}: unexpected control chunk of index={chunk_number}")
+        return (chunk_number, sender)
 
     def on_chunk_received_from_the_splitter(self, chunk):
         chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
@@ -148,7 +175,8 @@ class Peer_DBS2(Peer_DBS):
         
         #self.update_forward(origin, sender)
         if self.is_duplicate(chunk_number):
-            self.request_prune(chunk_number, sender)
+            #self.request_prune(chunk_number, sender)
+            self.request_prune(origin, sender)
         else:
             self.buffer_chunk(chunk)
 
@@ -171,7 +199,7 @@ class Peer_DBS2(Peer_DBS):
         except KeyError:
             self.activity[origin] = 1
 
-        self.compute_deltas(chunk_number, sender)
+        #self.compute_deltas(chunk_number, sender)
 
     def process_chunk(self, chunk, sender):
         self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
@@ -213,46 +241,55 @@ class Peer_DBS2(Peer_DBS):
 
     # Pruning messages are sent when chunks are received more than
     # once.
-    def request_prune(self, chunk_number, peer):
-        stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")        
-        msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
+    #def request_prune(self, chunk_number, peer):
+    def request_prune(self, origin, peer):
+        #stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")        
+        #msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
+        stderr.write(f" ---- {Messages.PRUNE} ---- {origin} ---- ")
+#        stderr.write(f" (({Messages.PRUNE}, {IP_tools.ip2int(origin[0])}, {origin[1]}))")
+        msg = struct.pack("!iIi", Messages.PRUNE, IP_tools.ip2int(origin[0]), origin[1])
         self.team_socket.sendto(msg, peer)
-        self.lg.debug(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
+        #self.lg.debug(f"{self.ext_id}: [prune {chunk_number}] sent to {peer}")
+        self.lg.debug(f"{self.ext_id}: sent [prune {origin}] to {peer}")
 
-    # When a {peer} receives a [prune {chunk_number}], the {sender} is
+    # When a {peer} receives a [prune {chunk_number}{origin}], the {sender} is
     # requesting that {peer} stop sending chunks originated at
-    # {self.buffer[chunk_number % self.buffer_size].origin}.
-    def process_prune(self, chunk_number, sender):
+    # {self.buffer[chunk_number % self.buffer_size].origin}{origin}.
+    #def process_prune(self, chunk_number, sender):
+    def process_prune(self, origin, sender):
+        stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{origin}/{sender[1]}{colorama.Style.RESET_ALL}")
         #stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}")
-        self.lg.debug(f"{self.ext_id}: received [prune {chunk_number}] from {sender}")
+        #self.lg.debug(f"{self.ext_id}: received [prune {chunk_number}] from {sender}")
+        self.lg.debug(f"{self.ext_id}: received [prune {origin}] from {sender}")
 
         def remove_sender(origin, sender):
             assert sender in self.forward[origin], f"{self.ext_id}: {sender} is not in self.forward[{origin}]={self.forward[origin]}"
             self.forward[origin].remove(sender)
             self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} has been removed from forward[{origin}]={self.forward[origin]}")
 
-        position = chunk_number % self.buffer_size
-        buffer_box = self.buffer[position]
+        #position = chunk_number % self.buffer_size
+        #buffer_box = self.buffer[position]
         
         # Notice that chunk "chunk_number" should be stored in the
         # buffer because it has been sent to the neighbor that is
         # requesting the prune.
 
         # Only complete prunning if I have the origin of the pruned chunk.
-        if buffer_box[ChunkStructure.CHUNK_NUMBER] == chunk_number:
-            origin = buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT]
-            self.lg.debug(f"{self.ext_id}: process_prune: [prune {chunk_number}] received from {sender} for pruning origin={origin}")
-            if origin in self.forward:
-                self.lg.debug(f"{self.ext_id}: process_prune: origin={origin} is in forward")
-                if sender in self.forward[origin]:
-                    self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} is in forward[{origin}]")
-                    remove_sender(origin, sender)
-                else:
-                    self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} is not in forward[{origin}]={self.forward[origin]}")
+        #if buffer_box[ChunkStructure.CHUNK_NUMBER] == chunk_number:
+            #origin = buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT]
+            #self.lg.debug(f"{self.ext_id}: process_prune: [prune {chunk_number}] received from {sender} for pruning origin={origin}")
+        self.lg.debug(f"{self.ext_id}: process_prune: [prune {origin}] received from {sender}")
+        if origin in self.forward:
+            self.lg.debug(f"{self.ext_id}: process_prune: origin={origin} is in forward")
+            if sender in self.forward[origin]:
+                self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} is in forward[{origin}]")
+                remove_sender(origin, sender)
             else:
-                self.lg.debug(f"{self.ext_id}: process_prune: origin={origin} is not in forward={self.forward}")
+                self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} is not in forward[{origin}]={self.forward[origin]}")
         else:
-            self.lg.debug(f"{self.ext_id}: process_prune: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})")
+            self.lg.debug(f"{self.ext_id}: process_prune: origin={origin} is not in forward={self.forward}")
+        #else:
+            #self.lg.debug(f"{self.ext_id}: process_prune: chunk_number={chunk_number} is not in buffer ({self.buffer[position][ChunkStructure.CHUNK_NUMBER]}!={chunk_number})")
 
     def append_to_team(self, peer):
         assert peer != self.public_endpoint
@@ -288,7 +325,7 @@ class Peer_DBS2(Peer_DBS):
         except ValueError:
             self.lg.warning(f"{self.ext_id}: process_goodbye: failed to remove {sender} from team={self.team}")
 
-    def process_unpacked_message(self, message, sender):
+    def ___process_unpacked_message(self, message, sender):
         chunk_number = message[ChunkStructure.CHUNK_NUMBER]
 
         if chunk_number >= 0:
@@ -298,10 +335,12 @@ class Peer_DBS2(Peer_DBS):
             self.process_chunk(message, sender)
             self.send_chunks_to_the_next_neighbor()
         else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
+            stderr.write(f" <<{chunk_number}>>")
             if chunk_number == Messages.REQUEST:
                 self.process_request(message[1], sender)
             elif chunk_number == Messages.PRUNE:
-                self.process_prune(message[1], sender)
+                stderr.write(f" ==== {message} ====")
+                self.process_prune((IP_tools.int2ip(message[1]), message[2]), sender)
             elif chunk_number == Messages.HELLO:
                 self.process_hello(sender)
             elif chunk_number == Messages.GOODBYE:
@@ -311,6 +350,14 @@ class Peer_DBS2(Peer_DBS):
         return (chunk_number, sender)
 
     def play_chunk(self, chunk_number):
+        optimized_chunk = (chunk_number + self.optimization_horizon) % Limits.MAX_CHUNK_NUMBER
+        buffer_box = self.buffer[optimized_chunk % self.buffer_size]
+        if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
+            if len(self.team)>1:
+                peer = random.choice(self.team)
+                #peer = min(self.team, key=self.delta_inertia.get)
+                self.request_chunk(optimized_chunk, peer)
+
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         self.lg.debug(f"{self.ext_id}: chunk={chunk_number} hops={buffer_box[ChunkStructure.HOPS]}")
         if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
@@ -348,8 +395,8 @@ class Peer_DBS2(Peer_DBS):
             #if self.ext_id[0] == '000':
                 #stderr.write(f" {self.team}")
             if len(self.team) > 1:
-                #peer = random.choice(self.team)
-                peer = min(self.team, key=self.delta_inertia.get)
+                peer = random.choice(self.team)
+                #peer = min(self.team, key=self.delta_inertia.get)
                 #peer = min(self.delta_inertia, key=self.delta_inertia.get)
                 #stderr.write(f"{peer} {self.delta_inertia}\n")
                 self.request_chunk(chunk_number, peer)
@@ -386,13 +433,6 @@ class Peer_DBS2(Peer_DBS):
             # Only the data will be empty in order to remember things ...
             self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer(buffer_box)
             self.played += 1
-
-        optimized_chunk = (chunk_number + self.optimization_horizon) % Limits.MAX_CHUNK_NUMBER
-        buffer_box = self.buffer[optimized_chunk % self.buffer_size]
-        if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
-            if len(self.team)>1:
-                peer = min(self.team, key=self.delta_inertia.get)
-                self.request_chunk(optimized_chunk, peer)
 
         self.number_of_chunks_consumed += 1
         if __debug__:
