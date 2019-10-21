@@ -387,7 +387,7 @@ class Peer_DBS():
             elif chunk_number == Messages.GOODBYE:
                 self.process_goodbye(sender)
             else:
-                stderr.write("{self.ext_id}: unexpected control chunk of index={chunk_number}")
+                stderr.write("{self.ext_id}: unexpected control chunk with code={chunk_number}")
         return (chunk_number, sender)            
 
     def ___unpack_message(self, packet, sender):

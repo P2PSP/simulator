@@ -40,7 +40,6 @@ class Peer_DBS2(Peer_DBS):
     # Checks if the chunk with chunk_number was previously received.
     def is_duplicate(self, chunk_number):
         position = chunk_number % self.buffer_size
-        stderr.write(f" {chunk_number}/{self.buffer[position][ChunkStructure.CHUNK_NUMBER]}")
         duplicate = self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
         if __debug__:
             if duplicate:
@@ -97,10 +96,10 @@ class Peer_DBS2(Peer_DBS):
             elif chunk_number == Messages.REQUEST:
                 self.process_request(chunk_number, sender)
             elif chunk_number == Messages.PRUNE:
-                stderr.write(f" ==== {i_dont_know} ====")
-                self.process_prune((IP_tools.int2ip(i_dont_know[0]), i_dont_know[1]), sender)
+                origin = struct.unpack('!iIi', packet)
+                self.process_prune((IP_tools.int2ip(origin[1]), origin[2]), sender)
             else:
-                stderr.write("{self.ext_id}: unexpected control chunk of index={chunk_number}")
+                stderr.write("{self.ext_id}: unexpected control chunk with code={chunk_number}")
         return (chunk_number, sender)
 
     def on_chunk_received_from_the_splitter(self, chunk):
