@@ -262,9 +262,13 @@ class Peer_DBS2(Peer_DBS):
         self.lg.debug(f"{self.ext_id}: received [prune {origin}] from {sender}")
 
         def remove_sender(origin, sender):
+            # Remove sender from forward[origin]
             assert sender in self.forward[origin], f"{self.ext_id}: {sender} is not in self.forward[{origin}]={self.forward[origin]}"
             self.forward[origin].remove(sender)
             self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} has been removed from forward[{origin}]={self.forward[origin]}")
+
+            # Remove the pending chunks to sender
+            #self.pending[sender].clear()
 
         #position = chunk_number % self.buffer_size
         #buffer_box = self.buffer[position]

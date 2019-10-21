@@ -45,9 +45,9 @@ class Socket_wrapper():
             self.sock = sock
             self.type = type
         try:
-            self.lg.debug(f"{self.sock.getsockname()}: latency={latency}\n")
+            self.lg.debug(f"{self.sock.getsockname()}: latency={latency}")
         except:
-            self.lg.debug(f"{self.sock.getsockname()}: latency disabled\n")
+            self.lg.debug(f"{self.sock.getsockname()}: latency disabled")
 
     def send(self, msg):
         self.lg.debug(f"{self.sock.getsockname()} - [{msg}] => {self.sock.getpeername()}")
