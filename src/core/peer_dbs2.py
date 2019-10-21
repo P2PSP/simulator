@@ -70,11 +70,11 @@ class Peer_DBS2(Peer_DBS):
             # {origin} is not in self.forward
             self.forward[origin] = [destination]
             #self.pending[destination] = [] OJOJOOJOJOJOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-            stderr.write(f"{self.ext_id}: origin={origin} destination={destination}")
+            #stderr.write(f"{self.ext_id}: origin={origin} destination={destination}")
         #assert origin in self.forward, f"{self.ext_id}: {origin} is not in {self.forward}"
         #assert destination in self.forward[origin], f"{self.ext_id}: {destination} not in {self.forward[origin]}"
         
-        stderr.write(f" [{len(self.forward)}]") # <---------------------
+        #stderr.write(f" [{len(self.forward)}]") # <---------------------
         #stderr.write(f"{self.forward}\n")
 
     def unpack_message(self, packet, sender):
@@ -244,7 +244,7 @@ class Peer_DBS2(Peer_DBS):
     def request_prune(self, origin, peer):
         #stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")        
         #msg = struct.pack("!ii", Messages.PRUNE, chunk_number)
-        stderr.write(f" ---- {Messages.PRUNE} ---- {origin} ---- ")
+        #stderr.write(f" ---- {Messages.PRUNE} ---- {origin} ---- ")
 #        stderr.write(f" (({Messages.PRUNE}, {IP_tools.ip2int(origin[0])}, {origin[1]}))")
         msg = struct.pack("!iIi", Messages.PRUNE, IP_tools.ip2int(origin[0]), origin[1])
         self.team_socket.sendto(msg, peer)
@@ -256,7 +256,7 @@ class Peer_DBS2(Peer_DBS):
     # {self.buffer[chunk_number % self.buffer_size].origin}{origin}.
     #def process_prune(self, chunk_number, sender):
     def process_prune(self, origin, sender):
-        stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{origin}/{sender[1]}{colorama.Style.RESET_ALL}")
+        stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{origin[1]}/{sender[1]}{colorama.Style.RESET_ALL}")
         #stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}")
         #self.lg.debug(f"{self.ext_id}: received [prune {chunk_number}] from {sender}")
         self.lg.debug(f"{self.ext_id}: received [prune {origin}] from {sender}")

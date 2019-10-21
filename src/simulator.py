@@ -102,7 +102,7 @@ class Simulator():
             stderr.write(f"| {colorama.Back.RED}{colorama.Fore.BLACK}Max hops{colorama.Style.RESET_ALL}\n")
         stderr.write(f"| {colorama.Fore.CYAN}Sender/Requested chunk/Receiver{colorama.Style.RESET_ALL}\n")
         #stderr.write(f"| {colorama.Fore.CYAN}Sender/Requested chunk/Receiver{colorama.Back.CYAN} {colorama.Fore.BLACK}Requested chunk/requesting peer{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"| {colorama.Back.CYAN}{colorama.Fore.BLACK}Sender/Prunned chunk/Receiver{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Back.CYAN}{colorama.Fore.BLACK}Receiver/Prunned origin/Sender{colorama.Style.RESET_ALL}\n")
         stderr.write("\n")
         
         np.random.seed(self.seed)
