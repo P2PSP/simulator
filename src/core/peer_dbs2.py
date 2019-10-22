@@ -95,10 +95,13 @@ class Peer_DBS2(Peer_DBS):
             elif chunk_number == Messages.GOODBYE:
                 self.process_goodbye(sender)
             elif chunk_number == Messages.REQUEST:
-                self.process_request(chunk_number, sender)
+                _, requested_chunk = struct.unpack('!ii', packet)
+                self.process_request(requested_chunk, sender)
             elif chunk_number == Messages.PRUNE:
-                origin = struct.unpack('!iIi', packet)
-                self.process_prune((IP_tools.int2ip(origin[1]), origin[2]), sender)
+                _, origin_ip, origin_port = struct.unpack('!iIi', packet)
+                #origin = struct.unpack('!iIi', packet)
+                #self.process_prune((IP_tools.int2ip(origin[1]), origin[2]), sender)
+                self.process_prune((IP_tools.int2ip(origin_ip), origin_port), sender)
             else:
                 stderr.write("{self.ext_id}: unexpected control chunk with code={chunk_number}")
         return (chunk_number, sender)

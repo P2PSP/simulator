@@ -217,7 +217,7 @@ class Peer_DBS():
         self.lg.debug(f"{self.ext_id}: chunk {chunk_number} sent to {destination}")
 
     def send_chunks_to_the_next_neighbor(self):
-        self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending})")
+        self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending} forward={self.forward})")
         # Select next entry in pending with chunks to send
         #stderr.write(f" ==>{self.pending}")
         if len(self.pending) > 0:
