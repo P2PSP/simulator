@@ -26,6 +26,7 @@ class Peer_DBS2(Peer_DBS):
 
     def __init__(self):
         Peer_DBS.__init__(self)
+        self.duplicates = {}
 
         # Peers (end-points) in the known team, which is formed by
         # those peers that has sent to this peer a chunk, directly or
@@ -174,8 +175,13 @@ class Peer_DBS2(Peer_DBS):
         
         #self.update_forward(origin, sender)
         if self.is_duplicate(chunk_number):
-            #self.request_prune(chunk_number, sender)
-            self.request_prune(origin, sender)
+            try:
+                self.duplicates[sender] += 1
+            except KeyError:
+                self.duplicates[sender] = 0
+            if self.duplicates[sender] > 1000:
+                self.request_prune(origin, sender)
+                del self.duplicates[sender]
         else:
             self.buffer_chunk(chunk)
 
