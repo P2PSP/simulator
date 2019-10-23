@@ -26,6 +26,8 @@ class Peer_DBS2(Peer_DBS):
 
     def __init__(self):
         Peer_DBS.__init__(self)
+
+        # Duplicates per sender.
         self.duplicates = {}
 
         # Peers (end-points) in the known team, which is formed by
@@ -182,8 +184,8 @@ class Peer_DBS2(Peer_DBS):
                 self.duplicates[sender] += 1
             except KeyError:
                 self.duplicates[sender] = 0
-            if self.duplicates[sender] > 1000:
-                self.request_prune(origin, sender)
+            if self.duplicates[sender] > 2:
+                #self.request_prune(origin, sender)
                 del self.duplicates[sender]
         else:
             self.buffer_chunk(chunk)
@@ -220,7 +222,7 @@ class Peer_DBS2(Peer_DBS):
         if origin in self.forward:
             self.update_pendings(origin, chunk_number)
 
-    def request_chunk(self, chunk_number, peer):
+    def request_path(self, chunk_number, peer):
         stderr.write(f" {colorama.Fore.CYAN}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")
         #stderr.write(f" R{self.ext_id}-{chunk_number}-{peer}")
         self.lg.debug(f"{self.ext_id}: sent [request {chunk_number}] to {peer}")
@@ -368,7 +370,7 @@ class Peer_DBS2(Peer_DBS):
             if len(self.team)>1:
                 peer = random.choice(self.team)
                 #peer = min(self.team, key=self.delta_inertia.get)
-                self.request_chunk(optimized_chunk, peer)
+                self.request_path(optimized_chunk, peer)
 
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         self.lg.debug(f"{self.ext_id}: chunk={chunk_number} hops={buffer_box[ChunkStructure.HOPS]}")
@@ -411,7 +413,7 @@ class Peer_DBS2(Peer_DBS):
                 #peer = min(self.team, key=self.delta_inertia.get)
                 #peer = min(self.delta_inertia, key=self.delta_inertia.get)
                 #stderr.write(f"{peer} {self.delta_inertia}\n")
-                self.request_chunk(chunk_number, peer)
+                self.request_path(chunk_number, peer)
                 #stderr.write(f" ->{peer}")
                 if peer == self.ext_id[1]:
                     stderr.write(f" ------------------------->hola!!!<---------------------")
