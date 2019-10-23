@@ -34,13 +34,13 @@ class Simulator():
                  number_of_peers=7,    # Monitor apart
                  number_of_rounds=100,
                  number_of_faulty=0,
-                 buffer_size=32,
+                 buffer_size=64,
                  chunk_cadence=0.01,
                  min_activity = -5, # rounds
                  max_chunk_loss = 16,
                  speed = 1000.0,
                  seed = None,
-                 horizon = 16,  # buffer_size - number_of_peers*2
+                 horizon = 64 - 8*4, #buffer_size - number_of_peers*4, 
                  gui=False):
 
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

@@ -184,8 +184,8 @@ class Peer_DBS2(Peer_DBS):
                 self.duplicates[sender] += 1
             except KeyError:
                 self.duplicates[sender] = 0
-            if self.duplicates[sender] > 2:
-                #self.request_prune(origin, sender)
+            if self.duplicates[sender] > 1:
+                self.request_prune(origin, sender)
                 del self.duplicates[sender]
         else:
             self.buffer_chunk(chunk)
