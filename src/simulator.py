@@ -34,7 +34,7 @@ class Simulator():
                  number_of_peers=7,    # Monitor apart
                  number_of_rounds=100,
                  number_of_faulty=0,
-                 buffer_size=64,
+                 buffer_size=32,
                  chunk_cadence=0.01,
                  min_activity = -5, # rounds
                  max_chunk_loss = 16,

@@ -55,10 +55,8 @@ class Peer_DBS2(Peer_DBS):
             if destination not in self.forward[origin]:
                 self.forward[origin].append(destination)
                 #self.pending[destination] = [] OJJJJJJJJJJJJJJJJOOOOOOOOOOOOOOOOOOOOOOOOOOORRRRRRRRRRRRRRRRRRRRRRRRRRRR
-                stderr.write("-")
             else:
                 # {destination} already in {self.forward[origin]}
-                stderr.write("+")
                 pass
         else:
             # {origin} is not in self.forward
@@ -221,7 +219,8 @@ class Peer_DBS2(Peer_DBS):
             self.update_pendings(origin, chunk_number)
 
     def request_path(self, chunk_number, peer):
-        stderr.write(f" {colorama.Fore.CYAN}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")
+        #stderr.write(f" {colorama.Fore.CYAN}{self.ext_id[2]}/{chunk_number}/{peer[1]}{colorama.Style.RESET_ALL}")
+        stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}")
         #stderr.write(f" R{self.ext_id}-{chunk_number}-{peer}")
         self.lg.debug(f"{self.ext_id}: sent [request {chunk_number}] to {peer}")
         msg = struct.pack("!ii", Messages.REQUEST, chunk_number)
@@ -265,7 +264,8 @@ class Peer_DBS2(Peer_DBS):
     # {self.buffer[chunk_number % self.buffer_size].origin}{origin}.
     #def process_prune(self, chunk_number, sender):
     def process_prune(self, origin, sender):
-        stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{origin[1]}/{sender[1]}{colorama.Style.RESET_ALL}")
+        #stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[2]}/{origin[1]}/{sender[1]}{colorama.Style.RESET_ALL}")
+        stderr.write(f" {colorama.Back.CYAN}{colorama.Fore.BLACK}{self.ext_id[0]}{colorama.Style.RESET_ALL}")
         #stderr.write(f" {colorama.Fore.CYAN}{chunk_number}{colorama.Style.RESET_ALL}")
         #self.lg.debug(f"{self.ext_id}: received [prune {chunk_number}] from {sender}")
         self.lg.debug(f"{self.ext_id}: received [prune {origin}] from {sender}")
@@ -337,30 +337,6 @@ class Peer_DBS2(Peer_DBS):
         except ValueError:
             self.lg.warning(f"{self.ext_id}: process_goodbye: failed to remove {sender} from team={self.team}")
 
-    def ___process_unpacked_message(self, message, sender):
-        chunk_number = message[ChunkStructure.CHUNK_NUMBER]
-
-        if chunk_number >= 0:
-            # We have received a chunk.
-            self.lg.debug(f"{self.ext_id}: received chunk {message} from {sender}")
-            self.received_chunks += 1
-            self.process_chunk(message, sender)
-            self.send_chunks_to_the_next_neighbor()
-        else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
-            stderr.write(f" <<{chunk_number}>>")
-            if chunk_number == Messages.REQUEST:
-                self.process_request(message[1], sender)
-            elif chunk_number == Messages.PRUNE:
-                stderr.write(f" ==== {message} ====")
-                self.process_prune((IP_tools.int2ip(message[1]), message[2]), sender)
-            elif chunk_number == Messages.HELLO:
-                self.process_hello(sender)
-            elif chunk_number == Messages.GOODBYE:
-                self.process_goodbye(sender)
-            else:
-                stderr.write("{self.ext_id}: process_unpacked_message: unexpected control chunk of index={chunk_number}")
-        return (chunk_number, sender)
-
     def play_chunk(self, chunk_number):
         optimized_chunk = (chunk_number + self.optimization_horizon) % Limits.MAX_CHUNK_NUMBER
         buffer_box = self.buffer[optimized_chunk % self.buffer_size]
@@ -413,8 +389,7 @@ class Peer_DBS2(Peer_DBS):
                 #stderr.write(f"{peer} {self.delta_inertia}\n")
                 self.request_path(chunk_number, peer)
                 #stderr.write(f" ->{peer}")
-                if peer == self.ext_id[1]:
-                    stderr.write(f" ------------------------->hola!!!<---------------------")
+                assert peer != self.ext_id[1], f"{self.ext_id}: {peer} has selected itself to request a path"
 
             # Send the request to all neighbors.
             # for neighbor in self.forward[self.id]:
