@@ -40,6 +40,9 @@ class Peer_DBS2(Peer_DBS):
     def set_optimization_horizon(self, optimization_horizon):
         self.optimization_horizon = optimization_horizon
 
+    def set_optimal_neighborhood_degree(self, optimal_neighborhood_degree):
+        self.optimal_neighborhood_degree = optimal_neighborhood_degree
+
     # Add a new peer to the team list.
     def update_the_team(self, peer):
         self.lg.debug(f"{self.ext_id}: updating team with peer {peer}")
@@ -161,6 +164,14 @@ class Peer_DBS2(Peer_DBS):
         #    #stderr.write(f" ->{peer}")
         #    if peer == self.ext_id[1]:
         #        stderr.write(f" ------------------------->hola!!!<---------------------")
+
+        if len(self.forward) < self.optimal_neighborhood_degree:
+            if len(self.team) > 1:
+                peer = random.choice(self.team)
+                if peer not in self.forward:
+                    self.forward[peer] = []
+                    for destination in self.team:
+                        self.forward[peer].append(destination)
 
     # Checks if the chunk with chunk_number was previously received.
     def is_duplicate(self, chunk_number):
