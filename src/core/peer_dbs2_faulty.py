@@ -17,20 +17,19 @@ class Peer_DBS2_faulty(Peer_DBS2_simulator):
         self.target = self.forward[self.public_endpoint][0]  # The first peer in the list (possiblely random)
         self.lg.debug(f"{self.ext_id}: selected target {self.target}")
 
-    def send_chunks_to_neighbors(self):
-        self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending})")
+    def send_chunks_to_the_next_neighbor(self):
+        self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending}) forward={self.forward})")
         # Select next entry in pending with chunks to send
         if len(self.pending) > 0:
             counter = 0
-            neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
+            neighbor = list(self.pending.keys())[(self.neighbor_index)]
             if neighbor == self.target:
                 pass
             else:
                 self.send_chunks(neighbor)
             while len(self.pending[neighbor]) == 0:
                 self.neighbor_index = list(self.pending.keys()).index(neighbor) + 1
-                neighbor = list(self.pending.keys())[(self.neighbor_index) % len(self.pending)]
-                counter += 1
+                neighbor = list(self.pending.keys())[self.neighbor_index]
                 if counter > len(self.pending):
                     break
-
+                counter += 1

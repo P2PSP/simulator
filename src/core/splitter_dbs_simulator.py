@@ -74,16 +74,18 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
 
     def packet_format(self):
-        self.chunk_packet_format = "!isIii"
+        self.chunk_packet_format = "!isIiif"
 
     def compose_chunk_packet(self, chunk_number, chunk, peer):
         #now = time.time()
         hops = 0
         chunk_msg = (chunk_number,
                      chunk,
-                     IP_tools.ip2int(peer[0]), # now,
+                     IP_tools.ip2int(peer[0]),
                      peer[1],
-                     hops)
+                     hops,
+                     time.time()
+        )
         msg = struct.pack(self.chunk_packet_format, *chunk_msg)
         return msg
 

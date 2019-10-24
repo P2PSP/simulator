@@ -26,6 +26,7 @@ class Peer_DBS_simulator(Peer_DBS):
 
     def __init__(self, id, name = "Peer_DBS_simulator"):
         super().__init__()
+#        self.chunk_packet_format = "!isIii"
         self.lg.debug(f"{name}: DBS simulator initialized")
 
     def receive_the_chunk_size(self):
@@ -35,7 +36,8 @@ class Peer_DBS_simulator(Peer_DBS):
         self.chunk_packet_format = "!isIii"
 
     def clear_entry_in_buffer(self, buffer_box):
-        return [buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT], buffer_box[ChunkStructure.HOPS]]
+        #return [buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT], buffer_box[ChunkStructure.HOPS]]
+        return self.empty_entry_in_buffer()
 
     def empty_entry_in_buffer(self):
         return [-1, b'L', None, 0, 0]

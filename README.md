@@ -6,10 +6,10 @@ A complete stand-alone simulator of the P2PSP (Peer-to-Peer Straightforward Prot
 
 ## Examples:
 
-1. Run a team with 10 peers (1 monitor and 9 normal peers), during 100 rounds:
+1. Run a team using the default parameters:
 ```
 # inside of the <src> folder, run:
-python3 simulator.py run
+python3 simulator.py run > /tmp/1
 ```
 
 2. Controlling the number of peers that will join the team:
@@ -32,6 +32,11 @@ python3 simulator.py run --max_chunk_loss 50
 python3 simulator.py run --number_of_monitors 2
 ```
 
+6. Showing the average CLR:
+```
+python3 simulator.py run --set_of_rules DBS --number_of_peers 3 --buffer_size 6 --number_of_rounds 100 --max_chunk_loss 1000 --min_activity -100 | grep CLR | awk '{match($0,/CLR=[0-9.]+/);A=substr($0,RSTART,RLENGTH);sub(/.*=/,X,A);print A}' | python ../experiments/average.py
+```
+
 6. Using IP multicast instead IP unicast:
 ```
 python3 simulator.py run --set_of_rules IMS
@@ -44,7 +49,7 @@ python3 simulator.py run --loglevel INFO
 
 8. Showing the buffer of the peer #3 (peers are enumerated sequentially using 3 digits):
 ```
-python3 simulator.py run --loglevel DEBUG | grep "buffer=" | grep "'003'"
+python3 simulator.py run 2> /dev/null | grep "buffer=" | grep "'003'"
 ```
 
 9. Showing the neighborhood degree of peer #3 for optimization_horizon=5:

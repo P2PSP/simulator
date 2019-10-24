@@ -276,15 +276,6 @@ class Splitter_DBS():
     def get_id(self):
         return self.id
 
-#    def compose_chunk_packet(self, chunk_number, chunk, peer):
-#        #now = time.time()
-#        chunk_msg = (chunk_number,
-#                     chunk,
-#                     IP_tools.ip2int(peer[0]), # now,
-#                     peer[1])
-#        msg = struct.pack(self.chunk_packet_format, *chunk_msg)
-#        return msg
-
     def on_round_beginning(self):
         self.remove_outgoing_peers()
         #while not self.new_peers.empty():

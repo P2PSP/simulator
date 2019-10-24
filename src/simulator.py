@@ -34,11 +34,13 @@ class Simulator():
                  number_of_peers=7,    # Monitor apart
                  number_of_rounds=100,
                  number_of_faulty=0,
-                 buffer_size=32,
+                 buffer_size=64,
                  chunk_cadence=0.01,
                  min_activity = -5, # rounds
                  max_chunk_loss = 16,
                  speed = 1000.0,
+                 seed = None,
+                 horizon = 0, #buffer_size - number_of_peers*4,
                  gui=False):
 
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -60,38 +62,50 @@ class Simulator():
         self.max_chunk_loss = float(max_chunk_loss)
         self.current_round = 0
         self.speed = float(speed)
+        self.seed = seed
+        self.horizon = horizon
         self.gui = gui
         self.processes = {}
 
+        stderr.write(f"Parameters:\n")
         self.lg.debug(f"set_of_rules=\"{self.set_of_rules}\"")
-        stderr.write(f"set_of_rules=\"{self.set_of_rules}\"\n")
+        stderr.write(f"| set_of_rules=\"{self.set_of_rules}\"\n")
         self.lg.debug(f"number_of_peers={self.number_of_peers}")
-        stderr.write(f"number_of_peers={self.number_of_peers}\n")
+        stderr.write(f"| number_of_peers={self.number_of_peers}\n")
         self.lg.debug(f"number_of_monitors={self.number_of_monitors}")
-        stderr.write(f"number_of_monitors={self.number_of_monitors}\n")
+        stderr.write(f"| number_of_monitors={self.number_of_monitors}\n")
         self.lg.debug(f"number_of_rounds={self.number_of_rounds}")
-        stderr.write(f"number_of_rounds={self.number_of_rounds}\n")
+        stderr.write(f"| number_of_rounds={self.number_of_rounds}\n")
         self.lg.debug(f"number_of_faulty={self.number_of_faulty}")
-        stderr.write(f"number_of_faulty={self.number_of_faulty}\n")
+        stderr.write(f"| number_of_faulty={self.number_of_faulty}\n")
         self.lg.debug(f"buffer_size={self.buffer_size}")
-        stderr.write(f"buffer_size={self.buffer_size}\n")
+        stderr.write(f"| buffer_size={self.buffer_size}\n")
         self.lg.debug(f"min_activity={self.min_activity}")
-        stderr.write(f"min_activity={self.min_activity}\n")
+        stderr.write(f"| min_activity={self.min_activity}\n")
         self.lg.debug(f"max_chunk_loss={self.max_chunk_loss}")
-        stderr.write(f"max_chunk_loss={self.max_chunk_loss}\n")
+        stderr.write(f"| max_chunk_loss={self.max_chunk_loss}\n")
         self.lg.debug(f"speed={self.speed}")
-        stderr.write(f"speed={self.speed}\n")
+        stderr.write(f"| speed={self.speed}\n")
+        self.lg.debug(f"seed={self.seed}")
+        stderr.write(f"| seed={self.seed}\n")
+        self.lg.debug(f"horizon={self.horizon}")
+        stderr.write(f"| horizon={self.horizon}\n")
+        stderr.write("\n")
 
-        stderr.write(f"CPU usage\n")
-        stderr.write(f"{colorama.Fore.MAGENTA}Team size{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Fore.RED}Lost chunk{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Fore.RED}(Unsupportive peer){colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Fore.BLUE}Deleted peer{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Fore.YELLOW}Round{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"Output synopsis:\n")
+        stderr.write(f"| CPU usage\n")
+        stderr.write(f"| {colorama.Fore.MAGENTA}Team size{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Fore.YELLOW}Round{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Fore.RED}Lost chunk/Unsupportive peer{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Fore.BLUE}Deleted peer{colorama.Style.RESET_ALL}\n")
         if __debug__:
-            stderr.write(f"{colorama.Back.RED}{colorama.Fore.BLACK}Max hops{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Back.CYAN}{colorama.Fore.BLACK}Requested chunk{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"{colorama.Fore.CYAN}Prunned chunk{colorama.Style.RESET_ALL}\n")
+            stderr.write(f"| {colorama.Back.RED}{colorama.Fore.BLACK}Max hops{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Fore.CYAN}Sender/Requested chunk/Receiver{colorama.Style.RESET_ALL}\n")
+        #stderr.write(f"| {colorama.Fore.CYAN}Sender/Requested chunk/Receiver{colorama.Back.CYAN} {colorama.Fore.BLACK}Requested chunk/requesting peer{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Back.CYAN}{colorama.Fore.BLACK}Receiver/Prunned origin/Sender{colorama.Style.RESET_ALL}\n")
+        stderr.write("\n")
+        
+        np.random.seed(self.seed)
 
     def compute_team_size(self, n):
         return 2 ** (n - 1).bit_length()
@@ -142,8 +156,10 @@ class Simulator():
                 peer = Monitor_DBS2_simulator(id = id,
                                              name = "Monitor_DBS2_simulator")
                 self.lg.debug("simulator: DBS2 monitor created")
+                peer.set_optimization_horizon(self.horizon)
         elif type == "faulty":
             peer = Peer_faulty(id, name="Peer_DBS2_faulty")
+            peer.set_optimization_horizon(self.horizon)
             self.lg.debug("simulator: faulty peer created")
         else:
             if self.set_of_rules == "DBS":
@@ -152,6 +168,7 @@ class Simulator():
             elif self.set_of_rules == "DBS2":
                 peer = Peer_DBS2_simulator(id = id, name = "Peer_DBS2_simulator")
                 self.lg.debug("simulator: DBS2 peer created")
+                peer.set_optimization_horizon(self.horizon)
             elif self.set_of_rules == "IMS":
                 peer = Peer_IMS_simulator(id = id, name = "Peer_IMS_simulator")
                 self.lg.debug("simulator: IMS peer created")
