@@ -40,7 +40,7 @@ class Simulator():
                  max_chunk_loss = 16,
                  speed = 1000.0,
                  seed = None,
-                 horizon = 64 - 8*4, #buffer_size - number_of_peers*4, 
+                 horizon = 0, #buffer_size - number_of_peers*4,
                  gui=False):
 
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -159,6 +159,7 @@ class Simulator():
                 peer.set_optimization_horizon(self.horizon)
         elif type == "faulty":
             peer = Peer_faulty(id, name="Peer_DBS2_faulty")
+            peer.set_optimization_horizon(self.horizon)
             self.lg.debug("simulator: faulty peer created")
         else:
             if self.set_of_rules == "DBS":

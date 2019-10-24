@@ -39,15 +39,6 @@ class Peer_DBS2(Peer_DBS):
 
     def set_optimization_horizon(self, optimization_horizon):
         self.optimization_horizon = optimization_horizon
-        
-    # Checks if the chunk with chunk_number was previously received.
-    def is_duplicate(self, chunk_number):
-        position = chunk_number % self.buffer_size
-        duplicate = self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
-        if __debug__:
-            if duplicate:
-                self.lg.debug(f"{self.ext_id}: duplicate {chunk_number} (the first one was originated by ({self.buffer[position][ChunkStructure.ORIGIN_ADDR]}, {self.buffer[position][ChunkStructure.ORIGIN_PORT]})")
-        return duplicate
 
     # Add a new peer to the team list.
     def update_the_team(self, peer):
@@ -173,6 +164,12 @@ class Peer_DBS2(Peer_DBS):
         #    if peer == self.ext_id[1]:
         #        stderr.write(f" ------------------------->hola!!!<---------------------")
 
+    # Checks if the chunk with chunk_number was previously received.
+    def is_duplicate(self, chunk_number):
+        position = chunk_number % self.buffer_size
+        duplicate = self.buffer[position][ChunkStructure.CHUNK_NUMBER] == chunk_number
+        return duplicate
+
     def on_chunk_received_from_a_peer(self, chunk, sender):
         chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
         origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
@@ -180,13 +177,14 @@ class Peer_DBS2(Peer_DBS):
         
         #self.update_forward(origin, sender)
         if self.is_duplicate(chunk_number):
+            self.lg.debug(f"{self.ext_id}: duplicate {chunk_number} (the first one was originated by {origin}")
             try:
-                self.duplicates[sender] += 1
+                self.duplicates[(origin, sender)] += 1
             except KeyError:
-                self.duplicates[sender] = 0
-            if self.duplicates[sender] > 1:
+                self.duplicates[(origin, sender)] = 0
+            if self.duplicates[(origin, sender)] > 0:
                 self.request_prune(origin, sender)
-                del self.duplicates[sender]
+                del self.duplicates[(origin, sender)]
         else:
             self.buffer_chunk(chunk)
 
