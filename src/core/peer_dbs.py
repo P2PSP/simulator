@@ -215,6 +215,18 @@ class Peer_DBS():
         self.team_socket.sendto(packet, destination)
         self.sendto_counter += 1
         self.lg.debug(f"{self.ext_id}: chunk {chunk_number} sent to {destination}")
+        try:
+            self.activity[destination] -= 1
+        except KeyError:
+            self.activity[destination] = 0
+            
+        if self.activity[destination] < self.min_activity:
+            del self.activity[destination]
+            for destinations_list in self.forward.values():
+                if destination in destinations_list:
+                    destinations_list.remove(destination)
+                assert destination not in destinations_list, f"{self.ext_id}: {destination} still in {self.forward}"
+        self.lg.debug(f"{self.ext_id}: activity={self.activity}")
 
     def send_chunks_to_the_next_neighbor(self):
         self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending} forward={self.forward})")
@@ -263,14 +275,14 @@ class Peer_DBS():
         self.update_pendings(self.public_endpoint, chunk_number)
 
         # Increase inactivity and remove selfish neighbors.
-        for neighbor in self.activity.keys():
-            self.activity[neighbor] -= 1
-        #for neighbor in list(self.activity):
-            if self.activity[neighbor] < self.min_activity:
-                del self.activity[neighbor]
-                for neighbors_list in self.forward.values():
-                    if neighbor in neighbors_list:
-                        neighbors_list.remove(neighbor)
+        #for neighbor in list(self.activity.keys()):
+        #    self.activity[neighbor] -= 1
+        ##for neighbor in list(self.activity):    
+        #    if self.activity[neighbor] < self.min_activity:
+        #        del self.activity[neighbor]
+        #        for neighbors_list in self.forward.values():
+        #            if neighbor in neighbors_list:
+        #                neighbors_list.remove(neighbor)
 
         # New round, all pending chunks are sent for neighbor in self.pending:
         # self.send_chunks(neighbor)
@@ -315,9 +327,9 @@ class Peer_DBS():
             self.forward[self.public_endpoint].append(origin)
 
         try:
-            self.activity[origin] += 1
+            self.activity[sender] += 1
         except KeyError:
-            self.activity[origin] = 1
+            self.activity[sender] = 1
 
         self.compute_deltas(chunk_number, sender)
 
@@ -530,6 +542,7 @@ class Peer_DBS():
             #self.buffer.append((-1, b'L', (None, 0)))  # L == Lost
 
         self.buffer_data()
+        stderr.write(" Buffering done\n")
         #while (not self.is_the_player_disconected() or self.waiting_for_goodbye):
         while(self.player_connected and self.waiting_for_goodbye):
             self.buffer_and_play()

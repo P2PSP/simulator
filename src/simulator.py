@@ -92,13 +92,15 @@ class Simulator():
         stderr.write(f"| seed={self.seed}\n")
         self.lg.debug(f"horizon={self.horizon}")
         stderr.write(f"| horizon={self.horizon}\n")
+        self.lg.debug(f"optimal_neighborhood_degree={self.optimal_neighborhood_degree}")
+        stderr.write(f"| optimal_neighborhood_degree={self.optimal_neighborhood_degree}\n")
         stderr.write("\n")
 
         stderr.write(f"Output synopsis:\n")
         stderr.write(f"| CPU usage\n")
         stderr.write(f"| {colorama.Fore.MAGENTA}Team size{colorama.Style.RESET_ALL}\n")
         stderr.write(f"| {colorama.Fore.YELLOW}Round{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"| {colorama.Fore.RED}Lost chunk/Unsupportive peer{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Fore.RED}Lost chunk/peer{colorama.Style.RESET_ALL}\n")
         stderr.write(f"| {colorama.Fore.BLUE}Deleted peer{colorama.Style.RESET_ALL}\n")
         if __debug__:
             stderr.write(f"| {colorama.Back.RED}{colorama.Fore.BLACK}Max hops{colorama.Style.RESET_ALL}\n")

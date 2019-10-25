@@ -107,17 +107,19 @@ class Peer_DBS2(Peer_DBS):
         self.buffer_chunk(chunk)
 
         # Increase inactivity and remove selfish neighbors.
-        for neighbor in list(self.activity.keys()):
-            self.activity[neighbor] -= 1
+        #for neighbor in list(self.activity.keys()):
+        #    self.activity[neighbor] -= 1
 #        for _neighbor in list(self.activity):
-            if self.activity[neighbor] < self.min_activity:
-                del self.activity[neighbor]
-                for neighbors in self.forward.values():
-                    if neighbor in neighbors:
-                        neighbors.remove(neighbor)
+        #    if self.activity[neighbor] < self.min_activity:
+        #        del self.activity[neighbor]
+        #        for neighbors in self.forward.values():
+        #            if neighbor in neighbors:
+        #                neighbors.remove(neighbor)
+        #            assert neighbor not in neighbors, f"{self.ext_id}: {neighbor} still in {self.forward}"
                 # Habría que borrar las entradas de forward que
                 #apuntan al selfish peer y los chunks pendientes.  del
                 #self.pending[neighbor]
+#        stderr.write(f"{self.ext_id}: activity={self.activity}\n")
 
         # Can produce network congestion!
         #for neighbor in self.pending:
@@ -165,13 +167,42 @@ class Peer_DBS2(Peer_DBS):
         #    if peer == self.ext_id[1]:
         #        stderr.write(f" ------------------------->hola!!!<---------------------")
 
-        if len(self.forward) < self.optimal_neighborhood_degree:
+        if len(self.forward[self.public_endpoint]) > self.optimal_neighborhood_degree:
             if len(self.team) > 1:
-                peer = random.choice(self.team)
-                if peer not in self.forward:
-                    self.forward[peer] = []
-                    for destination in self.team:
-                        self.forward[peer].append(destination)
+                random_origin = random.choice(self.forward[self.public_endpoint])
+                random_desination = random.choice(self.team)
+                try:
+                    if random_desination not in self.forward[random_origin]:
+                        if len(self.forward[random_origin]) < self.optimal_neighborhood_degree:
+                            self.forward[random_origin].append(random_desination)
+                except KeyError:
+                    self.forward[random_origin] = [random_desination]
+        self.lg.debug(f"{self.ext_id}: forward={self.forward}")
+
+#        for origin in list(self.forward):
+#            if len(self.forward[origin]) > self.optimal_neighborhood_degree:
+#                if len(self.team) > 1:
+#                    new_origin = random.choice(self.team)
+#                    self.forward[new_origin] = []
+#                    for destination in self.team:
+#                        if destination != new_origin:
+#                            self.forward[new_origin].append(destination)
+
+
+#        if len(self.forward) < self.optimal_neighborhood_degree:
+#            if len(self.team) > 1:
+#                origin = random.choice(self.team)
+#                if origin not in self.forward:
+#                    #destination = random.choice(self.team)
+#                    #try:
+#                    #    self.forward[origin].append(destination)
+#                    #except KeyError:
+#                    #    self.forward[origin] = []
+#                    self.forward[origin] = []
+#                    for destination in self.team:
+#                        if destination != origin:
+#                            if destination not in self.forward[origin]:
+#                                self.forward[origin].append(destination)
 
     # Checks if the chunk with chunk_number was previously received.
     def is_duplicate(self, chunk_number):
@@ -212,9 +243,9 @@ class Peer_DBS2(Peer_DBS):
                 self.update_the_team(origin)
 
         try:
-            self.activity[origin] += 1
+            self.activity[sender] += 1
         except KeyError:
-            self.activity[origin] = 1
+            self.activity[sender] = 1
 
         #self.compute_deltas(chunk_number, sender)
 
@@ -283,9 +314,9 @@ class Peer_DBS2(Peer_DBS):
 
         def remove_sender(origin, sender):
             # Remove sender from forward[origin]
-            assert sender in self.forward[origin], f"{self.ext_id}: {sender} is not in self.forward[{origin}]={self.forward[origin]}"
             self.forward[origin].remove(sender)
             self.lg.debug(f"{self.ext_id}: process_prune: sender={sender} has been removed from forward[{origin}]={self.forward[origin]}")
+            assert sender not in self.forward[origin], f"{self.ext_id}: {sender} is still in self.forward[{origin}]={self.forward[origin]}"
 
             # Remove the pending chunks to sender
             #self.pending[sender].clear()

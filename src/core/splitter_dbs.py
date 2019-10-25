@@ -190,7 +190,6 @@ class Splitter_DBS():
     def del_peer(self, peer_index):
         del self.team[peer_index]
         stderr.write(f" {colorama.Fore.BLUE}{peer_index}({len(self.team)}){colorama.Style.RESET_ALL}")
-        stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}")
 
     def remove_peer(self, peer):
         try:
@@ -303,11 +302,13 @@ class Splitter_DBS():
                 total_peers += len(self.team)
                 self.on_round_beginning()
                 stderr.write(f" {colorama.Fore.YELLOW}{self.current_round}{colorama.Style.RESET_ALL}")
+                stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}")
+                self.lg.debug(f"splitter {self.id}: team={self.team}")
 
             try:
                 peer = self.team[self.peer_number]
             except IndexError:
-                stderr.write(f"{self.id}: the peer with index {self.peer_number} does not exist. peers_list={self.team} peer_number={self.peer_number}")
+                stderr.write(f"splitter {self.id}: the peer with index {self.peer_number} does not exist. peers_list={self.team} peer_number={self.peer_number}")
 
             self.destination_of_chunk[chunk_number % (self.buffer_size)] = peer  # self.team.index(peer)
             self.send_chunk(chunk_number, chunk, peer)
