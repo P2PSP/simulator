@@ -13,9 +13,11 @@ import colorama
 
 from core.monitor_dbs_simulator import Monitor_DBS_simulator
 from core.monitor_dbs2_simulator import Monitor_DBS2_simulator
+from core.monitor_dbs3_simulator import Monitor_DBS3_simulator
 from core.monitor_ims_simulator import Monitor_IMS_simulator
 from core.peer_dbs_simulator import Peer_DBS_simulator
 from core.peer_dbs2_simulator import Peer_DBS2_simulator
+from core.peer_dbs3_simulator import Peer_DBS3_simulator
 from core.peer_ims_simulator import Peer_IMS_simulator
 from core.peer_dbs2_faulty import Peer_DBS2_faulty as Peer_faulty
 from core.simulator_stuff import Simulator_stuff as sim
@@ -163,6 +165,12 @@ class Simulator():
                 self.lg.debug("simulator: DBS2 monitor created")
 #                peer.set_optimization_horizon(self.horizon)
 #                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
+            elif self.set_of_rules == "DBS3":
+                peer = Monitor_DBS3_simulator(id = id,
+                                             name = "Monitor_DBS3_simulator")
+                self.lg.debug("simulator: DBS3 monitor created")
+                peer.set_optimization_horizon(self.horizon)
+#                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
         elif type == "faulty":
             peer = Peer_faulty(id, name="Peer_DBS2_faulty")
 #            peer.set_optimization_horizon(self.horizon)
@@ -176,6 +184,11 @@ class Simulator():
                 peer = Peer_DBS2_simulator(id = id, name = "Peer_DBS2_simulator")
                 self.lg.debug("simulator: DBS2 peer created")
 #                peer.set_optimization_horizon(self.horizon)
+#                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
+            elif self.set_of_rules == "DBS3":
+                peer = Peer_DBS2_simulator(id = id, name = "Peer_DBS3_simulator")
+                self.lg.debug("simulator: DBS3 peer created")
+                peer.set_optimization_horizon(self.horizon)
 #                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
             elif self.set_of_rules == "IMS":
                 peer = Peer_IMS_simulator(id = id, name = "Peer_IMS_simulator")

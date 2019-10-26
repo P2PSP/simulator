@@ -1,6 +1,6 @@
 """
 @package simulator
-peer_dbs_simulator module
+peer_dbs2_simulator module
 """
 
 from .peer_dbs2 import Peer_DBS2
