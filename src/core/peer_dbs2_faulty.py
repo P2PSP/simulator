@@ -28,7 +28,7 @@ class Peer_DBS2_faulty(Peer_DBS2_simulator):
             else:
                 self.send_chunks(neighbor)
             while len(self.pending[neighbor]) == 0:
-                self.neighbor_index = list(self.pending.keys()).index(neighbor) + 1
+                self.neighbor_index = (list(self.pending.keys()).index(neighbor) + 1) % len(self.pending)
                 neighbor = list(self.pending.keys())[self.neighbor_index]
                 if counter > len(self.pending):
                     break

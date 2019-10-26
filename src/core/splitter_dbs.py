@@ -162,7 +162,7 @@ class Splitter_DBS():
         stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}")
 
     def increment_unsupportivity_of_peer(self, peer):
-        stderr.write(f" {colorama.Fore.RED}({self.team.index(peer)}){colorama.Style.RESET_ALL}")
+        stderr.write(f" {colorama.Fore.RED}{self.team.index(peer)}{colorama.Style.RESET_ALL}")
         try:
             self.losses[peer] += 1
         except KeyError:
@@ -182,7 +182,7 @@ class Splitter_DBS():
         if destination in self.team:
             if self.team.index(destination) >= self.number_of_monitors:
                 self.increment_unsupportivity_of_peer(destination)
-        stderr.write(f" {colorama.Fore.RED}{lost_chunk_number}{colorama.Style.RESET_ALL}")
+        stderr.write(f"/{colorama.Fore.RED}{lost_chunk_number}{colorama.Style.RESET_ALL}")
 
     def get_losser(self, lost_chunk_number):
         return self.destination_of_chunk[lost_chunk_number % (self.buffer_size)]
@@ -308,7 +308,7 @@ class Splitter_DBS():
             try:
                 peer = self.team[self.peer_number]
             except IndexError:
-                stderr.write(f"splitter {self.id}: the peer with index {self.peer_number} does not exist. peers_list={self.team} peer_number={self.peer_number}")
+                self.lg.debug(f"splitter {self.id}: the peer with index {self.peer_number} does not exist. peers_list={self.team} peer_number={self.peer_number}")
 
             self.destination_of_chunk[chunk_number % (self.buffer_size)] = peer  # self.team.index(peer)
             self.send_chunk(chunk_number, chunk, peer)

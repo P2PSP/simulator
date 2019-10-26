@@ -231,13 +231,13 @@ class Peer_DBS():
     def send_chunks_to_the_next_neighbor(self):
         self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending} forward={self.forward})")
         # Select next entry in pending with chunks to send
-        #stderr.write(f" ==>{self.pending}")
         if len(self.pending) > 0:
             counter = 0
             neighbor = list(self.pending.keys())[self.neighbor_index]
             self.lg.debug(f"{self.ext_id}: selected neighbor {neighbor} from {self.pending.keys()}")
             self.send_chunks(neighbor)
-            assert len(self.pending[neighbor]) == 0, f"{self.ext_id}: {self.pending}"
+            assert len(self.pending[neighbor]) == 0, \
+                f"{self.ext_id}: {self.pending}"
             while len(self.pending[neighbor]) == 0:
                 self.neighbor_index = (list(self.pending.keys()).index(neighbor) + 1) % len(self.pending)
                 neighbor = list(self.pending.keys())[self.neighbor_index]
@@ -534,6 +534,7 @@ class Peer_DBS():
         if __debug__:
             buffering_time = time.time() - start_time
             self.lg.debug(f"{self.ext_id}: buffering time={buffering_time}")
+        stderr.write(f" {buffering_time:.2f}")
 
     def run(self):
         self.lg.debug(f"{self.ext_id}: waiting for the chunks ...")
@@ -542,7 +543,6 @@ class Peer_DBS():
             #self.buffer.append((-1, b'L', (None, 0)))  # L == Lost
 
         self.buffer_data()
-        stderr.write(" Buffering done\n")
         #while (not self.is_the_player_disconected() or self.waiting_for_goodbye):
         while(self.player_connected and self.waiting_for_goodbye):
             self.buffer_and_play()
