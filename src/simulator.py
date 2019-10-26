@@ -128,13 +128,13 @@ class Simulator():
     def run_a_splitter(self, splitter_id):
         if self.buffer_size == 0:
             self.buffer_size = self.compute_buffer_size()
-        if self.set_of_rules == "DBS" or self.set_of_rules == "DBS2" or self.set_of_rules == "IMS":
-            splitter = Splitter_DBS_simulator(
-                buffer_size = self.buffer_size,
-                max_chunk_loss = self.max_chunk_loss,
-                number_of_rounds = self.number_of_rounds,
-                speed = self.speed)
-            self.lg.debug("simulator: DBS/IMS splitter created")
+        #if self.set_of_rules == "DBS" or self.set_of_rules == "DBS2" or self.set_of_rules == "IMS":
+        splitter = Splitter_DBS_simulator(
+            buffer_size = self.buffer_size,
+            max_chunk_loss = self.max_chunk_loss,
+            number_of_rounds = self.number_of_rounds,
+            speed = self.speed)
+        self.lg.debug("simulator: DBS/IMS splitter created")
 
         # splitter.start()
         splitter.setup_peer_connection_socket()
@@ -186,7 +186,7 @@ class Simulator():
 #                peer.set_optimization_horizon(self.horizon)
 #                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
             elif self.set_of_rules == "DBS3":
-                peer = Peer_DBS2_simulator(id = id, name = "Peer_DBS3_simulator")
+                peer = Peer_DBS3_simulator(id = id, name = "Peer_DBS3_simulator")
                 self.lg.debug("simulator: DBS3 peer created")
                 peer.set_optimization_horizon(self.horizon)
 #                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
