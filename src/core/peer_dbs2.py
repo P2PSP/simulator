@@ -96,11 +96,14 @@ class Peer_DBS2(Peer_DBS):
         self.buffer_chunk(chunk)
 
         if __debug__:
+            max = 0
             self.rounds_counter += 1
             for origin, neighbors in self.forward.items():
                 buf = ''
                 #for i in neighbors:
                 #    buf += str(i)
+                if max < len(neighbors):
+                    max = len(neighbors)
                 buf = len(neighbors)*"#"
                 self.lg.debug(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
 
@@ -112,12 +115,12 @@ class Peer_DBS2(Peer_DBS):
             self.prev_chunk_number_received_from_the_splitter = chunk_number
             self.number_of_lost_chunks_in_this_round = 0
 
-            max = 0
-            for i in self.buffer:
-                if i[ChunkStructure.CHUNK_DATA] != b'L':
-                    hops = i[ChunkStructure.HOPS]
-                    if hops > max:
-                        max = hops
+#            max = 0
+#            for i in self.buffer:
+#                if i[ChunkStructure.CHUNK_DATA] != b'L':
+#                    hops = i[ChunkStructure.HOPS]
+#                    if hops > max:
+#                        max = hops
             stderr.write(f" {colorama.Back.RED}{colorama.Fore.BLACK}{max}{colorama.Style.RESET_ALL}")
 
     # Checks if the chunk with chunk_number was previously received.
