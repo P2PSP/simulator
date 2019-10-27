@@ -331,7 +331,7 @@ class Peer_DBS():
         except KeyError:
             self.activity[sender] = 1
 
-        self.compute_deltas(chunk_number, sender)
+        self.compute_deltas(chunk_number, origin)
 
     def process_chunk(self, chunk, sender):
         self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
@@ -414,23 +414,6 @@ class Peer_DBS():
         x = self.process_unpacked_message(message, sender)
         return x
 
-    def ___process_unpacked_message(self, message, sender):
-        chunk_number = message[ChunkStructure.CHUNK_NUMBER]
-        if chunk_number >= 0:
-            self.lg.debug(f"{self.ext_id}: received chunk {message} from {sender}")
-            self.received_chunks += 1
-            self.process_chunk(message, sender)
-            self.send_chunks_to_the_next_neighbor()
-
-        else:  # message[ChunkStructure.CHUNK_NUMBER] < 0
-            if chunk_number == Messages.HELLO:
-                self.process_hello(sender)
-            elif chunk_number == Messages.GOODBYE:
-                self.process_goodbye(sender)
-            else:
-                stderr.write("{self.ext_id}: unexpected control chunk of index={chunk_number}")
-        return (chunk_number, sender)
-
     def complain(self, chunk_number):
         # Only monitors complain
         pass
@@ -509,6 +492,7 @@ class Peer_DBS():
         
         # Receive a chunk.
         (chunk_number, sender) = self.process_next_message()
+        self.prev_received_chunk = chunk_number # <-----
         self.delta = chunk_number
         while (chunk_number < 0):
             (chunk_number, sender) = self.process_next_message()

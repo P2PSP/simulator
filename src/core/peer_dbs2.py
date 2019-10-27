@@ -200,10 +200,11 @@ class Peer_DBS2(Peer_DBS):
                       buffer_box[ChunkStructure.ORIGIN_PORT])
             if origin != sender:
                 self.update_forward(origin, sender)
+                self.lg.debug(f"{self.ext_id}: process_request: forwarding chunk from {origin} to {sender}")
             else:
                 self.lg.debug(f"{self.ext_id}: process_request: origin {origin} is the sender of the request")
         else:
-            self.lg.debug(f"{self.ext_id}: process_request: chunk {chunk_number} is not in my buffer")
+            self.lg.debug(f"{self.ext_id}: process_request: chunk {chunk_number} is not in my buffer={self.buffer}")
 
     # Pruning messages are sent when chunks are received more than
     # once.
