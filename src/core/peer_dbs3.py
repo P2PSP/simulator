@@ -56,3 +56,6 @@ class Peer_DBS3(Peer_DBS2):
         #if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
         self.chunk_potentially_lost = optimized_chunk + self.buffer_size//3
         Peer_DBS2.play_chunk(self, chunk_number)
+
+    def process_prune(self, origin, peer):
+        pass

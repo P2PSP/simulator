@@ -303,6 +303,7 @@ class Splitter_DBS():
                 self.on_round_beginning()
                 stderr.write(f" {colorama.Fore.YELLOW}{self.current_round}{colorama.Style.RESET_ALL}")
                 stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}")
+                stderr.write(f" {colorama.Fore.GREEN}{chunk_number}{colorama.Style.RESET_ALL}")
                 self.lg.debug(f"splitter {self.id}: team={self.team}")
 
             try:

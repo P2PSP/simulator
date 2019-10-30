@@ -157,8 +157,8 @@ class Peer_DBS2(Peer_DBS):
             # fatal error ... the peer will send a prunning
             # message to these neighbors), but the peer should not
             # be added to the team.
-            assert origin != self.public_endpoint, \
-                f"{self.ext_id}: I'm received a chunk originated at me"
+            #assert origin != self.public_endpoint, \
+            #    f"{self.ext_id}: I'm received a chunk originated at me"
             if origin != self.public_endpoint:
                 self.update_the_team(origin)
 
