@@ -280,7 +280,7 @@ class Peer_DBS2(Peer_DBS):
 
     def play_chunk(self, chunk_number):
         buffer_box = self.buffer[chunk_number % self.buffer_size]
-        self.lg.debug(f"{self.ext_id}: chunk={chunk_number} hops={buffer_box[ChunkStructure.HOPS]}")
+        self.lg.debug(f"{self.ext_id}:playing {chunk_number} {buffer_box}")
         if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
             # The cell in the buffer is empty.
             self.complain(chunk_number) # Only monitors

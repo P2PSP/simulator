@@ -196,7 +196,8 @@ class Peer_DBS():
         return True
 
     def send_chunks(self, neighbor):
-        self.lg.debug(f"{self.ext_id}: sending chunks {self.pending[neighbor]} to neighbor={neighbor}")
+        assert len(self.pending[neighbor]) > 0, f"{len(self.pending[neighbor])}"
+        self.lg.debug(f"{self.ext_id}: sending chunks {self.pending[neighbor]} {len(self.pending[neighbor])} to neighbor={neighbor}")
         # When peer X receives a chunk, X selects the next
         # entry pending[E] (with one or more chunk numbers),
         # sends the chunk with chunk_number C indicated by
@@ -220,13 +221,15 @@ class Peer_DBS():
         except KeyError:
             self.activity[destination] = 0
             
-        if self.activity[destination] < self.min_activity:
-            del self.activity[destination]
-            for destinations_list in self.forward.values():
-                if destination in destinations_list:
-                    destinations_list.remove(destination)
-                assert destination not in destinations_list, f"{self.ext_id}: {destination} still in {self.forward}"
-        self.lg.debug(f"{self.ext_id}: activity={self.activity}")
+        #if self.activity[destination] < self.min_activity:
+        #    del self.activity[destination]
+        #    for destinations_list in self.forward.values():
+        #        if destination in destinations_list:
+        #            destinations_list.remove(destination)
+        #            self.lg.debug(f"{self.ext_id}: removed {destination}")
+        #        assert destination not in destinations_list, f"{self.ext_id}: {destination} still in {self.forward}"
+        #    self.lg.debug(f"{self.ext_id}: forward={self.forward}")
+        #self.lg.debug(f"{self.ext_id}: activity={self.activity}")
 
     def send_chunks_to_the_next_neighbor(self):
         self.lg.debug(f"{self.ext_id}: sending chunks to neighbors (pending={self.pending} forward={self.forward})")
@@ -235,7 +238,9 @@ class Peer_DBS():
             counter = 0
             neighbor = list(self.pending.keys())[self.neighbor_index]
             self.lg.debug(f"{self.ext_id}: selected neighbor {neighbor} from {self.pending.keys()}")
-            self.send_chunks(neighbor)
+            if len(self.pending[neighbor])>0:
+                assert len(self.pending[neighbor]) > 0, f"{len(self.pending[neighbor])}"
+                self.send_chunks(neighbor)
             assert len(self.pending[neighbor]) == 0, \
                 f"{self.ext_id}: {self.pending}"
             while len(self.pending[neighbor]) == 0:
@@ -248,7 +253,7 @@ class Peer_DBS():
     def buffer_chunk(self, chunk):
         position = chunk[ChunkStructure.CHUNK_NUMBER] % self.buffer_size
         self.buffer[position] = chunk
-        self.lg.debug(f"{self.ext_id}: buffering chunk={chunk}")
+        self.lg.debug(f"{self.ext_id}: buffering chunk={chunk} buffer={self.buffer}")
 
     def update_pendings(self, origin, chunk_number):
         self.lg.debug(f"{self.ext_id}: updating pendings (origin={origin}, chunk_number={chunk_number})")

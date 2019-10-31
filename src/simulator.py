@@ -108,7 +108,7 @@ class Simulator():
         stderr.write(f"| {colorama.Fore.BLUE}Deleted peer{colorama.Style.RESET_ALL}\n")
         if __debug__:
             stderr.write(f"| {colorama.Back.RED}{colorama.Fore.BLACK}Max hops{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"| {colorama.Fore.CYAN}Requested_chunk{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Fore.CYAN}Requested chunk{colorama.Style.RESET_ALL}\n")
         #stderr.write(f"| {colorama.Fore.CYAN}Sender/Requested chunk/Receiver{colorama.Back.CYAN} {colorama.Fore.BLACK}Requested chunk/requesting peer{colorama.Style.RESET_ALL}\n")
         stderr.write(f"| {colorama.Back.CYAN}{colorama.Fore.BLACK}Prunned origin{colorama.Style.RESET_ALL}\n")
         stderr.write("\n")
