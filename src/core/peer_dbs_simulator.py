@@ -21,6 +21,7 @@ import logging
 from .chunk_structure import ChunkStructure
 from .ip_tools import IP_tools
 from .messages import Messages
+import core.stderr as stderr
 
 class Peer_DBS_simulator(Peer_DBS):
 
@@ -33,7 +34,7 @@ class Peer_DBS_simulator(Peer_DBS):
         pass
 
     def packet_format(self):
-        self.chunk_packet_format = "!isIii"
+        self.chunk_packet_format = "!isIiid"
 
     def clear_entry_in_buffer(self, buffer_box):
         #return [buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT], buffer_box[ChunkStructure.HOPS]]
@@ -41,3 +42,9 @@ class Peer_DBS_simulator(Peer_DBS):
 
     def empty_entry_in_buffer(self):
         return [-1, b'L', None, 0, 0]
+
+    def process_chunk(self, chunk, sender):
+        super().process_chunk(chunk, sender)
+        transmission_time = time.time() - chunk[ChunkStructure.TIME]
+        #stderr.write(f" {transmission_time:.2}")
+        self.lg.debug(f"{self.ext_id}: transmission time={transmission_time}")

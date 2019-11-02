@@ -66,7 +66,7 @@ class Peer_DBS():
         self.activity = {}  # Incremented if received a chunk in the last round from that origin
         self.prev_chunk_number_received_from_the_splitter = 0 # Simulator?
         #self.delta = 0
-        self.delta_inertia = {}
+        #self.delta_inertia = {}
 
         logging.basicConfig(stream=sys.stdout, format="%(asctime)s.%(msecs)03d %(message)s %(levelname)-8s %(name)s %(pathname)s:%(lineno)d", datefmt="%H:%M:%S")
         self.lg = logging.getLogger(__name__)
@@ -149,7 +149,7 @@ class Peer_DBS():
             self.forward[self.public_endpoint].append(neighbor)
             self.pending[neighbor] = []
 
-            self.delta_inertia[neighbor] = 0.0
+            #self.delta_inertia[neighbor] = 0.0
             
             self.say_hello(neighbor)
             self.lg.debug(f"{self.ext_id}: peer {neighbor} is in the team")
@@ -336,7 +336,7 @@ class Peer_DBS():
         except KeyError:
             self.activity[sender] = 1
 
-        self.compute_deltas(chunk_number, origin)
+        #self.compute_deltas(chunk_number, origin)
 
     def process_chunk(self, chunk, sender):
         self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
@@ -353,7 +353,7 @@ class Peer_DBS():
         if sender not in self.forward[self.public_endpoint]:
             self.forward[self.public_endpoint].append(sender)
             self.pending[sender] = []
-        self.delta_inertia[sender] = 0.0
+        #self.delta_inertia[sender] = 0.0
 
     def process_goodbye(self, sender):
         self.lg.debug(f"{self.ext_id}: received [goodbye] from {sender}")
@@ -393,6 +393,7 @@ class Peer_DBS():
         if chunk_number >= 0:
             self.received_chunks += 1
             chunk = list(struct.unpack(self.chunk_packet_format, packet))
+            #stderr.write(f" ->{packet} {chunk}<-")
             chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
             chunk[ChunkStructure.HOPS] += 1
             self.lg.debug(f"{self.ext_id}: received chunk {chunk} from {sender}")

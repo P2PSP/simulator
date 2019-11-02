@@ -32,10 +32,7 @@ import core.stderr as stderr
 
 class Splitter_DBS():
 
-    def __init__(self,
-                 buffer_size = 32,
-                 max_chunk_loss = 16,
-                 name="Splitter_DBS"):
+    def __init__(self, buffer_size = 32, max_chunk_loss = 16, name="Splitter_DBS"):
         self.name = name
         self.buffer_size = buffer_size
         self.max_chunk_loss = max_chunk_loss
@@ -85,9 +82,7 @@ class Splitter_DBS():
         self.team_socket.bind(self.id)
 
     def send_chunk(self, chunk_number, chunk, peer):
-        chunk_msg = self.compose_chunk_packet(chunk_number = chunk_number,
-                                              chunk = chunk,
-                                              peer = peer)
+        chunk_msg = self.compose_chunk_packet(chunk_number = chunk_number, chunk = chunk, peer = peer)
         self.team_socket.sendto(chunk_msg, peer)
         self.lg.debug(f"{self.id}: chunk {chunk_number} sent to {peer}")
 
