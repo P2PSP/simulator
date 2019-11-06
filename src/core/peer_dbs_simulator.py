@@ -33,18 +33,40 @@ class Peer_DBS_simulator(Peer_DBS):
     def receive_the_chunk_size(self):
         pass
 
-    def packet_format(self):
-        self.chunk_packet_format = "!isIiid"
+    def set_packet_format(self):
+        self.packet_format = "!isIiid"
 
     def clear_entry_in_buffer(self, buffer_box):
-        #return [buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT], buffer_box[ChunkStructure.HOPS]]
-        return self.empty_entry_in_buffer()
+        return [buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT], buffer_box[ChunkStructure.HOPS], buffer_box[ChunkStructure.TIME]]
+        #return [buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT], buffer_box[ChunkStructure.HOPS], time.time()]
+        #return self.empty_entry_in_buffer()
 
     def empty_entry_in_buffer(self):
-        return [-1, b'L', None, 0, 0]
+        return [-1, b'L', None, 0, 0, 0.0] # chunk_number, chunk, (source), hops, time
+        #return [-1, b'L', None, 0, 0, time.time()] # chunk_number, chunk, (source), hops, time
 
-    def process_chunk(self, chunk, sender):
-        super().process_chunk(chunk, sender)
-        transmission_time = time.time() - chunk[ChunkStructure.TIME]
-        #stderr.write(f" {transmission_time:.2}")
-        self.lg.debug(f"{self.ext_id}: transmission time={transmission_time}")
+    def unpack_message(self, packet, sender):
+        msg_format = "!i" + (len(packet)-4)*'s'
+        chunk_number, *i_dont_know = struct.unpack(msg_format, packet)
+        if chunk_number >= 0:
+            self.received_chunks += 1
+            chunk = list(struct.unpack(self.packet_format, packet))
+            #stderr.write(f" ->{packet} {chunk}<-")
+            chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
+            chunk[ChunkStructure.HOPS] += 1
+            transmission_time = time.time() - chunk[ChunkStructure.TIME]
+            chunk[ChunkStructure.TIME] = transmission_time
+            stderr.write(f" <-{chunk[ChunkStructure.TIME]}->")
+            #stderr.write(f" {transmission_time:.2}")
+            self.lg.debug(f"{self.ext_id}: transmission time={transmission_time}")
+            self.lg.debug(f"{self.ext_id}: received chunk {chunk} from {sender}")
+            self.process_chunk(chunk, sender)
+            self.send_chunks_to_the_next_neighbor()
+        else:
+            if chunk_number == Messages.HELLO:
+                self.process_hello(sender)
+            elif chunk_number == Messages.GOODBYE:
+                self.process_goodbye(sender)
+            else:
+                stderr.write(f"{self.ext_id}: unexpected control chunk with code={chunk_number}")
+        return (chunk_number, sender)            

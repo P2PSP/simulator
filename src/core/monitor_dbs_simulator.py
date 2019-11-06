@@ -11,8 +11,8 @@ class Monitor_DBS_simulator(Monitor_DBS, Peer_DBS_simulator):
     def receive_the_chunk_size(self):
         Peer_DBS_simulator.receive_the_chunk_size(self)
 
-    def packet_format(self):
-        Peer_DBS_simulator.packet_format(self)
+    def set_packet_format(self):
+        Peer_DBS_simulator.set_packet_format(self)
         
     def compose_message(self, chunk_number):
         return Peer_DBS_simulator.compose_message(self, chunk_number)

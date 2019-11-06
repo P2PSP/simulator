@@ -56,8 +56,8 @@ class Peer_DBS():
 
         self.sendto_counter = 0
         self.received_chunks = 0
-        self.packet_format() # OJOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-        self.max_packet_length = struct.calcsize(self.chunk_packet_format)
+        self.set_packet_format()
+        self.max_packet_length = struct.calcsize(self.packet_format)
         self.neighbor_index = 0 
         self.number_of_chunks_consumed = 0 # Simulation ?
         self.number_of_lost_chunks_in_this_round = 0 # Simulation?
@@ -377,36 +377,10 @@ class Peer_DBS():
     def create_packet(self, chunk_number):
         chunk_position = chunk_number % self.buffer_size
         chunk = self.buffer[chunk_position].copy()
+        assert len(chunk)==len(self.packet_format)-1, f"{chunk} {len(chunk)} {self.packet_format}"
         chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.ip2int(chunk[ChunkStructure.ORIGIN_ADDR])
-        packet = struct.pack(self.chunk_packet_format, *chunk)
+        packet = struct.pack(self.packet_format, *chunk)
         return packet
-
-    def ___unpack_chunk(self, packet):
-        chunk = list(struct.unpack(self.chunk_packet_format, packet))
-        chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
-        chunk[ChunkStructure.HOPS] += 1
-        return chunk
-
-    def unpack_message(self, packet, sender):
-        msg_format = "!i" + (len(packet)-4)*'s'
-        chunk_number, *i_dont_know = struct.unpack(msg_format, packet)
-        if chunk_number >= 0:
-            self.received_chunks += 1
-            chunk = list(struct.unpack(self.chunk_packet_format, packet))
-            #stderr.write(f" ->{packet} {chunk}<-")
-            chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
-            chunk[ChunkStructure.HOPS] += 1
-            self.lg.debug(f"{self.ext_id}: received chunk {chunk} from {sender}")
-            self.process_chunk(chunk, sender)
-            self.send_chunks_to_the_next_neighbor()
-        else:
-            if chunk_number == Messages.HELLO:
-                self.process_hello(sender)
-            elif chunk_number == Messages.GOODBYE:
-                self.process_goodbye(sender)
-            else:
-                stderr.write("{self.ext_id}: unexpected control chunk with code={chunk_number}")
-        return (chunk_number, sender)            
 
     def ___unpack_message(self, packet, sender):
         if len(packet) == self.max_packet_length:
