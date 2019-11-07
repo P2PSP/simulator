@@ -62,7 +62,6 @@ class Peer_DBS():
         self.number_of_chunks_consumed = 0 # Simulation ?
         self.number_of_lost_chunks_in_this_round = 0 # Simulation?
         self.played = 0 # Simulation?
-        self.rounds_counter = 0 # Simulation?
         self.activity = {}  # Incremented if received a chunk in the last round from that origin
         self.prev_chunk_number_received_from_the_splitter = 0 # Simulator?
         #self.delta = 0
@@ -292,22 +291,6 @@ class Peer_DBS():
         # New round, all pending chunks are sent for neighbor in self.pending:
         # self.send_chunks(neighbor)
 
-        if __debug__:
-            self.rounds_counter += 1
-            for origin, neighbors in self.forward.items():
-                buf = ''
-                #for i in neighbors:
-                #    buf += str(i)
-                buf = len(neighbors)*"#"
-                self.lg.debug(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
-
-            try:
-                CLR = self.number_of_lost_chunks_in_this_round / (chunk_number - self.prev_chunk_number_received_from_the_splitter)
-                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks_in_this_round} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_received_from_the_splitter}")
-            except ZeroDivisionError:
-                pass
-            self.prev_chunk_number_received_from_the_splitter = chunk_number
-            self.number_of_lost_chunks_in_this_round = 0
 
     def compute_deltas(self, chunk_number, sender):
         #self.delta = chunk_number - self.delta

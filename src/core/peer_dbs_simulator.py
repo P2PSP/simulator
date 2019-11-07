@@ -27,7 +27,10 @@ class Peer_DBS_simulator(Peer_DBS):
 
     def __init__(self, id, name = "Peer_DBS_simulator"):
         super().__init__()
-#        self.chunk_packet_format = "!isIii"
+        #        self.chunk_packet_format = "!isIii"
+        self.rounds_counter = 0
+        self.accumulated_latency_in_the_round = 0
+        self.number_of_chunks_received_in_the_round = 0
         self.lg.debug(f"{name}: DBS simulator initialized")
 
     def receive_the_chunk_size(self):
@@ -55,8 +58,9 @@ class Peer_DBS_simulator(Peer_DBS):
             chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
             chunk[ChunkStructure.HOPS] += 1
             transmission_time = time.time() - chunk[ChunkStructure.TIME]
+            self.accumulated_latency_in_the_round += transmission_time
             #chunk[ChunkStructure.TIME] = transmission_time
-            stderr.write(f" <-{transmission_time}->")
+            #stderr.write(f" <-{transmission_time}->")
             #stderr.write(f" {transmission_time:.2}")
             self.lg.debug(f"{self.ext_id}: transmission time={transmission_time}")
             self.lg.debug(f"{self.ext_id}: received chunk {chunk} from {sender}")
@@ -70,3 +74,35 @@ class Peer_DBS_simulator(Peer_DBS):
             else:
                 stderr.write(f"{self.ext_id}: unexpected control chunk with code={chunk_number}")
         return (chunk_number, sender)            
+
+    def on_chunk_received_from_a_peer(self, chunk, sender):
+        super().on_chunk_received_from_a_peer(chunk, sender)
+        self.number_of_chunks_received_in_the_round += 1
+
+    def compute_average_latency(self):
+        average_latency = self.accumulated_latency_in_the_round / self.number_of_chunks_received_in_the_round
+        self.accumulated_latency_in_the_round = 0
+        self.lg.debug(f"{self.ext_id}: average_latency={average_latency}")
+
+    def on_chunk_received_from_the_splitter(self, chunk):
+        super().on_chunk_received_from_the_splitter(chunk)
+        chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
+        if __debug__:
+            self.rounds_counter += 1
+            for origin, neighbors in self.forward.items():
+                buf = ''
+                #for i in neighbors:
+                #    buf += str(i)
+                buf = len(neighbors)*"#"
+                self.lg.debug(f"{self.ext_id}: round={self.rounds_counter:03} origin={origin} K={len(neighbors):02} fan-out={buf:10}")
+
+            try:
+                CLR = self.number_of_lost_chunks_in_this_round / (chunk_number - self.prev_chunk_number_received_from_the_splitter)
+                self.lg.debug(f"{self.ext_id}: CLR={CLR:1.3} losses={self.number_of_lost_chunks_in_this_round} chunk_number={chunk_number} increment={chunk_number - self.prev_chunk_number_received_from_the_splitter}")
+            except ZeroDivisionError:
+                pass
+            self.prev_chunk_number_received_from_the_splitter = chunk_number
+            self.number_of_lost_chunks_in_this_round = 0
+        self.number_of_chunks_received_in_the_round += 1
+        self.compute_average_latency()
+        self.number_of_chunks_received_in_the_round = 0

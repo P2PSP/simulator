@@ -29,7 +29,8 @@ class Peer_DBS3_simulator(Peer_DBS2_simulator, Peer_DBS3):
             chunk[ChunkStructure.ORIGIN_ADDR] = IP_tools.int2ip(chunk[ChunkStructure.ORIGIN_ADDR])
             chunk[ChunkStructure.HOPS] += 1
             transmission_time = time.time() - chunk[ChunkStructure.TIME]
-            stderr.write(f" <-{transmission_time}->")
+            self.accumulated_latency_in_the_round += transmission_time
+            #stderr.write(f" <-{transmission_time}->")
             self.lg.debug(f"{self.ext_id}: transmission time={transmission_time}")
             self.lg.debug(f"{self.ext_id}: received chunk {chunk} from {sender}")
             self.process_chunk(chunk, sender)
