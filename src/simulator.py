@@ -153,16 +153,13 @@ class Simulator():
                 pass
                 #chunks_before_leave = 99999999
             if self.set_of_rules == "DBS":
-                peer = Monitor_DBS_simulator(id = id,
-                                             name = "Monitor_DBS_simulator")
+                peer = Monitor_DBS_simulator(id = id, name = "Monitor_DBS_simulator")
                 self.lg.debug("simulator: DBS monitor created")
             elif self.set_of_rules == "IMS":
-                peer = Monitor_IMS_simulator(id = id,
-                                             name = "Monitor_IMS_simulator")
+                peer = Monitor_IMS_simulator(id = id, name = "Monitor_IMS_simulator")
                 self.lg.debug("simulator: IMS monitor created")
             elif self.set_of_rules == "DBS2":
-                peer = Monitor_DBS2_simulator(id = id,
-                                             name = "Monitor_DBS2_simulator")
+                peer = Monitor_DBS2_simulator(id = id, name = "Monitor_DBS2_simulator")
                 self.lg.debug("simulator: DBS2 monitor created")
 #                peer.set_optimization_horizon(self.horizon)
 #                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)

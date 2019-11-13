@@ -89,6 +89,6 @@ class Peer_DBS2_simulator(Peer_DBS2, Peer_DBS_simulator):
 #                    if hops > max:
 #                        max = hops
             stderr.write(f" {colorama.Back.RED}{colorama.Fore.BLACK}{max}{colorama.Style.RESET_ALL}")
-        self.number_of_chunks_received_in_the_round += 1
-        self.compute_average_latency()
-        self.number_of_chunks_received_in_the_round = 0
+#        self.number_of_chunks_received_in_the_round += 1
+#        self.compute_average_latency()
+#        self.number_of_chunks_received_in_the_round = 0
