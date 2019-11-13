@@ -13,4 +13,5 @@ class Monitor_DBS3_simulator(Monitor_DBS3, Peer_simulator):
 
     def __init__(self, id, name = "Monitor_DBS3_simulator"):
         Monitor_DBS3.__init__(self)
-        Peer_simulator.__init__(self, id, name = "Monitor_DBS_simulator")
+        Peer_simulator.__init__(self, id, name)
+        self.lg.debug(f"{name}: initialized")
