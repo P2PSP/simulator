@@ -32,10 +32,7 @@ import core.stderr as stderr
 
 class Splitter_DBS():
 
-    def __init__(self,
-                 buffer_size = 32,
-                 max_chunk_loss = 16,
-                 name="Splitter_DBS"):
+    def __init__(self, buffer_size = 32, max_chunk_loss = 16, name="Splitter_DBS"):
         self.name = name
         self.buffer_size = buffer_size
         self.max_chunk_loss = max_chunk_loss
@@ -85,9 +82,7 @@ class Splitter_DBS():
         self.team_socket.bind(self.id)
 
     def send_chunk(self, chunk_number, chunk, peer):
-        chunk_msg = self.compose_chunk_packet(chunk_number = chunk_number,
-                                              chunk = chunk,
-                                              peer = peer)
+        chunk_msg = self.compose_chunk_packet(chunk_number = chunk_number, chunk = chunk, peer = peer)
         self.team_socket.sendto(chunk_msg, peer)
         self.lg.debug(f"{self.id}: chunk {chunk_number} sent to {peer}")
 
@@ -162,7 +157,7 @@ class Splitter_DBS():
         stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}")
 
     def increment_unsupportivity_of_peer(self, peer):
-        stderr.write(f" {colorama.Fore.RED}({self.team.index(peer)}){colorama.Style.RESET_ALL}")
+        stderr.write(f" {colorama.Fore.RED}{self.team.index(peer)}{colorama.Style.RESET_ALL}")
         try:
             self.losses[peer] += 1
         except KeyError:
@@ -182,7 +177,7 @@ class Splitter_DBS():
         if destination in self.team:
             if self.team.index(destination) >= self.number_of_monitors:
                 self.increment_unsupportivity_of_peer(destination)
-        stderr.write(f" {colorama.Fore.RED}{lost_chunk_number}{colorama.Style.RESET_ALL}")
+        stderr.write(f"/{colorama.Fore.RED}{lost_chunk_number}{colorama.Style.RESET_ALL}")
 
     def get_losser(self, lost_chunk_number):
         return self.destination_of_chunk[lost_chunk_number % (self.buffer_size)]
@@ -190,7 +185,6 @@ class Splitter_DBS():
     def del_peer(self, peer_index):
         del self.team[peer_index]
         stderr.write(f" {colorama.Fore.BLUE}{peer_index}({len(self.team)}){colorama.Style.RESET_ALL}")
-        stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}")
 
     def remove_peer(self, peer):
         try:
@@ -303,11 +297,14 @@ class Splitter_DBS():
                 total_peers += len(self.team)
                 self.on_round_beginning()
                 stderr.write(f" {colorama.Fore.YELLOW}{self.current_round}{colorama.Style.RESET_ALL}")
+                stderr.write(f" {colorama.Fore.MAGENTA}{len(self.team)}{colorama.Style.RESET_ALL}")
+                stderr.write(f" {colorama.Fore.GREEN}{chunk_number}{colorama.Style.RESET_ALL}")
+                self.lg.debug(f"splitter {self.id}: team={self.team}")
 
             try:
                 peer = self.team[self.peer_number]
             except IndexError:
-                stderr.write(f"{self.id}: the peer with index {self.peer_number} does not exist. peers_list={self.team} peer_number={self.peer_number}")
+                self.lg.debug(f"splitter {self.id}: the peer with index {self.peer_number} does not exist. peers_list={self.team} peer_number={self.peer_number}")
 
             self.destination_of_chunk[chunk_number % (self.buffer_size)] = peer  # self.team.index(peer)
             self.send_chunk(chunk_number, chunk, peer)

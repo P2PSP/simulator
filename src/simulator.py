@@ -13,9 +13,11 @@ import colorama
 
 from core.monitor_dbs_simulator import Monitor_DBS_simulator
 from core.monitor_dbs2_simulator import Monitor_DBS2_simulator
+from core.monitor_dbs3_simulator import Monitor_DBS3_simulator
 from core.monitor_ims_simulator import Monitor_IMS_simulator
 from core.peer_dbs_simulator import Peer_DBS_simulator
 from core.peer_dbs2_simulator import Peer_DBS2_simulator
+from core.peer_dbs3_simulator import Peer_DBS3_simulator
 from core.peer_ims_simulator import Peer_IMS_simulator
 from core.peer_dbs2_faulty import Peer_DBS2_faulty as Peer_faulty
 from core.simulator_stuff import Simulator_stuff as sim
@@ -34,13 +36,14 @@ class Simulator():
                  number_of_peers=7,    # Monitor apart
                  number_of_rounds=100,
                  number_of_faulty=0,
-                 buffer_size=64,
+                 buffer_size=32,
                  chunk_cadence=0.01,
                  min_activity = -5, # rounds
                  max_chunk_loss = 16,
                  speed = 1000.0,
                  seed = None,
                  horizon = 0, #buffer_size - number_of_peers*4,
+                 optimal_neighborhood_degree = 3,
                  gui=False):
 
         #logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -64,6 +67,7 @@ class Simulator():
         self.speed = float(speed)
         self.seed = seed
         self.horizon = horizon
+        self.optimal_neighborhood_degree = optimal_neighborhood_degree
         self.gui = gui
         self.processes = {}
 
@@ -90,19 +94,23 @@ class Simulator():
         stderr.write(f"| seed={self.seed}\n")
         self.lg.debug(f"horizon={self.horizon}")
         stderr.write(f"| horizon={self.horizon}\n")
+        self.lg.debug(f"optimal_neighborhood_degree={self.optimal_neighborhood_degree}")
+        stderr.write(f"| optimal_neighborhood_degree={self.optimal_neighborhood_degree}\n")
         stderr.write("\n")
 
         stderr.write(f"Output synopsis:\n")
-        stderr.write(f"| CPU usage\n")
+        stderr.write(f"| CPU_usage\n")
+        stderr.write(f"| Buffering.time\n")
+        stderr.write(f"| {colorama.Fore.GREEN}Chunk number{colorama.Style.RESET_ALL}\n")
         stderr.write(f"| {colorama.Fore.MAGENTA}Team size{colorama.Style.RESET_ALL}\n")
         stderr.write(f"| {colorama.Fore.YELLOW}Round{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"| {colorama.Fore.RED}Lost chunk/Unsupportive peer{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Fore.RED}Peer/lost chunk{colorama.Style.RESET_ALL}\n")
         stderr.write(f"| {colorama.Fore.BLUE}Deleted peer{colorama.Style.RESET_ALL}\n")
         if __debug__:
             stderr.write(f"| {colorama.Back.RED}{colorama.Fore.BLACK}Max hops{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"| {colorama.Fore.CYAN}Sender/Requested chunk/Receiver{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Fore.CYAN}Requested chunk{colorama.Style.RESET_ALL}\n")
         #stderr.write(f"| {colorama.Fore.CYAN}Sender/Requested chunk/Receiver{colorama.Back.CYAN} {colorama.Fore.BLACK}Requested chunk/requesting peer{colorama.Style.RESET_ALL}\n")
-        stderr.write(f"| {colorama.Back.CYAN}{colorama.Fore.BLACK}Receiver/Prunned origin/Sender{colorama.Style.RESET_ALL}\n")
+        stderr.write(f"| {colorama.Back.CYAN}{colorama.Fore.BLACK}Prunned origin{colorama.Style.RESET_ALL}\n")
         stderr.write("\n")
         
         np.random.seed(self.seed)
@@ -121,13 +129,13 @@ class Simulator():
     def run_a_splitter(self, splitter_id):
         if self.buffer_size == 0:
             self.buffer_size = self.compute_buffer_size()
-        if self.set_of_rules == "DBS" or self.set_of_rules == "DBS2" or self.set_of_rules == "IMS":
-            splitter = Splitter_DBS_simulator(
-                buffer_size = self.buffer_size,
-                max_chunk_loss = self.max_chunk_loss,
-                number_of_rounds = self.number_of_rounds,
-                speed = self.speed)
-            self.lg.debug("simulator: DBS/IMS splitter created")
+        #if self.set_of_rules == "DBS" or self.set_of_rules == "DBS2" or self.set_of_rules == "IMS":
+        splitter = Splitter_DBS_simulator(
+            buffer_size = self.buffer_size,
+            max_chunk_loss = self.max_chunk_loss,
+            number_of_rounds = self.number_of_rounds,
+            speed = self.speed)
+        self.lg.debug("simulator: DBS/IMS splitter created")
 
         # splitter.start()
         splitter.setup_peer_connection_socket()
@@ -145,21 +153,26 @@ class Simulator():
                 pass
                 #chunks_before_leave = 99999999
             if self.set_of_rules == "DBS":
-                peer = Monitor_DBS_simulator(id = id,
-                                             name = "Monitor_DBS_simulator")
+                peer = Monitor_DBS_simulator(id = id, name = "Monitor_DBS_simulator")
                 self.lg.debug("simulator: DBS monitor created")
             elif self.set_of_rules == "IMS":
-                peer = Monitor_IMS_simulator(id = id,
-                                             name = "Monitor_IMS_simulator")
+                peer = Monitor_IMS_simulator(id = id, name = "Monitor_IMS_simulator")
                 self.lg.debug("simulator: IMS monitor created")
             elif self.set_of_rules == "DBS2":
-                peer = Monitor_DBS2_simulator(id = id,
-                                             name = "Monitor_DBS2_simulator")
+                peer = Monitor_DBS2_simulator(id = id, name = "Monitor_DBS2_simulator")
                 self.lg.debug("simulator: DBS2 monitor created")
+#                peer.set_optimization_horizon(self.horizon)
+#                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
+            elif self.set_of_rules == "DBS3":
+                peer = Monitor_DBS3_simulator(id = id,
+                                             name = "Monitor_DBS3_simulator")
+                self.lg.debug("simulator: DBS3 monitor created")
                 peer.set_optimization_horizon(self.horizon)
+#                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
         elif type == "faulty":
             peer = Peer_faulty(id, name="Peer_DBS2_faulty")
-            peer.set_optimization_horizon(self.horizon)
+#            peer.set_optimization_horizon(self.horizon)
+#            peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
             self.lg.debug("simulator: faulty peer created")
         else:
             if self.set_of_rules == "DBS":
@@ -168,7 +181,13 @@ class Simulator():
             elif self.set_of_rules == "DBS2":
                 peer = Peer_DBS2_simulator(id = id, name = "Peer_DBS2_simulator")
                 self.lg.debug("simulator: DBS2 peer created")
+#                peer.set_optimization_horizon(self.horizon)
+#                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
+            elif self.set_of_rules == "DBS3":
+                peer = Peer_DBS3_simulator(id = id, name = "Peer_DBS3_simulator")
+                self.lg.debug("simulator: DBS3 peer created")
                 peer.set_optimization_horizon(self.horizon)
+#                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
             elif self.set_of_rules == "IMS":
                 peer = Peer_IMS_simulator(id = id, name = "Peer_IMS_simulator")
                 self.lg.debug("simulator: IMS peer created")

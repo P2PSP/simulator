@@ -11,6 +11,7 @@ import sys
 import time
 from threading import Thread
 from core.splitter_dbs import Splitter_DBS
+import core.stderr as stderr
 
 from .common import Common
 from .simulator_stuff import Simulator_stuff
@@ -21,16 +22,8 @@ from .ip_tools import IP_tools
 
 class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
 
-    def __init__(self,
-                 buffer_size = 32,
-                 max_chunk_loss = 16,
-                 number_of_rounds = 100,
-                 speed = 4000,
-                 name = "Splitter_DBS_simulator"):
-        Splitter_DBS.__init__(self,
-                              buffer_size = buffer_size,
-                              max_chunk_loss = max_chunk_loss,
-                              name = "Splitter_DBS_simulator")
+    def __init__(self, buffer_size = 32, max_chunk_loss = 16, number_of_rounds = 100, speed = 4000, name = "Splitter_DBS_simulator"):
+        Splitter_DBS.__init__(self, buffer_size = buffer_size, max_chunk_loss = max_chunk_loss, name = "Splitter_DBS_simulator")
         self.number_of_rounds = number_of_rounds
         self.speed = speed
         self.cpu_usage = 50
@@ -74,18 +67,13 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         Simulator_stuff.FEEDBACK["DRAW"].put(("R", self.current_round))
 
     def packet_format(self):
-        self.chunk_packet_format = "!isIiif"
+        self.chunk_packet_format = "!isIiid"
 
     def compose_chunk_packet(self, chunk_number, chunk, peer):
-        #now = time.time()
+        now = time.time()
         hops = 0
-        chunk_msg = (chunk_number,
-                     chunk,
-                     IP_tools.ip2int(peer[0]),
-                     peer[1],
-                     hops,
-                     time.time()
-        )
+        #chunk_msg = (chunk_number, chunk, IP_tools.ip2int(peer[0]), peer[1], hops, time.time())
+        chunk_msg = (chunk_number, chunk, IP_tools.ip2int(peer[0]), peer[1], hops, now)
         msg = struct.pack(self.chunk_packet_format, *chunk_msg)
         return msg
 
