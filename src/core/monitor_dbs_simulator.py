@@ -5,12 +5,12 @@ monitor_dbs_simulator module
 
 from .monitor_dbs import Monitor_DBS
 from .peer_dbs_simulator import Peer_DBS_simulator
-from .peer_simulator import Peer_Simulator
+from .peer_simulator import Peer_simulator
 
-class Monitor_DBS_simulator(Monitor_DBS, Peer_Simulator):
-    def __init__(self, id, name = "Monitor_DBS_Simulator"):
+class Monitor_DBS_simulator(Monitor_DBS, Peer_simulator):
+    def __init__(self, id, name = "Monitor_DBS_simulator"):
         Monitor_DBS.__init__(self)
-        Peer_Simulator.__init__(self, id, name = "Monitor_DBS_Simulator")
+        Peer_simulator.__init__(self, id, name = "Monitor_DBS_simulator")
 
 class Monitor_DBS_simulator2(Monitor_DBS, Peer_DBS_simulator):
 

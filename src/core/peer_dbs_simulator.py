@@ -16,7 +16,7 @@ from .simulator_stuff import Simulator_stuff as sim
 from .socket_wrapper import Socket_wrapper as socket
 from .simulator_stuff import hash
 from .peer_dbs import Peer_DBS
-from .peer_simulator import Peer_Simulator
+from .peer_simulator import Peer_simulator
 import logging
 #import colorama
 from .chunk_structure import ChunkStructure
@@ -24,10 +24,11 @@ from .ip_tools import IP_tools
 from .messages import Messages
 import core.stderr as stderr
 
-class Peer_DBS_simulator(Peer_DBS, Peer_Simulator):
+class Peer_DBS_simulator(Peer_DBS, Peer_simulator):
     def __init__(self, id, name = "Peer_DBS_simulator"):
         Peer_DBS.__init__(self)
-        Peer_Simulator.__init__(self, id, name = "Peer_Simulator")
+        Peer_simulator.__init__(self, id, name = "Peer_simulator")
+        self.lg.debug(f"{name}: DBS simulator initialized")
 
 class Peer_DBS_simulator2(Peer_DBS):
 
