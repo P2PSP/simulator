@@ -21,6 +21,7 @@ from .simulator_stuff import hash
 import core.stderr as stderr
 from .limits import Limits
 from .ip_tools import IP_tools
+import time
 
 class Peer_DBS2(Peer_DBS):
 
