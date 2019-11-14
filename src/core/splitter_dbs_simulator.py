@@ -29,7 +29,7 @@ class Splitter_DBS_simulator(Simulator_stuff, Splitter_DBS):
         self.cpu_usage = 50
         self.current_round = 0
         self.packet_format()
-        self.lg.debug("{name}: initialized")
+        self.lg.debug(f"{name}: initialized")
         colorama.init()
 
     def send_the_chunk_size(self, peer_serve_socket):

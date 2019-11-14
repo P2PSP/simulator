@@ -3,8 +3,7 @@
 peer_dbs3_simulator module
 """
 
-
-from .peer_dbs3 import Peer_DBS3
+from .peer_dbs3b import Peer_DBS3
 from .peer_simulator import Peer_simulator
 
 class Peer_DBS3_simulator(Peer_DBS3, Peer_simulator):

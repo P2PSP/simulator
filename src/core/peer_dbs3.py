@@ -34,7 +34,7 @@ class Peer_DBS3(Peer_DBS2):
     def set_optimal_neighborhood_degree(self, optimal_neighborhood_degree):
         self.optimal_neighborhood_degree = optimal_neighborhood_degree
 
-    def clear_entry_in_buffer(self, buffer_box):
+    def clear_entry_in_buffer__(self, buffer_box):
         return [buffer_box[ChunkStructure.CHUNK_NUMBER], b'L', buffer_box[ChunkStructure.ORIGIN_ADDR], buffer_box[ChunkStructure.ORIGIN_PORT], buffer_box[ChunkStructure.HOPS], buffer_box[ChunkStructure.TIME]]
 
     def on_chunk_received_from_the_splitter(self, chunk):
@@ -66,32 +66,6 @@ class Peer_DBS3(Peer_DBS2):
 #        for neighbor in self.pending:
 #            if len(self.pending[neighbor]) > 0:
 #                self.send_chunks(neighbor)
-
-    def __play_chunk(self, chunk_number):
-        optimized_chunk = (chunk_number + self.optimization_horizon) % Limits.MAX_CHUNK_NUMBER
-        #buffer_box = self.buffer[optimized_chunk % self.buffer_size]
-        #if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
-        self.chunk_potentially_lost = optimized_chunk + self.buffer_size//3
-        Peer_DBS2.play_chunk(self, chunk_number)
-
-    def request_origin(self, origin, peer):
-        #stderr.write(f" R{self.ext_id}-{chunk_number}-{peer}")
-        self.lg.debug(f"{self.ext_id}: sent [request_origin {origin}] to {peer}")
-        msg = struct.pack("!iIi", Messages.REQUEST_ORIGIN, IP_tools.ip2int(origin[0]), origin[1])
-        self.team_socket.sendto(msg, peer)
-
-    def process_request_origin(self, origin, sender):
-        stderr.write(f" {colorama.Fore.CYAN}{origin[1]}{colorama.Style.RESET_ALL}")
-        self.lg.debug(f"{self.ext_id}: received [request_origin {origin}] from {sender}")
-        if origin != sender:
-            self.update_forward(origin, sender)
-            self.lg.debug(f"{self.ext_id}: process_request: forwarding chunk from {origin} to {sender}")
-        else:
-            self.lg.debug(f"{self.ext_id}: process_request: origin {origin} is the sender of the request")
-
-
-#    def process_prune(self, origin, peer):
-#        pass
 
     # Respect to DBS, request and prune messages must be unpacked.
     def unpack_message(self, packet, sender):
@@ -128,3 +102,29 @@ class Peer_DBS3(Peer_DBS2):
             else:
                 stderr.write("{self.ext_id}: unexpected control chunk with code={chunk_number}")
         return (chunk_number, sender)
+
+    def __play_chunk(self, chunk_number):
+        optimized_chunk = (chunk_number + self.optimization_horizon) % Limits.MAX_CHUNK_NUMBER
+        #buffer_box = self.buffer[optimized_chunk % self.buffer_size]
+        #if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
+        self.chunk_potentially_lost = optimized_chunk + self.buffer_size//3
+        Peer_DBS2.play_chunk(self, chunk_number)
+
+    def request_origin(self, origin, peer):
+        #stderr.write(f" R{self.ext_id}-{chunk_number}-{peer}")
+        self.lg.debug(f"{self.ext_id}: sent [request_origin {origin}] to {peer}")
+        msg = struct.pack("!iIi", Messages.REQUEST_ORIGIN, IP_tools.ip2int(origin[0]), origin[1])
+        self.team_socket.sendto(msg, peer)
+
+    def process_request_origin(self, origin, sender):
+        stderr.write(f" {colorama.Fore.CYAN}{origin[1]}{colorama.Style.RESET_ALL}")
+        self.lg.debug(f"{self.ext_id}: received [request_origin {origin}] from {sender}")
+        if origin != sender:
+            self.update_forward(origin, sender)
+            self.lg.debug(f"{self.ext_id}: process_request: forwarding chunk from {origin} to {sender}")
+        else:
+            self.lg.debug(f"{self.ext_id}: process_request: origin {origin} is the sender of the request")
+
+#    def process_prune(self, origin, peer):
+#        pass
+

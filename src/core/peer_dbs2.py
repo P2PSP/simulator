@@ -61,6 +61,13 @@ class Peer_DBS2(Peer_DBS):
             self.forward[origin] = [destination]
             #self.pending[destination] = [] OJOJOOJOJOJOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 
+    def compute_average_latency(self):
+        #average_latency = self.accumulated_latency_in_the_round / self.number_of_chunks_received_in_the_round
+        average_latency = self.accumulated_latency_in_the_round / (len(self.team)+1)
+        self.accumulated_latency_in_the_round = 0
+        #self.lg.debug(f"{self.ext_id}: average_latency={average_latency} -- {self.number_of_chunks_received_in_the_round} --")
+        self.lg.debug(f"{self.ext_id}: average_latency={average_latency}")
+
     def on_chunk_received_from_the_splitter(self, chunk):
         if __debug__:
             chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
@@ -92,6 +99,12 @@ class Peer_DBS2(Peer_DBS):
 #                    if hops > max:
 #                        max = hops
             stderr.write(f" {colorama.Back.RED}{colorama.Fore.BLACK}{max}{colorama.Style.RESET_ALL}")
+
+            self.rounds_counter += 1
+            self.number_of_chunks_received_in_the_round += 1
+            self.compute_average_latency()
+            self.number_of_chunks_received_in_the_round = 0
+            
 #        self.number_of_chunks_received_in_the_round += 1
 #        self.compute_average_latency()
 #        self.number_of_chunks_received_in_the_round = 0
@@ -140,6 +153,9 @@ class Peer_DBS2(Peer_DBS):
             self.activity[sender] += 1
         except KeyError:
             self.activity[sender] = 1
+
+        if __debug__:
+            self.number_of_chunks_received_in_the_round += 1
 
     def process_chunk(self, chunk, sender):
         self.lg.debug(f"{self.ext_id}: processing chunk={chunk}")
@@ -252,6 +268,12 @@ class Peer_DBS2(Peer_DBS):
         except ValueError:
             self.lg.warning(f"{self.ext_id}: process_goodbye: failed to remove {sender} from team={self.team}")
 
+    def request_chunk_to_random_peer(self, chunk_number):
+        if len(self.team) > 1:
+                peer = random.choice(self.team)
+                self.request_path(chunk_number, peer)
+                assert peer != self.ext_id[1], f"{self.ext_id}: {peer} has selected itself to request a path"
+
     def play_chunk(self, chunk_number):
         buffer_box = self.buffer[chunk_number % self.buffer_size]
         self.lg.debug(f"{self.ext_id}:playing {chunk_number} {buffer_box}")
@@ -268,10 +290,7 @@ class Peer_DBS2(Peer_DBS):
             # duplicate chunks, then a [prune <chunk_number>] should
             # be sent to those peers which send duplicates.
 
-            if len(self.team) > 1:
-                peer = random.choice(self.team)
-                self.request_path(chunk_number, peer)
-                assert peer != self.ext_id[1], f"{self.ext_id}: {peer} has selected itself to request a path"
+            self.request_chunk_to_random_peer(chunk_number)
         else:
             # The cell has a chunk
             self.buffer[chunk_number % self.buffer_size] = self.clear_entry_in_buffer(buffer_box)

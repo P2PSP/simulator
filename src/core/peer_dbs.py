@@ -305,8 +305,7 @@ class Peer_DBS():
         # New round, all pending chunks are sent for neighbor in self.pending:
         # self.send_chunks(neighbor)
 
-
-    def compute_deltas(self, chunk_number, sender):
+    def compute_deltas_(self, chunk_number, sender):
         #self.delta = chunk_number - self.delta
         delta = chunk_number - self.chunk_to_play
         try:
@@ -321,9 +320,10 @@ class Peer_DBS():
         # the received chunk is new. DBS specific because peers
         # will forward to the <origin> all chunks originated at
         # themselves (received by the splitter).
-        chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
         origin = chunk[ChunkStructure.ORIGIN_ADDR], chunk[ChunkStructure.ORIGIN_PORT]
-        self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin}")
+        if __debug__:
+            chunk_number = chunk[ChunkStructure.CHUNK_NUMBER]
+            self.lg.debug(f"{self.ext_id}: processing chunk {chunk_number} with origin {origin}")
 
         if origin not in self.forward[self.public_endpoint]:
             self.forward[self.public_endpoint].append(origin)

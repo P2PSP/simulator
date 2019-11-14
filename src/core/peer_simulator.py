@@ -29,7 +29,7 @@ class Peer_simulator():
         self.rounds_counter = 0
         self.accumulated_latency_in_the_round = 0
         self.number_of_chunks_received_in_the_round = 0
-        self.lg.debug(f"{name} initialized")
+        self.lg.debug(f"{name}: initialized")
 
     def receive_the_chunk_size(self):
         pass
@@ -46,17 +46,17 @@ class Peer_simulator():
         return [-1, b'L', None, 0, 0, 0.0] # chunk_number, chunk, (source), hops, time
         #return [-1, b'L', None, 0, 0, time.time()] # chunk_number, chunk, (source), hops, time
 
-    def on_chunk_received_from_a_peer(self, chunk, sender):
+    def on_chunk_received_from_a_peer__(self, chunk, sender):
         super().on_chunk_received_from_a_peer(chunk, sender)
         self.number_of_chunks_received_in_the_round += 1
 
-    def compute_average_latency(self):
+    def compute_average_latency__(self):
         average_latency = self.accumulated_latency_in_the_round / self.number_of_chunks_received_in_the_round
         self.accumulated_latency_in_the_round = 0
         self.lg.debug(f"{self.ext_id}: average_latency={average_latency} -- {self.number_of_chunks_received_in_the_round} --")
 
-    def on_chunk_received_from_the_splitter(self, chunk):
-        super().on_chunk_received_from_the_splitter(chunk)
+    def on_chunk_received_from_the_splitter__(self, chunk):
+        su.on_chunk_received_from_the_splitter(chunk)
         self.rounds_counter += 1
         self.number_of_chunks_received_in_the_round += 1
         self.compute_average_latency()
