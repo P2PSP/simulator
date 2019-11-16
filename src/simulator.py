@@ -43,7 +43,7 @@ class Simulator():
                  max_chunk_loss = 16,
                  speed = 1000.0,
                  seed = None,
-                 horizon = 0, #buffer_size - number_of_peers*4,
+                 #horizon = 0, #buffer_size - number_of_peers*4,
                  optimal_neighborhood_degree = 3,
                  gui=False):
 
@@ -68,8 +68,8 @@ class Simulator():
         self.current_round = 0
         self.speed = float(speed)
         self.seed = seed
-        self.horizon = horizon
-        self.optimal_neighborhood_degree = optimal_neighborhood_degree
+        #self.horizon = horizon
+        #self.optimal_neighborhood_degree = optimal_neighborhood_degree
         self.gui = gui
         self.processes = {}
 
@@ -96,10 +96,10 @@ class Simulator():
         stderr.write(f"| speed={self.speed}\n")
         self.lg.debug(f"seed={self.seed}")
         stderr.write(f"| seed={self.seed}\n")
-        self.lg.debug(f"horizon={self.horizon}")
-        stderr.write(f"| horizon={self.horizon}\n")
-        self.lg.debug(f"optimal_neighborhood_degree={self.optimal_neighborhood_degree}")
-        stderr.write(f"| optimal_neighborhood_degree={self.optimal_neighborhood_degree}\n")
+        #self.lg.debug(f"horizon={self.horizon}")
+        #stderr.write(f"| horizon={self.horizon}\n")
+        #self.lg.debug(f"optimal_neighborhood_degree={self.optimal_neighborhood_degree}")
+        #stderr.write(f"| optimal_neighborhood_degree={self.optimal_neighborhood_degree}\n")
         stderr.write("\n")
 
         stderr.write(f"Output synopsis:\n")
@@ -171,7 +171,7 @@ class Simulator():
                 peer = Monitor_DBS3_simulator(id = id,
                                              name = "Monitor_DBS3_simulator")
                 self.lg.debug("simulator: DBS3 monitor created")
-                peer.set_optimization_horizon(self.horizon)
+                #peer.set_optimization_horizon(self.horizon)
 #                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
         elif type == "faulty":
             peer = Peer_faulty(id, name="Peer_DBS2_faulty")
@@ -190,7 +190,7 @@ class Simulator():
             elif self.set_of_rules == "DBS3":
                 peer = Peer_DBS3_simulator(id = id, name = "Peer_DBS3_simulator")
                 self.lg.debug("simulator: DBS3 peer created")
-                peer.set_optimization_horizon(self.horizon)
+                #peer.set_optimization_horizon(self.horizon)
 #                peer.set_optimal_neighborhood_degree(self.optimal_neighborhood_degree)
             elif self.set_of_rules == "IMS":
                 peer = Peer_IMS_simulator(id = id, name = "Peer_IMS_simulator")

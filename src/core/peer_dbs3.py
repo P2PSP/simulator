@@ -8,7 +8,8 @@ peer_dbs3 module
 # DBS3 (Data Broadcasting Set extension 2) layer, peer side.
 
 # DBS3 extends DBS2, optimizing the topology even when not chunks are
-# lost.
+# lost. The receiver of a REQUEST_ORIGIN should request the origin
+# especified in the message to a peer different of the sender.
 
 import random
 from .chunk_structure import ChunkStructure
