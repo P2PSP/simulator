@@ -38,6 +38,11 @@ class Peer_DBS2(Peer_DBS):
         # team.
         self.team = []
 
+    # In DBS2, peers do not stop sending chunks to their neighbors by
+    # their insolidarity.
+    def check_debt(self, destination):
+        pass
+
     # Add a new peer to the team list.
     def update_the_team(self, peer):
         self.lg.debug(f"{self.ext_id}: updating team with peer {peer}")
@@ -150,9 +155,9 @@ class Peer_DBS2(Peer_DBS):
                 self.update_the_team(origin)
 
         try:
-            self.activity[sender] += 1
+            self.debt[sender] -= 1
         except KeyError:
-            self.activity[sender] = 1
+            self.debt[sender] = 0
 
         if __debug__:
             self.number_of_chunks_received_in_the_round += 1

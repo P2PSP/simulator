@@ -38,7 +38,8 @@ class Simulator():
                  number_of_faulty=0,
                  buffer_size=32,
                  chunk_cadence=0.01,
-                 min_activity = -5, # rounds
+                 #min_activity = -5, # rounds
+                 max_debt = 16,  # Chunks
                  max_chunk_loss = 16,
                  speed = 1000.0,
                  seed = None,
@@ -61,7 +62,8 @@ class Simulator():
         self.number_of_rounds = int(number_of_rounds)
         self.number_of_faulty = number_of_faulty
         self.buffer_size = int(buffer_size)
-        self.min_activity = int(min_activity)
+        #self.min_activity = int(min_activity)
+        self.max_debt = int(max_debt)
         self.max_chunk_loss = float(max_chunk_loss)
         self.current_round = 0
         self.speed = float(speed)
@@ -84,8 +86,10 @@ class Simulator():
         stderr.write(f"| number_of_faulty={self.number_of_faulty}\n")
         self.lg.debug(f"buffer_size={self.buffer_size}")
         stderr.write(f"| buffer_size={self.buffer_size}\n")
-        self.lg.debug(f"min_activity={self.min_activity}")
-        stderr.write(f"| min_activity={self.min_activity}\n")
+        #self.lg.debug(f"min_activity={self.min_activity}")
+        #stderr.write(f"| min_activity={self.min_activity}\n")
+        self.lg.debug(f"max_debt={self.max_debt}")
+        stderr.write(f"| max_debt={self.max_debt}\n")
         self.lg.debug(f"max_chunk_loss={self.max_chunk_loss}")
         stderr.write(f"| max_chunk_loss={self.max_chunk_loss}\n")
         self.lg.debug(f"speed={self.speed}")
@@ -195,7 +199,8 @@ class Simulator():
 
         #peer.chunks_before_leave = chunks_before_leave
         peer.set_splitter(splitter_id)
-        peer.set_min_activity(self.min_activity)
+        #peer.set_min_activity(self.min_activity)
+        peer.set_max_debt(self.max_debt)
         if peer.connect_to_the_splitter(peer_port=0):
             peer.receive_the_public_endpoint()
             peer.receive_the_peer_index_in_team()

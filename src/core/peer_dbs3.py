@@ -66,6 +66,9 @@ class Peer_DBS3(Peer_DBS2):
 #        for neighbor in self.pending:
 #            if len(self.pending[neighbor]) > 0:
 #                self.send_chunks(neighbor)
+        self.buffer_chunk(chunk)
+        for i in self.debt.keys():
+            self.debt[i] /= 2
 
     # Respect to DBS, request and prune messages must be unpacked.
     def unpack_message(self, packet, sender):

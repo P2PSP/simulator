@@ -62,7 +62,7 @@ class Peer_DBS():
         self.number_of_chunks_consumed = 0 # Simulation ?
         self.number_of_lost_chunks_in_this_round = 0 # Simulation?
         self.played = 0 # Simulation?
-        self.activity = {}  # Incremented if received a chunk in the last round from that origin
+        self.debt = {}  # Chunks debts (used for removing selfish peers)
         self.prev_chunk_number_received_from_the_splitter = 0 # Simulator?
         #self.delta = 0
         #self.delta_inertia = {}
@@ -77,8 +77,8 @@ class Peer_DBS():
     def set_splitter(self, splitter):
         self.splitter = splitter
 
-    def set_min_activity(self, min_activity):
-        self.min_activity = min_activity
+    def set_max_debt(self, max_debt):
+        self.max_debt = max_debt
 
     def listen_to_the_team(self):
         self.team_socket = socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -209,6 +209,11 @@ class Peer_DBS():
             chunk_number = self.pending[neighbor].pop(0)
             self.send_chunk_to_peer(chunk_number, neighbor)
         assert len(self.pending[neighbor]) == 0, f"len(self.pending[{neighbor}])={len(self.pending[neighbor])}"
+    def check_debt(self, destination):
+        pass
+        if self.debt[destination] > self.max_debt:
+            del self.debt[destination]
+            del self.forward[destination]
 
     def send_chunk_to_peer(self, chunk_number, destination):
         packet = self.create_packet(chunk_number)
@@ -216,10 +221,11 @@ class Peer_DBS():
         self.sendto_counter += 1
         self.lg.debug(f"{self.ext_id}: chunk {chunk_number} sent to {destination}")
         try:
-            self.activity[destination] -= 1
+            self.debt[destination] += 1
         except KeyError:
-            self.activity[destination] = 0
-            
+            self.debt[destination] = 1
+        self.check_debt(destination)
+
         #if self.activity[destination] < self.min_activity:
         #    del self.activity[destination]
         #    for destinations_list in self.forward.values():
@@ -329,9 +335,9 @@ class Peer_DBS():
             self.forward[self.public_endpoint].append(origin)
 
         try:
-            self.activity[sender] += 1
+            self.debt[sender] -= 1
         except KeyError:
-            self.activity[sender] = 1
+            self.debt[sender] = 0
 
         #self.compute_deltas(chunk_number, origin)
 
