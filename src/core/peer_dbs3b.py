@@ -36,17 +36,22 @@ class Peer_DBS3(Peer_DBS2):
     def __set_optimal_neighborhood_degree(self, optimal_neighborhood_degree):
         self.optimal_neighborhood_degree = optimal_neighborhood_degree
 
+    def on_chunk_received_from_the_splitter(self, chunk):
+        Peer_DBS2.on_chunk_received_from_the_splitter(self, chunk)
+        for i in self.debt.keys():
+            self.debt[i] /= 2
+
     def play_chunk(self, chunk_number):
         optimized_chunk = (chunk_number + self.optimization_horizon) % Limits.MAX_CHUNK_NUMBER
         buffer_box = self.buffer[optimized_chunk % self.buffer_size]
         #stderr.write(f"{buffer_box} {self.optimization_horizon} {optimized_chunk}\n")
         if buffer_box[ChunkStructure.CHUNK_DATA] == b'L':
-            #try:
-            #    peer = min(self.debt, key=self.debt.get)
-            #    self.request_path(chunk_number, peer)
-            #except ValueError:
-            #    pass
-            self.request_chunk_to_random_peer(chunk_number)
+            try:
+                peer = min(self.debt, key=self.debt.get)
+                self.request_path(chunk_number, peer)
+            except ValueError:
+                pass
+            #self.request_chunk_to_random_peer(chunk_number)
             self.optimization_horizon -= 1
             if self.optimization_horizon < 0:
                 self.optimization_horizon = 0
